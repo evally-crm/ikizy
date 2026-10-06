@@ -1,0 +1,81 @@
+/* ---------- login / criação de salão ---------- */
+.auth {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+  padding: 24px var(--gutter);
+  overflow: hidden;
+}
+.auth__box {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  max-width: 440px;
+}
+.auth__logo {
+  font-size: 30px;
+  text-align: center;
+}
+.auth__card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 28px 24px;
+  box-shadow: var(--shadow-md);
+}
+.auth__card .form {
+  margin-top: 12px;
+}
+.auth__title {
+  font-size: clamp(28px, 6vw, 36px);
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+.auth__switch {
+  margin-top: 8px;
+  font-size: 14px;
+  text-align: center;
+  color: var(--ink-500);
+}
+.auth__switch .textlink {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: inherit;
+  color: var(--brand-700);
+}
+.alert {
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: var(--pink-100);
+  color: var(--brand-700);
+  font-size: 13px;
+}
+.alert--ok {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+/* tela de carregamento enquanto a sessão é verificada */
+.splash {
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+}
+.splash__logo {
+  font-size: 34px;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  animation: splash-pulse 1.2s ease-in-out infinite;
+}
+@keyframes splash-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
-import { Bell, ChevronDown, Ellipsis, Search, X } from 'lucide-react'
+import { Bell, ChevronDown, Ellipsis, LogOut, Search, X } from 'lucide-react'
+import { useAuth } from '../../auth/AuthProvider'
 import { navItems } from './nav'
 import { Avatar, Button } from '../ui'
 
@@ -134,6 +135,9 @@ function BottomNav() {
 }
 
 export default function AppShell() {
+  const { session, salon, signOut } = useAuth()
+  const displayName = session?.user.email?.split('@')[0] ?? 'Maria Eduarda'
+
   return (
     <div className="shell">
       <div className="shell__orb" aria-hidden="true" />
@@ -150,12 +154,17 @@ export default function AppShell() {
               <span className="notif__dot" aria-hidden="true" />
             </Button>
             <div className="user">
-              <Avatar name="Maria Eduarda" />
+              <Avatar name={displayName} />
               <div className="user__text">
-                <p className="user__name">Maria Eduarda</p>
-                <p className="user__role">Studio Maria Beauty</p>
+                <p className="user__name">{displayName}</p>
+                <p className="user__role">{salon?.name ?? 'Studio Maria Beauty'}</p>
               </div>
             </div>
+            {session && (
+              <Button variant="soft" icon aria-label="Sair" onClick={() => void signOut()}>
+                <LogOut size={18} />
+              </Button>
+            )}
           </div>
         </div>
       </header>
