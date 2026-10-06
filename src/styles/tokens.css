@@ -1,0 +1,67 @@
+:root {
+  /* marca */
+  --brand-500: #bf0c22;
+  --brand-700: #800513;
+  --brand-900: #460106;
+
+  /* tons derivados da marca (heatmap, gráficos) */
+  --pink-100: #f9e1e5;
+  --pink-300: #eeaab3;
+
+  /* superfícies */
+  --bg: #f5f4f4;
+  --white: #ffffff;
+  --blush: #fcf2ff;
+  --gray-200: #eeeded;
+  --gray-300: #d9d7d8;
+
+  /* tinta */
+  --ink-500: #6b6668;
+  --ink-700: #242424;
+  --ink-900: #0e0d0d;
+  --black: #000000;
+
+  /* semânticas (uso pontual) */
+  --success: #1f7a4d;
+  --success-soft: #e3f4ea;
+  --warning: #9a6200;
+  --warning-soft: #fbf0d9;
+
+  /* derivados */
+  --line: rgba(14, 13, 13, 0.08);
+  --line-strong: rgba(14, 13, 13, 0.16);
+  --brand-tint: rgba(191, 12, 34, 0.08);
+  --shadow-sm: 0 1px 2px rgba(14, 13, 13, 0.04);
+  --shadow-md: 0 18px 40px -18px rgba(70, 1, 6, 0.28);
+
+  /* tipografia */
+  --font-sans: 'Outfit', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-serif: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
+
+  /* raios */
+  --radius-sm: 12px;
+  --radius-md: 18px;
+  --radius-lg: 28px;
+  --radius-pill: 999px;
+
+  /* layout */
+  --bottomnav-h: 64px;
+  --topbar-h: 76px;
+  --content-max: 1440px;
+  --content-pb: 24px;
+  /* altura disponível para telas que cabem na viewport (desktop) */
+  --fit-h: calc(100dvh - var(--topbar-h) - 8px - var(--content-pb));
+  --gutter: 16px;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --gutter: 28px;
+  }
+}
+@media (min-width: 1280px) {
+  :root {
+    --gutter: 40px;
+  }
+}

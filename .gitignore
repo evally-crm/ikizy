@@ -23,3 +23,10 @@ dist-ssr
 *.sln
 *.sw?
 desktop.ini
+
+# local
+.claude/
+.env
+.env.*
+!.env.example
+supabase/.temp/

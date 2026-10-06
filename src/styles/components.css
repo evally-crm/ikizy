@@ -1,0 +1,337 @@
+/* ---------- botões ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 0 22px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s, transform 0.15s;
+}
+.btn:active {
+  transform: scale(0.97);
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.btn--primary {
+  background: var(--brand-900);
+  color: var(--white);
+}
+.btn--primary:hover:not(:disabled) {
+  background: var(--brand-700);
+}
+.btn--accent {
+  background: var(--brand-500);
+  color: var(--white);
+}
+.btn--accent:hover:not(:disabled) {
+  background: var(--brand-700);
+}
+.btn--light {
+  background: var(--white);
+  color: var(--brand-900);
+}
+.btn--light:hover:not(:disabled) {
+  background: var(--blush);
+}
+.btn--ghost {
+  background: transparent;
+  color: var(--ink-900);
+  border-color: var(--line-strong);
+}
+.btn--ghost:hover:not(:disabled) {
+  background: var(--white);
+}
+.btn--soft {
+  background: var(--white);
+  color: var(--ink-900);
+  box-shadow: var(--shadow-sm);
+}
+.btn--soft:hover:not(:disabled) {
+  background: var(--gray-200);
+}
+.btn--sm {
+  min-height: 38px;
+  padding: 0 16px;
+  font-size: 13px;
+}
+.btn--icon {
+  width: 46px;
+  padding: 0;
+  flex: none;
+}
+.btn--icon.btn--sm {
+  width: 38px;
+}
+
+/* ---------- cards ---------- */
+.card {
+  position: relative;
+  min-width: 0;
+  padding: 22px;
+  border-radius: var(--radius-lg);
+  background: var(--white);
+  box-shadow: var(--shadow-sm);
+}
+.card--soft {
+  background: var(--gray-200);
+  box-shadow: none;
+}
+.card--dark {
+  background: var(--ink-900);
+  color: rgba(255, 255, 255, 0.92);
+}
+.card--dark h2,
+.card--dark h3 {
+  color: var(--white);
+}
+.card--brand {
+  overflow: hidden;
+  color: var(--white);
+  background:
+    radial-gradient(120% 90% at 85% 0%, rgba(191, 12, 34, 0.55), transparent 60%),
+    radial-gradient(90% 80% at 0% 100%, rgba(128, 5, 19, 0.9), transparent 70%),
+    var(--brand-900);
+}
+.card--brand h2,
+.card--brand h3 {
+  color: var(--white);
+}
+.card--brand .em,
+.card--dark .em {
+  color: #ff8a98;
+}
+.card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.card__head > div {
+  min-width: 0;
+}
+.card__title {
+  font-size: 18px;
+}
+.card__sub {
+  font-size: 13px;
+  color: var(--ink-500);
+}
+.card--dark .card__sub {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+/* ---------- números ---------- */
+.money {
+  display: inline-flex;
+  align-items: flex-start;
+  font-weight: 300;
+  letter-spacing: -0.035em;
+  line-height: 1;
+  color: inherit;
+  white-space: nowrap;
+}
+.money__cur {
+  margin-right: 4px;
+  padding-top: 0.18em;
+  font-size: 0.38em;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+.money__dec {
+  padding-top: 0.12em;
+  font-size: 0.42em;
+  letter-spacing: 0;
+  opacity: 0.55;
+}
+.money--md {
+  font-size: 26px;
+}
+.money--lg {
+  font-size: clamp(30px, 6vw, 40px);
+}
+.money--xl {
+  font-size: clamp(38px, 8vw, 56px);
+}
+
+.ring {
+  position: relative;
+  flex: none;
+}
+.ring svg {
+  display: block;
+}
+.ring__value {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  color: var(--ink-900);
+}
+.ring__value small {
+  position: absolute;
+  margin: -10px 0 0 34px;
+  font-size: 10px;
+}
+
+/* ---------- badge ---------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.badge--confirmado {
+  background: var(--success-soft);
+  color: var(--success);
+}
+.badge--pendente {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+.badge--atendimento {
+  background: var(--brand-500);
+  color: var(--white);
+}
+.badge--concluido {
+  background: var(--gray-200);
+  color: var(--ink-500);
+}
+.badge--up {
+  background: var(--success-soft);
+  color: var(--success);
+}
+.badge--dark {
+  background: var(--ink-900);
+  color: var(--white);
+}
+
+/* ---------- avatar ---------- */
+.avatar {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--brand-900);
+  color: var(--blush);
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 18px;
+}
+.avatar--sm {
+  width: 32px;
+  height: 32px;
+  font-size: 14px;
+}
+.avatar--soft {
+  background: var(--gray-200);
+  color: var(--brand-900);
+}
+
+/* ---------- chips / pílulas ---------- */
+.chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--white);
+  font-size: 13px;
+  transition: background-color 0.15s, color 0.15s;
+}
+.chip:hover {
+  background: var(--gray-200);
+}
+.chip[aria-pressed='true'],
+.chip[aria-selected='true'] {
+  background: var(--brand-900);
+  color: var(--white);
+}
+
+/* ---------- modal / sheet ---------- */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(14, 13, 13, 0.45);
+  backdrop-filter: blur(3px);
+}
+.dialog {
+  width: 100%;
+  max-width: 480px;
+  max-height: 90dvh;
+  overflow-y: auto;
+  padding: 26px var(--gutter) calc(26px + env(safe-area-inset-bottom));
+  background: var(--white);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+.dialog__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.dialog__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 16px;
+  margin: 0 0 22px;
+}
+.dialog__grid dt {
+  font-size: 12px;
+  color: var(--ink-500);
+}
+.dialog__grid dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.dialog__text {
+  margin-bottom: 22px;
+  color: var(--ink-500);
+}
+.dialog__actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.dialog__actions .btn {
+  flex: 1 1 160px;
+}
+
+@media (min-width: 768px) {
+  .overlay {
+    align-items: center;
+  }
+  .dialog {
+    border-radius: var(--radius-lg);
+    padding-bottom: 26px;
+  }
+}
