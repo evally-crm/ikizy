@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Link, Navigate } from 'react-router-dom'
-import { LogIn } from 'lucide-react'
+import { ArrowRight, Lock, Mail } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
 import { ROUTES } from '../../lib/routes'
 import { Button, Em } from '../../components/ui'
@@ -38,6 +38,8 @@ export default function Login() {
   return (
     <AuthLayout>
       <AuthCard
+        tabs="login"
+        aside={<GoogleButton onClick={onGoogle} disabled={busy} />}
         title={
           <>
             Bem-vinda de <Em>volta</Em>
@@ -45,32 +47,38 @@ export default function Login() {
         }
         subtitle="Entre para ver a agenda e o caixa do seu negócio."
       >
-        <GoogleButton onClick={onGoogle} disabled={busy} />
         <form className="form" onSubmit={onSubmit}>
-          <AuthField label="E-mail" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+          <AuthField
+            label="E-mail"
+            icon={<Mail size={16} />}
+            type="email"
+            autoComplete="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
           <AuthField
             label="Senha"
+            icon={<Lock size={16} />}
             type="password"
             autoComplete="current-password"
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            action={
+              <Link to={ROUTES.recover} className="auth__pill">
+                Esqueci
+              </Link>
+            }
           />
-          <Link to={ROUTES.recover} className="textlink auth__forgot">
-            Esqueci minha senha
-          </Link>
           <FormMessages error={error} />
-          <Button type="submit" disabled={busy}>
-            <LogIn size={16} aria-hidden="true" />
+          <Button type="submit" className="auth__submit" disabled={busy}>
             {busy ? 'Aguarde…' : 'Entrar'}
+            <span className="auth__arrow" aria-hidden="true">
+              <ArrowRight size={18} />
+            </span>
           </Button>
         </form>
-        <p className="auth__switch">
-          Ainda não tem conta?{' '}
-          <Link to={ROUTES.signup} className="textlink">
-            Criar conta
-          </Link>
-        </p>
       </AuthCard>
     </AuthLayout>
   )

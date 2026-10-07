@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
-import { Link, Navigate } from 'react-router-dom'
-import { UserPlus } from 'lucide-react'
+import { Navigate } from 'react-router-dom'
+import { ArrowRight, Lock, Mail } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
 import { ROUTES } from '../../lib/routes'
 import { Button, Em } from '../../components/ui'
@@ -48,6 +48,8 @@ export default function Cadastro() {
   return (
     <AuthLayout>
       <AuthCard
+        tabs="signup"
+        aside={<GoogleButton onClick={onGoogle} disabled={busy} />}
         title={
           <>
             Crie sua <Em>conta</Em>
@@ -55,11 +57,19 @@ export default function Cadastro() {
         }
         subtitle="Leva um minuto. Depois você monta o seu negócio."
       >
-        <GoogleButton onClick={onGoogle} disabled={busy} />
         <form className="form" onSubmit={onSubmit}>
-          <AuthField label="E-mail" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+          <AuthField
+            label="E-mail"
+            icon={<Mail size={16} />}
+            type="email"
+            autoComplete="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
           <AuthField
             label="Senha"
+            icon={<Lock size={16} />}
             type="password"
             autoComplete="new-password"
             required
@@ -69,17 +79,13 @@ export default function Cadastro() {
             onChange={(e) => setPassword(e.target.value)}
           />
           <FormMessages error={error} notice={notice} />
-          <Button type="submit" disabled={busy}>
-            <UserPlus size={16} aria-hidden="true" />
+          <Button type="submit" className="auth__submit" disabled={busy}>
             {busy ? 'Aguarde…' : 'Criar conta'}
+            <span className="auth__arrow" aria-hidden="true">
+              <ArrowRight size={18} />
+            </span>
           </Button>
         </form>
-        <p className="auth__switch">
-          Já tem conta?{' '}
-          <Link to={ROUTES.login} className="textlink">
-            Entrar
-          </Link>
-        </p>
       </AuthCard>
     </AuthLayout>
   )

@@ -1,4 +1,4 @@
-/* ---------- login / criação de salão ---------- */
+/* ---------- login / criação de salão: névoa cinza, vidro fosco e controles em pílula ---------- */
 .auth {
   position: relative;
   display: grid;
@@ -6,6 +6,53 @@
   min-height: 100dvh;
   padding: 24px var(--gutter);
   overflow: hidden;
+}
+.auth__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(160deg, #efeff1 0%, #dcdce0 100%);
+}
+.auth__bg span {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70px);
+}
+.auth__bg span:first-child {
+  top: -140px;
+  left: -120px;
+  width: 460px;
+  height: 460px;
+  background: rgba(40, 40, 46, 0.32);
+}
+.auth__bg span:last-child {
+  right: -140px;
+  bottom: -160px;
+  width: 520px;
+  height: 520px;
+  background: rgba(255, 255, 255, 0.9);
+}
+/* arte em meio-tom: só no desktop, ocupando a metade direita, atrás do cartão */
+.auth__art {
+  display: none;
+}
+@media (min-width: 960px) {
+  .auth {
+    grid-template-columns: minmax(440px, 44%) 1fr;
+  }
+  .auth__art {
+    display: block;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 0;
+    width: 62%;
+    height: 100%;
+  }
+  .auth__box {
+    justify-self: center;
+  }
 }
 .auth__box {
   position: relative;
@@ -23,12 +70,25 @@
 .auth__card {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 28px 24px;
-  box-shadow: var(--shadow-md);
+  gap: 14px;
+  padding: 24px 22px 26px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 32px;
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: 0 30px 60px -32px rgba(20, 20, 24, 0.4);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  backdrop-filter: blur(24px) saturate(1.2);
+}
+.auth__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 6px;
 }
 .auth__card .form {
-  margin-top: 12px;
+  gap: 12px;
+  margin-top: 6px;
 }
 .auth__title {
   font-size: clamp(28px, 6vw, 36px);
@@ -50,6 +110,140 @@
   font-size: inherit;
   color: var(--brand-700);
 }
+
+/* seletor Entrar / Criar conta: pílula preta com o item ativo em branco */
+.auth__tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--ink-900);
+}
+.auth__tabs a {
+  padding: 10px 14px;
+  border-radius: var(--radius-pill);
+  text-align: center;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+  transition: background-color 0.2s, color 0.2s;
+}
+.auth__tabs a:hover {
+  color: var(--white);
+}
+.auth__tabs a[aria-current='page'] {
+  background: var(--white);
+  color: var(--ink-900);
+}
+
+/* pílula social compacta, ao lado do título */
+.auth__social {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 14px 5px 5px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+  color: var(--ink-900);
+  transition: background-color 0.15s;
+}
+.auth__social:hover:not(:disabled) {
+  background: var(--white);
+}
+.auth__social:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.auth__social-ico {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--white);
+}
+
+/* campos em pílula: o rótulo fica só para leitores de tela */
+.auth .field__label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.auth .input {
+  gap: 10px;
+  min-height: 56px;
+  padding: 0 8px;
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.7);
+}
+.auth .input:hover {
+  background: rgba(255, 255, 255, 0.85);
+}
+.auth .input:focus-within {
+  border-color: var(--ink-900);
+  background: var(--white);
+  box-shadow: 0 0 0 3px rgba(27, 27, 29, 0.1);
+}
+.auth .input input {
+  padding: 0 8px;
+  color: var(--ink-900);
+}
+.auth .input:has(.auth__ico) input {
+  padding-left: 0;
+}
+.auth__ico {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--gray-200);
+  color: var(--ink-500);
+}
+.auth__pill {
+  flex: none;
+  padding: 7px 14px;
+  border-radius: var(--radius-pill);
+  background: var(--white);
+  font-size: 12px;
+  color: var(--ink-900);
+}
+.auth__pill:hover {
+  background: var(--ink-900);
+  color: var(--white);
+}
+
+/* botão principal: pílula grafite com disco e seta */
+.auth__submit {
+  justify-content: space-between;
+  min-height: 56px;
+  margin-top: 4px;
+  padding: 0 7px 0 26px;
+  background: var(--ink-900);
+  font-size: 15px;
+}
+.auth__submit:hover:not(:disabled) {
+  background: var(--black);
+}
+.auth__arrow {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--white);
+  color: var(--ink-900);
+}
+
 .alert {
   padding: 10px 14px;
   border-radius: 14px;
@@ -78,28 +272,4 @@
   50% {
     opacity: 0.45;
   }
-}
-
-.auth__forgot {
-  align-self: flex-end;
-  margin-top: -6px;
-}
-.auth__switch .textlink {
-  color: var(--brand-700);
-}
-
-.auth__or {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 14px 0;
-  font-size: 13px;
-  color: var(--ink-500);
-}
-.auth__or::before,
-.auth__or::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--line);
 }
