@@ -2,6 +2,7 @@ import { neon } from '@neondatabase/serverless'
 import { createRemoteJWKSet, jwtVerify } from 'jose'
 import Stripe from 'stripe'
 import { HttpError, type BillingDb, type Membership, type SubscriptionRow } from './billing.js'
+import type { PublicSite } from './siteHtml.js'
 
 /** lê uma variável de ambiente obrigatória (configurada na Vercel, nunca no código) */
 export function env(name: string): string {
@@ -122,6 +123,13 @@ export function createDb(): BillingDb {
           and (last_event_at is null or last_event_at <= ${p.eventAt.toISOString()}::timestamptz)`
     },
   }
+}
+
+/** dados da página pública; null se o slug não existe ou o site ainda não foi publicado */
+export async function fetchPublicSite(slug: string): Promise<PublicSite | null> {
+  const sql = neon(env('DATABASE_URL'))
+  const rows = (await sql`select public.get_public_site(${slug}) as site`) as { site: PublicSite | null }[]
+  return rows[0]?.site ?? null
 }
 
 // ---------------------------------------------------------------- respostas HTTP
