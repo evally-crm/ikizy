@@ -1,6 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import type { Session } from '@supabase/supabase-js'
-import { isSupabaseConfigured, supabase } from '../lib/supabase'
+import { isNeonConfigured, neon, type NeonSession as Session } from '../lib/neon'
 import { dash, ROUTES } from '../lib/routes'
 
 export type MemberRole = 'owner' | 'manager' | 'reception' | 'professional'
@@ -12,7 +11,7 @@ export interface Salon {
   role: MemberRole
 }
 
-/** demo: sem Supabase configurado · loading: resolvendo sessão/salão */
+/** demo: sem Neon configurado · loading: resolvendo sessão/salão */
 export type AuthStatus = 'demo' | 'loading' | 'signed-out' | 'no-salon' | 'ready'
 
 interface AuthState {
@@ -23,7 +22,8 @@ interface AuthState {
   signUp: (email: string, password: string) => Promise<{ error: string | null; needsConfirmation: boolean }>
   /** envia o e-mail de recuperação; a resposta é sempre a mesma para não revelar se o e-mail existe */
   sendPasswordReset: (email: string) => Promise<string | null>
-  updatePassword: (password: string) => Promise<string | null>
+  /** token vem do link do e-mail (?token=...); o Neon Auth não abre sessão no link de recuperação */
+  updatePassword: (password: string, token: string) => Promise<string | null>
   signOut: () => Promise<void>
   createSalon: (name: string, slug: string) => Promise<string | null>
 }
@@ -39,26 +39,26 @@ export function useAuth() {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [salon, setSalon] = useState<Salon | null>(null)
-  const [sessionReady, setSessionReady] = useState(!isSupabaseConfigured)
-  const [salonReady, setSalonReady] = useState(!isSupabaseConfigured)
+  const [sessionReady, setSessionReady] = useState(!isNeonConfigured)
+  const [salonReady, setSalonReady] = useState(!isNeonConfigured)
 
   // sessão
   useEffect(() => {
-    if (!supabase) return
-    supabase.auth.getSession().then(({ data }) => {
+    if (!neon) return
+    neon.auth.getSession().then(({ data }) => {
       setSession(data.session)
       setSessionReady(true)
     })
-    // o callback só atualiza estado: chamar o Supabase aqui dentro pode travar o cliente
-    const { data } = supabase.auth.onAuthStateChange((_event, next) => setSession(next))
+    // o callback só atualiza estado: chamar o cliente aqui dentro pode travar
+    const { data } = neon.auth.onAuthStateChange((_event, next) => setSession(next))
     return () => data.subscription.unsubscribe()
   }, [])
 
   const userId = session?.user.id
 
   const loadSalon = useCallback(async (uid: string) => {
-    if (!supabase) return
-    const { data, error } = await supabase
+    if (!neon) return
+    const { data, error } = await neon
       .from('members')
       .select('role, salons ( id, name, slug )')
       .eq('user_id', uid)
@@ -71,7 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // salão do usuário logado
   useEffect(() => {
-    if (!isSupabaseConfigured || !sessionReady) return
+    if (!isNeonConfigured || !sessionReady) return
     if (!userId) {
       setSalon(null)
       setSalonReady(true)
@@ -81,7 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void loadSalon(userId)
   }, [userId, sessionReady, loadSalon])
 
-  const status: AuthStatus = !isSupabaseConfigured
+  const status: AuthStatus = !isNeonConfigured
     ? 'demo'
     : !sessionReady || (userId && !salonReady)
       ? 'loading'
@@ -97,14 +97,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       session,
       salon,
       async signIn(email, password) {
-        if (!supabase) return 'Supabase não configurado.'
-        const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
+        if (!neon) return 'Neon não configurado.'
+        const { error } = await neon.auth.signInWithPassword({ email: email.trim(), password })
         // mensagem genérica: não revela se o e-mail existe
         return error ? 'E-mail ou senha incorretos.' : null
       },
       async signUp(email, password) {
-        if (!supabase) return { error: 'Supabase não configurado.', needsConfirmation: false }
-        const { data, error } = await supabase.auth.signUp({
+        if (!neon) return { error: 'Neon não configurado.', needsConfirmation: false }
+        const { data, error } = await neon.auth.signUp({
           email: email.trim(),
           password,
           options: { emailRedirectTo: `${window.location.origin}${dash()}` },
@@ -113,23 +113,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { error: null, needsConfirmation: !data.session }
       },
       async sendPasswordReset(email) {
-        if (!supabase) return 'Supabase não configurado.'
+        if (!neon) return 'Neon não configurado.'
         // ignora o erro de propósito: não revelar se o e-mail está cadastrado
-        await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: `${window.location.origin}${ROUTES.reset}` })
+        await neon.auth.resetPasswordForEmail(email.trim(), { redirectTo: `${window.location.origin}${ROUTES.reset}` })
         return null
       },
-      async updatePassword(password) {
-        if (!supabase) return 'Supabase não configurado.'
-        const { error } = await supabase.auth.updateUser({ password })
+      async updatePassword(password, token) {
+        if (!neon) return 'Neon não configurado.'
+        const { error } = await neon.auth.getBetterAuthInstance().resetPassword({ newPassword: password, token })
         return error ? 'Não foi possível atualizar a senha. Peça um novo link e tente de novo.' : null
       },
       async signOut() {
-        await supabase?.auth.signOut()
+        await neon?.auth.signOut()
         setSalon(null)
       },
       async createSalon(name, slug) {
-        if (!supabase || !userId) return 'Você precisa estar logada.'
-        const { error } = await supabase.rpc('create_salon', { p_name: name, p_slug: slug })
+        if (!neon || !userId) return 'Você precisa estar logada.'
+        const { error } = await neon.rpc('create_salon', { p_name: name, p_slug: slug })
         if (error) {
           if (error.message.includes('salons_slug_key') || error.code === '23505') {
             return error.message.includes('já pertence') ? 'Esta conta já tem um salão.' : 'Este endereço já está em uso. Escolha outro.'

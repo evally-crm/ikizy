@@ -1,7 +1,7 @@
 # IKIZY
 
 Gestão simples para salões e negócios de beleza: agenda, clientes, financeiro e site próprio.
-Monorepo (npm workspaces) com React + TypeScript + Vite e Supabase (Postgres, Auth e RLS).
+Monorepo (npm workspaces) com React + TypeScript + Vite e Neon (Postgres, Neon Auth e Data API com RLS).
 
 ## Estrutura
 
@@ -9,8 +9,9 @@ Monorepo (npm workspaces) com React + TypeScript + Vite e Supabase (Postgres, Au
 apps/
   app/        sistema (app.ikizy.com)   login, cadastro, recuperar senha e /dashboard/*
   landing/    site institucional (ikizy.com): /, /precos, /recursos, /sobre, /contato  (Astro, estático)
-supabase/     migrations e testes de RLS
-neon.ts       configuração do Neon (conectado, ainda sem uso pelo app)
+neon/         migrations do banco (Neon)
+supabase/     migrations e testes de RLS originais (referência, não são mais aplicados)
+neon.ts       configuração do Neon (auth e dataApi ligados)
 ```
 
 | Domínio | O que é |
@@ -37,16 +38,17 @@ A landing aponta os botões "Entrar" e "Teste agora" para `https://app.ikizy.com
 
 Sem variáveis de ambiente o app abre em **modo demonstração**, com dados de exemplo e sem login.
 
-## Conectando ao Supabase
+## Conectando ao Neon
 
-1. Crie um projeto em supabase.com.
-2. Aplique, em ordem, as migrations de `supabase/migrations/` (SQL Editor, ou `supabase db push`).
-3. Copie `apps/app/.env.example` para `apps/app/.env.local` e preencha a URL e a chave **anon** (Project Settings > API).
-   Nunca use a chave `service_role` no front-end.
-4. Em Authentication > URL Configuration, cadastre como redirect `http://localhost:5173/**` e, em produção,
-   `https://app.ikizy.com/**` (usados na confirmação de e-mail e na recuperação de senha).
+1. `neon deploy` (liga Neon Auth e Data API conforme o `neon.ts`).
+2. Aplique, em ordem, as migrations de `neon/migrations/`.
+3. `neon env pull` traz `NEON_AUTH_BASE_URL` e `NEON_DATA_API_URL`. Copie-os para `apps/app/.env.local` como
+   `VITE_NEON_AUTH_URL` e `VITE_NEON_DATA_API_URL` (veja `apps/app/.env.example`).
+4. Cadastre as origens do app como domínios confiáveis do Auth (sem isso, redirecionamentos dão `invalid domain`):
+   `neon neon-auth domain add http://localhost:5173` e `neon neon-auth domain add https://app.ikizy.com`.
 
 Com as variáveis preenchidas, o app exige login e a criação do negócio (`/cadastro/salao`) antes de abrir o sistema.
+Em produção, o envio de e-mails (verificação e recuperação de senha) exige SMTP próprio no Neon Auth.
 
 ## Segurança do banco
 
@@ -56,4 +58,4 @@ Com as variáveis preenchidas, o app exige login e a criação do negócio (`/ca
 - Endereços como `app`, `www` e `api` são reservados (constraint `salons_slug_not_reserved`).
 - `close_month()` grava o fechamento (imutável) e trava atendimentos do mês.
 
-Testes de RLS: `supabase/tests/rls_test.sql` (validado em Postgres 17 com `auth_stubs.sql` simulando o schema `auth`).
+Testes de RLS: `supabase/tests/rls_test.sql` (validado em Postgres 17 com `auth_stubs.sql` simulando o schema `auth`; ainda não adaptado ao Neon).

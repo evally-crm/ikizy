@@ -1,15 +1,17 @@
 import { useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { KeyRound } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
 import { ROUTES } from '../../lib/routes'
 import { Button, Em } from '../../components/ui'
 import { AuthCard, AuthField, AuthLayout, FormMessages } from './AuthLayout'
 
-/** destino do link de recuperação: o Supabase abre uma sessão temporária e aqui definimos a nova senha */
+/** destino do link de recuperação: o Neon Auth envia ?token=... e aqui definimos a nova senha */
 export default function RedefinirSenha() {
-  const { status, session, updatePassword } = useAuth()
+  const { status, updatePassword } = useAuth()
   const navigate = useNavigate()
+  const [params] = useSearchParams()
+  const token = params.get('token')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [busy, setBusy] = useState(false)
@@ -17,7 +19,7 @@ export default function RedefinirSenha() {
 
   if (status === 'loading') return null
 
-  if (!session) {
+  if (!token) {
     return (
       <AuthLayout>
         <AuthCard
@@ -48,10 +50,10 @@ export default function RedefinirSenha() {
       return
     }
     setBusy(true)
-    const err = await updatePassword(password)
+    const err = await updatePassword(password, token)
     setBusy(false)
     if (err) setError(err)
-    else navigate(ROUTES.dashboard, { replace: true })
+    else navigate(ROUTES.login, { replace: true })
   }
 
   return (
