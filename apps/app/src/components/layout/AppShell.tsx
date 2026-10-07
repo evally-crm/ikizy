@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { Bell, ChevronDown, Ellipsis, LogOut, Search, X } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
@@ -139,13 +139,119 @@ function BottomNav() {
   )
 }
 
+/** editar cadastro: nome da pessoa e do negócio */
+function ProfileDialog({ onClose }: { onClose: () => void }) {
+  const { displayName, salon, session, updateProfile } = useAuth()
+  const [userName, setUserName] = useState(displayName)
+  const [salonName, setSalonName] = useState(salon?.name ?? '')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const canEditSalon = !salon || salon.role === 'owner' || salon.role === 'manager'
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  const onSubmit = async (e: FormEvent) => {
+    e.preventDefault()
+    setBusy(true)
+    const message = await updateProfile(userName, canEditSalon ? salonName : (salon?.name ?? salonName))
+    setBusy(false)
+    if (message) setError(message)
+    else onClose()
+  }
+
+  return (
+    <div className="overlay" onClick={onClose}>
+      <form
+        className="dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Editar cadastro"
+        onClick={(e) => e.stopPropagation()}
+        onSubmit={onSubmit}
+      >
+        <div className="dialog__head">
+          <h2>
+            Editar <span className="em">cadastro</span>
+          </h2>
+          <Button variant="ghost" size="sm" icon aria-label="Fechar" onClick={onClose}>
+            <X size={18} />
+          </Button>
+        </div>
+
+        <div className="form">
+          <label className="field">
+            <span className="field__label">Seu nome</span>
+            <span className="input">
+              <input
+                value={userName}
+                onChange={(e) => setUserName(e.target.value)}
+                autoComplete="name"
+                required
+                minLength={2}
+                maxLength={80}
+              />
+            </span>
+          </label>
+          <label className="field">
+            <span className="field__label">Nome do negócio</span>
+            <span className="input">
+              <input
+                value={salonName}
+                onChange={(e) => setSalonName(e.target.value)}
+                autoComplete="organization"
+                required
+                minLength={2}
+                maxLength={60}
+                disabled={!canEditSalon}
+              />
+            </span>
+            {!canEditSalon && <span className="field__hint">Só dona ou gerente altera o negócio.</span>}
+          </label>
+          {session?.user.email && (
+            <label className="field">
+              <span className="field__label">E-mail</span>
+              <span className="input">
+                <input value={session.user.email} disabled readOnly />
+              </span>
+            </label>
+          )}
+          {salon && (
+            <p className="field__hint">
+              Seu endereço <strong>{salon.slug}</strong> não muda por aqui, para não quebrar links já compartilhados.
+            </p>
+          )}
+        </div>
+
+        {error && (
+          <p className="dialog__error" role="alert">
+            {error}
+          </p>
+        )}
+
+        <div className="dialog__actions">
+          <Button variant="light" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button type="submit" disabled={busy}>
+            {busy ? 'Salvando…' : 'Salvar'}
+          </Button>
+        </div>
+      </form>
+    </div>
+  )
+}
+
 export default function AppShell() {
-  const { session, salon, signOut } = useAuth()
-  const displayName = session?.user.email?.split('@')[0] ?? 'Maria Eduarda'
+  const { session, salon, signOut, displayName } = useAuth()
+  const [editing, setEditing] = useState(false)
+  const closeEdit = useRef(() => setEditing(false)).current
 
   return (
     <div className="shell">
-      <div className="shell__orb" aria-hidden="true" />
       <header className="topbar">
         <div className="topbar__inner">
           <Logo />
@@ -158,13 +264,13 @@ export default function AppShell() {
               <Bell size={18} />
               <span className="notif__dot" aria-hidden="true" />
             </Button>
-            <div className="user">
+            <button type="button" className="user" aria-label="Editar cadastro" title="Editar cadastro" onClick={() => setEditing(true)}>
               <Avatar name={displayName} />
               <div className="user__text">
                 <p className="user__name">{displayName}</p>
                 <p className="user__role">{salon?.name ?? 'Studio Maria Beauty'}</p>
               </div>
-            </div>
+            </button>
             {session && (
               <Button variant="soft" icon aria-label="Sair" onClick={() => void signOut()}>
                 <LogOut size={18} />
@@ -177,6 +283,7 @@ export default function AppShell() {
         <Outlet />
       </main>
       <BottomNav />
+      {editing && <ProfileDialog onClose={closeEdit} />}
     </div>
   )
 }

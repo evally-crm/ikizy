@@ -317,6 +317,18 @@
   margin-bottom: 22px;
   color: var(--ink-500);
 }
+.dialog__error {
+  margin: 14px 0 0;
+  font-size: 13px;
+  color: var(--brand-500);
+}
+.dialog .form {
+  margin-bottom: 22px;
+}
+.dialog .input input:disabled {
+  color: var(--ink-500);
+  cursor: not-allowed;
+}
 .dialog__actions {
   display: flex;
   gap: 8px;

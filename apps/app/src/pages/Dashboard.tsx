@@ -7,6 +7,7 @@ import { appointments, professionals, weekRevenue } from '../data/mock'
 import { MONTHLY_GOAL, getMonths } from '../data/finance'
 import { clientTags, daysSince, getClients, TAG_LABEL } from '../data/clients'
 import { formatBRL, formatTime } from '../lib/format'
+import { useAuth } from '../auth/AuthProvider'
 import { dash } from '../lib/routes'
 import { Avatar, Card, Em, Money, StatusBadge } from '../components/ui'
 
@@ -27,6 +28,7 @@ function Ticks({ ratio, label }: { ratio: number; label: string }) {
 }
 
 export default function Dashboard() {
+  const { displayName } = useAuth()
   const now = useMemo(() => new Date(), [])
   const today = [...appointments].sort((a, b) => a.start - b.start)
   const done = today.filter((a) => a.status === 'concluido')
@@ -57,7 +59,7 @@ export default function Dashboard() {
     <div className="page page--fit">
       <header className="bar">
         <h1 className="bar__title">
-          Olá, Maria. Resumo de <Em>hoje</Em>
+          Olá, {displayName.split(' ')[0]}. Resumo de <Em>hoje</Em>
         </h1>
         <div className="bar__side">
         <dl className="minis">

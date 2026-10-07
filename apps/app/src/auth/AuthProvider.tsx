@@ -30,6 +30,10 @@ interface AuthState {
   signOut: () => Promise<void>
   /** cria o negócio e, se houver `setup`, já cadastra serviços e a profissional sugeridos pelo questionário */
   createSalon: (name: string, slug: string, setup?: SalonSetup) => Promise<string | null>
+  /** nome de exibição de quem está logada (cadastro > e-mail > padrão) */
+  displayName: string
+  /** edita o cadastro: nome da pessoa e nome do negócio (só dono/gerente altera o negócio) */
+  updateProfile: (userName: string, salonName: string) => Promise<string | null>
 }
 
 const AuthContext = createContext<AuthState | null>(null)
@@ -45,6 +49,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [salon, setSalon] = useState<Salon | null>(null)
   const [sessionReady, setSessionReady] = useState(!isNeonConfigured)
   const [salonReady, setSalonReady] = useState(!isNeonConfigured)
+  // sobrescreve o que veio da sessão/salão logo após editar (e serve de armazenamento no modo demo)
+  const [profile, setProfile] = useState<{ userName?: string; salonName?: string }>({})
 
   // sessão
   useEffect(() => {
@@ -95,11 +101,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           ? 'ready'
           : 'no-salon'
 
+  // o Neon Auth entrega o nome da pessoa em user_metadata.displayName (não em user.name)
+  const metaName = session?.user.user_metadata?.displayName
+  const sessionName = typeof metaName === 'string' ? metaName.trim() : undefined
+  const displayName = profile.userName ?? (sessionName || session?.user.email?.split('@')[0] || 'Maria Eduarda')
+  const shownSalon = salon && profile.salonName ? { ...salon, name: profile.salonName } : salon
+
   const value = useMemo<AuthState>(
     () => ({
       status,
       session,
-      salon,
+      salon: shownSalon,
+      displayName,
+      async updateProfile(userName, salonName) {
+        const person = userName.trim()
+        const business = salonName.trim()
+        if (person.length < 2) return 'Informe seu nome.'
+        if (business.length < 2) return 'O nome do negócio precisa ter pelo menos 2 caracteres.'
+        if (neon && salon) {
+          if (person !== displayName) {
+            // direto no Better Auth: o updateUser do adaptador Supabase lê o { status: true } de sucesso como falha
+            const { error } = await neon.auth.getBetterAuthInstance().updateUser({ name: person })
+            if (error) return 'Não foi possível salvar seu nome agora. Tente novamente.'          }
+          if (business !== salon.name) {
+            const { data, error } = await neon.from('salons').update({ name: business }).eq('id', salon.id).select('id')
+            if (error || !data?.length) return 'Só quem é dona ou gerente pode alterar o nome do negócio.'
+          }
+        }
+        setProfile({ userName: person, salonName: business })
+        return null
+      },
       async signIn(email, password) {
         if (!neon) return 'Neon não configurado.'
         const { error } = await neon.auth.signInWithPassword({ email: email.trim(), password })
@@ -138,6 +169,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       async signOut() {
         await neon?.auth.signOut()
         setSalon(null)
+        setProfile({})
       },
       async createSalon(name, slug, setup) {
         if (!neon || !userId) return 'Você precisa estar logada.'
@@ -163,7 +195,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return null
       },
     }),
-    [status, session, salon, userId, loadSalon],
+    [status, session, salon, shownSalon, displayName, userId, loadSalon],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
