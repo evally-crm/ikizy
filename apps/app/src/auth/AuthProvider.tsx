@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { isSupabaseConfigured, supabase } from '../lib/supabase'
+import { dash, ROUTES } from '../lib/routes'
 
 export type MemberRole = 'owner' | 'manager' | 'reception' | 'professional'
 
@@ -20,6 +21,9 @@ interface AuthState {
   salon: Salon | null
   signIn: (email: string, password: string) => Promise<string | null>
   signUp: (email: string, password: string) => Promise<{ error: string | null; needsConfirmation: boolean }>
+  /** envia o e-mail de recuperação; a resposta é sempre a mesma para não revelar se o e-mail existe */
+  sendPasswordReset: (email: string) => Promise<string | null>
+  updatePassword: (password: string) => Promise<string | null>
   signOut: () => Promise<void>
   createSalon: (name: string, slug: string) => Promise<string | null>
 }
@@ -103,10 +107,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { data, error } = await supabase.auth.signUp({
           email: email.trim(),
           password,
-          options: { emailRedirectTo: window.location.origin },
+          options: { emailRedirectTo: `${window.location.origin}${dash()}` },
         })
         if (error) return { error: 'Não foi possível criar a conta. Confira os dados e tente novamente.', needsConfirmation: false }
         return { error: null, needsConfirmation: !data.session }
+      },
+      async sendPasswordReset(email) {
+        if (!supabase) return 'Supabase não configurado.'
+        // ignora o erro de propósito: não revelar se o e-mail está cadastrado
+        await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: `${window.location.origin}${ROUTES.reset}` })
+        return null
+      },
+      async updatePassword(password) {
+        if (!supabase) return 'Supabase não configurado.'
+        const { error } = await supabase.auth.updateUser({ password })
+        return error ? 'Não foi possível atualizar a senha. Peça um novo link e tente de novo.' : null
       },
       async signOut() {
         await supabase?.auth.signOut()
@@ -119,6 +134,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (error.message.includes('salons_slug_key') || error.code === '23505') {
             return error.message.includes('já pertence') ? 'Esta conta já tem um salão.' : 'Este endereço já está em uso. Escolha outro.'
           }
+          if (error.message.includes('salons_slug_not_reserved')) return 'Esse endereço é reservado. Escolha outro.'
           if (error.code === '23514') return 'Use de 3 a 40 letras minúsculas, números e hífen.'
           return 'Não foi possível criar o salão agora. Tente novamente.'
         }

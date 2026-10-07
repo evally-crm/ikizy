@@ -3,14 +3,19 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { Bell, ChevronDown, Ellipsis, LogOut, Search, X } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
 import { navItems } from './nav'
+import { ROUTES } from '../../lib/routes'
 import { Avatar, Button } from '../ui'
 
-const primary = navItems.filter((i) => i.primary)
-const more = navItems.filter((i) => !i.primary)
+// topo (desktop): as seções principais; o resto vai em 'Mais'
+const topItems = navItems.filter((i) => i.core)
+const topMore = navItems.filter((i) => !i.core)
+// barra inferior (celular)
+const barItems = navItems.filter((i) => i.primary)
+const barMore = navItems.filter((i) => !i.primary)
 
 function Logo() {
   return (
-    <NavLink to="/" className="logo" aria-label="IKIZY — início">
+    <NavLink to={ROUTES.dashboard} className="logo" aria-label="IKIZY — início">
       IKIZY<span className="logo__dot">.</span>
     </NavLink>
   )
@@ -42,12 +47,12 @@ function PillNav() {
     return () => document.removeEventListener('mousedown', onClick)
   }, [open])
 
-  const moreActive = more.some((i) => pathname.startsWith(i.to))
+  const moreActive = topMore.some((i) => pathname.startsWith(i.to))
 
   return (
     <nav className="pillnav" aria-label="Navegação principal">
-      {primary.map(({ to, label }) => (
-        <NavLink key={to} to={to} end={to === '/'} className="pillnav__link">
+      {topItems.map(({ to, label }) => (
+        <NavLink key={to} to={to} end={to === ROUTES.dashboard} className="pillnav__link">
           {label}
         </NavLink>
       ))}
@@ -63,7 +68,7 @@ function PillNav() {
         </button>
         {open && (
           <div className="popover" role="menu">
-            {more.map(({ to, label, icon: Icon }) => (
+            {topMore.map(({ to, label, icon: Icon }) => (
               <NavLink key={to} to={to} className="popover__item" role="menuitem">
                 <Icon size={18} aria-hidden="true" />
                 {label}
@@ -85,8 +90,8 @@ function BottomNav() {
   return (
     <>
       <nav className="bottomnav" aria-label="Navegação principal">
-        {primary.map(({ to, label, icon: Icon }) => (
-          <NavLink key={to} to={to} end={to === '/'} className="bottomnav__link" aria-label={label} title={label}>
+        {barItems.map(({ to, label, icon: Icon }) => (
+          <NavLink key={to} to={to} end={to === ROUTES.dashboard} className="bottomnav__link" aria-label={label} title={label}>
             <Icon size={20} aria-hidden="true" />
           </NavLink>
         ))}
@@ -120,7 +125,7 @@ function BottomNav() {
               </Button>
             </div>
             <div className="more-grid">
-              {more.map(({ to, label, icon: Icon }) => (
+              {barMore.map(({ to, label, icon: Icon }) => (
                 <NavLink key={to} to={to} className="more-grid__item">
                   <Icon size={20} aria-hidden="true" />
                   {label}

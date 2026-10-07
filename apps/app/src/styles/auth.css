@@ -79,3 +79,11 @@
     opacity: 0.45;
   }
 }
+
+.auth__forgot {
+  align-self: flex-end;
+  margin-top: -6px;
+}
+.auth__switch .textlink {
+  color: var(--brand-700);
+}

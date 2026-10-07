@@ -1,19 +1,13 @@
 import { useState, type FormEvent } from 'react'
 import { Navigate } from 'react-router-dom'
 import { Rocket } from 'lucide-react'
-import { useAuth } from '../auth/AuthProvider'
-import { AuthField, AuthLayout } from './Auth'
-import { Button, Card, Em } from '../components/ui'
+import { useAuth } from '../../auth/AuthProvider'
+import { ROUTES } from '../../lib/routes'
+import { isReservedSlug, SITE_DOMAIN, SLUG_PATTERN, siteHost, slugify } from '../../lib/slug'
+import { Button, Em } from '../../components/ui'
+import { AuthCard, AuthField, AuthLayout, FormMessages } from './AuthLayout'
 
-const slugify = (s: string) =>
-  s
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 40)
-
+/** /cadastro/salao: depois de criar a conta, a pessoa cria o negócio dela */
 export default function Onboarding() {
   const { status, createSalon, signOut } = useAuth()
   const [name, setName] = useState('')
@@ -22,8 +16,8 @@ export default function Onboarding() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  if (status === 'signed-out') return <Navigate to="/entrar" replace />
-  if (status === 'ready' || status === 'demo') return <Navigate to="/" replace />
+  if (status === 'signed-out') return <Navigate to={ROUTES.login} replace />
+  if (status === 'ready' || status === 'demo') return <Navigate to={ROUTES.dashboard} replace />
 
   const onName = (value: string) => {
     setName(value)
@@ -37,6 +31,10 @@ export default function Onboarding() {
       setError('O endereço precisa ter pelo menos 3 caracteres.')
       return
     }
+    if (isReservedSlug(slug)) {
+      setError('Esse endereço é reservado. Escolha outro.')
+      return
+    }
     setBusy(true)
     setError(await createSalon(name, slug))
     setBusy(false)
@@ -44,12 +42,14 @@ export default function Onboarding() {
 
   return (
     <AuthLayout>
-      <Card className="auth__card">
-        <h1 className="auth__title">
-          Vamos montar o seu <Em>salão</Em>
-        </h1>
-        <p className="card__sub">Só duas informações. O resto você ajusta depois em “Meu site”.</p>
-
+      <AuthCard
+        title={
+          <>
+            Vamos montar o seu <Em>negócio</Em>
+          </>
+        }
+        subtitle="Só duas informações. O resto você ajusta depois, no painel."
+      >
         <form className="form" onSubmit={onSubmit}>
           <AuthField
             label="Nome do salão"
@@ -61,27 +61,23 @@ export default function Onboarding() {
             onChange={(e) => onName(e.target.value)}
           />
           <AuthField
-            label="Endereço da sua página"
+            label={`Endereço da sua página (.${SITE_DOMAIN})`}
             required
             minLength={3}
             maxLength={40}
-            pattern="[a-z0-9]+(-[a-z0-9]+)*"
+            pattern={SLUG_PATTERN}
             title="Use letras minúsculas, números e hífen"
-            hint={`ikizy.app/${slug || 'seu-salao'}`}
+            hint={siteHost(slug)}
             value={slug}
             onChange={(e) => {
               setSlugTouched(true)
               setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))
             }}
           />
-          {error && (
-            <p className="alert" role="alert">
-              {error}
-            </p>
-          )}
+          <FormMessages error={error} />
           <Button type="submit" disabled={busy}>
             <Rocket size={16} aria-hidden="true" />
-            {busy ? 'Criando…' : 'Criar meu salão'}
+            {busy ? 'Criando…' : 'Criar meu negócio'}
           </Button>
         </form>
 
@@ -90,7 +86,7 @@ export default function Onboarding() {
             Sair desta conta
           </button>
         </p>
-      </Card>
+      </AuthCard>
     </AuthLayout>
   )
 }

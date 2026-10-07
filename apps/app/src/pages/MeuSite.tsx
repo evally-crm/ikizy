@@ -13,6 +13,7 @@ import {
   type SiteConfig,
 } from '../data/catalog'
 import { formatBRL } from '../lib/format'
+import { isReservedSlug, SITE_DOMAIN, siteHost } from '../lib/slug'
 import { useMediaQuery } from '../hooks/useMediaQuery'
 import SitePreview from '../components/SitePreview'
 import { Button, Card, Em } from '../components/ui'
@@ -82,6 +83,7 @@ export default function MeuSite() {
 
   const active: Tab = isWide && tab === 'previa' ? 'pagina' : tab
   const { site, services, products } = draft
+  const slugReserved = isReservedSlug(site.slug)
 
   const setSite = <K extends keyof SiteConfig>(key: K, value: SiteConfig[K]) =>
     setDraft((d) => ({ ...d, site: { ...d.site, [key]: value } }))
@@ -126,8 +128,7 @@ export default function MeuSite() {
         </h1>
         <div className="bar__side">
           <a className="mini mini--link" href={`#${site.slug}`} onClick={(e) => e.preventDefault()}>
-            <span className="mini__key">ikizy.app/</span>
-            <span className="mini__val">{site.slug || 'seu-salao'}</span>
+            <span className="mini__val">{siteHost(site.slug)}</span>
             <ExternalLink size={13} aria-hidden="true" />
           </a>
           {dirty && (
@@ -135,7 +136,7 @@ export default function MeuSite() {
               <Undo2 size={15} aria-hidden="true" /> Descartar
             </Button>
           )}
-          <Button size="sm" disabled={!dirty && !justPublished} onClick={onPublish}>
+          <Button size="sm" disabled={(!dirty && !justPublished) || slugReserved} onClick={onPublish}>
             <Rocket size={15} aria-hidden="true" />
             {justPublished ? 'Publicado!' : dirty ? 'Publicar alterações' : 'Tudo publicado'}
           </Button>
@@ -164,16 +165,20 @@ export default function MeuSite() {
           <div className="studio__body" id="studio-panel" role="tabpanel" aria-labelledby={`tab-${active}`}>
             {active === 'pagina' && (
               <div className="form">
-                <Field label="Endereço da página" hint="É o link que você coloca no Instagram e no WhatsApp.">
+                <Field
+                  label="Endereço da página"
+                  hint={slugReserved ? 'Esse endereço é reservado. Escolha outro.' : 'É o link que você coloca no Instagram e no WhatsApp.'}
+                >
                   {(id) => (
-                    <span className="input input--prefix">
-                      <span aria-hidden="true">ikizy.app/</span>
+                    <span className="input input--suffix">
                       <input
                         id={id}
                         value={site.slug}
                         maxLength={40}
+                        aria-invalid={slugReserved}
                         onChange={(e) => setSite('slug', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
                       />
+                      <span aria-hidden="true">.{SITE_DOMAIN}</span>
                     </span>
                   )}
                 </Field>

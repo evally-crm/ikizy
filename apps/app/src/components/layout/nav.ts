@@ -1,6 +1,8 @@
 import {
+  BarChart3,
   CalendarDays,
   Gift,
+  Globe,
   LayoutDashboard,
   Megaphone,
   Package,
@@ -9,30 +11,31 @@ import {
   UserRound,
   Users,
   Wallet,
-  Globe,
-  BarChart3,
   type LucideIcon,
 } from 'lucide-react'
+import { dash, ROUTES } from '../../lib/routes'
 
 export interface NavItem {
   to: string
   label: string
   icon: LucideIcon
-  /** aparece direto na barra inferior (mobile) */
+  /** aparece direto no menu do topo (desktop); os demais ficam em "Mais" */
+  core?: boolean
+  /** aparece direto na barra inferior (celular) */
   primary?: boolean
 }
 
 export const navItems: NavItem[] = [
-  { to: '/', label: 'Início', icon: LayoutDashboard, primary: true },
-  { to: '/agenda', label: 'Agenda', icon: CalendarDays, primary: true },
-  { to: '/clientes', label: 'Clientes', icon: Users, primary: true },
-  { to: '/servicos', label: 'Serviços', icon: Scissors },
-  { to: '/financeiro', label: 'Financeiro', icon: Wallet, primary: true },
-  { to: '/marketing', label: 'Marketing', icon: Megaphone },
-  { to: '/fidelidade', label: 'Fidelidade', icon: Gift },
-  { to: '/estoque', label: 'Estoque', icon: Package },
-  { to: '/equipe', label: 'Equipe', icon: UserRound },
-  { to: '/site', label: 'Meu site', icon: Globe },
-  { to: '/relatorios', label: 'Relatórios', icon: BarChart3 },
-  { to: '/configuracoes', label: 'Configurações', icon: Settings },
+  { to: ROUTES.dashboard, label: 'Início', icon: LayoutDashboard, core: true, primary: true },
+  { to: dash('/agenda'), label: 'Agenda', icon: CalendarDays, core: true, primary: true },
+  { to: dash('/clientes'), label: 'Clientes', icon: Users, core: true, primary: true },
+  { to: dash('/servicos'), label: 'Serviços', icon: Scissors, core: true },
+  { to: dash('/financeiro'), label: 'Financeiro', icon: Wallet, core: true, primary: true },
+  { to: dash('/equipe'), label: 'Equipe', icon: UserRound, core: true },
+  { to: dash('/relatorios'), label: 'Relatórios', icon: BarChart3, core: true },
+  { to: dash('/marketing'), label: 'Marketing', icon: Megaphone },
+  { to: dash('/fidelidade'), label: 'Fidelidade', icon: Gift },
+  { to: dash('/estoque'), label: 'Estoque', icon: Package },
+  { to: dash('/site'), label: 'Meu site', icon: Globe },
+  { to: dash('/configuracoes'), label: 'Configurações', icon: Settings },
 ]

@@ -1,4 +1,5 @@
 import { Navigate, Outlet } from 'react-router-dom'
+import { ROUTES } from '../lib/routes'
 import { useAuth } from './AuthProvider'
 
 /** protege as telas do sistema: exige login e um salão (no modo demo, libera tudo) */
@@ -15,7 +16,7 @@ export default function RequireSalon() {
       </div>
     )
   }
-  if (status === 'signed-out') return <Navigate to="/entrar" replace />
-  if (status === 'no-salon') return <Navigate to="/comecar" replace />
+  if (status === 'signed-out') return <Navigate to={ROUTES.login} replace />
+  if (status === 'no-salon') return <Navigate to={ROUTES.createSalon} replace />
   return <Outlet />
 }

@@ -2,6 +2,7 @@ import { CalendarCheck, AtSign, Clock, MessageCircle } from 'lucide-react'
 import { ACCENTS, CATEGORIES, type Studio } from '../data/catalog'
 import { professionals } from '../data/mock'
 import { formatBRL } from '../lib/format'
+import { siteHost } from '../lib/slug'
 
 /** prévia ao vivo da página pública do salão */
 export default function SitePreview({ studio }: { studio: Studio }) {
@@ -95,7 +96,7 @@ export default function SitePreview({ studio }: { studio: Studio }) {
             <AtSign size={13} aria-hidden="true" /> {site.instagram}
           </p>
         )}
-        <small>ikizy.app/{site.slug || 'seu-salao'}</small>
+        <small>{siteHost(site.slug)}</small>
       </footer>
     </div>
   )

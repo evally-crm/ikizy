@@ -7,6 +7,7 @@ import { appointments, professionals, weekRevenue } from '../data/mock'
 import { MONTHLY_GOAL, getMonths } from '../data/finance'
 import { clientTags, daysSince, getClients, TAG_LABEL } from '../data/clients'
 import { formatBRL, formatTime } from '../lib/format'
+import { dash } from '../lib/routes'
 import { Avatar, Card, Em, Money, StatusBadge } from '../components/ui'
 
 const proName = (id: string) => professionals.find((p) => p.id === id)?.name ?? ''
@@ -137,7 +138,7 @@ export default function Dashboard() {
         <Card className="dash__next upnext">
           <div className="card__head">
             <h2 className="card__title">Próximos atendimentos</h2>
-            <Link to="/agenda" className="textlink">
+            <Link to={dash('/agenda')} className="textlink">
               Ver agenda
             </Link>
           </div>
@@ -172,7 +173,7 @@ export default function Dashboard() {
                         {a.service} · {proName(a.professionalId)}
                       </p>
                     </div>
-                    <Link to="/agenda" className="chevbtn" aria-label={`Ver ${a.client} na agenda`}>
+                    <Link to={dash('/agenda')} className="chevbtn" aria-label={`Ver ${a.client} na agenda`}>
                       <ChevronRight size={16} />
                     </Link>
                   </li>
@@ -188,7 +189,7 @@ export default function Dashboard() {
         <Card className="dash__people">
           <div className="card__head">
             <h2 className="card__title">Vale um contato</h2>
-            <Link to="/clientes" className="textlink">
+            <Link to={dash('/clientes')} className="textlink">
               Ver clientes
             </Link>
           </div>
@@ -233,7 +234,7 @@ export default function Dashboard() {
               {short(month.gross)} acumulados · {goalPct}% da meta de {short(MONTHLY_GOAL)}
             </p>
           </div>
-          <Link to="/financeiro" className="closecard__cta">
+          <Link to={dash('/financeiro')} className="closecard__cta">
             {daysLeft <= 3 ? 'Fechar o mês' : 'Ver prévia do fechamento'}
             <span className="closecard__arrow">
               <ArrowRight size={16} aria-hidden="true" />
@@ -245,7 +246,7 @@ export default function Dashboard() {
         <Card className="dash__month">
           <div className="card__head">
             <h2 className="card__title">{monthName} em números</h2>
-            <Link to="/financeiro" className="chevbtn" aria-label="Abrir financeiro">
+            <Link to={dash('/financeiro')} className="chevbtn" aria-label="Abrir financeiro">
               <ArrowUpRight size={16} />
             </Link>
           </div>

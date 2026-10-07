@@ -28,6 +28,7 @@ import {
 } from '../data/clients'
 import { professionals } from '../data/mock'
 import { formatBRL } from '../lib/format'
+import { dash } from '../lib/routes'
 import { useMediaQuery } from '../hooks/useMediaQuery'
 import { Avatar, Button, Card, Em, Money } from '../components/ui'
 
@@ -129,7 +130,7 @@ function ClientList({
             return (
               <li key={c.id}>
                 <Link
-                  to={`/clientes/${c.id}`}
+                  to={dash(`/clientes/${c.id}`)}
                   className={`clist__item ${c.id === selectedId ? 'is-active' : ''}`}
                   aria-current={c.id === selectedId ? 'page' : undefined}
                 >
@@ -165,7 +166,7 @@ function ClientDetail({ client, today, showBack }: { client: Client; today: Date
   return (
     <div className="crm__detail">
       {showBack && (
-        <Link to="/clientes" className="backlink">
+        <Link to={dash('/clientes')} className="backlink">
           <ArrowLeft size={18} aria-hidden="true" /> Clientes
         </Link>
       )}
@@ -420,7 +421,7 @@ export default function Clientes() {
             <dd>{missing}</dd>
           </div>
         </dl>
-        <Button size="sm" onClick={() => navigate('/clientes')}>
+        <Button size="sm" onClick={() => navigate(dash('/clientes'))}>
           <Plus size={16} aria-hidden="true" /> Nova cliente
         </Button>
         </div>
