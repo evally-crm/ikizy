@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { Download, Lock, Send, X } from 'lucide-react'
-import { getMonths, type MonthClosing } from '../data/finance'
-import { professionals } from '../data/mock'
+import { Download, Lock, Plus, Send, Trash2, X } from 'lucide-react'
+import { useAuth } from '../auth/AuthProvider'
+import { type MonthClosing } from '../data/finance'
+import { CARD_FEE_PCT, useFinance, type Expense } from '../data/useFinance'
 import { formatBRL } from '../lib/format'
 import { Avatar, Button, Card, Em, Money } from '../components/ui'
 
@@ -31,7 +32,7 @@ function DailyLine({ daily }: { daily: (number | null)[] }) {
   )
 }
 
-function Receipt({ month, closedAt }: { month: MonthClosing; closedAt: Date | null }) {
+function Receipt({ month, closedAt, salonName }: { month: MonthClosing; closedAt: Date | null; salonName: string }) {
   const days = month.daily.map((v, i) => ({ v, i })).filter((d) => d.v !== null) as { v: number; i: number }[]
   const bestDay = days.reduce((a, b) => (b.v > a.v ? b : a), days[0] ?? { v: 0, i: 0 })
   const bestDate = new Date(month.date.getFullYear(), month.date.getMonth(), bestDay.i + 1)
@@ -57,7 +58,7 @@ function Receipt({ month, closedAt }: { month: MonthClosing; closedAt: Date | nu
           <p>
             {format(month.date, 'MMMM yyyy', { locale: ptBR }).toUpperCase()}
           </p>
-          <p>Studio Maria Beauty</p>
+          <p>{salonName}</p>
           {!closedAt && <p className="receipt__preview">Prévia · mês em aberto</p>}
         </header>
 
@@ -97,6 +98,12 @@ function Receipt({ month, closedAt }: { month: MonthClosing; closedAt: Date | nu
             <dt>(-) Produtos</dt>
             <dd>{formatBRL(month.products)}</dd>
           </div>
+          {month.expenses > 0 && (
+            <div>
+              <dt>(-) Despesas</dt>
+              <dd>{formatBRL(month.expenses)}</dd>
+            </div>
+          )}
           <div>
             <dt>(-) Taxas de cartão</dt>
             <dd>{formatBRL(month.cardFees)}</dd>
@@ -206,8 +213,7 @@ function CloseDialog({ month, onCancel, onConfirm }: { month: MonthClosing; onCa
           </div>
         </dl>
         <p className="dialog__text">
-          Ao fechar, os lançamentos de {month.label} ficam travados, as comissões vão para pagamento e o recibo é enviado no
-          seu WhatsApp.
+          Ao fechar, os atendimentos e as saídas de {month.label} ficam travados e o recibo guarda estes números. Não dá para desfazer.
           {month.isCurrent && month.elapsedDays < month.daysInMonth && ' Atenção: o mês ainda não terminou.'}
         </p>
         <div className="dialog__actions">
@@ -223,24 +229,156 @@ function CloseDialog({ month, onCancel, onConfirm }: { month: MonthClosing; onCa
   )
 }
 
+function ExpenseDialog({
+  month,
+  onSave,
+  onClose,
+}: {
+  month: MonthClosing
+  onSave: (input: { date: string; description: string; amount: number }) => Promise<string | null>
+  onClose: () => void
+}) {
+  const monthStart = format(month.date, 'yyyy-MM-01')
+  const defaultDate = month.isCurrent
+    ? format(new Date(), 'yyyy-MM-dd')
+    : format(new Date(month.date.getFullYear(), month.date.getMonth() + 1, 0), 'yyyy-MM-dd')
+  const [date, setDate] = useState(defaultDate)
+  const [description, setDescription] = useState('')
+  const [amount, setAmount] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault()
+    const value = Number(amount.replace(/\./g, '').replace(',', '.'))
+    if (!description.trim()) return setError('Descreva a saída.')
+    if (!Number.isFinite(value) || value <= 0) return setError('Informe um valor maior que zero.')
+    if (!date.startsWith(monthStart.slice(0, 7))) return setError(`A data precisa estar em ${month.label}.`)
+    setBusy(true)
+    const message = await onSave({ date, description: description.trim(), amount: value })
+    setBusy(false)
+    if (message) setError(message)
+    else onClose()
+  }
+
+  return (
+    <div className="overlay" onClick={onClose}>
+      <form className="dialog" role="dialog" aria-modal="true" aria-label="Nova saída" onClick={(e) => e.stopPropagation()} onSubmit={submit}>
+        <div className="dialog__head">
+          <h2>
+            Nova <Em>saída</Em>
+          </h2>
+          <Button variant="ghost" size="sm" icon aria-label="Fechar" onClick={onClose}>
+            <X size={18} />
+          </Button>
+        </div>
+        <div className="form">
+          <label className="field">
+            <span className="field__label">Descrição</span>
+            <span className="input">
+              <input value={description} onChange={(e) => setDescription(e.target.value)} maxLength={80} placeholder="Aluguel, esmaltes, luz…" autoFocus />
+            </span>
+          </label>
+          <label className="field">
+            <span className="field__label">Valor</span>
+            <span className="input">
+              <span className="wiz__cur">R$</span>
+              <input value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^\d,.]/g, ''))} inputMode="decimal" placeholder="0,00" />
+            </span>
+          </label>
+          <label className="field">
+            <span className="field__label">Data</span>
+            <span className="input">
+              <input type="date" value={date} min={monthStart} onChange={(e) => setDate(e.target.value)} />
+            </span>
+          </label>
+        </div>
+        {error && (
+          <p className="dialog__error" role="alert">
+            {error}
+          </p>
+        )}
+        <div className="dialog__actions">
+          <Button variant="light" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button type="submit" disabled={busy}>
+            {busy ? 'Salvando…' : 'Lançar saída'}
+          </Button>
+        </div>
+      </form>
+    </div>
+  )
+}
+
 export default function Financeiro() {
-  const months = useMemo(() => getMonths(), [])
-  const [selectedId, setSelectedId] = useState(months[months.length - 1].id)
+  const { salon } = useAuth()
+  const fin = useFinance()
+  const { months, professionals } = fin
+  const [selectedId, setSelectedId] = useState<string | null>(null)
   const [closedNow, setClosedNow] = useState<Record<string, Date>>({})
   const [confirming, setConfirming] = useState(false)
+  const [addingExpense, setAddingExpense] = useState(false)
+  const [actionError, setActionError] = useState<string | null>(null)
 
-  const month = months.find((m) => m.id === selectedId)!
+  if (fin.loading) {
+    return (
+      <div className="page">
+        <p className="crm__empty" role="status">
+          Carregando financeiro…
+        </p>
+      </div>
+    )
+  }
+  if (months.length === 0) {
+    return (
+      <div className="page">
+        <p className="dialog__error" role="alert">
+          {fin.error ?? 'Sem dados para mostrar.'}{' '}
+          <button type="button" className="textlink" onClick={fin.reload}>
+            Tentar de novo
+          </button>
+        </p>
+      </div>
+    )
+  }
+
+  const month = months.find((m) => m.id === selectedId) ?? months[months.length - 1]
   const prev = months[months.indexOf(month) - 1]
   const closedAt = month.closedAt ?? closedNow[month.id] ?? null
   const growth = prev && prev.gross ? Math.round(((month.gross - prev.gross) / prev.gross) * 100) : null
+  const monthExpenses = fin.expenses.filter((e) => e.date.startsWith(month.id))
+  const salonName = salon?.name ?? 'Studio Maria Beauty'
 
   const composition = [
-    { label: 'Lucro', value: month.net, cls: 'is-net' },
+    { label: 'Lucro', value: Math.max(month.net, 0), cls: 'is-net' },
     { label: 'Comissões', value: month.commissionsTotal, cls: 'is-comm' },
     { label: 'Produtos', value: month.products, cls: 'is-prod' },
+    { label: 'Despesas', value: month.expenses, cls: 'is-exp' },
     { label: 'Taxas', value: month.cardFees, cls: 'is-fee' },
-  ]
+  ].filter((c) => c.value > 0 || c.cls === 'is-net')
   const maxPayment = Math.max(...month.payments.map((p) => p.total), 1)
+  const summary = `Fechamento de ${month.label} - ${salonName}\nFaturamento: ${formatBRL(month.gross)}\nLucro líquido: ${formatBRL(month.net)}\nAtendimentos: ${month.appointments}`
+
+  const onClose = async () => {
+    setActionError(null)
+    const message = await fin.closeMonth(month)
+    if (message) setActionError(message)
+    else if (!fin.live) setClosedNow((c) => ({ ...c, [month.id]: new Date() }))
+    setConfirming(false)
+  }
+
+  const onRemove = async (e: Expense) => {
+    setActionError(null)
+    const message = await fin.removeExpense(e.id)
+    if (message) setActionError(message)
+  }
 
   return (
     <div className="page">
@@ -258,7 +396,7 @@ export default function Financeiro() {
               type="button"
               role="tab"
               className="chip"
-              aria-selected={m.id === selectedId}
+              aria-selected={m.id === month.id}
               onClick={() => setSelectedId(m.id)}
             >
               {cap(m.label)}
@@ -267,6 +405,12 @@ export default function Financeiro() {
           ))}
         </div>
       </header>
+
+      {(fin.error || actionError) && (
+        <p className="dialog__error" role="alert">
+          {actionError ?? fin.error}
+        </p>
+      )}
 
       <section className="kpis" aria-label={`Resumo de ${month.label}`}>
         <div className="kpi">
@@ -297,14 +441,14 @@ export default function Financeiro() {
 
       <div className="fin">
         <div className="fin__receipt">
-          <Receipt month={month} closedAt={closedAt} />
+          <Receipt month={month} closedAt={closedAt} salonName={salonName} />
           <div className="receipt__actions">
             <Button variant="soft" onClick={() => window.print()}>
               <Download size={16} aria-hidden="true" /> Baixar PDF
             </Button>
-            <Button variant="soft">
+            <a className="btn btn--soft" href={`https://wa.me/?text=${encodeURIComponent(summary)}`} target="_blank" rel="noreferrer">
               <Send size={16} aria-hidden="true" /> Enviar no WhatsApp
-            </Button>
+            </a>
           </div>
         </div>
 
@@ -314,23 +458,19 @@ export default function Financeiro() {
               <Lock size={20} aria-hidden="true" />
               <div>
                 <h2 className="card__title">{cap(month.label)} está fechado</h2>
-                <p className="card__sub">
-                  Fechado em {format(closedAt, "dd/MM 'às' HH:mm")}. Comissões enviadas para pagamento.
-                </p>
+                <p className="card__sub">Fechado em {format(closedAt, "dd/MM 'às' HH:mm")}. Os números não mudam mais.</p>
               </div>
             </Card>
           ) : (
             <Card variant="brand" className="closecta">
               <div>
                 <p className="eyebrow" style={{ color: 'rgba(255,255,255,0.75)' }}>
-                  {month.daysInMonth - month.elapsedDays} dias para o fim do mês
+                  {month.isCurrent ? `${month.daysInMonth - month.elapsedDays} dias para o fim do mês` : 'Mês já terminou'}
                 </p>
                 <h2 className="closecta__title">
                   Pronta para fechar <Em>{month.label}</Em>?
                 </h2>
-                <p className="closecta__text">
-                  Confira o recibo, trave os lançamentos e envie as comissões da equipe de uma vez.
-                </p>
+                <p className="closecta__text">Confira o recibo e trave os lançamentos do mês.</p>
               </div>
               <Button variant="light" onClick={() => setConfirming(true)}>
                 <Lock size={16} aria-hidden="true" /> Fechar {month.label}
@@ -362,6 +502,46 @@ export default function Financeiro() {
                 </li>
               ))}
             </ul>
+            <p className="card__sub" style={{ marginTop: 10 }}>
+              Taxas de cartão estimadas em {CARD_FEE_PCT.toString().replace('.', ',')}% do crédito e do débito. Produtos vêm do gasto mensal cadastrado em
+              Meu site.
+            </p>
+          </Card>
+
+          <Card>
+            <div className="card__head">
+              <div>
+                <p className="eyebrow">Caixa</p>
+                <h2 className="card__title">Saídas do mês</h2>
+              </div>
+              {!closedAt && fin.expensesAvailable && (
+                <Button variant="soft" size="sm" onClick={() => setAddingExpense(true)}>
+                  <Plus size={16} aria-hidden="true" /> Lançar
+                </Button>
+              )}
+            </div>
+            {!fin.expensesAvailable ? (
+              <p className="card__sub">As saídas ficam disponíveis assim que a atualização do banco for aplicada.</p>
+            ) : monthExpenses.length === 0 ? (
+              <p className="card__sub">Nenhuma saída lançada em {month.label}.</p>
+            ) : (
+              <ul className="list">
+                {monthExpenses.map((e) => (
+                  <li key={e.id} className="list__item">
+                    <span className="list__text">
+                      {e.description}
+                      <small className="list__small">{format(new Date(`${e.date}T12:00:00`), 'dd/MM')}</small>
+                    </span>
+                    <strong className="list__value">{formatBRL(e.amount)}</strong>
+                    {!closedAt && (
+                      <button type="button" className="chevbtn" aria-label={`Apagar ${e.description}`} onClick={() => void onRemove(e)}>
+                        <Trash2 size={16} aria-hidden="true" />
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
           </Card>
 
           <div className="fin__pair">
@@ -372,21 +552,25 @@ export default function Financeiro() {
                   <h2 className="card__title">Comissões</h2>
                 </div>
               </div>
-              <ul className="list">
-                {month.commissions.map((c) => {
-                  const pro = professionals.find((p) => p.id === c.professionalId)!
-                  return (
-                    <li key={c.professionalId} className="list__item">
-                      <Avatar name={pro.name} size="sm" />
-                      <span className="list__text">
-                        {pro.name}
-                        <small className="list__small">{c.qty} atendimentos</small>
-                      </span>
-                      <strong className="list__value">{formatBRL(c.total)}</strong>
-                    </li>
-                  )
-                })}
-              </ul>
+              {month.commissions.length === 0 ? (
+                <p className="card__sub">Sem comissões neste mês. Defina o percentual de cada profissional para calcular.</p>
+              ) : (
+                <ul className="list">
+                  {month.commissions.map((c) => {
+                    const name = professionals.find((p) => p.id === c.professionalId)?.name ?? 'Profissional'
+                    return (
+                      <li key={c.professionalId} className="list__item">
+                        <Avatar name={name} size="sm" />
+                        <span className="list__text">
+                          {name}
+                          <small className="list__small">{c.qty} atendimentos</small>
+                        </span>
+                        <strong className="list__value">{formatBRL(c.total)}</strong>
+                      </li>
+                    )
+                  })}
+                </ul>
+              )}
             </Card>
 
             <Card>
@@ -396,35 +580,31 @@ export default function Financeiro() {
                   <h2 className="card__title">Formas de pagamento</h2>
                 </div>
               </div>
-              <div className="paybars">
-                {month.payments.map((p) => (
-                  <div key={p.method} className="paybars__col">
-                    <span className="paybars__value">{formatBRL(p.total).replace(',00', '')}</span>
-                    <div className="paybars__track">
-                      <div
-                        className={`paybars__bar ${p.total === maxPayment ? 'is-top' : ''}`}
-                        style={{ height: `${Math.max((p.total / maxPayment) * 100, 4)}%` }}
-                      />
+              {month.payments.length === 0 ? (
+                <p className="card__sub">Os recebimentos aparecem quando você conclui atendimentos na agenda.</p>
+              ) : (
+                <div className="paybars">
+                  {month.payments.map((p) => (
+                    <div key={p.method} className="paybars__col">
+                      <span className="paybars__value">{formatBRL(p.total).replace(',00', '')}</span>
+                      <div className="paybars__track">
+                        <div
+                          className={`paybars__bar ${p.total === maxPayment ? 'is-top' : ''}`}
+                          style={{ height: `${Math.max((p.total / maxPayment) * 100, 4)}%` }}
+                        />
+                      </div>
+                      <span className="paybars__label">{p.method}</span>
                     </div>
-                    <span className="paybars__label">{p.method}</span>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </Card>
           </div>
         </div>
       </div>
 
-      {confirming && (
-        <CloseDialog
-          month={month}
-          onCancel={() => setConfirming(false)}
-          onConfirm={() => {
-            setClosedNow((c) => ({ ...c, [month.id]: new Date() }))
-            setConfirming(false)
-          }}
-        />
-      )}
+      {addingExpense && <ExpenseDialog month={month} onSave={fin.addExpense} onClose={() => setAddingExpense(false)} />}
+      {confirming && <CloseDialog month={month} onCancel={() => setConfirming(false)} onConfirm={() => void onClose()} />}
     </div>
   )
 }

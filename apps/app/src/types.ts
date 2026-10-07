@@ -1,3 +1,12 @@
+export type PaymentMethod = 'pix' | 'credito' | 'debito' | 'dinheiro'
+
+export const PAYMENT_LABEL: Record<PaymentMethod, string> = {
+  pix: 'Pix',
+  credito: 'Crédito',
+  debito: 'Débito',
+  dinheiro: 'Dinheiro',
+}
+
 export type AppointmentStatus = 'confirmado' | 'pendente' | 'atendimento' | 'concluido' | 'cancelado' | 'faltou'
 
 /** status que ocupam o horário da profissional (cancelado e faltou liberam a vaga na conta) */

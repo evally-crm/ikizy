@@ -16,6 +16,7 @@ import { formatBRL } from '../lib/format'
 import { isReservedSlug, SITE_DOMAIN, siteHost } from '../lib/slug'
 import { useMediaQuery } from '../hooks/useMediaQuery'
 import SitePreview from '../components/SitePreview'
+import OnlineBookingChecklist from '../components/OnlineBookingChecklist'
 import { Button, Card, Em } from '../components/ui'
 
 type Tab = 'pagina' | 'servicos' | 'produtos' | 'previa'
@@ -76,10 +77,12 @@ function Switch({ checked, onChange, label, hint }: { checked: boolean; onChange
 }
 
 export default function MeuSite() {
-  const { draft, setDraft, dirty, publish, discard } = useStudio()
+  const { draft, setDraft, dirty, publish, discard, loading, error: loadError, isLive, publishedSlug } = useStudio()
   const isWide = useMediaQuery('(min-width: 1100px)')
   const [tab, setTab] = useState<Tab>('pagina')
   const [justPublished, setJustPublished] = useState(false)
+  const [publishing, setPublishing] = useState(false)
+  const [publishError, setPublishError] = useState<string | null>(null)
 
   const active: Tab = isWide && tab === 'previa' ? 'pagina' : tab
   const { site, services, products } = draft
@@ -109,8 +112,15 @@ export default function MeuSite() {
       services: d.services.map((s) => (s.productId === id ? { ...s, productId: null } : s)),
     }))
 
-  const onPublish = () => {
-    publish()
+  const onPublish = async () => {
+    setPublishing(true)
+    setPublishError(null)
+    const problem = await publish()
+    setPublishing(false)
+    if (problem) {
+      setPublishError(problem)
+      return
+    }
     setJustPublished(true)
     window.setTimeout(() => setJustPublished(false), 2500)
   }
@@ -127,21 +137,33 @@ export default function MeuSite() {
           Meu <Em>site</Em>
         </h1>
         <div className="bar__side">
-          <a className="mini mini--link" href={`#${site.slug}`} onClick={(e) => e.preventDefault()}>
-            <span className="mini__val">{siteHost(site.slug)}</span>
-            <ExternalLink size={13} aria-hidden="true" />
-          </a>
+          {isLive ? (
+            <a className="mini mini--link" href={`https://${siteHost(publishedSlug)}`} target="_blank" rel="noreferrer">
+              <span className="mini__val">{siteHost(publishedSlug)}</span>
+              <ExternalLink size={13} aria-hidden="true" />
+            </a>
+          ) : (
+            <span className="mini">
+              <span className="mini__val">{siteHost(site.slug)} · ainda não publicado</span>
+            </span>
+          )}
           {dirty && (
             <Button variant="ghost" size="sm" onClick={discard}>
               <Undo2 size={15} aria-hidden="true" /> Descartar
             </Button>
           )}
-          <Button size="sm" disabled={(!dirty && !justPublished) || slugReserved} onClick={onPublish}>
+          <Button size="sm" disabled={(!dirty && !justPublished && isLive) || slugReserved || publishing || loading} onClick={() => void onPublish()}>
             <Rocket size={15} aria-hidden="true" />
-            {justPublished ? 'Publicado!' : dirty ? 'Publicar alterações' : 'Tudo publicado'}
+            {publishing ? 'Publicando…' : justPublished ? 'Publicado!' : !isLive ? 'Publicar site' : dirty ? 'Publicar alterações' : 'Tudo publicado'}
           </Button>
         </div>
       </header>
+
+      {(loadError || publishError) && (
+        <p className="field__hint" role="alert">
+          {loadError ?? publishError}
+        </p>
+      )}
 
       <div className="studio">
         <Card className="studio__editor">
@@ -165,6 +187,7 @@ export default function MeuSite() {
           <div className="studio__body" id="studio-panel" role="tabpanel" aria-labelledby={`tab-${active}`}>
             {active === 'pagina' && (
               <div className="form">
+                <OnlineBookingChecklist whatsapp={site.whatsapp} />
                 <Field
                   label="Endereço da página"
                   hint={slugReserved ? 'Esse endereço é reservado. Escolha outro.' : 'É o link que você coloca no Instagram e no WhatsApp.'}

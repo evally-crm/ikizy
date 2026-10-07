@@ -31,6 +31,8 @@ export interface MonthClosing {
   gross: number
   cardFees: number
   products: number
+  /** saídas lançadas no mês (aluguel, contas...) */
+  expenses: number
   commissions: CommissionLine[]
   commissionsTotal: number
   net: number
@@ -122,6 +124,7 @@ function buildMonth(date: Date, opts: { factor: number; seed: number; current: b
     gross,
     cardFees,
     products,
+    expenses: 0,
     commissions,
     commissionsTotal,
     net: gross - cardFees - products - commissionsTotal,

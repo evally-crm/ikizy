@@ -2,9 +2,10 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { addMonths, format, startOfMonth } from 'date-fns'
 import { useAuth } from '../auth/AuthProvider'
 import { isNeonConfigured, neon } from '../lib/neon'
-import { ACTIVE_STATUSES, type Appointment, type AppointmentStatus, type Professional } from '../types'
+import { ACTIVE_STATUSES, type Appointment, type AppointmentStatus, type PaymentMethod, type Professional } from '../types'
 import { appointments as mockAppointments, professionals as mockProfessionals } from './mock'
 import { getClients } from './clients'
+import type { HourInterval } from '../lib/agendaTime'
 
 export interface ClientOption {
   id: string
@@ -33,7 +34,10 @@ export interface NewAppointment {
   price: number
 }
 
-export type AppointmentPatch = Partial<Pick<Appointment, 'status' | 'date' | 'start' | 'professionalId' | 'duration' | 'price'>>
+export type AppointmentPatch = Partial<Pick<Appointment, 'status' | 'date' | 'start' | 'professionalId' | 'duration' | 'price'>> & {
+  /** como a cliente pagou, informado ao concluir (alimenta o financeiro) */
+  paymentMethod?: PaymentMethod
+}
 
 interface AgendaState {
   loading: boolean
@@ -42,6 +46,11 @@ interface AgendaState {
   clients: ClientOption[]
   services: ServiceOption[]
   appointments: Appointment[]
+  /** horário de atendimento por profissional; sem entrada = ainda não configurado */
+  workingHours: Record<string, HourInterval[]>
+  /** false quando o banco ainda não tem a tabela de horários (migration pendente) */
+  hoursAvailable: boolean
+  saveHours: (professionalId: string, intervals: HourInterval[]) => Promise<string | null>
   /** garante que o período em volta da data esteja carregado */
   focus: (date: Date) => void
   reload: () => void
@@ -156,6 +165,8 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
   const [clients, setClients] = useState<ClientOption[]>([])
   const [services, setServices] = useState<ServiceOption[]>([])
   const [appointments, setAppointments] = useState<Appointment[]>([])
+  const [workingHours, setWorkingHours] = useState<Record<string, HourInterval[]>>({})
+  const [hoursAvailable, setHoursAvailable] = useState(true)
   const [loading, setLoading] = useState(live)
   const [error, setError] = useState<string | null>(null)
   const [tick, setTick] = useState(0)
@@ -172,6 +183,12 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
     setClients(d.clients)
     setServices(d.services)
     setAppointments(d.appts)
+    // demonstração: segunda a sábado, das 9h às 19h
+    setWorkingHours(
+      Object.fromEntries(
+        mockProfessionals.map((p) => [p.id, [1, 2, 3, 4, 5, 6].map((weekday) => ({ weekday, start: 9 * 60, end: 19 * 60 }))]),
+      ),
+    )
     setLoading(false)
   }, [live])
 
@@ -180,16 +197,29 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
     if (!live || !neon || !salonId) return
     let cancelled = false
     void (async () => {
-      const [pros, cls, svcs] = await Promise.all([
+      const [pros, cls, svcs, hrs] = await Promise.all([
         neon.from('professionals').select('id, name, title').eq('salon_id', salonId).eq('active', true).order('name'),
         neon.from('clients').select('id, name, phone').eq('salon_id', salonId).order('name'),
         neon.from('services').select('id, name, price, duration').eq('salon_id', salonId).order('name'),
+        neon.from('working_hours').select('professional_id, weekday, start_minute, end_minute').eq('salon_id', salonId),
       ])
       if (cancelled) return
       if (pros.error || cls.error || svcs.error) {
         setError('Não foi possível carregar a agenda. Verifique a conexão e tente de novo.')
         setLoading(false)
         return
+      }
+      // a tabela de horários pode não existir ainda (migration pendente): a agenda segue com a grade padrão
+      if (hrs.error) {
+        setHoursAvailable(false)
+        setWorkingHours({})
+      } else {
+        const byPro: Record<string, HourInterval[]> = {}
+        for (const r of hrs.data ?? []) {
+          ;(byPro[r.professional_id as string] ??= []).push({ weekday: r.weekday, start: r.start_minute, end: r.end_minute })
+        }
+        setHoursAvailable(true)
+        setWorkingHours(byPro)
       }
       setProfessionals((pros.data ?? []).map((p) => ({ id: p.id, name: p.name, role: p.title })))
       setClients((cls.data ?? []).map((c) => ({ id: c.id, name: c.name, phone: c.phone })))
@@ -296,7 +326,8 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
   )
 
   const update = useCallback(
-    async (id: string, patch: AppointmentPatch) => {
+    async (id: string, fullPatch: AppointmentPatch) => {
+      const { paymentMethod, ...patch } = fullPatch
       if (live && neon) {
         const cols: Record<string, unknown> = {}
         const current = appointments.find((a) => a.id === id)
@@ -310,11 +341,31 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
         const { data, error: err } = await neon.from('appointments').update(cols).eq('id', id).select('id')
         if (err) return friendly(err)
         if (!data?.length) return 'Você não tem permissão para alterar este atendimento.'
+        // coluna criada pela migration do financeiro; se ainda não existir, o atendimento segue salvo sem a forma de pagamento
+        if (paymentMethod) await neon.from('appointments').update({ payment_method: paymentMethod }).eq('id', id)
       }
       setAppointments((list) => list.map((a) => (a.id === id ? { ...a, ...patch } : a)))
       return null
     },
     [live, appointments],
+  )
+
+  const saveHours = useCallback(
+    async (professionalId: string, intervals: HourInterval[]) => {
+      if (live && neon) {
+        const { error: err } = await neon.rpc('set_working_hours', {
+          p_professional: professionalId,
+          p_intervals: intervals.map((i) => ({ weekday: i.weekday, start_minute: i.start, end_minute: i.end })),
+        })
+        if (err) {
+          if (err.code === '23514') return 'Os intervalos de um mesmo dia não podem se sobrepor.'
+          return 'Não foi possível salvar os horários agora. Tente novamente.'
+        }
+      }
+      setWorkingHours((h) => ({ ...h, [professionalId]: intervals }))
+      return null
+    },
+    [live],
   )
 
   const addProfessional = useCallback(
@@ -338,8 +389,23 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
   )
 
   const value = useMemo<AgendaState>(
-    () => ({ loading, error, professionals, clients, services, appointments, focus, reload, create, update, addProfessional }),
-    [loading, error, professionals, clients, services, appointments, focus, reload, create, update, addProfessional],
+    () => ({
+      loading,
+      error,
+      professionals,
+      clients,
+      services,
+      appointments,
+      workingHours,
+      hoursAvailable,
+      saveHours,
+      focus,
+      reload,
+      create,
+      update,
+      addProfessional,
+    }),
+    [loading, error, professionals, clients, services, appointments, workingHours, hoursAvailable, saveHours, focus, reload, create, update, addProfessional],
   )
 
   return <AgendaContext.Provider value={value}>{children}</AgendaContext.Provider>
