@@ -107,7 +107,7 @@ export async function createCheckout(deps: CheckoutDeps, user: { id: string; ema
 
   // cartão ativo: mudanças e cancelamento acontecem no portal, não num novo checkout (evita cobrar duas vezes)
   const hasLiveCardSubscription =
-    !!sub.stripeSubscriptionId && sub.billingMethod === 'card' && (sub.status === 'active' || sub.status === 'past_due') && !sub.cancelAtPeriodEnd
+    !!sub.stripeSubscriptionId && sub.billingMethod === 'card' && (sub.status === 'active' || sub.status === 'trialing' || sub.status === 'past_due') && !sub.cancelAtPeriodEnd
   if (hasLiveCardSubscription) {
     throw new HttpError(409, 'use_portal', 'Você já tem uma assinatura no cartão. Gerencie pelo portal de pagamento.')
   }

@@ -13,6 +13,7 @@ import {
   PLAN_IDS,
   PLANS,
   daysLeft,
+  isCardTrial,
   monthsLabel,
   periodEnd,
   pixAmountCents,
@@ -49,7 +50,7 @@ export default function Assinatura() {
   }, [returned, refresh])
 
   const hasLiveCard =
-    !!sub && sub.method === 'card' && sub.hasCustomer && (sub.status === 'active' || sub.status === 'past_due') && !sub.cancelAtPeriodEnd
+    !!sub && sub.method === 'card' && sub.hasCustomer && (sub.status === 'active' || sub.status === 'trialing' || sub.status === 'past_due') && !sub.cancelAtPeriodEnd
 
   async function run(key: string, action: () => Promise<void>) {
     setBusy(key)
@@ -93,7 +94,9 @@ export default function Assinatura() {
 
       {returned === 'ok' && (
         <p className="billing-note billing-note--ok" role="status">
-          Pagamento enviado. Estamos confirmando e atualizando o seu plano, isso leva só alguns segundos.
+          {sub?.method
+            ? 'Tudo certo! Recebemos seu pagamento e sua assinatura está confirmada.'
+            : 'Pagamento enviado. Estamos confirmando e atualizando o seu plano, isso leva só alguns segundos.'}
         </p>
       )}
       {returned === 'cancelado' && (
@@ -114,7 +117,7 @@ export default function Assinatura() {
               Plano atual <Badge>{PLANS[sub.plan].name}</Badge>
             </p>
             <p className="billing-status__title">
-              {state === 'trial' && (
+              {state === 'trial' && !isCardTrial(sub) && (
                 <>
                   Teste grátis · restam <Em>{daysLeft(sub.accessUntil)} dias</Em>
                 </>
@@ -126,7 +129,8 @@ export default function Assinatura() {
             </p>
             <p className="billing-status__text">
               {state === 'trial' && `Sem cartão. O teste vai até ${longDate.format(sub.accessUntil)}.`}
-              {state === 'active' && sub.method === 'card' && `Renova automaticamente no cartão em ${longDate.format(periodEnd(sub))}.`}
+              {isCardTrial(sub) && `Teste grátis até ${longDate.format(periodEnd(sub))}. Depois, cobramos ${formatBRL(PLANS[sub.plan].cents / 100)}/mês no cartão, e você pode cancelar antes pelo portal.`}
+              {state === 'active' && sub.method === 'card' && !isCardTrial(sub) && `Renova automaticamente no cartão em ${longDate.format(periodEnd(sub))}.`}
               {state === 'active' && sub.method === 'pix' && `Pago por Pix. Acesso até ${longDate.format(sub.accessUntil)}. Para renovar, pague de novo antes dessa data.`}
               {state === 'ending' && `Acesso até ${longDate.format(periodEnd(sub))}. Depois disso o sistema abre só para leitura.`}
               {state === 'past_due' && 'Não conseguimos cobrar o cartão. Atualize o pagamento para manter o acesso.'}

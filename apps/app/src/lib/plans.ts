@@ -105,8 +105,12 @@ export function daysLeft(until: Date, now = new Date()): number {
 /** avisamos quando faltam até 7 dias */
 export const WARN_DAYS = 7
 
+/** assinou no cartão durante o teste do Solo: já é assinante, a primeira cobrança só vem no fim do teste */
+export const isCardTrial = (sub: SubscriptionInfo) => sub.status === 'trialing' && sub.method === 'card'
+
 export function accessState(sub: SubscriptionInfo, now = new Date()): AccessState {
   if (sub.accessUntil.getTime() <= now.getTime()) return 'expired'
+  if (isCardTrial(sub)) return 'active'
   if (sub.status === 'trialing') return 'trial'
   if (sub.status === 'past_due') return 'past_due'
   if (sub.status === 'canceled') return 'ending'
@@ -117,7 +121,7 @@ export function accessState(sub: SubscriptionInfo, now = new Date()): AccessStat
 
 /** o que mostrar como "renova em" / "acesso até": para cartão, o fim do período sem a tolerância */
 export function periodEnd(sub: SubscriptionInfo): Date {
-  if (sub.method === 'card' && sub.status !== 'trialing') return new Date(sub.accessUntil.getTime() - GRACE_DAYS * DAY)
+  if (sub.method === 'card') return new Date(sub.accessUntil.getTime() - GRACE_DAYS * DAY)
   return sub.accessUntil
 }
 
@@ -140,6 +144,7 @@ const shortDate = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-d
 /** uma linha para mostrar na conta: 'Solo · teste grátis, restam 21 dias' */
 export function describeSubscription(sub: SubscriptionInfo, now = new Date()): string {
   const name = PLANS[sub.plan].name
+  if (isCardTrial(sub) && sub.accessUntil.getTime() > now.getTime()) return name + ' · assinatura ativa, 1ª cobrança em ' + shortDate.format(periodEnd(sub))
   switch (accessState(sub, now)) {
     case 'trial': {
       const d = daysLeft(sub.accessUntil, now)

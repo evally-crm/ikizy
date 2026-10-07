@@ -13,7 +13,7 @@ import {
   type SubscriptionRow,
 } from './billing.js'
 import { PLANS as LANDING_PLANS, PIX_DISCOUNT_PCT as LANDING_DISCOUNT, PIX_MONTHS as LANDING_MONTHS, pixTotalCents } from '../../../landing/src/lib/pricing.js'
-import { PIX_DISCOUNT_PCT, PIX_MONTHS, PLANS, accessState, daysLeft, describeSubscription, parseSubscription, periodEnd, pixAmountCents, pixFullCents, type SubscriptionInfo } from '../../src/lib/plans.js'
+import { isCardTrial, PIX_DISCOUNT_PCT, PIX_MONTHS, PLANS, accessState, daysLeft, describeSubscription, parseSubscription, periodEnd, pixAmountCents, pixFullCents, type SubscriptionInfo } from '../../src/lib/plans.js'
 
 const DAY = 24 * 60 * 60 * 1000
 const NOW = new Date('2026-10-10T12:00:00Z')
@@ -165,6 +165,11 @@ describe('createCheckout', () => {
     const { db } = fakeDb({ sub: { status: 'active', billingMethod: 'card', stripeSubscriptionId: 'sub_1', stripeCustomerId: 'cus_1' } })
     await rejects(createCheckout(deps(db, fakeStripe().stripe), user, { plan: 'studio', method: 'card', months: 1 }), 409, 'use_portal')
     await rejects(createCheckout(deps(db, fakeStripe().stripe), user, { plan: 'studio', method: 'pix', months: 1 }), 409, 'use_portal')
+  })
+
+  it('quem já assinou no cartão durante o teste (trialing) também vai para o portal', async () => {
+    const { db } = fakeDb({ sub: { status: 'trialing', billingMethod: 'card', stripeSubscriptionId: 'sub_1', stripeCustomerId: 'cus_1' } })
+    await rejects(createCheckout(deps(db, fakeStripe().stripe), user, { plan: 'studio', method: 'card', months: 1 }), 409, 'use_portal')
   })
 
   it('assinatura de cartão já cancelada para o fim do período pode assinar de novo', async () => {
@@ -320,6 +325,16 @@ describe('accessState', () => {
     assert.equal(accessState(info({ status: 'active', method: 'card', cancelAtPeriodEnd: true, accessUntil: new Date(NOW.getTime() + 3 * DAY) }), NOW), 'ending')
     assert.equal(accessState(info({ status: 'past_due', method: 'card' }), NOW), 'past_due')
     assert.equal(accessState(info({ accessUntil: new Date(NOW.getTime() - 1000) }), NOW), 'expired')
+  })
+  it('assinar no cartão durante o teste vira assinatura ativa, com 1ª cobrança no fim do teste', () => {
+    const until = new Date(NOW.getTime() + 22 * DAY)
+    const s = info({ status: 'trialing', method: 'card', accessUntil: until })
+    assert.equal(isCardTrial(s), true)
+    assert.equal(accessState(s, NOW), 'active')
+    assert.equal(periodEnd(s).getTime(), until.getTime() - 2 * DAY)
+    assert.match(describeSubscription(s, NOW), /^Solo · assinatura ativa, 1ª cobrança em \d\d\/\d\d$/)
+    assert.equal(isCardTrial(info()), false) // teste sem cartão continua sendo teste
+    assert.equal(accessState(info(), NOW), 'trial')
   })
   it('daysLeft arredonda para cima e nunca fica negativo', () => {
     assert.equal(daysLeft(new Date(NOW.getTime() + 1.2 * DAY), NOW), 2)
