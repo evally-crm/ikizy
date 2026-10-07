@@ -308,11 +308,16 @@
 .split__dot.is-prod {
   background: var(--pink-100);
 }
+.split__seg.is-exp .split__bar,
+.split__dot.is-exp {
+  background: var(--pink-200, #e9b9c6);
+}
 .split__seg.is-fee .split__bar,
 .split__dot.is-fee {
   background: #5a5657;
 }
 .split__seg.is-prod .split__pct,
+.split__seg.is-exp .split__pct,
 .split__seg.is-fee .split__pct {
   font-size: 13px;
 }

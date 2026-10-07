@@ -10,6 +10,7 @@ import {
   Check,
   FileSignature,
   Gift,
+  Pencil,
   MessageCircle,
   Phone,
   Plus,
@@ -22,11 +23,11 @@ import {
   TAG_LABEL,
   clientTags,
   daysSince,
-  getClients,
   type Client,
   type ClientTag,
 } from '../data/clients'
-import { professionals } from '../data/mock'
+import { useClientBook, type ProfessionalOption } from '../data/useClientBook'
+import { ClientDialog } from '../components/ClientDialog'
 import { formatBRL } from '../lib/format'
 import { dash } from '../lib/routes'
 import { useMediaQuery } from '../hooks/useMediaQuery'
@@ -48,7 +49,12 @@ const normalize = (s: string) =>
     .replace(/[̀-ͯ]/g, '')
     .toLowerCase()
 
-const proName = (id: string) => professionals.find((p) => p.id === id)?.name ?? ''
+const whatsappUrl = (phone: string, text?: string) => {
+  const digits = phone.replace(/\D/g, '')
+  if (!digits) return null
+  const number = digits.startsWith('55') ? digits : `55${digits}`
+  return `https://wa.me/${number}${text ? `?text=${encodeURIComponent(text)}` : ''}`
+}
 
 function lastVisitLabel(days: number) {
   if (days === 0) return 'Veio hoje'
@@ -138,7 +144,7 @@ function ClientList({
                   <span className="clist__body">
                     <span className="clist__name">{c.name}</span>
                     <span className="clist__meta">
-                      {lastVisitLabel(days)} · {c.visits} {c.visits === 1 ? 'visita' : 'visitas'}
+                      {c.visits === 0 ? 'Ainda sem visitas' : `${lastVisitLabel(days)} · ${c.visits} ${c.visits === 1 ? 'visita' : 'visitas'}`}
                     </span>
                     <Tags tags={clientTags(c, today)} />
                   </span>
@@ -153,12 +159,32 @@ function ClientList({
   )
 }
 
-function ClientDetail({ client, today, showBack }: { client: Client; today: Date; showBack: boolean }) {
+function ClientDetail({
+  client,
+  today,
+  showBack,
+  live,
+  professionals,
+  onEdit,
+  onAnamnesis,
+}: {
+  client: Client
+  today: Date
+  showBack: boolean
+  live: boolean
+  professionals: ProfessionalOption[]
+  onEdit: () => void
+  onAnamnesis: () => Promise<string | null>
+}) {
+  const navigate = useNavigate()
+  const [anamnesisError, setAnamnesisError] = useState<string | null>(null)
+  const proName = (id: string) => professionals.find((p) => p.id === id)?.name ?? ''
+  const hasVisits = client.visits > 0
   const tags = clientTags(client, today)
   const days = daysSince(client.lastVisit, today)
   const nextExpected = addDays(client.lastVisit, client.interval)
-  const overdue = daysSince(nextExpected, today)
-  const ticket = Math.round(client.totalSpent / client.visits)
+  const overdue = hasVisits ? daysSince(nextExpected, today) : 0
+  const ticket = hasVisits ? Math.round(client.totalSpent / client.visits) : 0
   const stamps = client.visits % STAMPS_PER_REWARD
   const rewards = Math.floor(client.visits / STAMPS_PER_REWARD)
   const firstName = client.name.split(' ')[0]
@@ -185,7 +211,8 @@ function ClientDetail({ client, today, showBack }: { client: Client; today: Date
             <div>
               <h2 className="profile__name">{client.name}</h2>
               <p className="card__sub">
-                Cliente desde {format(client.since, "MMM 'de' yyyy", { locale: ptBR })} · com {proName(client.professionalId)}
+                Cliente desde {format(client.since, "MMM 'de' yyyy", { locale: ptBR })}
+                {proName(client.professionalId) && ` · com ${proName(client.professionalId)}`}
               </p>
               <Tags tags={tags} />
             </div>
@@ -194,10 +221,21 @@ function ClientDetail({ client, today, showBack }: { client: Client; today: Date
             <a className="roundbtn" href={`tel:${client.phone.replace(/\D/g, '')}`} aria-label={`Ligar para ${firstName}`}>
               <Phone size={18} />
             </a>
-            <button type="button" className="roundbtn" aria-label={`Mensagem no WhatsApp para ${firstName}`}>
-              <MessageCircle size={18} />
+            {whatsappUrl(client.phone) && (
+              <a
+                className="roundbtn"
+                href={whatsappUrl(client.phone) ?? undefined}
+                target="_blank"
+                rel="noreferrer"
+                aria-label={`Mensagem no WhatsApp para ${firstName}`}
+              >
+                <MessageCircle size={18} />
+              </a>
+            )}
+            <button type="button" className="roundbtn" aria-label={`Editar ${firstName}`} onClick={onEdit}>
+              <Pencil size={18} />
             </button>
-            <Button variant="accent" icon aria-label={`Agendar ${firstName}`}>
+            <Button variant="accent" icon aria-label={`Agendar ${firstName}`} onClick={() => navigate(dash('/agenda'))}>
               <CalendarPlus size={18} />
             </Button>
           </div>
@@ -219,8 +257,14 @@ function ClientDetail({ client, today, showBack }: { client: Client; today: Date
           <div>
             <p className="card__sub">Volta a cada</p>
             <p className="profile__num">
-              ~{client.interval}
-              <small> dias</small>
+              {client.visits > 1 ? (
+                <>
+                  ~{client.interval}
+                  <small> dias</small>
+                </>
+              ) : (
+                '—'
+              )}
             </p>
           </div>
         </div>
@@ -233,17 +277,29 @@ function ClientDetail({ client, today, showBack }: { client: Client; today: Date
                 {days > MISSING_AFTER ? `${firstName} sumiu há ${days} dias.` : `Retorno atrasado ${overdue} ${overdue === 1 ? 'dia' : 'dias'}.`}{' '}
                 <strong>Mande um convite com cupom de retorno.</strong>
               </p>
-              <Button variant="light" size="sm">
-                Enviar convite
-              </Button>
+              {whatsappUrl(client.phone) && (
+                <a
+                  className="btn btn--light btn--sm"
+                  href={whatsappUrl(client.phone, `Oi, ${firstName}! Sentimos sua falta por aqui. Vamos marcar um horário?`) ?? undefined}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Enviar convite
+                </a>
+              )}
             </>
-          ) : (
+          ) : hasVisits ? (
             <>
               <Sparkles size={18} aria-hidden="true" />
               <p>
                 Próxima visita prevista para <strong>{format(nextExpected, "dd 'de' MMMM", { locale: ptBR })}</strong>.{' '}
                 {lastVisitLabel(days)}.
               </p>
+            </>
+          ) : (
+            <>
+              <Sparkles size={18} aria-hidden="true" />
+              <p>Ainda sem atendimentos concluídos. O histórico e o retorno aparecem depois do primeiro.</p>
             </>
           )}
         </div>
@@ -295,6 +351,14 @@ function ClientDetail({ client, today, showBack }: { client: Client; today: Date
               <li key={p}>{p}</li>
             ))}
           </ul>
+          {client.preferences.length === 0 && client.allergies.length === 0 && (
+            <p className="card__sub">
+              Nada anotado ainda.{' '}
+              <button type="button" className="textlink" onClick={onEdit}>
+                Adicionar
+              </button>
+            </p>
+          )}
         </Card>
 
         {/* histórico */}
@@ -306,6 +370,7 @@ function ClientDetail({ client, today, showBack }: { client: Client; today: Date
             </div>
             <span className="card__sub">{client.visits} no total</span>
           </div>
+          {client.history.length === 0 && <p className="card__sub">Os atendimentos concluídos aparecem aqui.</p>}
           <ol className="history">
             {client.history.map((v, i) => (
               <li key={i} className="history__item">
@@ -315,7 +380,7 @@ function ClientDetail({ client, today, showBack }: { client: Client; today: Date
                 </span>
                 <span className="history__body">
                   <span className="history__service">{v.service}</span>
-                  <span className="card__sub">com {proName(v.professionalId)}</span>
+                  {proName(v.professionalId) && <span className="card__sub">com {proName(v.professionalId)}</span>}
                 </span>
                 <span className="history__price">{formatBRL(v.price)}</span>
               </li>
@@ -323,7 +388,8 @@ function ClientDetail({ client, today, showBack }: { client: Client; today: Date
           </ol>
         </Card>
 
-        {/* galeria */}
+        {/* galeria (ainda sem armazenamento de fotos: só na demonstração) */}
+        {!live && (
         <Card>
           <div className="card__head">
             <div>
@@ -345,6 +411,7 @@ function ClientDetail({ client, today, showBack }: { client: Client; today: Date
             </button>
           </div>
         </Card>
+        )}
 
         {/* anamnese */}
         <Card className={`anamnesis ${client.anamnesisSignedAt ? 'is-signed' : ''}`}>
@@ -357,16 +424,21 @@ function ClientDetail({ client, today, showBack }: { client: Client; today: Date
           </div>
           {client.anamnesisSignedAt ? (
             <p className="card__sub">
-              Termo de consentimento assinado digitalmente em {format(client.anamnesisSignedAt, 'dd/MM/yyyy')}.
+              Termo de consentimento registrado em {format(client.anamnesisSignedAt, 'dd/MM/yyyy')}.
             </p>
           ) : (
             <>
               <p className="card__sub">
-                {firstName} ainda não preencheu a ficha. Envie o link para ela assinar pelo celular antes do próximo atendimento.
+                {firstName} ainda não assinou a ficha. Colha a assinatura antes do próximo atendimento e registre aqui.
               </p>
-              <Button size="sm" className="anamnesis__btn">
-                Enviar ficha no WhatsApp
+              <Button size="sm" className="anamnesis__btn" onClick={async () => setAnamnesisError(await onAnamnesis())}>
+                Marcar como assinada
               </Button>
+              {anamnesisError && (
+                <p className="dialog__error" role="alert">
+                  {anamnesisError}
+                </p>
+              )}
             </>
           )}
         </Card>
@@ -377,21 +449,61 @@ function ClientDetail({ client, today, showBack }: { client: Client; today: Date
 
 export default function Clientes() {
   const today = useMemo(() => new Date(), [])
-  const clients = useMemo(() => getClients(today), [today])
+  const book = useClientBook()
+  const { clients, professionals, live } = book
   const { id } = useParams()
   const navigate = useNavigate()
   const isWide = useMediaQuery('(min-width: 1100px)')
+  const [dialog, setDialog] = useState<'new' | 'edit' | null>(null)
 
   const selected = clients.find((c) => c.id === id) ?? (isWide ? clients[0] : undefined)
   const missing = clients.filter((c) => clientTags(c, today).includes('sumida')).length
   const newOnes = clients.filter((c) => clientTags(c, today).includes('nova')).length
-  const returning = Math.round((clients.filter((c) => c.visits > 1).length / clients.length) * 100)
+  const returning = clients.length ? Math.round((clients.filter((c) => c.visits > 1).length / clients.length) * 100) : 0
+
+  const dialogs = (
+    <>
+      {dialog === 'new' && (
+        <ClientDialog
+          professionals={professionals}
+          onClose={() => setDialog(null)}
+          onSave={async (draft) => {
+            const res = await book.create(draft)
+            if (res.id) navigate(dash(`/clientes/${res.id}`))
+            return res.error
+          }}
+        />
+      )}
+      {dialog === 'edit' && selected && (
+        <ClientDialog
+          client={selected}
+          professionals={professionals}
+          onClose={() => setDialog(null)}
+          onSave={(draft) => book.update(selected.id, draft)}
+        />
+      )}
+    </>
+  )
+
+  const detail = (showBack: boolean) =>
+    selected && (
+      <ClientDetail
+        client={selected}
+        today={today}
+        showBack={showBack}
+        live={live}
+        professionals={professionals}
+        onEdit={() => setDialog('edit')}
+        onAnamnesis={() => book.markAnamnesis(selected.id, true)}
+      />
+    )
 
   // no mobile, a ficha ocupa a tela inteira
   if (!isWide && selected) {
     return (
       <div className="page">
-        <ClientDetail client={selected} today={today} showBack />
+        {detail(true)}
+        {dialogs}
       </div>
     )
   }
@@ -421,16 +533,40 @@ export default function Clientes() {
             <dd>{missing}</dd>
           </div>
         </dl>
-        <Button size="sm" onClick={() => navigate(dash('/clientes'))}>
+        <Button size="sm" onClick={() => setDialog('new')}>
           <Plus size={16} aria-hidden="true" /> Nova cliente
         </Button>
         </div>
       </header>
 
-      <div className="crm">
-        <ClientList clients={clients} selectedId={selected?.id} today={today} />
-        {selected && <ClientDetail client={selected} today={today} showBack={false} />}
-      </div>
+      {book.error && (
+        <p className="dialog__error" role="alert">
+          {book.error}{' '}
+          <button type="button" className="textlink" onClick={book.reload}>
+            Tentar de novo
+          </button>
+        </p>
+      )}
+
+      {book.loading ? (
+        <p className="crm__empty" role="status">
+          Carregando clientes…
+        </p>
+      ) : clients.length === 0 ? (
+        <Card className="agenda__empty">
+          <h2 className="card__title">Cadastre sua primeira cliente</h2>
+          <p className="card__sub">Elas também entram aqui sozinhas quando você faz um agendamento novo na agenda.</p>
+          <Button onClick={() => setDialog('new')}>
+            <Plus size={16} aria-hidden="true" /> Nova cliente
+          </Button>
+        </Card>
+      ) : (
+        <div className="crm">
+          <ClientList clients={clients} selectedId={selected?.id} today={today} />
+          {detail(false)}
+        </div>
+      )}
+      {dialogs}
     </div>
   )
 }

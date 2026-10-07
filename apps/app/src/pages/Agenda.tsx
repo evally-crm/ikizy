@@ -1,417 +1,31 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
-import { addDays, format, isSameDay, parseISO, startOfWeek } from 'date-fns'
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { addDays, addMonths, endOfMonth, format, getDay, isSameDay, startOfMonth } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { ChevronLeft, ChevronRight, MessageCircle, Plus, X } from 'lucide-react'
-import { findConflict, useAgenda, type NewAppointment } from '../data/AgendaProvider'
+import { CalendarPlus, ChevronLeft, ChevronRight, Clock, Plus, RotateCcw } from 'lucide-react'
+import { findConflict, useAgenda } from '../data/AgendaProvider'
+import { END_HOUR, START_HOUR, closedRanges, dayKey } from '../lib/agendaTime'
 import { formatBRL, formatTime } from '../lib/format'
 import { useMediaQuery } from '../hooks/useMediaQuery'
-import { Avatar, Button, Card, Em, StatusBadge } from '../components/ui'
+import { Avatar, Button, Card, StatusBadge } from '../components/ui'
+import { AppointmentDialog, NewAppointmentDialog, whatsappLink, type NewInitial } from '../components/AppointmentDialogs'
+import { appointmentEntries } from '../components/appointmentMenu'
+import { ContextMenu, type MenuEntry } from '../components/ContextMenu'
+import { ConfirmDialog } from '../components/Modal'
+import { WorkingHoursDialog } from '../components/WorkingHoursDialog'
 import type { Appointment, AppointmentStatus } from '../types'
 
-const START_HOUR = 8
-const END_HOUR = 20
 const HOUR_H = 72
 const hours = Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i)
 const toY = (minutes: number) => ((minutes - START_HOUR * 60) / 60) * HOUR_H
-const dayKey = (d: Date) => format(d, 'yyyy-MM-dd')
 
-const toMinutes = (hhmm: string) => {
-  const [h, m] = hhmm.split(':').map(Number)
-  return h * 60 + m
-}
-
-/** próximo passo do atendimento, quando houver */
-const NEXT_STEP: Partial<Record<AppointmentStatus, { to: AppointmentStatus; label: string }>> = {
-  pendente: { to: 'confirmado', label: 'Confirmar' },
-  confirmado: { to: 'atendimento', label: 'Iniciar atendimento' },
-  atendimento: { to: 'concluido', label: 'Concluir' },
-}
-
-function whatsappLink(a: Appointment) {
-  const digits = a.phone.replace(/\D/g, '')
-  if (!digits) return null
-  const number = digits.startsWith('55') ? digits : `55${digits}`
-  const when = format(parseISO(a.date), "EEEE, d 'de' MMMM", { locale: ptBR })
-  const text = `Olá, ${a.client.split(' ')[0]}! Passando para confirmar seu horário de ${a.service} em ${when} às ${formatTime(a.start)}. Podemos confirmar?`
-  return `https://wa.me/${number}?text=${encodeURIComponent(text)}`
-}
-
-function Modal({ label, onClose, children }: { label: string; onClose: () => void; children: React.ReactNode }) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
-
-  return (
-    <div className="overlay" onClick={onClose}>
-      <div className="dialog" role="dialog" aria-modal="true" aria-label={label} onClick={(e) => e.stopPropagation()}>
-        {children}
-      </div>
-    </div>
-  )
-}
-
-function SelectField({
-  label,
-  value,
-  onChange,
-  children,
-}: {
-  label: string
-  value: string
-  onChange: (v: string) => void
-  children: React.ReactNode
-}) {
-  return (
-    <label className="field">
-      <span className="field__label">{label}</span>
-      <span className="input input--select">
-        <select value={value} onChange={(e) => onChange(e.target.value)}>
-          {children}
-        </select>
-      </span>
-    </label>
-  )
-}
-
-function NewAppointmentDialog({
-  initial,
-  onClose,
-}: {
-  initial: { date: string; start: number; professionalId?: string }
-  onClose: () => void
-}) {
-  const { professionals, clients, services, appointments, create } = useAgenda()
-  const [clientName, setClientName] = useState('')
-  const [phone, setPhone] = useState('')
-  const [professionalId, setProfessionalId] = useState(initial.professionalId ?? professionals[0]?.id ?? '')
-  const [serviceId, setServiceId] = useState(services[0]?.id ?? 'outro')
-  const [customService, setCustomService] = useState('')
-  const [date, setDate] = useState(initial.date)
-  const [time, setTime] = useState(formatTime(initial.start))
-  const [duration, setDuration] = useState(services[0]?.duration ?? 60)
-  const [price, setPrice] = useState(services[0]?.price ?? 0)
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  const existing = clients.find((c) => c.name.trim().toLowerCase() === clientName.trim().toLowerCase())
-  const custom = serviceId === 'outro'
-
-  const pickService = (id: string) => {
-    setServiceId(id)
-    const s = services.find((x) => x.id === id)
-    if (s) {
-      setDuration(s.duration)
-      setPrice(s.price)
-    }
-  }
-
-  const onSubmit = async (e: FormEvent) => {
-    e.preventDefault()
-    const name = clientName.trim()
-    const service = custom ? customService.trim() : (services.find((s) => s.id === serviceId)?.name ?? '')
-    if (name.length < 2) return setError('Informe o nome da cliente.')
-    if (!service) return setError('Informe o serviço.')
-    if (!professionalId) return setError('Escolha a profissional.')
-    const start = toMinutes(time)
-    const clash = findConflict(appointments, { professionalId, date, start, duration })
-    if (clash) {
-      return setError(`Esse horário bate com ${clash.client} (${formatTime(clash.start)} – ${formatTime(clash.start + clash.duration)}).`)
-    }
-    const input: NewAppointment = {
-      clientId: existing?.id,
-      clientName: existing?.name ?? name,
-      phone: existing?.phone || phone.trim(),
-      professionalId,
-      serviceId: custom ? null : serviceId,
-      serviceName: service,
-      date,
-      start,
-      duration,
-      price,
-    }
-    setBusy(true)
-    const message = await create(input)
-    setBusy(false)
-    if (message) setError(message)
-    else onClose()
-  }
-
-  return (
-    <Modal label="Novo agendamento" onClose={onClose}>
-      <form onSubmit={onSubmit}>
-        <div className="dialog__head">
-          <h2>
-            Novo <Em>agendamento</Em>
-          </h2>
-          <Button variant="ghost" size="sm" icon aria-label="Fechar" onClick={onClose}>
-            <X size={18} />
-          </Button>
-        </div>
-
-        <div className="form">
-          <label className="field">
-            <span className="field__label">Cliente</span>
-            <span className="input">
-              <input
-                value={clientName}
-                onChange={(e) => setClientName(e.target.value)}
-                list="agenda-clients"
-                placeholder="Nome da cliente"
-                autoComplete="off"
-                required
-                minLength={2}
-                maxLength={120}
-              />
-            </span>
-            <datalist id="agenda-clients">
-              {clients.map((c) => (
-                <option key={c.id} value={c.name} />
-              ))}
-            </datalist>
-            {existing ? (
-              <span className="field__hint">Cliente já cadastrada.</span>
-            ) : clientName.trim().length >= 2 ? (
-              <span className="field__hint">Cliente nova: será cadastrada junto com o agendamento.</span>
-            ) : null}
-          </label>
-
-          {!existing && clientName.trim().length >= 2 && (
-            <label className="field">
-              <span className="field__label">WhatsApp (opcional)</span>
-              <span className="input">
-                <input value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" placeholder="(11) 90000-0000" maxLength={20} />
-              </span>
-            </label>
-          )}
-
-          <SelectField label="Serviço" value={serviceId} onChange={pickService}>
-            {services.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-            <option value="outro">Outro serviço…</option>
-          </SelectField>
-
-          {custom && (
-            <label className="field">
-              <span className="field__label">Nome do serviço</span>
-              <span className="input">
-                <input value={customService} onChange={(e) => setCustomService(e.target.value)} maxLength={80} required />
-              </span>
-            </label>
-          )}
-
-          <SelectField label="Profissional" value={professionalId} onChange={setProfessionalId}>
-            {professionals.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </SelectField>
-
-          <div className="form__pair">
-            <label className="field">
-              <span className="field__label">Dia</span>
-              <span className="input">
-                <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
-              </span>
-            </label>
-            <label className="field">
-              <span className="field__label">Horário</span>
-              <span className="input">
-                <input type="time" step={300} value={time} onChange={(e) => setTime(e.target.value)} required />
-              </span>
-            </label>
-          </div>
-
-          <div className="form__pair">
-            <label className="field">
-              <span className="field__label">Duração (min)</span>
-              <span className="input">
-                <input type="number" min={5} max={600} step={5} value={duration} onChange={(e) => setDuration(Number(e.target.value))} required />
-              </span>
-            </label>
-            <label className="field">
-              <span className="field__label">Valor (R$)</span>
-              <span className="input input--money">
-                <input type="number" min={0} step="0.01" value={price} onChange={(e) => setPrice(Number(e.target.value))} required />
-              </span>
-            </label>
-          </div>
-        </div>
-
-        {error && (
-          <p className="dialog__error" role="alert">
-            {error}
-          </p>
-        )}
-
-        <div className="dialog__actions" style={{ marginTop: 22 }}>
-          <Button variant="light" onClick={onClose}>
-            Cancelar
-          </Button>
-          <Button type="submit" disabled={busy}>
-            {busy ? 'Salvando…' : 'Agendar'}
-          </Button>
-        </div>
-      </form>
-    </Modal>
-  )
-}
-
-function AppointmentDialog({ appointment, onClose }: { appointment: Appointment; onClose: () => void }) {
-  const { professionals, appointments, update } = useAgenda()
-  const [rescheduling, setRescheduling] = useState(false)
-  const [date, setDate] = useState(appointment.date)
-  const [time, setTime] = useState(formatTime(appointment.start))
-  const [professionalId, setProfessionalId] = useState(appointment.professionalId)
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  const pro = professionals.find((p) => p.id === appointment.professionalId)
-  const step = NEXT_STEP[appointment.status]
-  const open = appointment.status === 'pendente' || appointment.status === 'confirmado'
-  const wa = whatsappLink(appointment)
-
-  const run = async (patch: Parameters<typeof update>[1]) => {
-    setBusy(true)
-    const message = await update(appointment.id, patch)
-    setBusy(false)
-    if (message) setError(message)
-    else onClose()
-  }
-
-  const reschedule = async () => {
-    const start = toMinutes(time)
-    const clash = findConflict(appointments, { professionalId, date, start, duration: appointment.duration }, appointment.id)
-    if (clash) {
-      return setError(`Esse horário bate com ${clash.client} (${formatTime(clash.start)} – ${formatTime(clash.start + clash.duration)}).`)
-    }
-    await run({ date, start, professionalId })
-  }
-
-  const cancel = () => {
-    if (window.confirm(`Cancelar o atendimento de ${appointment.client}?`)) void run({ status: 'cancelado' })
-  }
-
-  return (
-    <Modal label={`Atendimento de ${appointment.client}`} onClose={onClose}>
-      <div className="dialog__head">
-        <div>
-          <p className="eyebrow">Atendimento</p>
-          <h2>{appointment.client}</h2>
-        </div>
-        <Button variant="ghost" size="sm" icon aria-label="Fechar" onClick={onClose}>
-          <X size={18} />
-        </Button>
-      </div>
-
-      <dl className="dialog__grid">
-        <div>
-          <dt>Serviço</dt>
-          <dd>{appointment.service}</dd>
-        </div>
-        <div>
-          <dt>Profissional</dt>
-          <dd>{pro?.name}</dd>
-        </div>
-        <div>
-          <dt>Horário</dt>
-          <dd>
-            {format(parseISO(appointment.date), 'dd/MM')} · {formatTime(appointment.start)} –{' '}
-            {formatTime(appointment.start + appointment.duration)}
-          </dd>
-        </div>
-        <div>
-          <dt>Valor</dt>
-          <dd>{formatBRL(appointment.price)}</dd>
-        </div>
-        <div>
-          <dt>Status</dt>
-          <dd>
-            <StatusBadge status={appointment.status} />
-          </dd>
-        </div>
-      </dl>
-
-      {rescheduling && (
-        <div className="form" style={{ marginBottom: 18 }}>
-          <div className="form__pair">
-            <label className="field">
-              <span className="field__label">Novo dia</span>
-              <span className="input">
-                <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
-              </span>
-            </label>
-            <label className="field">
-              <span className="field__label">Novo horário</span>
-              <span className="input">
-                <input type="time" step={300} value={time} onChange={(e) => setTime(e.target.value)} required />
-              </span>
-            </label>
-          </div>
-          <SelectField label="Profissional" value={professionalId} onChange={setProfessionalId}>
-            {professionals.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </SelectField>
-        </div>
-      )}
-
-      {error && (
-        <p className="dialog__error" role="alert" style={{ marginBottom: 14 }}>
-          {error}
-        </p>
-      )}
-
-      <div className="dialog__actions">
-        {rescheduling ? (
-          <>
-            <Button variant="light" onClick={() => setRescheduling(false)}>
-              Voltar
-            </Button>
-            <Button disabled={busy} onClick={() => void reschedule()}>
-              {busy ? 'Salvando…' : 'Salvar novo horário'}
-            </Button>
-          </>
-        ) : (
-          <>
-            {step && (
-              <Button disabled={busy} onClick={() => void run({ status: step.to })}>
-                {step.label}
-              </Button>
-            )}
-            {open && wa && (
-              <a className="btn btn--ghost" href={wa} target="_blank" rel="noreferrer">
-                <MessageCircle size={16} aria-hidden="true" /> WhatsApp
-              </a>
-            )}
-            {open && (
-              <Button variant="ghost" onClick={() => setRescheduling(true)}>
-                Remarcar
-              </Button>
-            )}
-          </>
-        )}
-      </div>
-
-      {open && !rescheduling && (
-        <div className="dialog__more">
-          <button type="button" disabled={busy} onClick={() => void run({ status: 'faltou' })}>
-            Marcar falta
-          </button>
-          <button type="button" disabled={busy} onClick={cancel}>
-            Cancelar atendimento
-          </button>
-        </div>
-      )}
-    </Modal>
-  )
+const STATUS_NAME: Record<AppointmentStatus, string> = {
+  pendente: 'aguardando',
+  confirmado: 'confirmado',
+  atendimento: 'em atendimento',
+  concluido: 'concluído',
+  cancelado: 'cancelado',
+  faltou: 'falta',
 }
 
 function FirstProfessional() {
@@ -461,13 +75,232 @@ function FirstProfessional() {
   )
 }
 
+type View = 'semana' | 'mes'
+
+/** cartão de calendário: título grande, semana em arco centrada no dia escolhido ou grade do mês */
+function CalendarCard({
+  date,
+  now,
+  view,
+  counts,
+  summary,
+  canCreate,
+  side,
+  onView,
+  onDate,
+  onNew,
+}: {
+  date: Date
+  now: Date
+  view: View
+  counts: Map<string, number>
+  summary: string
+  canCreate: boolean
+  /** no desktop o cartão vira a coluna lateral: sempre o mês, sem alternador */
+  side?: boolean
+  onView: (v: View) => void
+  onDate: (d: Date) => void
+  onNew: () => void
+}) {
+  if (side) view = 'mes'
+  const monthName = format(date, 'MMMM', { locale: ptBR })
+  const step = (d: Date, n: number) => (view === 'mes' ? addMonths(d, n) : addDays(d, n * 7))
+
+  const arc = Array.from({ length: 7 }, (_, i) => addDays(date, i - 3))
+
+  const first = startOfMonth(date)
+  const blanks = (getDay(first) + 6) % 7
+  const monthDays = Array.from({ length: endOfMonth(date).getDate() }, (_, i) => addDays(first, i))
+
+  return (
+    <section className={`calcard ${side ? 'calcard--flat' : ''}`} aria-label="Calendário">
+      <div className="calcard__top">
+        {side ? (
+          <h2 className="calcard__month">
+            {monthName[0].toUpperCase() + monthName.slice(1)} <span>{format(date, 'yyyy')}</span>
+          </h2>
+        ) : (
+          <div className="seg" role="tablist" aria-label="Visualização">
+            <button type="button" role="tab" aria-selected={view === 'semana'} onClick={() => onView('semana')}>
+              Semana
+            </button>
+            <button type="button" role="tab" aria-selected={view === 'mes'} onClick={() => onView('mes')}>
+              Mês
+            </button>
+          </div>
+        )}
+        <div className="calcard__nav">
+          <button type="button" aria-label={view === 'mes' ? 'Mês anterior' : 'Semana anterior'} onClick={() => onDate(step(date, -1))}>
+            <ChevronLeft size={18} />
+          </button>
+          {side ? (
+            <button type="button" className="calcard__today" onClick={() => onDate(new Date())}>
+              Hoje
+            </button>
+          ) : (
+            <button type="button" aria-label="Voltar para hoje" title="Hoje" onClick={() => onDate(new Date())}>
+              <RotateCcw size={16} />
+            </button>
+          )}
+          <button type="button" aria-label={view === 'mes' ? 'Próximo mês' : 'Próxima semana'} onClick={() => onDate(step(date, 1))}>
+            <ChevronRight size={18} />
+          </button>
+        </div>
+      </div>
+
+      {side ? (
+        <h1 className="sr-only">Agenda</h1>
+      ) : (
+        <h1 className="calcard__title">
+          <span>{monthName[0].toUpperCase() + monthName.slice(1)}</span>
+          <span className="calcard__day">{format(date, 'd')}</span>
+        </h1>
+      )}
+
+      {view === 'semana' ? (
+        <div className="arc" role="tablist" aria-label="Dias da semana">
+          {arc.map((d, i) => {
+            const dist = Math.abs(i - 3)
+            const n = counts.get(dayKey(d)) ?? 0
+            return (
+              <button
+                key={d.toISOString()}
+                type="button"
+                role="tab"
+                aria-selected={i === 3}
+                className={`arc__day ${isSameDay(d, now) ? 'is-today' : ''}`}
+                style={{ transform: `translateY(${dist * dist * 3}px)`, opacity: 1 - dist * 0.17 }}
+                onClick={() => onDate(d)}
+                aria-label={`${format(d, "EEEE, d 'de' MMMM", { locale: ptBR })}${n ? `, ${n} atendimentos` : ''}`}
+              >
+                <span className="arc__name">{format(d, 'EEEE', { locale: ptBR }).slice(0, 3)}</span>
+                <span className="arc__num">{format(d, 'd')}</span>
+                <span className={`arc__dot ${n ? 'is-on' : ''}`} aria-hidden="true" />
+              </button>
+            )
+          })}
+        </div>
+      ) : (
+        <div className="monthgrid">
+          {['seg', 'ter', 'qua', 'qui', 'sex', 'sáb', 'dom'].map((w) => (
+            <span key={w} className="monthgrid__head">
+              {w}
+            </span>
+          ))}
+          {Array.from({ length: blanks }, (_, i) => (
+            <span key={`b${i}`} />
+          ))}
+          {monthDays.map((d) => {
+            const n = counts.get(dayKey(d)) ?? 0
+            return (
+              <button
+                key={d.toISOString()}
+                type="button"
+                className={`monthgrid__day ${isSameDay(d, date) ? 'is-selected' : ''} ${isSameDay(d, now) ? 'is-today' : ''}`}
+                onClick={() => {
+                  onDate(d)
+                  if (!side) onView('semana')
+                }}
+                aria-label={`${format(d, "d 'de' MMMM", { locale: ptBR })}${n ? `, ${n} atendimentos` : ''}`}
+              >
+                <span className="monthgrid__num">{format(d, 'd')}</span>
+                <span className={`arc__dot ${n ? 'is-on' : ''}`} aria-hidden="true" />
+              </button>
+            )
+          })}
+        </div>
+      )}
+
+      {!side && (
+        <div className="calcard__foot">
+          <span className="calcard__summary">{summary}</span>
+          <button type="button" className="calcard__new" disabled={!canCreate} onClick={onNew}>
+            <Plus size={15} aria-hidden="true" /> Novo agendamento
+          </button>
+        </div>
+      )}
+    </section>
+  )
+}
+
+/** desktop: atendimentos do dia selecionado, ao lado do calendário */
+function DayList({
+  date,
+  items,
+  professionals,
+  loading,
+  canCreate,
+  onOpen,
+  onMenu,
+  onNew,
+}: {
+  date: Date
+  items: Appointment[]
+  professionals: { id: string; name: string }[]
+  loading: boolean
+  canCreate: boolean
+  onOpen: (id: string) => void
+  onMenu: (e: React.MouseEvent, a: Appointment) => void
+  onNew: () => void
+}) {
+  const sorted = [...items].sort((a, b) => a.start - b.start)
+  const proName = (id: string) => professionals.find((p) => p.id === id)?.name ?? ''
+  return (
+    <section className="evcard" aria-label="Atendimentos do dia">
+      <div className="evcard__head">
+        <h2 className="evcard__title">
+          Atendimentos <span>{format(date, "d 'de' MMM", { locale: ptBR }).replace('.', '')}</span>
+        </h2>
+        <button type="button" className="evcard__new" disabled={!canCreate} onClick={onNew}>
+          <Plus size={15} aria-hidden="true" /> Novo
+        </button>
+      </div>
+      {sorted.length === 0 ? (
+        <p className="evcard__empty">
+          {loading ? 'Carregando…' : 'Nenhum atendimento neste dia.'}
+          {!loading && <span>Clique em "Novo" ou num horário da grade para agendar.</span>}
+        </p>
+      ) : (
+        <ul className="evcard__list">
+          {sorted.map((a) => (
+            <li key={a.id}>
+              <button type="button" className="ev" onClick={() => onOpen(a.id)} onContextMenu={(e) => onMenu(e, a)}>
+                <span className="ev__time">
+                  <strong>{formatTime(a.start)}</strong>
+                  <span>{a.duration} min</span>
+                </span>
+                <span className="ev__body">
+                  <span className="ev__top">
+                    <span className="ev__name">{a.client}</span>
+                    <StatusBadge status={a.status} />
+                  </span>
+                  <span className="ev__meta">
+                    {a.service} · {proName(a.professionalId)} · {formatBRL(a.price)}
+                  </span>
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  )
+}
+
 export default function Agenda() {
   const isMobile = useMediaQuery('(max-width: 767px)')
-  const { professionals, appointments, loading, error, focus, reload } = useAgenda()
+  const isDesktop = useMediaQuery('(min-width: 1100px)')
+  const { professionals, appointments, workingHours, loading, error, focus, reload, update } = useAgenda()
+  const [params, setParams] = useSearchParams()
+  const [editingHours, setEditingHours] = useState(false)
   const [date, setDate] = useState(() => new Date())
   const [proFilter, setProFilter] = useState<string>('all')
-  const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [creating, setCreating] = useState<{ date: string; start: number; professionalId?: string } | null>(null)
+  const [dialog, setDialog] = useState<{ id: string; reschedule: boolean } | null>(null)
+  const [creating, setCreating] = useState<NewInitial | null>(null)
+  const [menu, setMenu] = useState<{ x: number; y: number; entries: MenuEntry[] } | null>(null)
+  const [confirm, setConfirm] = useState<Appointment | null>(null)
+  const [toast, setToast] = useState<string | null>(null)
+  const [view, setView] = useState<View>('semana')
   const [now, setNow] = useState(() => new Date())
 
   useEffect(() => {
@@ -477,15 +310,10 @@ export default function Agenda() {
 
   useEffect(() => focus(date), [date, focus])
 
-  const week = useMemo(() => {
-    const start = startOfWeek(date, { weekStartsOn: 1 })
-    return Array.from({ length: 7 }, (_, i) => addDays(start, i))
-  }, [date])
-
   // no mobile mostramos uma profissional por vez
   const activePro = isMobile && proFilter === 'all' ? (professionals[0]?.id ?? 'all') : proFilter
   const visiblePros = activePro === 'all' ? professionals : professionals.filter((p) => p.id === activePro)
-  const selected = appointments.find((a) => a.id === selectedId) ?? null
+  const selected = dialog ? (appointments.find((a) => a.id === dialog.id) ?? null) : null
 
   const today = dayKey(date)
   const dayAppointments = appointments.filter((a) => a.date === today && a.status !== 'cancelado')
@@ -500,53 +328,127 @@ export default function Agenda() {
   const showNow = isToday && nowMinutes >= START_HOUR * 60 && nowMinutes < END_HOUR * 60
   const gridHeight = hours.length * HOUR_H
 
-  const openSlot = (e: React.MouseEvent<HTMLDivElement>, professionalId: string) => {
-    if (e.target !== e.currentTarget && !(e.target as HTMLElement).classList.contains('agenda__line')) return
+  const notify = useCallback((message: string) => setToast(message), [])
+  useEffect(() => {
+    if (!toast) return
+    const id = setTimeout(() => setToast(null), 3500)
+    return () => clearTimeout(id)
+  }, [toast])
+  const closeMenu = useCallback(() => setMenu(null), [])
+
+  // /dashboard/agenda?horarios=1 abre o horário de atendimento (atalho do Meu site)
+  useEffect(() => {
+    if (params.get('horarios') !== '1') return
+    setEditingHours(true)
+    setParams({}, { replace: true })
+  }, [params, setParams])
+
+  const newNow = () => setCreating({ date: today, start: null })
+
+  /** minuto do dia sob o cursor na coluna, de 15 em 15 */
+  const minuteAt = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect()
-    const minutes = START_HOUR * 60 + Math.floor(((e.clientY - rect.top) / HOUR_H) * 4) * 15
-    setCreating({ date: today, start: minutes, professionalId })
+    return START_HOUR * 60 + Math.floor(((e.clientY - rect.top) / HOUR_H) * 4) * 15
+  }
+  const onBackground = (e: React.MouseEvent<HTMLDivElement>) =>
+    e.target === e.currentTarget || (e.target as HTMLElement).classList.contains('agenda__line')
+
+  const openSlot = (e: React.MouseEvent<HTMLDivElement>, professionalId: string) => {
+    if (!onBackground(e)) return
+    setCreating({ date: today, start: minuteAt(e), professionalId })
+  }
+
+  const slotMenu = (e: React.MouseEvent<HTMLDivElement>, professionalId: string) => {
+    if (!onBackground(e)) return
+    e.preventDefault()
+    const minutes = minuteAt(e)
+    setMenu({
+      x: e.clientX,
+      y: e.clientY,
+      entries: [
+        {
+          kind: 'item',
+          label: `Novo agendamento às ${formatTime(minutes)}`,
+          hint: 'N',
+          icon: CalendarPlus,
+          disabled: professionals.length === 0,
+          onSelect: () => setCreating({ date: today, start: minutes, professionalId }),
+        },
+        { kind: 'item', label: 'Ir para hoje', hint: 'H', icon: RotateCcw, onSelect: () => setDate(new Date()) },
+      ],
+    })
+  }
+
+  const patch = async (a: Appointment, changes: Parameters<typeof update>[1], ok: string) => {
+    const message = await update(a.id, changes)
+    notify(message ?? ok)
+  }
+
+  const duplicate = (a: Appointment) =>
+    setCreating({ date: a.date, start: null, professionalId: a.professionalId, clientName: a.client, serviceId: a.serviceId ?? undefined })
+
+  const appointmentMenu = (e: React.MouseEvent, a: Appointment) => {
+    e.preventDefault()
+    e.stopPropagation()
+    const link = whatsappLink(a)
+    setMenu({
+      x: e.clientX,
+      y: e.clientY,
+      entries: appointmentEntries(
+        a,
+        professionals,
+        {
+          status: (st) => void patch(a, { status: st }, `${a.client}: ${STATUS_NAME[st]}`),
+          professional: (id) => {
+            const name = professionals.find((p) => p.id === id)?.name ?? ''
+            const clash = findConflict(appointments, { professionalId: id, date: a.date, start: a.start, duration: a.duration }, a.id)
+            if (clash) notify(`${name} já tem ${clash.client} nesse horário`)
+            else void patch(a, { professionalId: id }, `${a.client} agora com ${name}`)
+          },
+          reschedule: () => setDialog({ id: a.id, reschedule: true }),
+          whatsapp: () => link && window.open(link, '_blank', 'noopener'),
+          duplicate: () => duplicate(a),
+          fault: () => void patch(a, { status: 'faltou' }, `Falta registrada: ${a.client}`),
+          cancel: () => setConfirm(a),
+        },
+        Boolean(link),
+      ),
+    })
   }
 
   return (
-    <div className="page">
-      <header className="page__head">
-        <div>
-          <p className="eyebrow">Agenda</p>
-          <h1 className="page__title">
-            {format(date, "EEEE, d 'de' MMMM", { locale: ptBR })
-              .split(',')
-              .map((part, i) =>
-                i === 0 ? <Em key={i}>{part[0].toUpperCase() + part.slice(1)}</Em> : <span key={i}>,{part}</span>,
-              )}
-          </h1>
-          <p className="card__sub">
-            {loading
-              ? 'Carregando…'
-              : dayAppointments.length === 0
-                ? 'Nenhum atendimento neste dia.'
-                : `${dayAppointments.length} ${dayAppointments.length === 1 ? 'atendimento' : 'atendimentos'}`}
-          </p>
-        </div>
-        <div className="page__actions">
-          <Button variant="ghost" size="sm" icon aria-label="Dia anterior" onClick={() => setDate((d) => addDays(d, -1))}>
-            <ChevronLeft size={18} />
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => setDate(new Date())}>
-            Hoje
-          </Button>
-          <Button variant="ghost" size="sm" icon aria-label="Próximo dia" onClick={() => setDate((d) => addDays(d, 1))}>
-            <ChevronRight size={18} />
-          </Button>
-          <Button
-            size="sm"
-            disabled={professionals.length === 0}
-            onClick={() => setCreating({ date: today, start: Math.max(8 * 60, Math.ceil(nowMinutes / 30) * 30) })}
-          >
-            <Plus size={16} aria-hidden="true" />
-            <span className="hide-sm">Novo</span>
-          </Button>
-        </div>
-      </header>
+    <div className="page agendapage">
+      <CalendarCard
+        side={isDesktop}
+        date={date}
+        now={now}
+        view={view}
+        counts={countByDay}
+        summary={
+          loading
+            ? 'Carregando…'
+            : dayAppointments.length === 0
+              ? 'Nenhum atendimento neste dia'
+              : `${dayAppointments.length} ${dayAppointments.length === 1 ? 'atendimento' : 'atendimentos'} em ${format(date, "d 'de' MMMM", { locale: ptBR })}`
+        }
+        canCreate={professionals.length > 0}
+        onView={setView}
+        onDate={setDate}
+        onNew={newNow}
+      />
+
+      {isDesktop && (
+        <DayList
+          date={date}
+          items={dayAppointments}
+          professionals={professionals}
+          loading={loading}
+          canCreate={professionals.length > 0}
+          onOpen={(id) => setDialog({ id, reschedule: false })}
+          onMenu={appointmentMenu}
+          onNew={newNow}
+        />
+      )}
 
       {error && (
         <p className="dialog__error" role="alert">
@@ -561,27 +463,6 @@ export default function Agenda() {
         <FirstProfessional />
       ) : (
         <>
-          <div className="weekstrip" role="tablist" aria-label="Dias da semana">
-            {week.map((d) => {
-              const n = countByDay.get(dayKey(d)) ?? 0
-              return (
-                <button
-                  key={d.toISOString()}
-                  type="button"
-                  role="tab"
-                  aria-selected={isSameDay(d, date)}
-                  className={`weekstrip__day ${isSameDay(d, now) ? 'is-today' : ''}`}
-                  onClick={() => setDate(d)}
-                  aria-label={`${format(d, "EEEE, d 'de' MMMM", { locale: ptBR })}${n ? `, ${n} atendimentos` : ''}`}
-                >
-                  <span className="weekstrip__name">{format(d, 'EEEE', { locale: ptBR }).slice(0, 3)}</span>
-                  <span className="weekstrip__num">{format(d, 'd')}</span>
-                  <span className={`weekstrip__dot ${n ? 'is-on' : ''}`} aria-hidden="true" />
-                </button>
-              )
-            })}
-          </div>
-
           <div className="chips" role="group" aria-label="Filtrar por profissional">
             {!isMobile && (
               <button type="button" className="chip" aria-pressed={activePro === 'all'} onClick={() => setProFilter('all')}>
@@ -599,6 +480,9 @@ export default function Agenda() {
                 {p.name}
               </button>
             ))}
+            <button type="button" className="chip chip--ghost" onClick={() => setEditingHours(true)}>
+              <Clock size={14} aria-hidden="true" /> Horário de atendimento
+            </button>
           </div>
 
           <div className="agenda">
@@ -628,9 +512,17 @@ export default function Agenda() {
               </div>
 
               {visiblePros.map((p) => (
-                <div key={p.id} className="agenda__col agenda__col--click" onClick={(e) => openSlot(e, p.id)}>
+                <div key={p.id} className="agenda__col agenda__col--click" onClick={(e) => openSlot(e, p.id)} onContextMenu={(e) => slotMenu(e, p.id)}>
                   {hours.map((h) => (
                     <div key={h} className="agenda__line" style={{ top: (h - START_HOUR) * HOUR_H }} />
+                  ))}
+                  {closedRanges(workingHours[p.id], date.getDay()).map(([from, to]) => (
+                    <div
+                      key={from}
+                      className="agenda__closed"
+                      style={{ top: toY(from), height: ((to - from) / 60) * HOUR_H }}
+                      title="Fora do horário de atendimento"
+                    />
                   ))}
                   {dayAppointments
                     .filter((a) => a.professionalId === p.id)
@@ -640,7 +532,8 @@ export default function Agenda() {
                         type="button"
                         className={`appt appt--${a.status}`}
                         style={{ top: toY(a.start) + 2, height: (a.duration / 60) * HOUR_H - 4 }}
-                        onClick={() => setSelectedId(a.id)}
+                        onClick={() => setDialog({ id: a.id, reschedule: false })}
+                        onContextMenu={(e) => appointmentMenu(e, a)}
                       >
                         <span className="appt__time">
                           {formatTime(a.start)} – {formatTime(a.start + a.duration)}
@@ -670,8 +563,33 @@ export default function Agenda() {
         </>
       )}
 
-      {selected && <AppointmentDialog key={selected.id} appointment={selected} onClose={() => setSelectedId(null)} />}
-      {creating && <NewAppointmentDialog initial={creating} onClose={() => setCreating(null)} />}
+      {selected && dialog && (
+        <AppointmentDialog
+          key={`${selected.id}-${dialog.reschedule}`}
+          appointment={selected}
+          startRescheduling={dialog.reschedule}
+          onClose={() => setDialog(null)}
+          notify={notify}
+          onDuplicate={duplicate}
+        />
+      )}
+      {editingHours && <WorkingHoursDialog onClose={() => setEditingHours(false)} notify={notify} />}
+      {creating && <NewAppointmentDialog initial={creating} onClose={() => setCreating(null)} notify={notify} />}
+      {confirm && (
+        <ConfirmDialog
+          title="Cancelar atendimento?"
+          text={`O horário de ${confirm.client} (${formatTime(confirm.start)}) volta a ficar livre.`}
+          confirmLabel="Cancelar atendimento"
+          onClose={() => setConfirm(null)}
+          onConfirm={() => void patch(confirm, { status: 'cancelado' }, `Cancelado: ${confirm.client}`)}
+        />
+      )}
+      {menu && <ContextMenu x={menu.x} y={menu.y} entries={menu.entries} onClose={closeMenu} />}
+      {toast && (
+        <div className="toast" role="status">
+          {toast}
+        </div>
+      )}
     </div>
   )
 }
