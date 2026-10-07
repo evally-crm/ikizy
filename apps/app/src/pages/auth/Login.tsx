@@ -1,10 +1,10 @@
 import { useState, type FormEvent } from 'react'
 import { Link, Navigate } from 'react-router-dom'
-import { ArrowRight, Lock, Mail } from 'lucide-react'
+import { Lock, Mail } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
 import { ROUTES } from '../../lib/routes'
-import { Button, Em } from '../../components/ui'
-import { AuthCard, AuthField, AuthLayout, FormMessages, GoogleButton } from './AuthLayout'
+import { Em } from '../../components/ui'
+import { AuthCard, AuthField, AuthLayout, AuthSubmit, FormMessages, GoogleButton } from './AuthLayout'
 
 export default function Login() {
   const { status, signIn, signInWithGoogle } = useAuth()
@@ -36,9 +36,14 @@ export default function Login() {
   }
 
   return (
-    <AuthLayout>
+    <AuthLayout
+      topAction={
+        <Link to={ROUTES.signup} className="auth__toplink">
+          Criar conta
+        </Link>
+      }
+    >
       <AuthCard
-        tabs="login"
         aside={<GoogleButton onClick={onGoogle} disabled={busy} />}
         title={
           <>
@@ -72,12 +77,7 @@ export default function Login() {
             }
           />
           <FormMessages error={error} />
-          <Button type="submit" className="auth__submit" disabled={busy}>
-            {busy ? 'Aguarde…' : 'Entrar'}
-            <span className="auth__arrow" aria-hidden="true">
-              <ArrowRight size={18} />
-            </span>
-          </Button>
+          <AuthSubmit label="Entrar" disabled={busy} />
         </form>
       </AuthCard>
     </AuthLayout>

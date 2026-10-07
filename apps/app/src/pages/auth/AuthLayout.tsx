@@ -1,10 +1,10 @@
 import { useId, type InputHTMLAttributes, type ReactNode } from 'react'
-import { Link } from 'react-router-dom'
+import { ArrowRight } from 'lucide-react'
 import { Card } from '../../components/ui'
-import { ROUTES } from '../../lib/routes'
 import { HalftoneArt } from './HalftoneArt'
 
-export function AuthLayout({ children }: { children: ReactNode }) {
+/** `topAction` fica à direita da marca (ex.: link "Criar conta") */
+export function AuthLayout({ children, topAction }: { children: ReactNode; topAction?: ReactNode }) {
   return (
     <div className="auth">
       <div className="auth__bg" aria-hidden="true">
@@ -13,50 +13,32 @@ export function AuthLayout({ children }: { children: ReactNode }) {
       </div>
       <HalftoneArt />
       <div className="auth__box">
-        <p className="logo auth__logo">
-          IKIZY<span className="logo__dot">.</span>
-        </p>
+        <header className="auth__top">
+          <p className="logo auth__logo">
+            IKIZY<span className="logo__dot">.</span>
+          </p>
+          {topAction && <div className="auth__top-action">{topAction}</div>}
+        </header>
         {children}
       </div>
     </div>
   )
 }
 
-/** alterna entre entrar e criar conta: pílula preta com o item ativo em branco */
-function AuthTabs({ active }: { active: 'login' | 'signup' }) {
-  const items = [
-    { key: 'login', to: ROUTES.login, label: 'Entrar' },
-    { key: 'signup', to: ROUTES.signup, label: 'Criar conta' },
-  ] as const
-  return (
-    <nav className="auth__tabs" aria-label="Acesso">
-      {items.map((item) => (
-        <Link key={item.key} to={item.to} aria-current={item.key === active ? 'page' : undefined}>
-          {item.label}
-        </Link>
-      ))}
-    </nav>
-  )
-}
-
-/** cartão padrão das telas de acesso; `tabs` mostra o seletor Entrar / Criar conta */
+/** bloco das telas de acesso, sem caixa: os elementos ficam soltos sobre o fundo; `aside` fica à direita do título */
 export function AuthCard({
   title,
   subtitle,
-  tabs,
   aside,
   children,
 }: {
   title: ReactNode
   subtitle?: string
-  tabs?: 'login' | 'signup'
-  /** fica à direita do título, na mesma linha (ex.: pílula do Google) */
   aside?: ReactNode
   children: ReactNode
 }) {
   return (
     <Card className="auth__card">
-      {tabs && <AuthTabs active={tabs} />}
       <div className="auth__head">
         <h1 className="auth__title">{title}</h1>
         {aside}
@@ -109,6 +91,28 @@ export function FormMessages({ error, notice }: { error: string | null; notice?:
         </p>
       )}
     </>
+  )
+}
+
+/** rodapé do formulário: aviso legal à esquerda e o disco escuro com seta (envia o formulário) à direita */
+export function AuthSubmit({ label, disabled }: { label: string; disabled?: boolean }) {
+  return (
+    <div className="auth__foot">
+      <p className="auth__legal">
+        Ao continuar, você concorda com os{' '}
+        <a href="https://ikizy.com/termos" target="_blank" rel="noreferrer">
+          Termos de uso
+        </a>{' '}
+        e a{' '}
+        <a href="https://ikizy.com/privacidade" target="_blank" rel="noreferrer">
+          Política de privacidade
+        </a>
+        .
+      </p>
+      <button type="submit" className="auth__go" disabled={disabled} aria-label={label} title={label}>
+        <ArrowRight size={22} aria-hidden="true" />
+      </button>
+    </div>
   )
 }
 

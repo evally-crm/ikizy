@@ -1,10 +1,10 @@
 import { useState, type FormEvent } from 'react'
-import { Navigate } from 'react-router-dom'
-import { ArrowRight, Lock, Mail } from 'lucide-react'
+import { Link, Navigate } from 'react-router-dom'
+import { Lock, Mail } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
 import { ROUTES } from '../../lib/routes'
-import { Button, Em } from '../../components/ui'
-import { AuthCard, AuthField, AuthLayout, FormMessages, GoogleButton } from './AuthLayout'
+import { Em } from '../../components/ui'
+import { AuthCard, AuthField, AuthLayout, AuthSubmit, FormMessages, GoogleButton } from './AuthLayout'
 
 export default function Cadastro() {
   const { status, signUp, signInWithGoogle } = useAuth()
@@ -46,9 +46,14 @@ export default function Cadastro() {
   }
 
   return (
-    <AuthLayout>
+    <AuthLayout
+      topAction={
+        <Link to={ROUTES.login} className="auth__toplink">
+          Entrar
+        </Link>
+      }
+    >
       <AuthCard
-        tabs="signup"
         aside={<GoogleButton onClick={onGoogle} disabled={busy} />}
         title={
           <>
@@ -79,12 +84,7 @@ export default function Cadastro() {
             onChange={(e) => setPassword(e.target.value)}
           />
           <FormMessages error={error} notice={notice} />
-          <Button type="submit" className="auth__submit" disabled={busy}>
-            {busy ? 'Aguarde…' : 'Criar conta'}
-            <span className="auth__arrow" aria-hidden="true">
-              <ArrowRight size={18} />
-            </span>
-          </Button>
+          <AuthSubmit label="Criar conta" disabled={busy} />
         </form>
       </AuthCard>
     </AuthLayout>
