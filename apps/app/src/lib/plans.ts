@@ -62,7 +62,15 @@ export const MIN_TRIAL_END_HOURS = 49
 /** chave que identifica o preço mensal de cada plano no Stripe (criado por scripts/stripe-setup.mjs) */
 export const priceLookupKey = (plan: PlanId) => `ikizy_${plan}_monthly`
 
-export const pixAmountCents = (plan: PlanId, months: PixMonths) => PLANS[plan].cents * months
+/** desconto (em %) de quem paga mais meses adiantado no Pix */
+export const PIX_DISCOUNT_PCT: Record<PixMonths, number> = { 1: 0, 3: 0, 12: 5 }
+
+/** valor cheio do período, sem desconto */
+export const pixFullCents = (plan: PlanId, months: PixMonths) => PLANS[plan].cents * months
+
+/** valor cobrado no Pix para o período, já com o desconto (é o que o servidor manda ao Stripe) */
+export const pixAmountCents = (plan: PlanId, months: PixMonths) =>
+  Math.round((pixFullCents(plan, months) * (100 - PIX_DISCOUNT_PCT[months])) / 100)
 
 export const monthsLabel = (months: number) => (months === 1 ? '1 mês' : `${months} meses`)
 

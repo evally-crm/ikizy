@@ -8,6 +8,7 @@ import { Button, Card, Em, Money } from '../components/ui'
 import { BillingError, openPortal, startCheckout } from '../lib/billingApi'
 import { formatBRL } from '../lib/format'
 import {
+  PIX_DISCOUNT_PCT,
   PIX_MONTHS,
   PLAN_IDS,
   PLANS,
@@ -15,6 +16,7 @@ import {
   monthsLabel,
   periodEnd,
   pixAmountCents,
+  pixFullCents,
   type BillingMethod,
   type PixMonths,
   type PlanId,
@@ -151,6 +153,7 @@ export default function Assinatura() {
               onClick={() => setMonths(m)}
             >
               {monthsLabel(m)}
+              {PIX_DISCOUNT_PCT[m] > 0 && <small className="seg__off">{PIX_DISCOUNT_PCT[m]}% off</small>}
             </button>
           ))}
         </div>
@@ -162,6 +165,9 @@ export default function Assinatura() {
           const plan = PLANS[id]
           const current = sub?.plan === id && state !== 'expired'
           const inTrialOffer = id === 'solo' && state === 'trial'
+          const total = pixAmountCents(id, months)
+          const full = pixFullCents(id, months)
+          const discount = PIX_DISCOUNT_PCT[months]
           return (
             <Card key={id} variant={current ? 'soft' : undefined} className="billing-plan">
               <div className="billing-plan__head">
@@ -171,8 +177,18 @@ export default function Assinatura() {
               </div>
               <p className="billing-plan__audience">{plan.audience}</p>
               <p className="billing-plan__price">
-                <Money value={plan.cents / 100} size="xl" />
-                <span>/mês</span>
+                <Money value={total / 100} size="xl" />
+                <span>{months === 1 ? '/mês' : `/${monthsLabel(months)}`}</span>
+              </p>
+              <p className="billing-plan__equiv">
+                {months === 1 ? (
+                  'No Pix por 1 mês, ou renovação mensal no cartão'
+                ) : (
+                  <>
+                    {discount > 0 ? <s>{formatBRL(full / 100)}</s> : null} {discount > 0 ? 'no' : 'No'} Pix, equivale a {formatBRL(total / months / 100)}/mês
+                    {discount > 0 && ` (${discount}% de desconto)`}
+                  </>
+                )}
               </p>
               <ul className="billing-plan__list">
                 {plan.features.map((f) => (
@@ -190,11 +206,11 @@ export default function Assinatura() {
                 <div className="billing-plan__actions">
                   <Button disabled={!isOwner || busy !== null} onClick={() => pay(id, 'card')}>
                     <CreditCard size={16} aria-hidden="true" />
-                    {busy === `${id}-card` ? 'Abrindo…' : inTrialOffer ? 'Assinar no cartão' : 'Assinar com cartão'}
+                    {busy === `${id}-card` ? 'Abrindo…' : `Cartão · ${formatBRL(plan.cents / 100)}/mês`}
                   </Button>
                   <Button variant="light" disabled={!isOwner || busy !== null} onClick={() => pay(id, 'pix')}>
                     <QrCode size={16} aria-hidden="true" />
-                    {busy === `${id}-pix` ? 'Abrindo…' : `Pix · ${formatBRL(pixAmountCents(id, months) / 100)}`}
+                    {busy === `${id}-pix` ? 'Abrindo…' : `Pix · ${formatBRL(total / 100)}`}
                   </Button>
                 </div>
               )}

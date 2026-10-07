@@ -12,7 +12,7 @@ import {
   type Membership,
   type SubscriptionRow,
 } from './billing.js'
-import { accessState, daysLeft, parseSubscription, periodEnd, pixAmountCents, type SubscriptionInfo } from '../../src/lib/plans.js'
+import { accessState, daysLeft, parseSubscription, periodEnd, pixAmountCents, pixFullCents, type SubscriptionInfo } from '../../src/lib/plans.js'
 
 const DAY = 24 * 60 * 60 * 1000
 const NOW = new Date('2026-10-10T12:00:00Z')
@@ -111,6 +111,9 @@ describe('createCheckout', () => {
     assert.deepEqual(s.allowed_payment_method_types, ['pix'])
     assert.equal(s.line_items[0].price_data.currency, 'brl')
     assert.equal(s.line_items[0].price_data.unit_amount, 2990 * 3)
+    // 12 meses: o servidor cobra o valor com desconto
+    await createCheckout(deps(fakeDb().db, stripe), user, { plan: 'studio', method: 'pix', months: 12 })
+    assert.equal((created[1] as Record<string, any>).line_items[0].price_data.unit_amount, 34086)
     assert.deepEqual(s.metadata, { kind: 'pix_prepaid', salon_id: 'salon-1', plan: 'studio', months: '3' })
     assert.equal(s.customer, 'cus_new_1')
     assert.deepEqual(calls.setCustomerId, ['cus_new_1'])
@@ -334,7 +337,14 @@ describe('accessState', () => {
     assert.equal(parseSubscription({ plan: 'x' }), null)
   })
   it('preços em centavos', () => {
-    assert.equal(pixAmountCents('solo', 12), 990 * 12)
     assert.equal(pixAmountCents('salao', 1), 5990)
+    assert.equal(pixAmountCents('studio', 3), 2990 * 3) // 3 meses sem desconto
+  })
+  it('Pix de 12 meses tem 5% de desconto, sempre em centavos inteiros', () => {
+    assert.equal(pixFullCents('solo', 12), 11880)
+    assert.equal(pixAmountCents('solo', 12), 11286)
+    assert.equal(pixAmountCents('studio', 12), 34086)
+    assert.equal(pixAmountCents('salao', 12), 68286)
+    for (const p of ['solo', 'studio', 'salao'] as const) assert.ok(Number.isInteger(pixAmountCents(p, 12)))
   })
 })
