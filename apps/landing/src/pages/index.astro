@@ -61,14 +61,16 @@ const faq = [
   { q: 'O que é a IKIZY?', a: 'A IKIZY é um sistema de gestão online para salões e negócios de beleza. Reúne agenda, cadastro de clientes, financeiro, equipe e um site próprio para receber agendamentos.' },
   { q: 'Para quem a IKIZY é indicada?', a: 'Para cabeleireiras, nail designers, profissionais de cílios e sobrancelhas, studios e salões, de quem atende sozinha a quem tem equipe.' },
   { q: 'Preciso instalar alguma coisa?', a: 'Não. A IKIZY funciona direto no navegador, no computador ou no celular.' },
-  { q: 'Posso testar antes de assinar?', a: 'Sim. Crie sua conta e explore o sistema antes de escolher um plano.' },
+  { q: 'Posso testar antes de assinar?', a: 'Sim. O plano Solo tem 1 mês grátis, sem pedir cartão. Crie sua conta e use o sistema durante o teste antes de decidir.' },
+  { q: 'Como posso pagar?', a: 'No cartão de crédito, com renovação automática todo mês, ou no Pix, pagando 1, 3 ou 12 meses adiantado. O Pix não renova sozinho: avisamos antes de o período acabar.' },
+  { q: 'O que acontece quando o teste ou o período pago termina?', a: 'O sistema fica só para leitura: seus dados continuam salvos e você pode consultá-los. Ao escolher um plano, tudo volta a funcionar.' },
   { q: 'Meus dados ficam separados dos de outros negócios?', a: 'Sim. Cada negócio enxerga apenas os próprios dados, e o acesso da equipe é controlado por papéis: dona, gerente, recepção e profissional.' },
 ]
 
 const extras = ['Equipe e comissões', 'Serviços e custos', 'Relatórios', 'Lembretes por WhatsApp', 'Acesso por papel: dona, gerente, recepção e profissional']
 
 const plans = [
-  { name: 'Solo', price: '9,90', hot: false, items: ['Para quem atende sozinha', 'Agenda e clientes', 'Financeiro básico', 'Site do negócio'] },
+  { name: 'Solo', price: '9,90', hot: false, items: ['1 mês grátis, sem cartão', 'Para quem atende sozinha', 'Agenda e clientes', 'Financeiro básico', 'Site do negócio'] },
   { name: 'Studio', price: '29,90', hot: true, items: ['Equipe pequena', 'Tudo do Solo', 'Comissões por profissional', 'Fechamento mensal em recibo', 'Relatórios'] },
   { name: 'Salão', price: '59,90', hot: false, items: ['Equipe maior', 'Tudo do Studio', 'Mais profissionais e permissões', 'Atendimento prioritário'] },
 ]
@@ -301,6 +303,7 @@ const faqSchema = {
         ))
       }
     </div>
+    <p class="note">Pague no cartão, com renovação automática, ou no Pix, de 1, 3 ou 12 meses adiantado.</p>
   </section>
 
   <!-- SOBRE -->
