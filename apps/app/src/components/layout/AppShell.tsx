@@ -2,7 +2,9 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { Bell, ChevronDown, Ellipsis, LogOut, Search, X } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
+import { SubscriptionProvider } from '../../billing/SubscriptionProvider'
 import { AgendaProvider } from '../../data/AgendaProvider'
+import BillingBanner from '../BillingBanner'
 import { navItems } from './nav'
 import { ROUTES } from '../../lib/routes'
 import { Avatar, Button } from '../ui'
@@ -261,6 +263,7 @@ export default function AppShell() {
   const closeEdit = useRef(() => setEditing(false)).current
 
   return (
+    <SubscriptionProvider>
     <div className="shell">
       <header className="topbar">
         <div className="topbar__inner">
@@ -287,11 +290,13 @@ export default function AppShell() {
       </header>
       <main className="content">
         <AgendaProvider>
+          <BillingBanner />
           <Outlet />
         </AgendaProvider>
       </main>
       <BottomNav />
       {editing && <ProfileDialog onClose={closeEdit} />}
     </div>
+    </SubscriptionProvider>
   )
 }

@@ -4,6 +4,7 @@ import RequireSalon from './auth/RequireSalon'
 import AppShell from './components/layout/AppShell'
 import { ROUTES } from './lib/routes'
 import Agenda from './pages/Agenda'
+import Assinatura from './pages/Assinatura'
 import Cadastro from './pages/auth/Cadastro'
 import Login from './pages/auth/Login'
 import Onboarding from './pages/auth/Onboarding'
@@ -34,6 +35,7 @@ export default function App() {
             <Route path="clientes/:id" element={<Clientes />} />
             <Route path="financeiro" element={<Financeiro />} />
             <Route path="site" element={<MeuSite />} />
+            <Route path="assinatura" element={<Assinatura />} />
             <Route path="*" element={<Placeholder />} />
           </Route>
         </Route>
