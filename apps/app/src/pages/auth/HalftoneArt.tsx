@@ -19,6 +19,8 @@ function draw(canvas: HTMLCanvasElement, t: number) {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
   ctx.clearRect(0, 0, width, height)
   ctx.fillStyle = `rgb(${INK})`
+  // no desktop a arte ocupa o painel direito: massa mais densa junto ao formulário, dissolvendo para a borda
+  const split = window.innerWidth >= 1024
 
   for (let y = STEP / 2; y < height; y += STEP) {
     for (let x = STEP / 2; x < width; x += STEP) {
@@ -27,7 +29,8 @@ function draw(canvas: HTMLCanvasElement, t: number) {
         Math.sin(y * 0.014 - x * 0.007 + 1.7 - t * 0.8) * 0.8 +
         Math.sin((x + y) * 0.006 + Math.sin(x * 0.01 - t * 0.5) * 1.6) * 0.6
       const v = (wave + 2.4) / 4.8 // 0..1
-      const size = Math.pow(v, 2.2) * STEP * 0.55
+      const mass = split ? 0.5 + 0.8 * Math.pow(1 - x / width, 0.9) : 1
+      const size = Math.pow(v, 2.2) * STEP * 0.55 * mass
       if (size < 0.5) continue
       ctx.beginPath()
       ctx.arc(x, y, size, 0, Math.PI * 2)

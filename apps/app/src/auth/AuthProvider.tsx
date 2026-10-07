@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { isNeonConfigured, neon, type NeonSession as Session } from '../lib/neon'
 import { dash, ROUTES } from '../lib/routes'
+import type { SalonSetup } from '../lib/segments'
 
 export type MemberRole = 'owner' | 'manager' | 'reception' | 'professional'
 
@@ -27,7 +28,8 @@ interface AuthState {
   /** abre o login do Google; ao voltar, a sessão é restaurada e o dashboard decide entre salão ou onboarding */
   signInWithGoogle: () => Promise<string | null>
   signOut: () => Promise<void>
-  createSalon: (name: string, slug: string) => Promise<string | null>
+  /** cria o negócio e, se houver `setup`, já cadastra serviços e a profissional sugeridos pelo questionário */
+  createSalon: (name: string, slug: string, setup?: SalonSetup) => Promise<string | null>
 }
 
 const AuthContext = createContext<AuthState | null>(null)
@@ -137,9 +139,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await neon?.auth.signOut()
         setSalon(null)
       },
-      async createSalon(name, slug) {
+      async createSalon(name, slug, setup) {
         if (!neon || !userId) return 'Você precisa estar logada.'
-        const { error } = await neon.rpc('create_salon', { p_name: name, p_slug: slug })
+        const { data: salonId, error } = await neon.rpc('create_salon', { p_name: name, p_slug: slug })
         if (error) {
           if (error.message.includes('salons_slug_key') || error.code === '23505') {
             return error.message.includes('já pertence') ? 'Esta conta já tem um salão.' : 'Este endereço já está em uso. Escolha outro.'
@@ -147,6 +149,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (error.message.includes('salons_slug_not_reserved')) return 'Esse endereço é reservado. Escolha outro.'
           if (error.code === '23514') return 'Use de 3 a 40 letras minúsculas, números e hífen.'
           return 'Não foi possível criar o salão agora. Tente novamente.'
+        }
+        // monta o que o questionário coletou; se falhar, o negócio já existe e a pessoa completa no painel
+        if (setup && typeof salonId === 'string') {
+          if (setup.services.length > 0) {
+            await neon.from('services').insert(setup.services.map((s) => ({ ...s, salon_id: salonId })))
+          }
+          if (setup.professionalName) {
+            await neon.from('professionals').insert({ salon_id: salonId, user_id: userId, name: setup.professionalName })
+          }
         }
         await loadSalon(userId)
         return null
