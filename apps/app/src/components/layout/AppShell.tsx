@@ -141,7 +141,7 @@ function BottomNav() {
 
 /** editar cadastro: nome da pessoa e do negócio */
 function ProfileDialog({ onClose }: { onClose: () => void }) {
-  const { displayName, salon, session, updateProfile } = useAuth()
+  const { displayName, salon, session, updateProfile, signOut } = useAuth()
   const [userName, setUserName] = useState(displayName)
   const [salonName, setSalonName] = useState(salon?.name ?? '')
   const [busy, setBusy] = useState(false)
@@ -240,13 +240,18 @@ function ProfileDialog({ onClose }: { onClose: () => void }) {
             {busy ? 'Salvando…' : 'Salvar'}
           </Button>
         </div>
+        {session && (
+          <button type="button" className="dialog__signout" onClick={() => void signOut()}>
+            <LogOut size={16} aria-hidden="true" /> Sair da conta
+          </button>
+        )}
       </form>
     </div>
   )
 }
 
 export default function AppShell() {
-  const { session, salon, signOut, displayName } = useAuth()
+  const { salon, displayName } = useAuth()
   const [editing, setEditing] = useState(false)
   const closeEdit = useRef(() => setEditing(false)).current
 
@@ -271,11 +276,6 @@ export default function AppShell() {
                 <p className="user__role">{salon?.name ?? 'Studio Maria Beauty'}</p>
               </div>
             </button>
-            {session && (
-              <Button variant="soft" icon aria-label="Sair" onClick={() => void signOut()}>
-                <LogOut size={18} />
-              </Button>
-            )}
           </div>
         </div>
       </header>

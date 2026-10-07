@@ -11,7 +11,7 @@ html {
 body {
   margin: 0;
   min-width: 320px;
-  background: var(--bg);
+  background: var(--page-bg);
   color: var(--ink-700);
   font-family: var(--font-sans);
   font-size: 15px;

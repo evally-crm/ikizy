@@ -10,6 +10,8 @@
 
   /* superfícies */
   --bg: #e8e8ea;
+  /* fundo geral das páginas, mais claro que o --bg usado em chips e campos */
+  --page-bg: #f5f5f7;
   --white: #ffffff;
   --blush: #fcf2ff;
   --gray-200: #dddde0;

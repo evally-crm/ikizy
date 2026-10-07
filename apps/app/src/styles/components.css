@@ -337,6 +337,25 @@
 .dialog__actions .btn {
   flex: 1 1 160px;
 }
+.dialog__signout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+  margin-top: 16px;
+  padding-top: 4px;
+  border: 0;
+  border-top: 1px solid var(--line);
+  background: transparent;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--brand-500);
+}
+.dialog__signout:hover {
+  color: var(--brand-700);
+}
 
 @media (min-width: 768px) {
   .overlay {

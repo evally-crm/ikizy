@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { format, getDay } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { ArrowRight, ArrowUpRight, CalendarDays, ChevronRight, Clock, Send, Wallet } from 'lucide-react'
+import { ArrowRight, ArrowUpRight, CalendarDays, ChevronRight, Clock, Send, TrendingDown, TrendingUp, Wallet } from 'lucide-react'
 import { appointments, professionals, weekRevenue } from '../data/mock'
 import { MONTHLY_GOAL, getMonths } from '../data/finance'
 import { clientTags, daysSince, getClients, TAG_LABEL } from '../data/clients'
@@ -13,6 +13,24 @@ import { Avatar, Card, Em, Money, StatusBadge } from '../components/ui'
 
 const proName = (id: string) => professionals.find((p) => p.id === id)?.name ?? ''
 const short = (v: number) => formatBRL(v).replace(',00', '')
+
+/** janela de atendimento usada no cálculo de ocupação: 9h às 19h */
+const WORK_MINUTES = 10 * 60
+
+/** variação percentual; `invert` quando subir é ruim (ex.: faltas) */
+function Delta({ value, invert = false }: { value: number; invert?: boolean }) {
+  if (!Number.isFinite(value) || Math.abs(value) < 0.5) return <span className="delta">igual ao mês passado</span>
+  const up = value > 0
+  const good = invert ? !up : up
+  const Icon = up ? TrendingUp : TrendingDown
+  return (
+    <span className={`delta ${good ? 'delta--good' : 'delta--bad'}`}>
+      <Icon size={12} aria-hidden="true" />
+      {up ? '+' : '−'}
+      {Math.abs(Math.round(value))}% vs. mês passado
+    </span>
+  )
+}
 
 /** traços verticais tipo "código de barras" que mostram uma proporção */
 function Ticks({ ratio, label }: { ratio: number; label: string }) {
@@ -44,10 +62,25 @@ export default function Dashboard() {
   const weekTotal = weekRevenue.reduce((s, d) => s + d.value, 0)
   const growth = 12
 
-  const month = getMonths(now)[2]
+  const months = getMonths(now)
+  const month = months[2]
+  const prev = months[1]
   const daysLeft = month.daysInMonth - month.elapsedDays
   const goalPct = Math.round((month.gross / MONTHLY_GOAL) * 100)
   const monthName = month.label[0].toUpperCase() + month.label.slice(1)
+
+  const pct = (cur: number, old: number) => (old ? ((cur - old) / old) * 100 : 0)
+  const ticketDelta = pct(month.ticket, prev.ticket)
+  const noShowRate = month.appointments ? (month.noShows / (month.appointments + month.noShows)) * 100 : 0
+  const prevNoShowRate = prev.appointments ? (prev.noShows / (prev.appointments + prev.noShows)) * 100 : 0
+  const noShowDelta = pct(noShowRate, prevNoShowRate)
+  const booked = today.reduce((s, a) => s + a.duration, 0)
+  const capacity = professionals.length * WORK_MINUTES
+  const occupancy = Math.round((booked / capacity) * 100)
+  const freeHours = Math.max(Math.round((capacity - booked) / 60), 0)
+
+  const ranking = [...month.categories].sort((a, b) => b.total - a.total)
+  const topTotal = ranking[0]?.total || 1
 
   const clients = useMemo(() => getClients(now), [now])
   const toContact = clients
@@ -56,7 +89,7 @@ export default function Dashboard() {
     .sort((a, b) => (a.tags[0] === 'aniversario' ? -1 : 0) - (b.tags[0] === 'aniversario' ? -1 : 0))
 
   return (
-    <div className="page page--fit">
+    <div className="page">
       <header className="bar">
         <h1 className="bar__title">
           Olá, {displayName.split(' ')[0]}. Resumo de <Em>hoje</Em>
@@ -252,26 +285,62 @@ export default function Dashboard() {
               <ArrowUpRight size={16} />
             </Link>
           </div>
-          <div className="monthnums">
-            <div className="monthnums__item">
+          <div className="kpis">
+            <div className="kpis__item">
+              <p className="card__sub">Ticket médio</p>
+              <p className="monthnums__value">{short(month.ticket)}</p>
+              <Delta value={ticketDelta} />
+            </div>
+            <div className="kpis__item">
+              <p className="card__sub">Ocupação hoje</p>
+              <p className="monthnums__value">
+                {occupancy}
+                <small>%</small>
+              </p>
+              <span className="delta">
+                {freeHours} {freeHours === 1 ? 'hora livre' : 'horas livres'} na equipe
+              </span>
+            </div>
+            <div className="kpis__item">
+              <p className="card__sub">Faltas e cancelamentos</p>
+              <p className="monthnums__value">
+                {noShowRate.toFixed(1).replace('.', ',')}
+                <small>%</small>
+              </p>
+              <Delta value={noShowDelta} invert />
+            </div>
+            <div className="kpis__item">
               <p className="card__sub">Atendimentos</p>
               <p className="monthnums__value">{month.appointments}</p>
               <Ticks ratio={month.elapsedDays / month.daysInMonth} label="Progresso do mês" />
             </div>
-            <div className="monthnums__item">
-              <p className="card__sub">Novas clientes</p>
-              <p className="monthnums__value">{month.newClients}</p>
-              <Ticks ratio={month.newClients / 16} label="Novas clientes em relação à média" />
-            </div>
-            <div className="monthnums__item">
-              <p className="card__sub">Meta</p>
-              <p className="monthnums__value">
-                {goalPct}
-                <small>%</small>
-              </p>
-              <Ticks ratio={goalPct / 100} label={`${goalPct}% da meta`} />
-            </div>
           </div>
+        </Card>
+
+        {/* ranking de serviços */}
+        <Card className="dash__rank">
+          <div className="card__head">
+            <h2 className="card__title">Serviços que mais rendem em {month.label}</h2>
+            <Link to={dash('/financeiro')} className="textlink">
+              Ver financeiro
+            </Link>
+          </div>
+          <ol className="rank">
+            {ranking.map((c) => (
+              <li key={c.name} className="rank__item">
+                <div className="rank__top">
+                  <p className="upnext__name">{c.name}</p>
+                  <p className="card__sub">
+                    {c.qty} atendimentos · ticket {short(c.qty ? Math.round(c.total / c.qty) : 0)}
+                  </p>
+                  <p className="rank__value">{short(c.total)}</p>
+                </div>
+                <div className="rank__bar" role="img" aria-label={`${c.name}: ${Math.round((c.total / month.gross) * 100)}% do faturamento`}>
+                  <span style={{ width: `${(c.total / topTotal) * 100}%` }} />
+                </div>
+              </li>
+            ))}
+          </ol>
         </Card>
       </div>
     </div>
