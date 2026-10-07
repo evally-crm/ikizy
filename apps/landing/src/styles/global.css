@@ -670,6 +670,21 @@ em,
   gap: 18px;
   font-size: 18px;
 }
+.prose h2 {
+  margin-top: 14px;
+  font-size: 24px;
+  line-height: 1.25;
+}
+.prose ul {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-left: 22px;
+  list-style: disc;
+}
+.prose a {
+  text-decoration: underline;
+}
 .values {
   display: grid;
   gap: 16px;

@@ -1,0 +1,114 @@
+---
+// RASCUNHO: revisar com advogado(a) antes de divulgar.
+import Base from '../layouts/Base.astro'
+import { COMPANY, CONTACT_EMAIL } from '../lib/site'
+---
+
+<Base title="Política de Privacidade" description="Como a IKIZY coleta, usa e protege dados pessoais, de acordo com a LGPD.">
+  <section class="container page-head">
+    <p class="eyebrow">Legal</p>
+    <h1 class="h1" style="margin-top: 10px;">Política de <em>privacidade</em></h1>
+    <p style="margin-top: 12px;">Última atualização: {COMPANY.updatedAt}</p>
+  </section>
+
+  <section class="container" style="padding-bottom: 64px;">
+    <div class="prose">
+      <p>
+        Esta política explica como a IKIZY trata dados pessoais, em conformidade com a Lei Geral de Proteção de Dados
+        (Lei nº 13.709/2018, a LGPD). Ela vale para o site ikizy.com e para o sistema em app.ikizy.com.
+      </p>
+
+      <h2>1. Quem somos</h2>
+      <p>
+        A IKIZY é operada por {COMPANY.legalName}, {COMPANY.document}. Para qualquer assunto de privacidade, fale com a
+        gente em <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
+      </p>
+
+      <h2>2. Dois papéis diferentes</h2>
+      <ul>
+        <li>
+          <strong>Dados de quem usa o sistema</strong> (donas e donos de negócio e equipe): a IKIZY é a <em>controladora</em>.
+          Decidimos como esses dados são usados para oferecer o serviço.
+        </li>
+        <li>
+          <strong>Dados das clientes do negócio</strong> (nome, telefone, aniversário, preferências, alergias, histórico de
+          atendimentos): o negócio que usa a IKIZY é a <em>controladora</em> e a IKIZY é a <em>operadora</em>, tratando os
+          dados apenas para prestar o serviço contratado e seguindo as instruções do negócio.
+        </li>
+      </ul>
+
+      <h2>3. Quais dados coletamos</h2>
+      <ul>
+        <li><strong>Conta:</strong> e-mail, senha (guardada de forma protegida, nunca em texto) e, se você escolher entrar com o Google, nome e e-mail da conta Google.</li>
+        <li><strong>Negócio:</strong> nome, endereço do site, equipe, serviços, produtos e configurações.</li>
+        <li><strong>Clientes e agenda:</strong> os dados que o negócio cadastrar, como contato, aniversário, preferências, alergias e atendimentos.</li>
+        <li><strong>Técnicos:</strong> dados de acesso e segurança, como endereço IP e tipo de navegador, para manter o serviço seguro.</li>
+      </ul>
+
+      <h2>4. Dados sensíveis (saúde)</h2>
+      <p>
+        Alergias e fichas de anamnese podem ser dados de saúde, considerados sensíveis pela LGPD. Eles devem ser coletados
+        pelo negócio apenas quando necessários para o atendimento e com o consentimento da cliente. O negócio é responsável
+        por obter esse consentimento; a IKIZY apenas armazena e protege essas informações.
+      </p>
+
+      <h2>5. Para que usamos e em que base legal</h2>
+      <ul>
+        <li>Criar sua conta e prestar o serviço contratado (execução de contrato).</li>
+        <li>Manter a segurança e prevenir fraudes (legítimo interesse).</li>
+        <li>Enviar avisos sobre o serviço, como confirmação de e-mail e recuperação de senha (execução de contrato).</li>
+        <li>Cumprir obrigações legais e regulatórias (obrigação legal).</li>
+        <li>Quando houver outra finalidade, pediremos o seu consentimento.</li>
+      </ul>
+
+      <h2>6. Com quem compartilhamos</h2>
+      <p>Não vendemos dados pessoais. Usamos prestadores que tratam dados em nosso nome, apenas para operar o serviço:</p>
+      <ul>
+        <li>Hospedagem do banco de dados e da autenticação (Neon).</li>
+        <li>Hospedagem do site e do sistema (Vercel).</li>
+        <li>Login com Google, quando você escolher essa opção (Google).</li>
+        <li>Processamento de pagamentos, quando houver cobrança de planos.</li>
+      </ul>
+      <p>
+        Alguns desses prestadores armazenam dados em servidores fora do Brasil (por exemplo, nos Estados Unidos). Nesses casos
+        adotamos as salvaguardas previstas na LGPD para a transferência internacional.
+      </p>
+
+      <h2>7. Por quanto tempo guardamos</h2>
+      <p>
+        Mantemos os dados enquanto a conta estiver ativa e pelo prazo necessário para cumprir obrigações legais. Ao encerrar a
+        conta, os dados são apagados ou anonimizados, salvo o que a lei exigir guardar.
+      </p>
+
+      <h2>8. Seus direitos</h2>
+      <p>
+        Você pode pedir, a qualquer momento: confirmação de que tratamos seus dados, acesso, correção, anonimização, bloqueio
+        ou eliminação, portabilidade, informação sobre compartilhamento e a revogação do consentimento. Se você é cliente de um
+        negócio que usa a IKIZY, o pedido deve ser feito primeiro ao próprio negócio, que é a controladora dos seus dados.
+        Escreva para <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> e responderemos em prazo razoável.
+      </p>
+
+      <h2>9. Segurança</h2>
+      <p>
+        Usamos conexões criptografadas e controle de acesso por negócio: cada conta só enxerga os dados do próprio negócio.
+        Nenhum sistema é totalmente imune a falhas; se houver um incidente que ofereça risco, avisaremos as pessoas afetadas e
+        a autoridade competente, como a lei determina.
+      </p>
+
+      <h2>10. Cookies</h2>
+      <p>Usamos apenas o armazenamento necessário para manter você conectado ao sistema. Não usamos cookies de publicidade.</p>
+
+      <h2>11. Mudanças nesta política</h2>
+      <p>
+        Podemos atualizar esta política. A data da última atualização fica no topo da página e, em mudanças importantes,
+        avisaremos por e-mail.
+      </p>
+
+      <h2>12. Contato</h2>
+      <p>
+        Dúvidas ou pedidos sobre seus dados: <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>. Você também pode
+        reclamar à Autoridade Nacional de Proteção de Dados (ANPD).
+      </p>
+    </div>
+  </section>
+</Base>

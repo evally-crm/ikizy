@@ -8,6 +8,13 @@ export const LINKS = {
 
 export const CONTACT_EMAIL = 'contato@ikizy.com'
 
+/** dados da empresa nos documentos legais (/privacidade e /termos); razão social conforme o cadastro do CNPJ */
+export const COMPANY = {
+  legalName: '64.800.845 Maria Eduarda Dias Ferreira',
+  document: 'CNPJ 64.800.845/0001-44',
+  updatedAt: '7 de outubro de 2026',
+} as const
+
 export const NAV = [
   { href: '/recursos', label: 'Recursos' },
   { href: '/precos', label: 'Preços' },

@@ -1,0 +1,81 @@
+---
+// RASCUNHO: revisar com advogado(a) antes de divulgar.
+import Base from '../layouts/Base.astro'
+import { COMPANY, CONTACT_EMAIL } from '../lib/site'
+---
+
+<Base title="Termos de Uso" description="Condições de uso do sistema IKIZY para negócios de beleza.">
+  <section class="container page-head">
+    <p class="eyebrow">Legal</p>
+    <h1 class="h1" style="margin-top: 10px;">Termos de <em>uso</em></h1>
+    <p style="margin-top: 12px;">Última atualização: {COMPANY.updatedAt}</p>
+  </section>
+
+  <section class="container" style="padding-bottom: 64px;">
+    <div class="prose">
+      <p>Ao criar uma conta ou usar a IKIZY, você concorda com estes termos. Se não concordar, não use o serviço.</p>
+
+      <h2>1. O serviço</h2>
+      <p>
+        A IKIZY, operada por {COMPANY.legalName} ({COMPANY.document}), é um sistema online de gestão para negócios de beleza:
+        agenda, clientes, serviços, financeiro, equipe e página pública do negócio.
+      </p>
+
+      <h2>2. Sua conta</h2>
+      <ul>
+        <li>Você precisa ter capacidade legal para contratar e informar dados verdadeiros.</li>
+        <li>Você é responsável por manter a senha em segurança e por tudo o que acontece na sua conta.</li>
+        <li>Avise-nos de imediato se suspeitar de acesso indevido.</li>
+      </ul>
+
+      <h2>3. Seus dados e os dados das suas clientes</h2>
+      <p>
+        Os dados que você cadastra continuam sendo seus. Quanto aos dados pessoais das suas clientes, você é a controladora
+        e a IKIZY é operadora, conforme a <a href="/privacidade">Política de Privacidade</a>. Você se compromete a coletar
+        esses dados de forma lícita, com o consentimento necessário, em especial para dados de saúde como alergias e anamnese,
+        e a respeitar os direitos das suas clientes.
+      </p>
+
+      <h2>4. Uso permitido</h2>
+      <p>
+        É proibido usar a IKIZY para atividades ilegais, tentar acessar dados de outros negócios, sobrecarregar ou comprometer
+        o sistema, ou revender o serviço sem autorização.
+      </p>
+
+      <h2>5. Planos e pagamento</h2>
+      <p>
+        O serviço pode ter planos pagos, com valores e condições informados na página de preços. A cobrança é recorrente e o
+        cancelamento pode ser feito a qualquer momento, valendo a partir do próximo ciclo. Mudanças de preço serão avisadas
+        com antecedência.
+      </p>
+
+      <h2>6. Disponibilidade</h2>
+      <p>
+        Trabalhamos para manter o serviço disponível, mas podem ocorrer interrupções para manutenção ou por motivos fora do
+        nosso controle. Recomendamos manter cópia das informações que são críticas para o seu negócio.
+      </p>
+
+      <h2>7. Encerramento</h2>
+      <p>
+        Você pode encerrar a conta quando quiser. Podemos suspender ou encerrar contas que violem estes termos. Após o
+        encerramento, os dados são tratados conforme a Política de Privacidade.
+      </p>
+
+      <h2>8. Responsabilidade</h2>
+      <p>
+        A IKIZY é uma ferramenta de apoio à gestão. Dentro do que a lei permite, não respondemos por decisões do negócio
+        tomadas com base nas informações do sistema, nem por danos indiretos. Nada aqui afasta direitos que a lei garante ao
+        consumidor.
+      </p>
+
+      <h2>9. Mudanças nos termos</h2>
+      <p>
+        Podemos atualizar estes termos. Em mudanças relevantes, avisaremos por e-mail ou no sistema. Continuar usando o
+        serviço após o aviso significa concordar com a nova versão.
+      </p>
+
+      <h2>10. Lei aplicável e contato</h2>
+      <p>Estes termos seguem as leis do Brasil. Dúvidas: <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.</p>
+    </div>
+  </section>
+</Base>
