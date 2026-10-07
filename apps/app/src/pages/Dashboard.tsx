@@ -3,7 +3,9 @@ import { Link } from 'react-router-dom'
 import { format, getDay } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { ArrowRight, ArrowUpRight, CalendarDays, ChevronRight, Clock, Send, TrendingDown, TrendingUp, Wallet } from 'lucide-react'
-import { appointments, professionals, weekRevenue } from '../data/mock'
+import { weekRevenue } from '../data/mock'
+import { useAgenda } from '../data/AgendaProvider'
+import { ACTIVE_STATUSES } from '../types'
 import { MONTHLY_GOAL, getMonths } from '../data/finance'
 import { clientTags, daysSince, getClients, TAG_LABEL } from '../data/clients'
 import { formatBRL, formatTime } from '../lib/format'
@@ -11,7 +13,6 @@ import { useAuth } from '../auth/AuthProvider'
 import { dash } from '../lib/routes'
 import { Avatar, Card, Em, Money, StatusBadge } from '../components/ui'
 
-const proName = (id: string) => professionals.find((p) => p.id === id)?.name ?? ''
 const short = (v: number) => formatBRL(v).replace(',00', '')
 
 /** janela de atendimento usada no cálculo de ocupação: 9h às 19h */
@@ -48,7 +49,12 @@ function Ticks({ ratio, label }: { ratio: number; label: string }) {
 export default function Dashboard() {
   const { displayName } = useAuth()
   const now = useMemo(() => new Date(), [])
-  const today = [...appointments].sort((a, b) => a.start - b.start)
+  const { professionals, appointments } = useAgenda()
+  const proName = (id: string) => professionals.find((p) => p.id === id)?.name ?? ''
+  const todayKey = format(now, 'yyyy-MM-dd')
+  const today = appointments
+    .filter((a) => a.date === todayKey && ACTIVE_STATUSES.includes(a.status))
+    .sort((a, b) => a.start - b.start)
   const done = today.filter((a) => a.status === 'concluido')
   const upcoming = today.filter((a) => a.status !== 'concluido')
   const [next, ...rest] = upcoming
@@ -76,7 +82,7 @@ export default function Dashboard() {
   const noShowDelta = pct(noShowRate, prevNoShowRate)
   const booked = today.reduce((s, a) => s + a.duration, 0)
   const capacity = professionals.length * WORK_MINUTES
-  const occupancy = Math.round((booked / capacity) * 100)
+  const occupancy = capacity ? Math.round((booked / capacity) * 100) : 0
   const freeHours = Math.max(Math.round((capacity - booked) / 60), 0)
 
   const ranking = [...month.categories].sort((a, b) => b.total - a.total)

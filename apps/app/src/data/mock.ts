@@ -1,5 +1,8 @@
 import type { Appointment, Professional } from '../types'
 
+/** atendimento de exemplo: o dia e o cadastro da cliente são acrescentados pelo AgendaProvider */
+export type MockAppointment = Pick<Appointment, 'id' | 'professionalId' | 'client' | 'service' | 'start' | 'duration' | 'price' | 'status'>
+
 export const professionals: Professional[] = [
   { id: 'ana', name: 'Ana Clara', role: 'Nail Designer' },
   { id: 'bia', name: 'Bia Souza', role: 'Lash Design' },
@@ -8,7 +11,7 @@ export const professionals: Professional[] = [
 
 const t = (h: number, m = 0) => h * 60 + m
 
-export const appointments: Appointment[] = [
+export const appointments: MockAppointment[] = [
   { id: '1', professionalId: 'ana', client: 'Juliana Prado', service: 'Alongamento em gel', start: t(9), duration: 120, price: 220, status: 'concluido' },
   { id: '2', professionalId: 'ana', client: 'Marina Costa', service: 'Esmaltação em gel', start: t(11, 30), duration: 60, price: 90, status: 'atendimento' },
   { id: '3', professionalId: 'ana', client: 'Patrícia Lima', service: 'Manutenção de unhas', start: t(13, 30), duration: 90, price: 150, status: 'confirmado' },

@@ -773,6 +773,15 @@
   color: var(--ink-500);
 }
 
+.appt--faltou {
+  background: var(--white);
+  border: 1px dashed var(--gray-300);
+  color: var(--ink-500);
+}
+.appt--faltou .appt__client {
+  text-decoration: line-through;
+}
+
 .legend {
   display: flex;
   flex-wrap: wrap;
@@ -803,6 +812,10 @@
 .legend__dot--concluido {
   background: var(--gray-300);
 }
+.legend__dot--faltou {
+  background: var(--white);
+  border: 1px dashed var(--gray-300);
+}
 
 @media (max-width: 479px) {
   .agenda__body,
@@ -812,4 +825,50 @@
   .agenda__now {
     left: 40px;
   }
+}
+
+/* agenda: marcador de dia com atendimentos, clique em horário vazio e ações secundárias */
+.weekstrip__dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: transparent;
+}
+.weekstrip__dot.is-on {
+  background: var(--brand-500);
+}
+.weekstrip__day[aria-selected='true'] .weekstrip__dot.is-on {
+  background: var(--white);
+}
+.agenda__col--click {
+  cursor: copy;
+}
+.agenda__col--click .appt {
+  cursor: pointer;
+}
+.agenda__empty {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 560px;
+  padding: 24px;
+}
+.dialog__more {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 20px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.dialog__more button {
+  padding: 6px 0;
+  border: 0;
+  background: transparent;
+  font-size: 13px;
+  color: var(--ink-500);
+}
+.dialog__more button:hover:not(:disabled) {
+  color: var(--brand-500);
 }

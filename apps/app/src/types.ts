@@ -1,4 +1,7 @@
-export type AppointmentStatus = 'confirmado' | 'pendente' | 'atendimento' | 'concluido'
+export type AppointmentStatus = 'confirmado' | 'pendente' | 'atendimento' | 'concluido' | 'cancelado' | 'faltou'
+
+/** status que ocupam o horário da profissional (cancelado e faltou liberam a vaga na conta) */
+export const ACTIVE_STATUSES: AppointmentStatus[] = ['pendente', 'confirmado', 'atendimento', 'concluido']
 
 export interface Professional {
   id: string
@@ -9,8 +12,13 @@ export interface Professional {
 export interface Appointment {
   id: string
   professionalId: string
+  clientId: string
   client: string
+  phone: string
+  serviceId: string | null
   service: string
+  /** yyyy-MM-dd, no fuso do navegador */
+  date: string
   /** minutos desde 00:00 */
   start: number
   duration: number

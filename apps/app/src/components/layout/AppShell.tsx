@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { Bell, ChevronDown, Ellipsis, LogOut, Search, X } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
+import { AgendaProvider } from '../../data/AgendaProvider'
 import { navItems } from './nav'
 import { ROUTES } from '../../lib/routes'
 import { Avatar, Button } from '../ui'
@@ -285,7 +286,9 @@ export default function AppShell() {
         </div>
       </header>
       <main className="content">
-        <Outlet />
+        <AgendaProvider>
+          <Outlet />
+        </AgendaProvider>
       </main>
       <BottomNav />
       {editing && <ProfileDialog onClose={closeEdit} />}

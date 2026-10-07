@@ -212,6 +212,11 @@
   background: var(--gray-200);
   color: var(--ink-500);
 }
+.badge--cancelado,
+.badge--faltou {
+  background: var(--pink-100);
+  color: var(--brand-500);
+}
 .badge--up {
   background: var(--success-soft);
   color: var(--success);

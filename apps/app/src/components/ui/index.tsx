@@ -79,6 +79,8 @@ const STATUS_LABEL: Record<AppointmentStatus, string> = {
   pendente: 'Aguardando',
   atendimento: 'Em atendimento',
   concluido: 'Concluído',
+  cancelado: 'Cancelado',
+  faltou: 'Faltou',
 }
 
 export function StatusBadge({ status }: { status: AppointmentStatus }) {
