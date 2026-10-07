@@ -7,7 +7,7 @@ const current = (href: string) => (path === href ? 'page' : undefined)
 
 <header class="header">
   <div class="container header__inner">
-    <a href="/" class="logo" aria-label="IKIZY — página inicial">IKIZY<span>.</span></a>
+    <a href="/" class="logo" aria-label="IKIZY — página inicial">ikizy<span>.</span></a>
 
     <nav class="nav" aria-label="Principal">
       {NAV.map((item) => <a href={item.href} aria-current={current(item.href)}>{item.label}</a>)}
@@ -32,3 +32,9 @@ const current = (href: string) => (path === href ? 'page' : undefined)
     </details>
   </div>
 </header>
+
+<script>
+  document.querySelectorAll('.menu a').forEach((a) =>
+    a.addEventListener('click', () => a.closest('details')?.removeAttribute('open')),
+  )
+</script>
