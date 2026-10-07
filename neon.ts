@@ -2,7 +2,9 @@ import { defineConfig } from "@neon/config/v1";
 
 export default defineConfig({
   // Declare your Neon services here
-  auth: false,
+  // Data API só porque o app usa supabase-js com RLS (compatibilidade PostgREST); exige Neon Auth.
+  auth: true,
+  dataApi: true,
   // Branch policy: per-branch tuning
   branch: (branch) => {
     if (branch.isDefault) {
