@@ -1,10 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "vite",
-  "rewrites": [
-    { "source": "/((?!api/).*)", "has": [{ "type": "host", "value": "app.ikizy.com" }], "destination": "/index.html" },
-    { "source": "/", "has": [{ "type": "host", "value": "(?<slug>[a-z0-9-]+)\\.ikizy\\.com" }], "destination": "/api/site?slug=:slug" },
-    { "source": "/s/:slug", "destination": "/api/site?slug=:slug" },
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
+  "routes": [
+    { "src": "/", "has": [{ "type": "host", "value": "(?!app\\.|www\\.)(?<slug>[a-z0-9-]+)\\.ikizy\\.com" }], "dest": "/api/site?slug=$slug" },
+    { "src": "/s/([a-z0-9-]+)", "dest": "/api/site?slug=$1" },
+    { "handle": "filesystem" },
+    { "src": "/(?!api/).*", "dest": "/index.html" }
   ]
 }
