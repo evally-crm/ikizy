@@ -32,7 +32,6 @@
 }
 .studio__body {
   min-height: 0;
-  scrollbar-width: thin;
 }
 .studio__preview {
   display: flex;

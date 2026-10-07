@@ -145,19 +145,36 @@
   .dash {
     grid-template-columns: repeat(12, minmax(0, 1fr));
   }
+  /* coluna esquerda (8): faturamento e, abaixo, contatos + fechamento; direita (4): agenda em altura total */
   .dash__tracker {
-    grid-column: span 8;
+    grid-column: 1 / span 8;
   }
   .dash__next {
+    grid-column: 9 / span 4;
+    grid-row: 1 / span 2;
+    contain: size;
+  }
+  .dash > .dash__people {
+    grid-column: span 4;
+    min-height: 290px;
+    contain: size;
+  }
+  .dash__close {
     grid-column: span 4;
   }
-  .dash__people,
-  .dash__close,
   .dash__month {
-    grid-column: span 4;
+    grid-column: span 5;
   }
   .dash__rank {
-    grid-column: span 12;
+    grid-column: span 7;
+  }
+  .dash__next .upnext__scroll,
+  .dash__people .people {
+    flex: 1;
+    min-height: 0;
+  }
+  .dash__people .people {
+    overflow-y: auto;
   }
 }
 
@@ -337,7 +354,6 @@
   margin: 0 -6px;
   padding: 0 6px;
   overflow-y: auto;
-  scrollbar-width: thin;
 }
 .upnext__hero {
   display: flex;
@@ -402,7 +418,6 @@
 .people {
   min-height: 0;
   overflow-y: auto;
-  scrollbar-width: thin;
 }
 .people__item {
   display: flex;
@@ -754,7 +769,6 @@
   margin: 0 -6px;
   padding: 0 6px;
   overflow-y: auto;
-  scrollbar-width: thin;
 }
 .clist__item {
   display: flex;
@@ -1128,6 +1142,5 @@
   .crm__detail {
     overflow-y: auto;
     padding-right: 4px;
-    scrollbar-width: thin;
   }
 }

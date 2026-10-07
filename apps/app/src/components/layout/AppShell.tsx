@@ -56,6 +56,7 @@ function PillNav() {
           {label}
         </NavLink>
       ))}
+      {topMore.length > 0 && (
       <div className="pillnav__more" ref={ref}>
         <button
           type="button"
@@ -77,6 +78,7 @@ function PillNav() {
           </div>
         )}
       </div>
+      )}
     </nav>
   )
 }
@@ -89,12 +91,13 @@ function BottomNav() {
 
   return (
     <>
-      <nav className="bottomnav" aria-label="Navegação principal">
+      <nav className="bottomnav" aria-label="Navegação principal" style={{ gridTemplateColumns: `repeat(${barItems.length + (barMore.length > 0 ? 1 : 0)}, 1fr)` }}>
         {barItems.map(({ to, label, icon: Icon }) => (
           <NavLink key={to} to={to} end={to === ROUTES.dashboard} className="bottomnav__link" aria-label={label} title={label}>
             <Icon size={20} aria-hidden="true" />
           </NavLink>
         ))}
+        {barMore.length > 0 && (
         <button
           type="button"
           className="bottomnav__link"
@@ -105,6 +108,7 @@ function BottomNav() {
         >
           <Ellipsis size={20} aria-hidden="true" />
         </button>
+        )}
       </nav>
 
       {open && (
@@ -262,9 +266,10 @@ export default function AppShell() {
           <Logo />
           <PillNav />
           <div className="topbar__actions">
-            <Button variant="soft" icon aria-label="Buscar" className="topbar__search">
-              <Search size={18} />
-            </Button>
+            <label className="topsearch">
+              <Search size={16} aria-hidden="true" />
+              <input type="search" placeholder="Buscar cliente ou serviço" aria-label="Buscar" />
+            </label>
             <Button variant="soft" icon aria-label="Notificações (3 novas)" className="notif">
               <Bell size={18} />
               <span className="notif__dot" aria-hidden="true" />

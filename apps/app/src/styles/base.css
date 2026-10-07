@@ -94,3 +94,31 @@ svg {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* barras de rolagem finíssimas, sem setas e sem trilho */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  border-radius: 4px;
+  background: rgba(14, 13, 13, 0.18);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(14, 13, 13, 0.32);
+}
+::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(14, 13, 13, 0.2) transparent;
+  }
+}
