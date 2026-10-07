@@ -68,32 +68,6 @@
     justify-self: center;
     width: min(380px, calc(100% - 64px));
   }
-  /* sobre o painel branco, campos e opções precisam de fundo e borda próprios para aparecer */
-  .auth .input,
-  .wiz__opt,
-  .wiz__price .input {
-    border-color: var(--line);
-    background: #f1f1f3;
-  }
-  .auth .input:hover,
-  .wiz__opt:hover {
-    background: #ebebee;
-  }
-  .auth .input:focus-within,
-  .wiz__price .input:focus-within {
-    border-color: var(--ink-900);
-    background: var(--white);
-  }
-  .wiz__opt[aria-pressed='true'] {
-    border-color: var(--ink-900);
-    background: var(--ink-900);
-  }
-  .wiz__back {
-    background: #f1f1f3;
-  }
-  .auth__ico {
-    background: var(--white);
-  }
 }
 .auth__box {
   position: relative;
@@ -456,5 +430,35 @@
 @keyframes splash-pulse {
   50% {
     opacity: 0.45;
+  }
+}
+
+/* desktop: sobre o painel branco, campos e opções precisam de fundo e borda próprios.
+   Fica no fim do arquivo de propósito: tem a mesma especificidade das regras acima e precisa vir depois delas. */
+@media (min-width: 1024px) {
+  .auth .input,
+  .wiz__opt,
+  .wiz__price .input {
+    border-color: var(--line);
+    background: #f1f1f3;
+  }
+  .auth .input:hover,
+  .wiz__opt:hover {
+    background: #ebebee;
+  }
+  .auth .input:focus-within,
+  .wiz__price .input:focus-within {
+    border-color: var(--ink-900);
+    background: var(--white);
+  }
+  .wiz__opt[aria-pressed='true'] {
+    border-color: var(--ink-900);
+    background: var(--ink-900);
+  }
+  .wiz__back {
+    background: #f1f1f3;
+  }
+  .auth__ico {
+    background: var(--white);
   }
 }
