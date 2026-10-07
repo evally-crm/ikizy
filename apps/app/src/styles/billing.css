@@ -197,3 +197,18 @@
   margin-right: 4px;
   opacity: 0.7;
 }
+
+/* resumo da assinatura dentro do diálogo da conta */
+.account-plan {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  background: var(--gray-200);
+}
+.account-plan__text {
+  margin-top: 2px;
+  font-size: 14px;
+}

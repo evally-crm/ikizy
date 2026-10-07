@@ -92,8 +92,9 @@ export interface SubscriptionInfo {
  * ending    acesso acaba em breve sem renovação automática (Pix ou cancelamento agendado)
  * past_due  a cobrança do cartão falhou; ainda dentro da tolerância
  * expired   sem acesso: o sistema abre só para leitura
+ * unknown   a assinatura não pôde ser lida (cobrança ainda não ativada neste banco): não avisa nem oferece pagamento
  */
-export type AccessState = 'trial' | 'active' | 'ending' | 'past_due' | 'expired'
+export type AccessState = 'trial' | 'active' | 'ending' | 'past_due' | 'expired' | 'unknown'
 
 const DAY = 24 * 60 * 60 * 1000
 
@@ -131,5 +132,28 @@ export function parseSubscription(row: Record<string, unknown>): SubscriptionInf
     method: row.billing_method === 'card' || row.billing_method === 'pix' ? row.billing_method : null,
     cancelAtPeriodEnd: row.cancel_at_period_end === true,
     hasCustomer: typeof row.stripe_customer_id === 'string' && row.stripe_customer_id.length > 0,
+  }
+}
+
+const shortDate = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' })
+
+/** uma linha para mostrar na conta: 'Solo · teste grátis, restam 21 dias' */
+export function describeSubscription(sub: SubscriptionInfo, now = new Date()): string {
+  const name = PLANS[sub.plan].name
+  switch (accessState(sub, now)) {
+    case 'trial': {
+      const d = daysLeft(sub.accessUntil, now)
+      return name + ' · teste grátis, ' + (d === 1 ? 'resta 1 dia' : 'restam ' + d + ' dias')
+    }
+    case 'active':
+      return name + ' · ' + (sub.method === 'pix' ? 'Pix, acesso até ' : 'renova em ') + shortDate.format(periodEnd(sub))
+    case 'ending':
+      return name + ' · acesso até ' + shortDate.format(periodEnd(sub))
+    case 'past_due':
+      return name + ' · pagamento pendente'
+    case 'expired':
+      return name + ' · acesso encerrado'
+    default:
+      return name
   }
 }

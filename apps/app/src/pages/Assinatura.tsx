@@ -136,8 +136,15 @@ export default function Assinatura() {
         </Card>
       )}
 
-      {!isOwner && <p className="billing-note">Só a dona do negócio pode assinar ou mudar o plano.</p>}
+      {!loading && !sub && (
+        <p className="billing-note" role="status">
+          A assinatura ainda não está disponível para o seu negócio. Quando for ativada, você poderá escolher o plano por aqui.
+        </p>
+      )}
 
+      {!isOwner && sub && <p className="billing-note">Só a dona do negócio pode assinar ou mudar o plano.</p>}
+
+      {sub && (
       <section aria-labelledby="pix-months" className="billing-pix">
         <p id="pix-months" className="billing-pix__label">
           Se pagar com Pix, quantos meses adiantado?
@@ -159,7 +166,9 @@ export default function Assinatura() {
         </div>
         <p className="billing-pix__hint">O Pix vale para o período escolhido e não renova sozinho. O cartão renova todo mês.</p>
       </section>
+      )}
 
+      {sub && (
       <div className="billing-plans">
         {PLAN_IDS.map((id) => {
           const plan = PLANS[id]
@@ -219,6 +228,7 @@ export default function Assinatura() {
           )
         })}
       </div>
+      )}
     </div>
   )
 }

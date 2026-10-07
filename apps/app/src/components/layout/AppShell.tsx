@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Bell, ChevronDown, Ellipsis, LogOut, Search, X } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
-import { SubscriptionProvider } from '../../billing/SubscriptionProvider'
+import { SubscriptionProvider, useSubscription } from '../../billing/SubscriptionProvider'
 import { AgendaProvider } from '../../data/AgendaProvider'
 import BillingBanner from '../BillingBanner'
 import { navItems } from './nav'
-import { ROUTES } from '../../lib/routes'
+import { describeSubscription } from '../../lib/plans'
+import { dash, ROUTES } from '../../lib/routes'
 import { Avatar, Button } from '../ui'
 
 // topo (desktop): as seções principais; o resto vai em 'Mais'
@@ -149,6 +150,8 @@ function BottomNav() {
 /** editar cadastro: nome da pessoa e do negócio */
 function ProfileDialog({ onClose }: { onClose: () => void }) {
   const { displayName, salon, session, updateProfile, signOut } = useAuth()
+  const { sub } = useSubscription()
+  const navigate = useNavigate()
   const [userName, setUserName] = useState(displayName)
   const [salonName, setSalonName] = useState(salon?.name ?? '')
   const [busy, setBusy] = useState(false)
@@ -176,13 +179,13 @@ function ProfileDialog({ onClose }: { onClose: () => void }) {
         className="dialog"
         role="dialog"
         aria-modal="true"
-        aria-label="Editar cadastro"
+        aria-label="Minha conta"
         onClick={(e) => e.stopPropagation()}
         onSubmit={onSubmit}
       >
         <div className="dialog__head">
           <h2>
-            Editar <span className="em">cadastro</span>
+            Minha <span className="em">conta</span>
           </h2>
           <Button variant="ghost" size="sm" icon aria-label="Fechar" onClick={onClose}>
             <X size={18} />
@@ -225,6 +228,24 @@ function ProfileDialog({ onClose }: { onClose: () => void }) {
                 <input value={session.user.email} disabled readOnly />
               </span>
             </label>
+          )}
+          {sub && (
+            <div className="account-plan">
+              <div>
+                <span className="field__label">Assinatura</span>
+                <p className="account-plan__text">{describeSubscription(sub)}</p>
+              </div>
+              <Button
+                variant="light"
+                size="sm"
+                onClick={() => {
+                  onClose()
+                  navigate(dash('/assinatura'))
+                }}
+              >
+                Ver planos
+              </Button>
+            </div>
           )}
           {salon && (
             <p className="field__hint">

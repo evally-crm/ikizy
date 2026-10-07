@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro'
 import { CONTACT_EMAIL, LINKS } from '../lib/site'
+import { PIX_DISCOUNT_PCT, PIX_MONTHS, PLANS, brlNumber } from '../lib/pricing'
 
 const crafts = [
   { name: 'Cabeleireira', hint: 'Agenda por profissional' },
@@ -68,12 +69,6 @@ const faq = [
 ]
 
 const extras = ['Equipe e comissões', 'Serviços e custos', 'Relatórios', 'Lembretes por WhatsApp', 'Acesso por papel: dona, gerente, recepção e profissional']
-
-const plans = [
-  { name: 'Solo', price: '9,90', hot: false, items: ['1 mês grátis, sem cartão', 'Para quem atende sozinha', 'Agenda e clientes', 'Financeiro básico', 'Site do negócio'] },
-  { name: 'Studio', price: '29,90', hot: true, items: ['Equipe pequena', 'Tudo do Solo', 'Comissões por profissional', 'Fechamento mensal em recibo', 'Relatórios'] },
-  { name: 'Salão', price: '59,90', hot: false, items: ['Equipe maior', 'Tudo do Studio', 'Mais profissionais e permissões', 'Atendimento prioritário'] },
-]
 
 const values = [
   { title: 'Estética', text: 'Um sistema bonito de usar importa. Quem trabalha com beleza merece ferramentas à altura.' },
@@ -288,17 +283,33 @@ const faqSchema = {
       <p class="eyebrow">Planos</p>
       <h2 id="price-title" class="h2">Um plano para o <em>tamanho</em> do seu negócio</h2>
     </div>
-    <div class="plans">
+    <div class="period">
+      <p id="period-label" class="period__label">Se pagar com Pix, quantos meses adiantado?</p>
+      <div class="seg" role="radiogroup" aria-labelledby="period-label" data-seg>
+        {
+          PIX_MONTHS.map((m) => (
+            <button type="button" role="radio" aria-checked={m === 1 ? 'true' : 'false'} class={`seg__item ${m === 1 ? 'is-active' : ''}`} data-months={m}>
+              {m === 1 ? '1 mês' : `${m} meses`}
+              {PIX_DISCOUNT_PCT[m] > 0 && <small class="seg__off">{PIX_DISCOUNT_PCT[m]}% off</small>}
+            </button>
+          ))
+        }
+      </div>
+      <p class="period__hint">O cartão renova todo mês. O Pix vale pelo período escolhido e não renova sozinho.</p>
+    </div>
+
+    <div class="plans" data-plans data-discount={JSON.stringify(PIX_DISCOUNT_PCT)}>
       {
-        plans.map((p) => (
-          <article class={`plan ${p.hot ? 'plan--hot' : ''}`}>
+        PLANS.map((p) => (
+          <article class={`plan ${p.hot ? 'plan--hot' : ''}`} data-cents={p.cents}>
             {p.hot && <span class="plan__tag">Mais escolhido</span>}
             <h3>{p.name}</h3>
-            <p class="plan__price"><small>R$</small>{p.price}<small>/mês</small></p>
+            <p class="plan__price"><small>R$</small><span data-total>{brlNumber(p.cents)}</span><small data-unit>/mês</small></p>
+            <p class="plan__equiv" data-equiv>No Pix por 1 mês, ou cartão com renovação mensal</p>
             <ul class="plan__list">
               {p.items.map((it) => <li>{it}</li>)}
             </ul>
-            <a class={`btn ${p.hot ? 'btn--light' : 'btn--primary'}`} href={LINKS.signup}>Teste agora</a>
+            <a class={`btn ${p.hot ? 'btn--light' : 'btn--primary'}`} href={LINKS.signup}>{p.cta}</a>
           </article>
         ))
       }
@@ -451,5 +462,50 @@ const faqSchema = {
       requestAnimationFrame(tick)
     }
     requestAnimationFrame(tick)
+  })()
+</script>
+
+<script is:inline id="pricing-script">
+  (() => {
+    const seg = document.querySelector("[data-seg]")
+    const plans = document.querySelector("[data-plans]")
+    if (!seg || !plans) return
+    const discount = JSON.parse(plans.dataset.discount)
+    const num = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    const brl = (c) => "R$ " + num.format(c / 100)
+
+    function update(months) {
+      const pct = discount[months] || 0
+      plans.querySelectorAll("[data-cents]").forEach((plan) => {
+        const cents = Number(plan.dataset.cents)
+        const full = cents * months
+        const total = Math.round((full * (100 - pct)) / 100)
+        plan.querySelector("[data-total]").textContent = num.format(total / 100)
+        plan.querySelector("[data-unit]").textContent = months === 1 ? "/mês" : "/" + months + " meses"
+        const eq = plan.querySelector("[data-equiv]")
+        eq.textContent = ""
+        if (months === 1) {
+          eq.textContent = "No Pix por 1 mês, ou cartão com renovação mensal"
+          return
+        }
+        if (pct > 0) {
+          const old = document.createElement("s")
+          old.textContent = brl(full)
+          eq.append(old, " ")
+        }
+        eq.append((pct > 0 ? "no" : "No") + " Pix, equivale a " + brl(total / months) + "/mês" + (pct > 0 ? " (" + pct + "% de desconto)" : ""))
+      })
+    }
+
+    seg.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-months]")
+      if (!btn) return
+      seg.querySelectorAll("[data-months]").forEach((b) => {
+        const on = b === btn
+        b.classList.toggle("is-active", on)
+        b.setAttribute("aria-checked", on ? "true" : "false")
+      })
+      update(Number(btn.dataset.months))
+    })
   })()
 </script>

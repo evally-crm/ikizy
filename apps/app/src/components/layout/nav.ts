@@ -1,4 +1,4 @@
-import { CalendarDays, CreditCard, Globe, LayoutDashboard, Users, Wallet, type LucideIcon } from 'lucide-react'
+import { CalendarDays, Globe, LayoutDashboard, Users, Wallet, type LucideIcon } from 'lucide-react'
 import { dash, ROUTES } from '../../lib/routes'
 
 export interface NavItem {
@@ -18,5 +18,4 @@ export const navItems: NavItem[] = [
   { to: dash('/clientes'), label: 'Clientes', icon: Users, core: true, primary: true },
   { to: dash('/financeiro'), label: 'Financeiro', icon: Wallet, core: true, primary: true },
   { to: dash('/site'), label: 'Meu site', icon: Globe, core: true, primary: true },
-  { to: dash('/assinatura'), label: 'Assinatura', icon: CreditCard },
 ]

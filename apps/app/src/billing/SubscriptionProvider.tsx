@@ -52,7 +52,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const value = useMemo<SubscriptionState>(
     () => ({
       sub,
-      state: sub ? accessState(sub) : 'expired',
+      state: sub ? accessState(sub) : 'unknown',
       loading,
       refresh: load,
     }),

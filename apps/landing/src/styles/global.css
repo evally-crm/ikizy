@@ -1245,6 +1245,73 @@ em {
   color: var(--ink-500);
 }
 
+/* ---------- seletor de período dos planos ---------- */
+.period {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.period__label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-900);
+}
+.period__hint {
+  font-size: 13px;
+  color: var(--ink-500);
+}
+.seg {
+  display: inline-flex;
+  padding: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--gray-100);
+}
+.seg__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink-700);
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+.seg__item:hover {
+  background: var(--gray-200);
+}
+.seg__item.is-active {
+  background: var(--ink-900);
+  color: var(--white);
+}
+.seg__off {
+  padding: 1px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--red);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 500;
+}
+.plan__equiv {
+  margin-top: -8px;
+  min-height: 2.9em;
+  font-size: 13px;
+  color: var(--ink-500);
+}
+.plan__equiv s {
+  margin-right: 2px;
+  opacity: 0.7;
+}
+.plan--hot .plan__equiv {
+  color: rgba(255, 255, 255, 0.7);
+}
+
 /* ---------- recursos extras ---------- */
 .chips {
   display: flex;
