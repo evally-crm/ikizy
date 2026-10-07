@@ -3,6 +3,10 @@
     "Neon": {
       "type": "http",
       "url": "https://mcp.neon.tech/mcp"
+    },
+    "vercel": {
+      "type": "http",
+      "url": "https://mcp.vercel.com"
     }
   }
 }
