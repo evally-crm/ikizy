@@ -19,7 +19,7 @@ export default function Placeholder() {
       </header>
       <Card className="empty">
         <Hourglass size={28} aria-hidden="true" />
-        <p>Essa seção entra nas próximas fases do Evally.</p>
+        <p>Essa seção entra nas próximas fases do IKIZY.</p>
       </Card>
     </div>
   )

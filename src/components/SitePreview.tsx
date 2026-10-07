@@ -95,7 +95,7 @@ export default function SitePreview({ studio }: { studio: Studio }) {
             <AtSign size={13} aria-hidden="true" /> {site.instagram}
           </p>
         )}
-        <small>evally.app/{site.slug || 'seu-salao'}</small>
+        <small>ikizy.app/{site.slug || 'seu-salao'}</small>
       </footer>
     </div>
   )

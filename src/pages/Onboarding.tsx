@@ -67,7 +67,7 @@ export default function Onboarding() {
             maxLength={40}
             pattern="[a-z0-9]+(-[a-z0-9]+)*"
             title="Use letras minúsculas, números e hífen"
-            hint={`evally.app/${slug || 'seu-salao'}`}
+            hint={`ikizy.app/${slug || 'seu-salao'}`}
             value={slug}
             onChange={(e) => {
               setSlugTouched(true)

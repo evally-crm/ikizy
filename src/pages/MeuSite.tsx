@@ -126,7 +126,7 @@ export default function MeuSite() {
         </h1>
         <div className="bar__side">
           <a className="mini mini--link" href={`#${site.slug}`} onClick={(e) => e.preventDefault()}>
-            <span className="mini__key">evally.app/</span>
+            <span className="mini__key">ikizy.app/</span>
             <span className="mini__val">{site.slug || 'seu-salao'}</span>
             <ExternalLink size={13} aria-hidden="true" />
           </a>
@@ -167,7 +167,7 @@ export default function MeuSite() {
                 <Field label="Endereço da página" hint="É o link que você coloca no Instagram e no WhatsApp.">
                   {(id) => (
                     <span className="input input--prefix">
-                      <span aria-hidden="true">evally.app/</span>
+                      <span aria-hidden="true">ikizy.app/</span>
                       <input
                         id={id}
                         value={site.slug}

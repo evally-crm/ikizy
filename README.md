@@ -1,6 +1,6 @@
-# evally
+# IKIZY
 
-Sistema de gestão para salões de beleza e cuidados (agenda, clientes, financeiro, site próprio).
+IKIZY (IKI + EASY): estética, elegância e autenticidade com uma gestão mais simples. Sistema para salões de beleza e cuidados (agenda, clientes, financeiro, site próprio).
 React + TypeScript + Vite, com Supabase (Postgres, Auth e RLS).
 
 ## Rodando

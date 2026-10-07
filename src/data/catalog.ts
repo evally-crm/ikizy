@@ -102,7 +102,7 @@ export function computeMath(service: Service, services: Service[], products: Pro
   return { cost, margin, marginPct: service.price > 0 ? Math.round((margin / service.price) * 100) : 0 }
 }
 
-const STORAGE_KEY = 'evally:studio:v1'
+const STORAGE_KEY = 'ikizy:studio:v1'
 
 function load(): Studio {
   try {

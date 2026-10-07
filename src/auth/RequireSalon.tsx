@@ -9,7 +9,7 @@ export default function RequireSalon() {
     return (
       <div className="splash" role="status" aria-live="polite">
         <span className="splash__logo">
-          Evally<span className="logo__dot">.</span>
+          IKIZY<span className="logo__dot">.</span>
         </span>
         <span className="sr-only">Carregando…</span>
       </div>

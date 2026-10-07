@@ -1,4 +1,4 @@
--- Evally: schema inicial multi-salão (multi-tenant) com RLS.
+-- IKIZY: schema inicial multi-salão (multi-tenant) com RLS.
 -- Toda tabela de dados tem salon_id; o acesso é sempre filtrado por quem é membro do salão.
 
 create extension if not exists pgcrypto;

@@ -10,8 +10,8 @@ const more = navItems.filter((i) => !i.primary)
 
 function Logo() {
   return (
-    <NavLink to="/" className="logo" aria-label="Evally — início">
-      Evally<span className="logo__dot">.</span>
+    <NavLink to="/" className="logo" aria-label="IKIZY — início">
+      IKIZY<span className="logo__dot">.</span>
     </NavLink>
   )
 }

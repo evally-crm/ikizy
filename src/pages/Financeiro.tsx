@@ -50,7 +50,7 @@ function Receipt({ month, closedAt }: { month: MonthClosing; closedAt: Date | nu
         )}
         <header className="receipt__head">
           <p className="receipt__logo">
-            Evally<span>.</span>
+            IKIZY<span>.</span>
           </p>
           <p className="receipt__title">Recibo do mês</p>
           <p>Nº {month.id.replace('-', '')}</p>

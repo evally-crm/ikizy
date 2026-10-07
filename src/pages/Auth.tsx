@@ -10,7 +10,7 @@ export function AuthLayout({ children }: { children: ReactNode }) {
       <div className="shell__orb" aria-hidden="true" />
       <div className="auth__box">
         <p className="logo auth__logo">
-          Evally<span className="logo__dot">.</span>
+          IKIZY<span className="logo__dot">.</span>
         </p>
         {children}
       </div>
