@@ -1,0 +1,45 @@
+---
+import Base from '../layouts/Base.astro'
+import { LINKS } from '../lib/site'
+
+const resources = [
+  { title: 'Agenda', text: 'Visão por dia e por profissional, com status de cada atendimento e a hora atual sempre à vista.' },
+  { title: 'Clientes', text: 'Ficha com histórico, preferências, alergias, cartão fidelidade e aviso de retorno atrasado.' },
+  { title: 'Serviços e custos', text: 'Defina valor, produto usado e gasto médio por mês. O sistema calcula custo e sobra de cada serviço.' },
+  { title: 'Financeiro', text: 'Faturamento, comissões e formas de pagamento. No fim do mês, o fechamento sai como um recibo.' },
+  { title: 'Equipe', text: 'Profissionais, agenda individual e comissões calculadas sem planilha.' },
+  { title: 'Relatórios', text: 'Horários mais procurados, ticket médio, retorno de clientes e faltas, para decidir com números.' },
+  { title: 'Site do seu negócio', text: 'Uma página própria, no endereço seu-negocio.ikizy.com, com serviços, preços e equipe que você escolhe mostrar.' },
+  { title: 'Lembretes por WhatsApp', text: 'Confirmação e lembrete antes do horário para reduzir faltas.' },
+  { title: 'Segurança', text: 'Cada negócio enxerga só os próprios dados, com acesso por papel: dona, gerente, recepção e profissional.' },
+]
+---
+
+<Base title="Recursos" description="Agenda, clientes, financeiro, equipe e site próprio: tudo o que seu negócio de beleza precisa em um sistema simples.">
+  <section class="container page-head">
+    <p class="eyebrow">Funcionalidades</p>
+    <h1 class="h1" style="margin-top: 10px;">Tudo em <em>um só lugar</em>.</h1>
+    <p class="lead">Do primeiro agendamento ao fechamento do mês, a IKIZY cuida da parte administrativa para você cuidar da sua arte.</p>
+  </section>
+
+  <section class="container">
+    <div class="cards">
+      {
+        resources.map((r, i) => (
+          <article class="card">
+            <span class="card__n">{String(i + 1).padStart(2, '0')}</span>
+            <h3>{r.title}</h3>
+            <p>{r.text}</p>
+          </article>
+        ))
+      }
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container cta-band">
+      <h2 class="h2">Veja na <em>prática</em>.</h2>
+      <a class="btn btn--primary" href={LINKS.signup}>Teste agora</a>
+    </div>
+  </section>
+</Base>

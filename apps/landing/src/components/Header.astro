@@ -1,0 +1,34 @@
+---
+import { LINKS, NAV } from '../lib/site'
+
+const path = Astro.url.pathname.replace(/\/$/, '') || '/'
+const current = (href: string) => (path === href ? 'page' : undefined)
+---
+
+<header class="header">
+  <div class="container header__inner">
+    <a href="/" class="logo" aria-label="IKIZY — página inicial">IKIZY<span>.</span></a>
+
+    <nav class="nav" aria-label="Principal">
+      {NAV.map((item) => <a href={item.href} aria-current={current(item.href)}>{item.label}</a>)}
+    </nav>
+
+    <div class="header__actions">
+      <a class="header__login" href={LINKS.login}>Entrar</a>
+      <a class="btn btn--primary btn--sm" href={LINKS.signup}>Teste agora</a>
+    </div>
+
+    <details class="menu">
+      <summary aria-label="Abrir menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+          <path d="M4 7h16M4 12h16M4 17h16"></path>
+        </svg>
+      </summary>
+      <div class="menu__panel">
+        {NAV.map((item) => <a href={item.href} aria-current={current(item.href)}>{item.label}</a>)}
+        <a href={LINKS.login}>Entrar</a>
+        <a class="btn btn--primary" href={LINKS.signup}>Teste agora</a>
+      </div>
+    </details>
+  </div>
+</header>

@@ -1,0 +1,31 @@
+---
+import { CONTACT_EMAIL, LINKS, NAV, TAGLINE } from '../lib/site'
+
+const year = new Date().getFullYear()
+---
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer__grid">
+      <div>
+        <a href="/" class="logo" aria-label="IKIZY — página inicial">IKIZY<span>.</span></a>
+        <p style="margin-top: 14px; max-width: 36ch;">{TAGLINE}</p>
+      </div>
+      <nav aria-label="Rodapé">
+        <h4>Conheça</h4>
+        <ul>
+          {NAV.map((item) => <li><a href={item.href}>{item.label}</a></li>)}
+        </ul>
+      </nav>
+      <div>
+        <h4>Sistema</h4>
+        <ul>
+          <li><a href={LINKS.login}>Entrar</a></li>
+          <li><a href={LINKS.signup}>Criar conta</a></li>
+          <li><a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a></li>
+        </ul>
+      </div>
+    </div>
+    <p class="footer__bottom">© {year} IKIZY. Todos os direitos reservados.</p>
+  </div>
+</footer>

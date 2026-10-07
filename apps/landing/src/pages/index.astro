@@ -1,0 +1,125 @@
+---
+import Base from '../layouts/Base.astro'
+import { LINKS } from '../lib/site'
+
+const features = [
+  { title: 'Agenda online', text: 'Seus horários organizados, com confirmação e lembrete automático para a cliente.' },
+  { title: 'Clientes que voltam', text: 'Histórico, preferências e aviso de quem sumiu para você chamar de volta.' },
+  { title: 'Financeiro descomplicado', text: 'Entradas, saídas e comissões num lugar só, com fechamento do mês em um recibo.' },
+  { title: 'Seu site personalizável', text: 'Uma página com o endereço do seu negócio para divulgar serviços e receber agendamentos.' },
+]
+const crafts = ['Cabeleireira', 'Nail Designer', 'Lash Design', 'Sobrancelha']
+---
+
+<Base title="IKIZY">
+  <section class="hero section">
+    <div class="orb" aria-hidden="true"></div>
+    <div class="container hero__grid">
+      <div class="hero__text">
+        <p class="eyebrow">Designed for Beauty</p>
+        <h1 class="h1">A arte de <em>gerenciar</em> seu negócio com perfeição.</h1>
+        <p class="lead">
+          O sistema completo para organizar sua agenda, controlar o financeiro e encantar suas clientes. Simples de usar,
+          bonito de ver.
+        </p>
+        <div class="btn-row">
+          <a class="btn btn--primary" href={LINKS.signup}>Teste agora</a>
+          <a class="btn btn--ghost" href="/recursos">Ver recursos</a>
+        </div>
+      </div>
+
+      <div class="mock" role="img" aria-label="Prévia da agenda do dia no sistema IKIZY">
+        <div class="mock__card">
+          <div class="mock__head">
+            <p class="mock__title">Agenda de hoje</p>
+            <span class="pill">12 atendimentos</span>
+          </div>
+          <div class="mock__row">
+            <span class="mock__time">09:00</span>
+            <div class="mock__who"><strong>Juliana Prado</strong><span>Alongamento em gel</span></div>
+            <span class="pill">Concluído</span>
+          </div>
+          <div class="mock__row">
+            <span class="mock__time">11:30</span>
+            <div class="mock__who"><strong>Marina Costa</strong><span>Esmaltação em gel</span></div>
+            <span class="pill pill--hot">Em atendimento</span>
+          </div>
+          <div class="mock__row">
+            <span class="mock__time">13:30</span>
+            <div class="mock__who"><strong>Patrícia Lima</strong><span>Manutenção de unhas</span></div>
+            <span class="pill pill--ok">Confirmado</span>
+          </div>
+        </div>
+        <div class="mock__float">
+          <small>Faturamento do mês</small>
+          <strong>R$ 7.254</strong>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container quote">
+      <p class="eyebrow">Invista na gestão do seu negócio</p>
+      <p>
+        Não é apenas sobre organizar horários, é sobre oferecer uma <em>experiência impecável</em> para cada cliente,
+        enquanto nós cuidamos de toda a <em>inteligência</em> do seu negócio.
+      </p>
+    </div>
+  </section>
+
+  <section class="section section--tight">
+    <div class="container split">
+      <div>
+        <p class="eyebrow">Gestão inteligente</p>
+        <h2 class="h2" style="margin-top: 12px;">Pronto para ter o <em>controle</em> total?</h2>
+        <p class="lead" style="margin: 20px 0 28px;">
+          Conheça a ferramenta que vai transformar sua gestão por dentro. Automatize os processos manuais e foque no que você faz
+          de melhor: a sua arte.
+        </p>
+        <a class="btn btn--primary" href="/contato">Entre em contato</a>
+      </div>
+      <ol class="numlist">
+        {
+          features.map((f, i) => (
+            <li>
+              <span class="numlist__n">{String(i + 1).padStart(2, '0')}.</span>
+              <h3>{f.title}</h3>
+              <p>{f.text}</p>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+  </section>
+
+  <section class="section forwho">
+    <div class="container">
+      <p class="eyebrow">A IKIZY é feita para</p>
+      <ul>
+        {crafts.map((c, i) => <li class={i === 1 ? 'is-main' : ''}>{c}</li>)}
+      </ul>
+    </div>
+  </section>
+
+  <section class="container">
+    <div class="statement">
+      <h2>Onde o seu talento encontra a <em>nossa tecnologia</em>.</h2>
+      <p>
+        A IKIZY é um sistema de gestão desenhado para eliminar a confusão administrativa. Substituímos cadernos e planilhas por
+        uma plataforma onde você controla agendamentos, caixa e clientes. Tudo organizado para você ter clareza do seu lucro,
+        enquanto ganha tempo para focar na sua arte.
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container cta-band">
+      <h2 class="h2">Comece a organizar seu negócio <em>hoje</em>.</h2>
+      <div class="btn-row" style="justify-content: center;">
+        <a class="btn btn--primary" href={LINKS.signup}>Teste agora</a>
+        <a class="btn btn--ghost" href="/precos">Ver planos</a>
+      </div>
+    </div>
+  </section>
+</Base>

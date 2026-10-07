@@ -8,7 +8,7 @@ Monorepo (npm workspaces) com React + TypeScript + Vite e Supabase (Postgres, Au
 ```
 apps/
   app/        sistema (app.ikizy.com)   login, cadastro, recuperar senha e /dashboard/*
-  landing/    site institucional (ikizy.com): /, /precos, /recursos, /sobre, /contato  [a criar]
+  landing/    site institucional (ikizy.com): /, /precos, /recursos, /sobre, /contato  (Astro, estático)
 supabase/     migrations e testes de RLS
 neon.ts       configuração do Neon (conectado, ainda sem uso pelo app)
 ```
@@ -27,9 +27,13 @@ meu site e configurações ficam em "Mais").
 
 ```bash
 npm install
-npm run dev      # app em http://localhost:5173
-npm run build
+npm run dev            # app em http://localhost:5173
+npm run dev:landing    # landing em http://localhost:4321
+npm run build          # compila app e landing
 ```
+
+A landing aponta os botões "Entrar" e "Teste agora" para `https://app.ikizy.com`. Em desenvolvimento, use
+`PUBLIC_APP_URL=http://localhost:5173 npm run dev:landing`.
 
 Sem variáveis de ambiente o app abre em **modo demonstração**, com dados de exemplo e sem login.
 

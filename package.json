@@ -7,7 +7,10 @@
   ],
   "scripts": {
     "dev": "npm run dev -w @ikizy/app",
-    "build": "npm run build -w @ikizy/app",
+    "dev:landing": "npm run dev -w @ikizy/landing",
+    "build": "npm run build --workspaces --if-present",
+    "build:app": "npm run build -w @ikizy/app",
+    "build:landing": "npm run build -w @ikizy/landing",
     "lint": "npm run lint -w @ikizy/app"
   },
   "devDependencies": {
