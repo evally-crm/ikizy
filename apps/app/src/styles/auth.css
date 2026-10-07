@@ -87,3 +87,19 @@
 .auth__switch .textlink {
   color: var(--brand-700);
 }
+
+.auth__or {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 14px 0;
+  font-size: 13px;
+  color: var(--ink-500);
+}
+.auth__or::before,
+.auth__or::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}

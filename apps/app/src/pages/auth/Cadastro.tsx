@@ -4,10 +4,10 @@ import { UserPlus } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
 import { ROUTES } from '../../lib/routes'
 import { Button, Em } from '../../components/ui'
-import { AuthCard, AuthField, AuthLayout, FormMessages } from './AuthLayout'
+import { AuthCard, AuthField, AuthLayout, FormMessages, GoogleButton } from './AuthLayout'
 
 export default function Cadastro() {
-  const { status, signUp } = useAuth()
+  const { status, signUp, signInWithGoogle } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
@@ -34,6 +34,17 @@ export default function Cadastro() {
     setBusy(false)
   }
 
+  const onGoogle = async () => {
+    setError(null)
+    setBusy(true)
+    const err = await signInWithGoogle()
+    // sem erro, o navegador já está indo para o Google
+    if (err) {
+      setError(err)
+      setBusy(false)
+    }
+  }
+
   return (
     <AuthLayout>
       <AuthCard
@@ -44,6 +55,7 @@ export default function Cadastro() {
         }
         subtitle="Leva um minuto. Depois você monta o seu negócio."
       >
+        <GoogleButton onClick={onGoogle} disabled={busy} />
         <form className="form" onSubmit={onSubmit}>
           <AuthField label="E-mail" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
           <AuthField

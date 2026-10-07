@@ -24,6 +24,8 @@ interface AuthState {
   sendPasswordReset: (email: string) => Promise<string | null>
   /** token vem do link do e-mail (?token=...); o Neon Auth não abre sessão no link de recuperação */
   updatePassword: (password: string, token: string) => Promise<string | null>
+  /** abre o login do Google; ao voltar, a sessão é restaurada e o dashboard decide entre salão ou onboarding */
+  signInWithGoogle: () => Promise<string | null>
   signOut: () => Promise<void>
   createSalon: (name: string, slug: string) => Promise<string | null>
 }
@@ -122,6 +124,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!neon) return 'Neon não configurado.'
         const { error } = await neon.auth.getBetterAuthInstance().resetPassword({ newPassword: password, token })
         return error ? 'Não foi possível atualizar a senha. Peça um novo link e tente de novo.' : null
+      },
+      async signInWithGoogle() {
+        if (!neon) return 'Neon não configurado.'
+        const { error } = await neon.auth.signInWithOAuth({
+          provider: 'google',
+          options: { redirectTo: `${window.location.origin}${dash()}` },
+        })
+        return error ? 'Não foi possível entrar com o Google agora. Tente novamente.' : null
       },
       async signOut() {
         await neon?.auth.signOut()

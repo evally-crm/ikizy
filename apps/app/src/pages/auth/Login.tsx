@@ -4,10 +4,10 @@ import { LogIn } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
 import { ROUTES } from '../../lib/routes'
 import { Button, Em } from '../../components/ui'
-import { AuthCard, AuthField, AuthLayout, FormMessages } from './AuthLayout'
+import { AuthCard, AuthField, AuthLayout, FormMessages, GoogleButton } from './AuthLayout'
 
 export default function Login() {
-  const { status, signIn } = useAuth()
+  const { status, signIn, signInWithGoogle } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
@@ -24,6 +24,17 @@ export default function Login() {
     setBusy(false)
   }
 
+  const onGoogle = async () => {
+    setError(null)
+    setBusy(true)
+    const err = await signInWithGoogle()
+    // sem erro, o navegador já está indo para o Google
+    if (err) {
+      setError(err)
+      setBusy(false)
+    }
+  }
+
   return (
     <AuthLayout>
       <AuthCard
@@ -34,6 +45,7 @@ export default function Login() {
         }
         subtitle="Entre para ver a agenda e o caixa do seu negócio."
       >
+        <GoogleButton onClick={onGoogle} disabled={busy} />
         <form className="form" onSubmit={onSubmit}>
           <AuthField label="E-mail" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
           <AuthField
