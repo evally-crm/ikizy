@@ -29,15 +29,6 @@ const floaters = [
   { x: 22, y: 36, r: -10, w: 52, h: 52, tone: 'blush' },
 ]
 
-const chips = [
-  { t: 'Cliente esqueceu o horário', x: 6, y: 14, d: 0, hot: true },
-  { t: 'Caixa no caderno', x: 70, y: 8, d: -2 },
-  { t: 'Planilha desatualizada', x: 80, y: 46, d: -4, hot: true },
-  { t: 'Mensagens perdidas no WhatsApp', x: 4, y: 62, d: -1 },
-  { t: 'Sem saber o lucro do mês', x: 60, y: 82, d: -5 },
-  { t: 'Comissão na calculadora', x: 22, y: 86, d: -3 },
-]
-
 const pains = [
   { was: 'Cliente esqueceu o horário', title: 'Lembrete automático', text: 'Confirmação e lembrete por WhatsApp antes do horário, para reduzir faltas.' },
   { was: 'Caixa no caderno', title: 'Financeiro em um lugar', text: 'Entradas, saídas e formas de pagamento. O fechamento do mês sai como um recibo.' },
@@ -141,7 +132,7 @@ const faqSchema = {
       {
         floaters.map((f, i) => (
           <span
-            class={`float float--${f.tone}`}
+            class={`float float--${f.tone}${f.y > 28 && f.y < 72 ? ' float--mid' : ''}`}
             style={`--x:${f.x}%;--y:${f.y}%;--r:${f.r}deg;--w:${f.w}px;--h:${f.h}px;--d:${(i % 5) * -1.4}s`}
           >
             {f.label && <b>{f.label}</b>}
@@ -163,23 +154,28 @@ const faqSchema = {
 
   <!-- DORES -->
   <section class="section screen container pains" aria-labelledby="pains-title">
-    <div class="pains__head">
-      <div aria-hidden="true">
-        {chips.map((c) => <span class={`chip ${c.hot ? 'chip--hot' : ''}`} style={`--x:${c.x}%;--y:${c.y}%;--d:${c.d}s`}>{c.t}</span>)}
-      </div>
+    <header class="pains__head">
+      <p class="eyebrow">Antes e depois</p>
       <h2 id="pains-title" class="pains__title">Do caderno ao <em>sistema</em></h2>
-    </div>
-    <div class="pains__cards">
+      <p class="lead">O que hoje toma o seu tempo no salão passa a acontecer sozinho.</p>
+    </header>
+    <ol class="pains__list">
       {
-        pains.map((x) => (
-          <article class="pain">
-            <p class="pain__was">{x.was}</p>
-            <h3>{x.title}</h3>
-            <p>{x.text}</p>
-          </article>
+        pains.map((x, i) => (
+          <li class="pain">
+            <span class="pain__n" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+            <div class="pain__body">
+              <p class="pain__was">
+                <span>Antes</span>
+                <s>{x.was}</s>
+              </p>
+              <h3>{x.title}</h3>
+              <p class="pain__text">{x.text}</p>
+            </div>
+          </li>
         ))
       }
-    </div>
+    </ol>
   </section>
 
   <!-- POR QUE NÓS -->
