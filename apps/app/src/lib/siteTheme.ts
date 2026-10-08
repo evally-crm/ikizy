@@ -2,7 +2,7 @@
 
 // ---------------------------------------------------------------- paletas (cores fixas, já combinadas e testadas)
 
-export type PaletteId = 'bordo' | 'rubi' | 'vinho' | 'rose' | 'cafe' | 'floresta' | 'marinho' | 'noir' | 'toledo'
+export type PaletteId = 'branco-bege' | 'rosa-branco' | 'bege-preto' | 'gelo-branco' | 'marinho-branco' | 'vinho-preto' | 'creme-pinho'
 
 export interface Palette {
   label: string
@@ -27,32 +27,47 @@ export interface Palette {
   dark: boolean
 }
 
-const LIGHT = { bg: '#efebe5', panel: '#ffffff', ink: '#0e0d0d', text: '#242424', muted: '#6b6668', line: '#e5e1dc', on: '#ffffff', dark: false }
-
+/**
+ * Só as combinações escolhidas para o produto (duas cores cada). Nas cores claras (bege, rosa bebê, azul gelo),
+ * o destaque usa um tom mais fechado da mesma cor para o texto continuar legível.
+ */
 export const PALETTES: Record<PaletteId, Palette> = {
-  bordo: { ...LIGHT, label: 'Bordô', accent: '#460106', soft: '#f3dfe1' },
-  rubi: { ...LIGHT, label: 'Rubi', accent: '#bf0c22', soft: '#fbe0e4' },
-  vinho: { ...LIGHT, label: 'Vinho', accent: '#800513', soft: '#f6dde0' },
-  rose: { label: 'Rosé', bg: '#f6e6e3', panel: '#fffaf9', ink: '#2a1618', text: '#3a2326', muted: '#7a5f63', line: '#ecd3d0', accent: '#a23a56', soft: '#f5dde2', on: '#ffffff', dark: false },
-  cafe: { label: 'Café', bg: '#e9dcc3', panel: '#f8f2e6', ink: '#1d1710', text: '#2b241b', muted: '#6f6555', line: '#dccfb4', accent: '#5b3a1e', soft: '#efe3cf', on: '#ffffff', dark: false },
-  floresta: { label: 'Floresta', bg: '#e3e8df', panel: '#f6f8f3', ink: '#0f1a14', text: '#1f2b24', muted: '#5d6b62', line: '#d3dbcf', accent: '#1f4d3a', soft: '#dbe7df', on: '#ffffff', dark: false },
-  marinho: { label: 'Marinho', bg: '#e2e7ef', panel: '#f6f8fb', ink: '#0d1524', text: '#1c2538', muted: '#5a6477', line: '#d3dae6', accent: '#1b2f55', soft: '#dce4f1', on: '#ffffff', dark: false },
-  noir: { label: 'Noir', bg: '#0e0d0d', panel: '#1a1919', ink: '#ffffff', text: '#e9e6e7', muted: '#a39fa1', line: '#2c2a2b', accent: '#d9b36c', soft: '#2b2416', on: '#0e0d0d', dark: true },
-  toledo: { label: 'Toledo', bg: '#1b0a10', panel: '#2a1219', ink: '#ffffff', text: '#f0e4e7', muted: '#b59ca2', line: '#43232d', accent: '#f0b6bf', soft: '#3a1b24', on: '#1b0a10', dark: true },
+  'branco-bege': { label: 'Branco e bege', bg: '#f6f1ea', panel: '#ffffff', ink: '#1f1a14', text: '#2e2720', muted: '#6e6356', line: '#e8dfd3', accent: '#6f5c48', soft: '#efe6da', on: '#ffffff', dark: false },
+  'rosa-branco': { label: 'Rosa bebê', bg: '#fbeef2', panel: '#ffffff', ink: '#2a1a20', text: '#3a2730', muted: '#7a5f69', line: '#f1dbe3', accent: '#a3405f', soft: '#f9e1ea', on: '#ffffff', dark: false },
+  'bege-preto': { label: 'Bege e preto', bg: '#e8dccb', panel: '#f6efe5', ink: '#111111', text: '#1d1a17', muted: '#5f564c', line: '#d9cbb7', accent: '#111111', soft: '#e9dfd0', on: '#f6efe5', dark: false },
+  'gelo-branco': { label: 'Azul gelo', bg: '#e8f0f9', panel: '#ffffff', ink: '#0f1b2b', text: '#1d2a3b', muted: '#56657a', line: '#d6e2f0', accent: '#2f5d8f', soft: '#dce8f6', on: '#ffffff', dark: false },
+  'marinho-branco': { label: 'Azul-marinho', bg: '#f4f6fa', panel: '#ffffff', ink: '#0d1530', text: '#1a2340', muted: '#59627a', line: '#e1e6ef', accent: '#1b2a55', soft: '#e2e7f2', on: '#ffffff', dark: false },
+  'vinho-preto': { label: 'Vinho e preto', bg: '#f2eded', panel: '#ffffff', ink: '#0e0d0d', text: '#1f1c1c', muted: '#6b6566', line: '#e6dfdf', accent: '#6e1423', soft: '#f4e1e4', on: '#ffffff', dark: false },
+  'creme-pinho': { label: 'Creme e pinho', bg: '#fffbda', panel: '#fffdf0', ink: '#00371c', text: '#10301f', muted: '#4f5f53', line: '#ede7bf', accent: '#00371c', soft: '#f3efc8', on: '#fffbda', dark: false },
 }
+
+export const DEFAULT_PALETTE: PaletteId = 'vinho-preto'
 
 export const isPaletteId = (v: unknown): v is PaletteId => typeof v === 'string' && v in PALETTES
 
-/**
- * Paleta de um site. Sites antigos guardavam cor (bordo/rubi/vinho) e tema (claro/bege/escuro) separados:
- * escuro vira Noir, bege vira Café e, no claro, vale a cor que tinham escolhido.
- */
+/** paletas que existiram antes (e cores/temas mais antigos ainda) -> combinação atual mais próxima */
+const LEGACY: Record<string, PaletteId> = {
+  bordo: 'vinho-preto',
+  rubi: 'vinho-preto',
+  vinho: 'vinho-preto',
+  toledo: 'vinho-preto',
+  rose: 'rosa-branco',
+  cafe: 'bege-preto',
+  noir: 'bege-preto',
+  floresta: 'creme-pinho',
+  marinho: 'marinho-branco',
+  escuro: 'bege-preto',
+  bege: 'branco-bege',
+}
+
+/** paleta de um site: a salva, senão a equivalente das escolhas antigas, senão a padrão */
 export function paletteFor(settings: { palette?: unknown; accent?: unknown; theme?: unknown }): { id: PaletteId; p: Palette } {
-  let id: PaletteId = 'bordo'
+  let id: PaletteId = DEFAULT_PALETTE
+  const legacy = (v: unknown) => (typeof v === 'string' ? LEGACY[v] : undefined)
   if (isPaletteId(settings.palette)) id = settings.palette
-  else if (settings.theme === 'escuro') id = 'noir'
-  else if (settings.theme === 'bege') id = 'cafe'
-  else if (isPaletteId(settings.accent)) id = settings.accent
+  else if (legacy(settings.palette)) id = legacy(settings.palette)!
+  else if (legacy(settings.theme)) id = legacy(settings.theme)!
+  else if (legacy(settings.accent)) id = legacy(settings.accent)!
   return { id, p: PALETTES[id] }
 }
 

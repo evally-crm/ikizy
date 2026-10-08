@@ -14,8 +14,8 @@ const contrast = (a: string, b: string) => {
 describe('paletas fixas', () => {
   const ids = Object.keys(PALETTES) as PaletteId[]
 
-  it('são nove, todas com cores #rrggbb', () => {
-    assert.equal(ids.length, 9)
+  it('são as sete combinações escolhidas, todas com cores #rrggbb', () => {
+    assert.equal(ids.length, 7)
     for (const id of ids) {
       for (const [k, v] of Object.entries(PALETTES[id])) {
         if (['label', 'dark'].includes(k)) continue
@@ -39,18 +39,21 @@ describe('paletas fixas', () => {
 
 describe('paletteFor', () => {
   it('usa a paleta salva quando válida', () => {
-    assert.equal(paletteFor({ palette: 'marinho' }).id, 'marinho')
+    assert.equal(paletteFor({ palette: 'creme-pinho' }).id, 'creme-pinho')
   })
 
-  it('sites antigos mantêm o visual: escuro vira noir, bege vira café, claro usa a cor escolhida', () => {
-    assert.equal(paletteFor({ accent: 'rubi', theme: 'escuro' }).id, 'noir')
-    assert.equal(paletteFor({ accent: 'rubi', theme: 'bege' }).id, 'cafe')
-    assert.equal(paletteFor({ accent: 'vinho', theme: 'claro' }).id, 'vinho')
+  it('escolhas antigas viram a combinação mais próxima', () => {
+    assert.equal(paletteFor({ palette: 'noir' }).id, 'bege-preto')
+    assert.equal(paletteFor({ palette: 'floresta' }).id, 'creme-pinho')
+    assert.equal(paletteFor({ palette: 'marinho' }).id, 'marinho-branco')
+    assert.equal(paletteFor({ accent: 'rubi', theme: 'escuro' }).id, 'bege-preto')
+    assert.equal(paletteFor({ accent: 'rubi', theme: 'bege' }).id, 'branco-bege')
+    assert.equal(paletteFor({ accent: 'vinho', theme: 'claro' }).id, 'vinho-preto')
   })
 
-  it('valor desconhecido cai no bordô', () => {
-    assert.equal(paletteFor({ palette: 'neon', accent: 'x', theme: 'y' }).id, 'bordo')
-    assert.equal(paletteFor({}).id, 'bordo')
+  it('valor desconhecido cai em vinho e preto', () => {
+    assert.equal(paletteFor({ palette: 'neon', accent: 'x', theme: 'y' }).id, 'vinho-preto')
+    assert.equal(paletteFor({}).id, 'vinho-preto')
     assert.ok(!isPaletteId('neon'))
   })
 })
