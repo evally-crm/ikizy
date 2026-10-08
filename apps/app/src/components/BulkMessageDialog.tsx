@@ -17,15 +17,13 @@ const firstName = (name: string) => name.trim().split(/\s+/)[0] ?? ''
  */
 export function BulkMessageDialog({
   clients,
-  reward,
   onClose,
 }: {
   clients: Client[]
-  reward?: string
   onClose: () => void
 }) {
   const { salonName, siteUrl } = useSalonInfo()
-  const render = (k: MessageKind) => renderMessage(k, { clientName: NAME, salonName, siteUrl, reward })
+  const render = (k: MessageKind) => renderMessage(k, { clientName: NAME, salonName, siteUrl })
   const [step, setStep] = useState<'texto' | 'envio'>('texto')
   const [kind, setKind] = useState<MessageKind>('livre')
   const [text, setText] = useState(() => render('livre'))

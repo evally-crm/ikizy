@@ -16,22 +16,6 @@ export interface ClientAppointment extends Visit {
   status: AppointmentStatus
 }
 
-/** movimento do cartão fidelidade: selo extra (> 0) ou prêmio resgatado (< 0) */
-export interface LoyaltyEntry {
-  id: string
-  stamps: number
-  note: string
-  date: Date
-}
-
-export interface LoyaltySettings {
-  enabled: boolean
-  stampsPerReward: number
-  reward: string
-}
-
-export const DEFAULT_LOYALTY: LoyaltySettings = { enabled: true, stampsPerReward: 10, reward: 'Um serviço grátis' }
-
 export interface Client {
   id: string
   name: string
@@ -63,7 +47,6 @@ export interface Client {
   history: Visit[]
   /** todos os atendimentos (inclusive futuros, cancelados e faltas), do mais recente para o mais antigo */
   appointments: ClientAppointment[]
-  loyalty: LoyaltyEntry[]
 }
 
 /** dias sem aparecer para considerar a cliente "sumida" */
@@ -136,7 +119,6 @@ function buildClient(s: Seed, today: Date): Client {
     anamnesisSignature: null,
     history,
     appointments: history.map((v) => ({ ...v, status: 'concluido' as const })),
-    loyalty: [],
   }
 }
 
@@ -162,20 +144,4 @@ export const TAG_LABEL: Record<ClientTag, string> = {
   nova: 'Nova',
   sumida: 'Sumida',
   aniversario: 'Aniversário',
-}
-
-/** situação do cartão: cada atendimento concluído vale um selo; selos extras somam e resgates descontam */
-export function loyaltyState(c: Client, settings: LoyaltySettings) {
-  const per = settings.stampsPerReward
-  const available = Math.max(0, c.visits + c.loyalty.reduce((sum, e) => sum + e.stamps, 0))
-  const redeemed = c.loyalty.filter((e) => e.stamps < 0).length
-  return {
-    available,
-    /** selos marcados no cartão atual */
-    filled: Math.min(available, per),
-    /** prêmios prontos para resgatar */
-    ready: Math.floor(available / per),
-    missing: available >= per ? 0 : per - available,
-    redeemed,
-  }
 }

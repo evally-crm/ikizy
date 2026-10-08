@@ -970,27 +970,34 @@
   }
 }
 
-.loyalty__icon {
-  color: var(--brand-500);
+/* cards de altura fixa: o conteúdo rola por dentro (cuidados e histórico) */
+.card--fixed {
+  display: flex;
+  flex-direction: column;
+  max-height: 420px;
+  min-height: 0;
 }
-.stamps {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 8px;
-  margin-bottom: 12px;
+.card--fixed > .card__head,
+.card--fixed > .history__summary {
+  flex: none;
 }
-.stamps__item {
-  display: grid;
-  place-items: center;
-  aspect-ratio: 1;
-  max-width: 44px;
-  border: 1.5px dashed var(--gray-300);
-  border-radius: 50%;
+.care.card--fixed {
+  overflow-y: auto;
 }
-.stamps__item.is-on {
-  border: 0;
-  background: var(--brand-900);
-  color: var(--white);
+.card--fixed .history {
+  flex: 1;
+  min-height: 0;
+  margin-right: -8px;
+  padding-right: 8px;
+  overflow-y: auto;
+}
+.detail-grid__wide.card--fixed {
+  max-height: 600px;
+}
+@media (min-width: 640px) {
+  .card--fixed:not(.detail-grid__wide) {
+    height: 420px;
+  }
 }
 
 .allergy {
@@ -1098,6 +1105,23 @@
 @media (min-width: 1100px) {
   .crm {
     grid-template-columns: minmax(300px, 4fr) minmax(0, 8fr);
+    align-items: start;
+  }
+  /* a carteira mostra só o que cabe na tela; a lista rola por dentro */
+  .crm__list {
+    position: sticky;
+    top: 16px;
+    max-height: calc(100dvh - 32px);
+  }
+}
+@media (min-width: 1100px) and (min-height: 700px) {
+  .page--fit > .crm {
+    grid-template-rows: minmax(0, 1fr);
+    align-items: stretch;
+  }
+  .page--fit .crm__list {
+    position: static;
+    max-height: none;
   }
 }
 @media (min-width: 1100px) and (min-height: 700px) {
@@ -1236,92 +1260,6 @@ button.textlink:disabled {
 .ftabs__item[aria-selected='true'] .ftabs__count {
   background: rgba(255, 255, 255, 0.16);
   color: var(--white);
-}
-
-/* fidelidade */
-.loyalty {
-  display: flex;
-  flex-direction: column;
-}
-.loyalty .stamps {
-  max-width: 300px;
-}
-.stamps__item {
-  font-size: 11px;
-  color: var(--ink-500);
-}
-.stamps__item.is-prize:not(.is-on) {
-  border-color: var(--brand-500);
-  color: var(--brand-500);
-}
-.loyalty.is-ready .stamps__item.is-on {
-  background: var(--brand-500);
-}
-.loyalty__reward {
-  font-weight: 500;
-  color: var(--ink-900);
-}
-.loyalty__ready {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px 12px;
-  padding: 12px 14px;
-  border-radius: 16px;
-  background: var(--pink-100);
-  font-size: 13px;
-  color: var(--brand-700);
-}
-.loyalty__ready p {
-  flex: 1 1 180px;
-}
-.loyalty__ready strong {
-  font-weight: 600;
-}
-.loyalty__foot {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 12px;
-  margin-top: 14px;
-}
-.ledger {
-  margin: 12px 0 0;
-  padding: 10px 0 0;
-  border-top: 1px solid var(--line);
-  list-style: none;
-}
-.ledger li {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 4px 0;
-  font-size: 13px;
-}
-.ledger__amt {
-  flex: none;
-  min-width: 34px;
-  padding: 2px 0;
-  border-radius: var(--radius-pill);
-  background: var(--success-soft);
-  font-size: 12px;
-  font-weight: 500;
-  text-align: center;
-  color: var(--success);
-}
-.ledger__amt.is-out {
-  background: var(--pink-100);
-  color: var(--brand-500);
-}
-.ledger__what {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  min-width: 0;
-}
-.ledger__what small {
-  font-size: 11px;
-  color: var(--ink-500);
 }
 
 /* cuidados */

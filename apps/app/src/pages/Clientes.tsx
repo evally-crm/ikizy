@@ -25,7 +25,6 @@ import {
   TAG_LABEL,
   clientTags,
   daysSince,
-  loyaltyState,
   type Client,
   type ClientTag,
 } from '../data/clients'
@@ -38,8 +37,6 @@ import {
   AnamnesisSummary,
   CareCard,
   HistoryCard,
-  LoyaltyCard,
-  LoyaltySettingsDialog,
   NotesCard,
   PersonalCard,
 } from '../components/ClientFile'
@@ -96,12 +93,10 @@ function ClientList({
   clients,
   selectedId,
   today,
-  reward,
 }: {
   clients: Client[]
   selectedId?: string
   today: Date
-  reward?: string
 }) {
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<Filter>('todas')
@@ -232,7 +227,6 @@ function ClientList({
       {bulk && (
         <BulkMessageDialog
           clients={clients.filter((c) => picked.has(c.id))}
-          reward={reward}
           onClose={() => setBulk(false)}
         />
       )}
@@ -256,7 +250,6 @@ function ClientDetail({
   book,
   salonName,
   onEdit,
-  onLoyaltySettings,
 }: {
   client: Client
   today: Date
@@ -264,7 +257,6 @@ function ClientDetail({
   book: ReturnType<typeof useClientBook>
   salonName: string
   onEdit: () => void
-  onLoyaltySettings: () => void
 }) {
   const navigate = useNavigate()
   const [tab, setTab] = useState<Tab>('resumo')
@@ -284,18 +276,14 @@ function ClientDetail({
   const overdue = hasVisits ? daysSince(nextExpected, today) : 0
   const ticket = hasVisits ? Math.round(client.totalSpent / client.visits) : 0
   const firstName = client.name.split(' ')[0]
-  const reward = loyaltyState(client, book.loyaltySettings)
   // mensagem que faz mais sentido agora para esta cliente
-  const suggested: MessageKind =
-    book.loyaltySettings.enabled && reward.ready > 0
-      ? 'premio'
-      : tags.includes('aniversario')
-        ? 'aniversario'
-        : days > MISSING_AFTER && hasVisits
-          ? 'sumida'
-          : overdue > 0
-            ? 'manutencao'
-            : 'livre'
+  const suggested: MessageKind = tags.includes('aniversario')
+    ? 'aniversario'
+    : days > MISSING_AFTER && hasVisits
+      ? 'sumida'
+      : overdue > 0
+        ? 'manutencao'
+        : 'livre'
   const upcoming = client.appointments
     .filter((a) => (a.status === 'pendente' || a.status === 'confirmado') && isAfter(a.date, today))
     .sort((a, b) => a.date.getTime() - b.date.getTime())[0]
@@ -479,20 +467,6 @@ function ClientDetail({
       <div className="detail-grid" role="tabpanel">
         {tab === 'resumo' && (
           <>
-            <LoyaltyCard
-              client={client}
-              settings={book.loyaltySettings}
-              canManage={book.canManage}
-              onAdd={(stamps, note) => book.addLoyalty(client.id, stamps, note)}
-              onRemove={(entryId) => book.removeLoyalty(client.id, entryId)}
-              onSettings={onLoyaltySettings}
-            />
-            <CareCard
-              key={client.id}
-              client={client}
-              onSave={(care) => book.updateCare(client.id, care)}
-              onOpenFile={() => setTab('ficha')}
-            />
             {!fileDone && (
               <Card className="detail-grid__wide filecta">
                 <FileSignature size={22} aria-hidden="true" />
@@ -507,7 +481,13 @@ function ClientDetail({
                 </Button>
               </Card>
             )}
-            <HistoryCard appointments={client.appointments} proName={proName} limit={3} onSeeAll={() => setTab('historico')} />
+            <CareCard
+              key={client.id}
+              client={client}
+              onSave={(care) => book.updateCare(client.id, care)}
+              onOpenFile={() => setTab('ficha')}
+            />
+            <HistoryCard appointments={client.appointments} proName={proName} compact onSeeAll={() => setTab('historico')} />
             <PhotosCard
               photos={photos.photos}
               loading={photos.loading}
@@ -549,7 +529,7 @@ function ClientDetail({
             phone={client.phone}
             kinds={CLIENT_KINDS}
             initial={message}
-            context={{ clientName: client.name, ...salonInfo, reward: book.loyaltySettings.reward }}
+            context={{ clientName: client.name, ...salonInfo }}
             onClose={() => setMessage(null)}
           />
         )}
@@ -589,7 +569,7 @@ export default function Clientes() {
   const { id } = useParams()
   const navigate = useNavigate()
   const isWide = useMediaQuery('(min-width: 1100px)')
-  const [dialog, setDialog] = useState<'new' | 'edit' | 'loyalty' | null>(null)
+  const [dialog, setDialog] = useState<'new' | 'edit' | null>(null)
 
   const selected = clients.find((c) => c.id === id) ?? (isWide ? clients[0] : undefined)
   const missing = clients.filter((c) => clientTags(c, today).includes('sumida')).length
@@ -617,9 +597,6 @@ export default function Clientes() {
           onSave={(draft) => book.update(selected.id, draft)}
         />
       )}
-      {dialog === 'loyalty' && (
-        <LoyaltySettingsDialog settings={book.loyaltySettings} onSave={book.saveLoyaltySettings} onClose={() => setDialog(null)} />
-      )}
     </>
   )
 
@@ -632,7 +609,6 @@ export default function Clientes() {
         book={book}
         salonName={salon?.name ?? ''}
         onEdit={() => setDialog('edit')}
-        onLoyaltySettings={() => setDialog('loyalty')}
       />
     )
 
@@ -700,7 +676,7 @@ export default function Clientes() {
         </Card>
       ) : (
         <div className="crm">
-          <ClientList clients={clients} selectedId={selected?.id} today={today} reward={book.loyaltySettings.reward} />
+          <ClientList clients={clients} selectedId={selected?.id} today={today} />
           {detail(false)}
         </div>
       )}

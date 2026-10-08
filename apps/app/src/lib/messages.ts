@@ -14,7 +14,6 @@ export type MessageKind =
   | 'manutencao'
   | 'sumida'
   | 'aniversario'
-  | 'premio'
   | 'livre'
 
 export const MESSAGE_LABEL: Record<MessageKind, string> = {
@@ -26,14 +25,13 @@ export const MESSAGE_LABEL: Record<MessageKind, string> = {
   manutencao: 'Hora da manutenção',
   sumida: 'Sentimos sua falta',
   aniversario: 'Aniversário',
-  premio: 'Prêmio da fidelidade',
   livre: 'Mensagem livre',
 }
 
 /** mensagens ligadas a um horário marcado */
 export const APPOINTMENT_KINDS: MessageKind[] = ['confirmacao', 'lembrete', 'hoje', 'pos', 'falta']
 /** mensagens de relacionamento com a cliente */
-export const CLIENT_KINDS: MessageKind[] = ['manutencao', 'sumida', 'aniversario', 'premio', 'livre']
+export const CLIENT_KINDS: MessageKind[] = ['manutencao', 'sumida', 'aniversario', 'livre']
 
 export interface MessageContext {
   clientName: string
@@ -45,8 +43,6 @@ export interface MessageContext {
   date?: string
   /** minutos desde 00:00 */
   start?: number
-  /** nome do prêmio do cartão fidelidade */
-  reward?: string
 }
 
 const firstName = (name: string) => name.trim().split(/\s+/)[0] ?? ''
@@ -79,8 +75,6 @@ export function renderMessage(kind: MessageKind, ctx: MessageContext): string {
       return `Oi, ${nome}! Faz um tempinho que você não vem e estou com saudade. 💕\n\nPreparei um carinho para a sua volta. Vamos marcar um horário?${agendar}`
     case 'aniversario':
       return `Feliz aniversário, ${nome}! 🎉🎂\n\nQue seu ano seja lindo. Para comemorar, tem um presente te esperando aqui no ${salao} no seu próximo atendimento. 💕`
-    case 'premio':
-      return `Oi, ${nome}! Você completou seu cartão fidelidade! 🎁\n\nSeu prêmio: ${(ctx.reward ?? 'um serviço grátis').toLowerCase()}. É só usar no seu próximo horário.${agendar}`
     case 'livre':
       return `Oi, ${nome}! `
   }

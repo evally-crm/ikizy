@@ -1,13 +1,8 @@
 import { useState, type FormEvent, type KeyboardEvent } from 'react'
 import { format, isAfter } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { AlertTriangle, Check, FileSignature, Gift, Pencil, Plus, Settings2, Trash2, X } from 'lucide-react'
-import {
-  loyaltyState,
-  type Client,
-  type ClientAppointment,
-  type LoyaltySettings,
-} from '../data/clients'
+import { AlertTriangle, Check, FileSignature, Pencil, Plus, Trash2, X } from 'lucide-react'
+import type { Client, ClientAppointment } from '../data/clients'
 import type { ClientNote, ProfessionalOption } from '../data/useClientBook'
 import {
   ANAMNESIS_GROUPS,
@@ -18,225 +13,12 @@ import {
 } from '../lib/anamnesis'
 import { formatBRL, formatPhone } from '../lib/format'
 import { Button, Card, StatusBadge } from './ui'
-import { Stepper, Switch } from './controls'
 import { ConfirmDialog, Modal } from './Modal'
 import { SignaturePad } from './SignaturePad'
 
 type Result = Promise<string | null>
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
-
-/* ------------------------------------------------------------------ fidelidade */
-
-export function LoyaltyCard({
-  client,
-  settings,
-  canManage,
-  onAdd,
-  onRemove,
-  onSettings,
-}: {
-  client: Client
-  settings: LoyaltySettings
-  canManage: boolean
-  onAdd: (stamps: number, note: string) => Result
-  onRemove: (entryId: string) => Result
-  onSettings: () => void
-}) {
-  const [error, setError] = useState<string | null>(null)
-  const [busy, setBusy] = useState(false)
-  const firstName = client.name.split(' ')[0]
-
-  const run = async (fn: () => Result) => {
-    setBusy(true)
-    setError(await fn())
-    setBusy(false)
-  }
-
-  if (!settings.enabled) {
-    return (
-      <Card className="loyalty is-off">
-        <div className="card__head">
-          <div>
-            <p className="eyebrow">Cartão fidelidade</p>
-            <h3 className="card__title">Desligado</h3>
-          </div>
-          <Gift size={20} aria-hidden="true" className="loyalty__icon" />
-        </div>
-        <p className="card__sub">
-          Dê um selo a cada atendimento concluído e um prêmio quando o cartão completar. Clientes com cartão voltam mais.
-        </p>
-        {canManage && (
-          <Button size="sm" className="card__cta" onClick={onSettings}>
-            Ativar cartão fidelidade
-          </Button>
-        )}
-      </Card>
-    )
-  }
-
-  const per = settings.stampsPerReward
-  const st = loyaltyState(client, settings)
-  const recent = client.loyalty.slice(0, 3)
-
-  return (
-    <Card className={`loyalty ${st.ready > 0 ? 'is-ready' : ''}`}>
-      <div className="card__head">
-        <div>
-          <p className="eyebrow">Cartão fidelidade</p>
-          <h3 className="card__title">
-            {st.filled} de {per} selos
-          </h3>
-        </div>
-        {canManage ? (
-          <button type="button" className="iconbtn" aria-label="Configurar cartão fidelidade" onClick={onSettings}>
-            <Settings2 size={18} />
-          </button>
-        ) : (
-          <Gift size={20} aria-hidden="true" className="loyalty__icon" />
-        )}
-      </div>
-
-      <div className="stamps" role="img" aria-label={`${st.filled} de ${per} selos`}>
-        {Array.from({ length: per }, (_, i) => {
-          const on = i < st.filled
-          const last = i === per - 1
-          return (
-            <span key={i} className={`stamps__item ${on ? 'is-on' : ''} ${last ? 'is-prize' : ''}`}>
-              {on ? <Check size={14} aria-hidden="true" /> : last ? <Gift size={14} aria-hidden="true" /> : i + 1}
-            </span>
-          )
-        })}
-      </div>
-
-      {st.ready > 0 ? (
-        <div className="loyalty__ready">
-          <p>
-            <strong>Prêmio liberado!</strong> {firstName} ganhou {settings.reward.toLowerCase()}
-            {st.ready > 1 && ` (${st.ready} prêmios)`}.
-          </p>
-          <Button size="sm" variant="accent" disabled={busy} onClick={() => run(() => onAdd(-per, settings.reward))}>
-            <Gift size={16} aria-hidden="true" /> Resgatar
-          </Button>
-        </div>
-      ) : (
-        <p className="card__sub">
-          Faltam {plural(st.missing, 'atendimento', 'atendimentos')} para ganhar <strong className="loyalty__reward">{settings.reward.toLowerCase()}</strong>.
-        </p>
-      )}
-
-      <div className="loyalty__foot">
-        <button type="button" className="chip chip--ghost chip--sm" disabled={busy} onClick={() => run(() => onAdd(1, 'Selo extra'))}>
-          <Plus size={14} aria-hidden="true" /> Selo extra
-        </button>
-        {st.redeemed > 0 && <span className="card__sub">Já resgatou {plural(st.redeemed, 'prêmio', 'prêmios')}</span>}
-      </div>
-
-      {recent.length > 0 && (
-        <ul className="ledger">
-          {recent.map((e, i) => (
-            <li key={e.id}>
-              <span className={`ledger__amt ${e.stamps < 0 ? 'is-out' : ''}`}>
-                {e.stamps > 0 ? `+${e.stamps}` : e.stamps}
-              </span>
-              <span className="ledger__what">
-                {e.stamps < 0 ? `Resgatou: ${e.note}` : e.note || 'Selo extra'}
-                <small>{format(e.date, "dd 'de' MMM", { locale: ptBR })}</small>
-              </span>
-              {i === 0 && (
-                <button type="button" className="textlink" disabled={busy} onClick={() => run(() => onRemove(e.id))}>
-                  Desfazer
-                </button>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
-
-      {error && (
-        <p className="dialog__error" role="alert">
-          {error}
-        </p>
-      )}
-    </Card>
-  )
-}
-
-export function LoyaltySettingsDialog({
-  settings,
-  onSave,
-  onClose,
-}: {
-  settings: LoyaltySettings
-  onSave: (s: LoyaltySettings) => Result
-  onClose: () => void
-}) {
-  // abrir a configuração com o cartão desligado é para ativá-lo
-  const [enabled, setEnabled] = useState(true)
-  const [per, setPer] = useState(settings.stampsPerReward)
-  const [reward, setReward] = useState(settings.reward)
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  const submit = async (e: FormEvent) => {
-    e.preventDefault()
-    if (!reward.trim()) {
-      setError('Diga qual é o prêmio.')
-      return
-    }
-    setBusy(true)
-    const err = await onSave({ enabled, stampsPerReward: per, reward: reward.trim() })
-    setBusy(false)
-    if (err) setError(err)
-    else onClose()
-  }
-
-  return (
-    <Modal label="Cartão fidelidade" onClose={onClose}>
-      <form onSubmit={submit}>
-        <div className="dialog__head">
-          <h2>Cartão fidelidade</h2>
-          <Button variant="ghost" size="sm" icon aria-label="Fechar" onClick={onClose}>
-            <X size={18} />
-          </Button>
-        </div>
-        <div className="form">
-          <Switch checked={enabled} onChange={setEnabled} label="Cartão ligado" hint="Vale para todas as clientes do salão" />
-          <Stepper label="Selos para ganhar o prêmio" value={per} onChange={setPer} min={3} max={30} step={1} format={(v) => `${v} selos`} />
-          <label className="field">
-            <span className="field__label">Prêmio</span>
-            <span className="input">
-              <input value={reward} onChange={(e) => setReward(e.target.value)} maxLength={60} placeholder="Um serviço grátis" />
-            </span>
-          </label>
-          <div className="chips chips--tight" role="group" aria-label="Sugestões de prêmio">
-            {['Um serviço grátis', 'Uma esmaltação grátis', 'Uma manutenção grátis', '50% no próximo serviço', 'Um brinde'].map((s) => (
-              <button key={s} type="button" className="chip" aria-pressed={reward === s} onClick={() => setReward(s)}>
-                {s}
-              </button>
-            ))}
-          </div>
-          <p className="card__sub">
-            Cada atendimento concluído vale um selo. Ao completar {per}, a cliente ganha: <strong>{reward.trim().toLowerCase() || '…'}</strong>.
-          </p>
-        </div>
-        {error && (
-          <p className="dialog__error" role="alert">
-            {error}
-          </p>
-        )}
-        <div className="dialog__actions">
-          <Button variant="light" onClick={onClose}>
-            Cancelar
-          </Button>
-          <Button type="submit" disabled={busy}>
-            {busy ? 'Salvando…' : 'Salvar'}
-          </Button>
-        </div>
-      </form>
-    </Modal>
-  )
-}
 
 /* ------------------------------------------------------------------ cuidados e preferências */
 
@@ -317,7 +99,7 @@ export function CareCard({
   const suggestions = SUGGESTIONS.filter((s) => !client.preferences.includes(s))
 
   return (
-    <Card className="care">
+    <Card className="care card--fixed">
       <div className="card__head">
         <div>
           <p className="eyebrow">Cuidados</p>
@@ -662,29 +444,29 @@ export function AnamnesisDialog({
 export function HistoryCard({
   appointments,
   proName,
-  limit,
+  compact = false,
   onSeeAll,
 }: {
   appointments: ClientAppointment[]
   proName: (id: string) => string
-  limit?: number
+  /** no resumo: meia largura, ao lado dos cuidados */
+  compact?: boolean
   onSeeAll?: () => void
 }) {
   const now = new Date()
   const past = appointments.filter((a) => !isAfter(a.date, now) || a.status === 'concluido')
-  const shown = limit ? past.slice(0, limit) : past
   const done = past.filter((a) => a.status === 'concluido').length
   const missed = past.filter((a) => a.status === 'faltou').length
   const cancelled = past.filter((a) => a.status === 'cancelado').length
 
   return (
-    <Card className="detail-grid__wide">
+    <Card className={`card--fixed ${compact ? '' : 'detail-grid__wide'}`}>
       <div className="card__head">
         <div>
           <p className="eyebrow">Histórico</p>
-          <h3 className="card__title">{limit ? 'Últimos atendimentos' : 'Todos os atendimentos'}</h3>
+          <h3 className="card__title">{compact ? 'Últimos atendimentos' : 'Todos os atendimentos'}</h3>
         </div>
-        {onSeeAll && past.length > (limit ?? 0) ? (
+        {onSeeAll && past.length > 0 ? (
           <button type="button" className="textlink" onClick={onSeeAll}>
             Ver todos ({past.length})
           </button>
@@ -692,14 +474,14 @@ export function HistoryCard({
           <span className="card__sub">{plural(done, 'concluído', 'concluídos')}</span>
         )}
       </div>
-      {!limit && (missed > 0 || cancelled > 0) && (
+      {!compact && (missed > 0 || cancelled > 0) && (
         <p className="card__sub history__summary">
           {plural(missed, 'falta', 'faltas')} · {plural(cancelled, 'cancelamento', 'cancelamentos')}
         </p>
       )}
-      {shown.length === 0 && <p className="card__sub">Os atendimentos aparecem aqui depois do primeiro horário.</p>}
+      {past.length === 0 && <p className="card__sub">Os atendimentos aparecem aqui depois do primeiro horário.</p>}
       <ol className="history">
-        {shown.map((v, i) => (
+        {past.map((v, i) => (
           <li key={i} className={`history__item ${v.status !== 'concluido' ? 'is-off' : ''}`}>
             <span className="history__date">
               <strong>{format(v.date, 'dd')}</strong>

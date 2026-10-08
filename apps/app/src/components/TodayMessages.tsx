@@ -4,7 +4,7 @@ import { addDays, format, parseISO } from 'date-fns'
 import { Check, Send } from 'lucide-react'
 import { useAgenda } from '../data/AgendaProvider'
 import { useClientBook } from '../data/useClientBook'
-import { MISSING_AFTER, daysSince, loyaltyState } from '../data/clients'
+import { MISSING_AFTER, daysSince } from '../data/clients'
 import {
   APPOINTMENT_KINDS,
   CLIENT_KINDS,
@@ -31,10 +31,10 @@ interface Item {
   context: Omit<MessageContext, 'salonName' | 'siteUrl'>
 }
 
-/** lista do dia de quem vale uma mensagem: lembretes, pós-atendimento, aniversários, prêmios e sumidas */
+/** lista do dia de quem vale uma mensagem: lembretes, pós-atendimento, aniversários e sumidas */
 export function TodayMessages() {
   const { appointments } = useAgenda()
-  const { clients, loyaltySettings } = useClientBook()
+  const { clients } = useClientBook()
   const salon = useSalonInfo()
   const [open, setOpen] = useState<Item | null>(null)
   const [, setTick] = useState(0)
@@ -65,16 +65,15 @@ export function TodayMessages() {
     const md = format(now, 'MM-dd')
     let missing = 0
     for (const c of clients) {
-      const base = { kinds: CLIENT_KINDS, name: c.name, phone: c.phone, context: { clientName: c.name, reward: loyaltySettings.reward } }
+      const base = { kinds: CLIENT_KINDS, name: c.name, phone: c.phone, context: { clientName: c.name } }
       if (c.birthday === md) push('aniversario', c.id, { ...base, detail: 'Faz aniversário hoje 🎂' })
-      else if (loyaltySettings.enabled && loyaltyState(c, loyaltySettings).ready > 0) push('premio', c.id, { ...base, detail: 'Completou o cartão fidelidade' })
       else if (c.visits > 0 && daysSince(c.lastVisit, now) > MISSING_AFTER && missing < 5) {
         missing++
         push('sumida', c.id, { ...base, detail: `Sem vir há ${daysSince(c.lastVisit, now)} dias` })
       }
     }
     return list
-  }, [appointments, clients, loyaltySettings, today, tomorrow, nowMinutes, now])
+  }, [appointments, clients, today, tomorrow, nowMinutes, now])
 
   const pending = items.filter((i) => !wasSent(i.key)).length
 
