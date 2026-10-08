@@ -616,8 +616,8 @@ export function AnamnesisDialog({
           <p className="anam__legend">Termo de consentimento</p>
           <p className="consent__text">
             Eu, <strong>{client.name}</strong>, declaro que as informações desta ficha são verdadeiras, que fui orientada sobre os
-            cuidados antes e depois dos procedimentos e autorizo {salonName || 'o salão'} a realizá-los e a guardar estes dados para o
-            meu atendimento, conforme a LGPD.
+            cuidados antes e depois dos procedimentos e autorizo {salonName || 'o salão'} a realizá-los, a fotografá-los para acompanhamento e a guardar estes
+            dados e fotos para o meu atendimento, conforme a LGPD.
           </p>
           {redo ? (
             <SignaturePad label={`Assinatura de ${firstName}`} onChange={setSignature} />

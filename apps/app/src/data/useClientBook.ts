@@ -455,3 +455,129 @@ export function useClientNotes(clientId: string | undefined) {
 
   return { notes, loading, error, add, remove }
 }
+
+export type PhotoKind = 'antes' | 'depois' | 'outra'
+
+export interface ClientPhoto {
+  id: string
+  kind: PhotoKind
+  caption: string
+  /** yyyy-MM-dd */
+  takenOn: string
+  thumb: string
+}
+
+export interface NewPhoto {
+  kind: PhotoKind
+  caption: string
+  takenOn: string
+  thumb: string
+  data: string
+}
+
+/** fotos de antes e depois de uma cliente: a lista traz só as miniaturas; a foto inteira vem ao abrir */
+export function useClientPhotos(clientId: string | undefined) {
+  const { salon } = useAuth()
+  const salonId = salon?.id
+  const live = isNeonConfigured && Boolean(neon) && Boolean(salonId)
+  const [photos, setPhotos] = useState<ClientPhoto[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  // modo demonstração: a foto inteira fica só na memória
+  const [localFull, setLocalFull] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    setPhotos([])
+    setError(null)
+    if (!clientId || !live || !neon || !salonId) return
+    let cancelled = false
+    setLoading(true)
+    void (async () => {
+      const { data, error: err } = await neon
+        .from('client_photos')
+        .select('id, kind, caption, taken_on, thumb')
+        .eq('salon_id', salonId)
+        .eq('client_id', clientId)
+        .order('taken_on', { ascending: false })
+        .order('created_at', { ascending: true })
+      if (cancelled) return
+      setLoading(false)
+      if (err) {
+        setError('Não foi possível carregar as fotos.')
+        return
+      }
+      setPhotos(
+        ((data ?? []) as { id: string; kind: PhotoKind; caption: string; taken_on: string; thumb: string }[]).map((p) => ({
+          id: p.id,
+          kind: p.kind,
+          caption: p.caption,
+          takenOn: p.taken_on,
+          thumb: p.thumb,
+        })),
+      )
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [clientId, live, salonId])
+
+  const sortPhotos = (list: ClientPhoto[]) => [...list].sort((a, b) => b.takenOn.localeCompare(a.takenOn))
+
+  const add = useCallback(
+    async (items: NewPhoto[]): Promise<string | null> => {
+      if (!clientId || items.length === 0) return null
+      if (!live || !neon || !salonId) {
+        const made = items.map((p, i) => ({ id: `f-${Date.now()}-${i}`, kind: p.kind, caption: p.caption, takenOn: p.takenOn, thumb: p.thumb }))
+        setLocalFull((m) => ({ ...m, ...Object.fromEntries(made.map((p, i) => [p.id, items[i].data])) }))
+        setPhotos((list) => sortPhotos([...list, ...made]))
+        return null
+      }
+      const { data, error: err } = await neon
+        .from('client_photos')
+        .insert(
+          items.map((p) => ({
+            salon_id: salonId,
+            client_id: clientId,
+            kind: p.kind,
+            caption: p.caption,
+            taken_on: p.takenOn,
+            thumb: p.thumb,
+            data: p.data,
+          })),
+        )
+        .select('id')
+      if (err || !data) return friendly(err ?? { message: '' })
+      const ids = (data as { id: string }[]).map((r) => r.id)
+      setPhotos((list) =>
+        sortPhotos([...list, ...items.map((p, i) => ({ id: ids[i], kind: p.kind, caption: p.caption, takenOn: p.takenOn, thumb: p.thumb }))]),
+      )
+      return null
+    },
+    [clientId, live, salonId],
+  )
+
+  const remove = useCallback(
+    async (id: string): Promise<string | null> => {
+      if (live && neon && salonId) {
+        const { error: err } = await neon.from('client_photos').delete().eq('id', id)
+        if (err) return friendly(err)
+      }
+      setPhotos((list) => list.filter((p) => p.id !== id))
+      return null
+    },
+    [live, salonId],
+  )
+
+  /** foto em tamanho bom para ver na tela */
+  const loadFull = useCallback(
+    async (id: string): Promise<string | null> => {
+      if (!live || !neon || !salonId) return localFull[id] ?? null
+      const { data, error: err } = await neon.from('client_photos').select('data').eq('id', id).maybeSingle()
+      if (err || !data) return null
+      return (data as { data: string }).data
+    },
+    [live, salonId, localFull],
+  )
+
+  return { photos, loading, error, add, remove, loadFull }
+}
