@@ -36,7 +36,15 @@ function toPublicSite(studio: Studio, team: { name: string; role: string }[]): P
     showcase: studio.showcase
       .filter((x) => x.visible && x.name.trim())
       .map((x) => ({ name: x.name, description: x.description, price: site.showPrices ? x.price : null, photo: photoUrl(x) || null })),
-    plans: [],
+    plans: studio.plans
+      .filter((x) => x.visible && x.name.trim())
+      .map((x) => ({
+        name: x.name,
+        description: x.description,
+        includes: x.includes.map((i) => i.trim()).filter(Boolean),
+        is_new: x.isNew,
+        price: site.showPrices ? x.price : null,
+      })),
     team: site.showTeam ? team.map((p) => ({ name: p.name, title: p.role })) : [],
   }
 }

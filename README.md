@@ -3,6 +3,8 @@
 Gestão simples para salões e negócios de beleza: agenda, clientes, financeiro e site próprio.
 Monorepo (npm workspaces) com React + TypeScript + Vite e Neon (Postgres, Neon Auth e Data API com RLS).
 
+> Contexto completo do projeto (decisões, o que já foi feito, como trabalhar e o que falta): [CONTEXTO.md](CONTEXTO.md).
+
 ## Estrutura
 
 ```

@@ -40,6 +40,20 @@ export interface ShowcaseItem {
   photoId: string | null
 }
 
+/** plano por assinatura que o negócio vende (ex.: "Unhas o mês todo"); a cobrança é combinada pelo WhatsApp */
+export interface ClientPlan {
+  id: string
+  name: string
+  description: string
+  /** preço por mês */
+  price: number
+  /** o que está incluso, um item por linha (até 8) */
+  includes: string[]
+  /** mostra a etiqueta "Novidade" na página */
+  isNew: boolean
+  visible: boolean
+}
+
 /** endereço de onde as fotos já salvas são servidas (a página pública usa o mesmo caminho) */
 const PHOTO_BASE = 'https://app.ikizy.com'
 
@@ -81,11 +95,13 @@ export interface Studio {
   services: Service[]
   products: Product[]
   showcase: ShowcaseItem[]
+  plans: ClientPlan[]
 }
 
 type StudioInput = Pick<Studio, 'site' | 'products'> & {
   services: (Omit<Service, 'photo' | 'photoId'> & Partial<Pick<Service, 'photo' | 'photoId'>>)[]
   showcase?: ShowcaseItem[]
+  plans?: ClientPlan[]
 }
 
 const DEMO_STUDIO: StudioInput = {
@@ -133,6 +149,7 @@ const normalize = (studio: StudioInput): Studio => ({
   ...studio,
   services: studio.services.map((sv) => ({ ...sv, photo: sv.photo ?? '', photoId: sv.photoId ?? null })),
   showcase: studio.showcase ?? [],
+  plans: studio.plans ?? [],
 })
 
 export const DEFAULT_STUDIO: Studio = normalize(DEMO_STUDIO)
@@ -179,6 +196,7 @@ const blankStudio = (name: string, slug: string): Studio => ({
   services: [],
   products: [],
   showcase: [],
+  plans: [],
 })
 
 interface SettingsRow {
@@ -229,7 +247,7 @@ export function useStudio() {
     if (!live || !neon || !salonId) return
     let cancelled = false
     void (async () => {
-      const [settings, svcs, prods, salonRow, shop] = await Promise.all([
+      const [settings, svcs, prods, salonRow, shop, plans] = await Promise.all([
         neon.from('site_settings').select('*').eq('salon_id', salonId).maybeSingle(),
         neon
           .from('services')
@@ -241,6 +259,12 @@ export function useStudio() {
         neon
           .from('showcase_items')
           .select('id, name, description, price, photo_id, visible')
+          .eq('salon_id', salonId)
+          .order('position')
+          .order('created_at'),
+        neon
+          .from('client_plans')
+          .select('id, name, description, price, includes, is_new, visible')
           .eq('salon_id', salonId)
           .order('position')
           .order('created_at'),
@@ -299,6 +323,17 @@ export function useStudio() {
               visible: x.visible as boolean,
               photo: '',
               photoId: (x.photo_id as string | null) ?? null,
+            })),
+        plans: plans.error
+          ? []
+          : (plans.data ?? []).map((x) => ({
+              id: x.id as string,
+              name: x.name as string,
+              description: (x.description as string) ?? '',
+              price: Number(x.price),
+              includes: (x.includes as string[] | null) ?? [],
+              isNew: Boolean(x.is_new),
+              visible: x.visible as boolean,
             })),
       }
       setPublished(studio)
@@ -430,6 +465,36 @@ export function useStudio() {
         if (r.error) return friendlyPublishError(r.error)
       }
 
+      // planos por assinatura
+      const planIds = new Map<string, string>()
+      let planPos = 0
+      for (const pl of draft.plans) {
+        const fields = {
+          name: pl.name.trim() || 'Plano',
+          description: pl.description.trim().slice(0, 200),
+          price: pl.price,
+          includes: pl.includes.map((i) => i.trim()).filter(Boolean).slice(0, 8),
+          is_new: pl.isNew,
+          visible: pl.visible,
+          position: planPos++,
+        }
+        if (isUuid(pl.id)) {
+          const r = await neon.from('client_plans').update(fields).eq('id', pl.id).eq('salon_id', salonId)
+          if (r.error) return friendlyPublishError(r.error)
+          planIds.set(pl.id, pl.id)
+        } else {
+          const r = await neon.from('client_plans').insert({ ...fields, salon_id: salonId }).select('id').single()
+          if (r.error || !r.data) return friendlyPublishError(r.error ?? { message: '' })
+          planIds.set(pl.id, r.data.id as string)
+        }
+      }
+      const keepPlans = [...planIds.values()]
+      const oldPlans = published.plans.map((x) => x.id).filter((id) => !keepPlans.includes(id))
+      if (oldPlans.length) {
+        const r = await neon.from('client_plans').delete().in('id', oldPlans).eq('salon_id', salonId)
+        if (r.error) return friendlyPublishError(r.error)
+      }
+
       // fotos que ninguém usa mais (trocadas ou removidas) saem do banco
       const keepPhotos = [...photoOf.values()].filter((id): id is string => Boolean(id))
       const clean = neon.from('site_photos').delete().eq('salon_id', salonId)
@@ -482,6 +547,11 @@ export function useStudio() {
           id: showcaseIds.get(x.id) ?? x.id,
           photo: '',
           photoId: photoOf.get(x.id) ?? null,
+        })),
+        plans: draft.plans.map((pl) => ({
+          ...pl,
+          id: planIds.get(pl.id) ?? pl.id,
+          includes: pl.includes.map((i) => i.trim()).filter(Boolean).slice(0, 8),
         })),
       }
       setDraft(next)
