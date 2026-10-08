@@ -99,7 +99,7 @@ export function CareCard({
   const suggestions = SUGGESTIONS.filter((s) => !client.preferences.includes(s))
 
   return (
-    <Card className="care">
+    <Card className="care card--fixed">
       <div className="card__head">
         <div>
           <p className="eyebrow">Cuidados</p>
@@ -444,29 +444,29 @@ export function AnamnesisDialog({
 export function HistoryCard({
   appointments,
   proName,
-  limit,
+  compact = false,
   onSeeAll,
 }: {
   appointments: ClientAppointment[]
   proName: (id: string) => string
-  limit?: number
+  /** no resumo: meia largura, ao lado dos cuidados */
+  compact?: boolean
   onSeeAll?: () => void
 }) {
   const now = new Date()
   const past = appointments.filter((a) => !isAfter(a.date, now) || a.status === 'concluido')
-  const shown = limit ? past.slice(0, limit) : past
   const done = past.filter((a) => a.status === 'concluido').length
   const missed = past.filter((a) => a.status === 'faltou').length
   const cancelled = past.filter((a) => a.status === 'cancelado').length
 
   return (
-    <Card className="detail-grid__wide">
+    <Card className={`card--fixed ${compact ? '' : 'detail-grid__wide'}`}>
       <div className="card__head">
         <div>
           <p className="eyebrow">Histórico</p>
-          <h3 className="card__title">{limit ? 'Últimos atendimentos' : 'Todos os atendimentos'}</h3>
+          <h3 className="card__title">{compact ? 'Últimos atendimentos' : 'Todos os atendimentos'}</h3>
         </div>
-        {onSeeAll && past.length > (limit ?? 0) ? (
+        {onSeeAll && past.length > 0 ? (
           <button type="button" className="textlink" onClick={onSeeAll}>
             Ver todos ({past.length})
           </button>
@@ -474,14 +474,14 @@ export function HistoryCard({
           <span className="card__sub">{plural(done, 'concluído', 'concluídos')}</span>
         )}
       </div>
-      {!limit && (missed > 0 || cancelled > 0) && (
+      {!compact && (missed > 0 || cancelled > 0) && (
         <p className="card__sub history__summary">
           {plural(missed, 'falta', 'faltas')} · {plural(cancelled, 'cancelamento', 'cancelamentos')}
         </p>
       )}
-      {shown.length === 0 && <p className="card__sub">Os atendimentos aparecem aqui depois do primeiro horário.</p>}
+      {past.length === 0 && <p className="card__sub">Os atendimentos aparecem aqui depois do primeiro horário.</p>}
       <ol className="history">
-        {shown.map((v, i) => (
+        {past.map((v, i) => (
           <li key={i} className={`history__item ${v.status !== 'concluido' ? 'is-off' : ''}`}>
             <span className="history__date">
               <strong>{format(v.date, 'dd')}</strong>

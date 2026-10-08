@@ -400,12 +400,6 @@ function ClientDetail({
       <div className="detail-grid" role="tabpanel">
         {tab === 'resumo' && (
           <>
-            <CareCard
-              key={client.id}
-              client={client}
-              onSave={(care) => book.updateCare(client.id, care)}
-              onOpenFile={() => setTab('ficha')}
-            />
             {!fileDone && (
               <Card className="detail-grid__wide filecta">
                 <FileSignature size={22} aria-hidden="true" />
@@ -420,7 +414,13 @@ function ClientDetail({
                 </Button>
               </Card>
             )}
-            <HistoryCard appointments={client.appointments} proName={proName} limit={3} onSeeAll={() => setTab('historico')} />
+            <CareCard
+              key={client.id}
+              client={client}
+              onSave={(care) => book.updateCare(client.id, care)}
+              onOpenFile={() => setTab('ficha')}
+            />
+            <HistoryCard appointments={client.appointments} proName={proName} compact onSeeAll={() => setTab('historico')} />
             <PhotosCard
               photos={photos.photos}
               loading={photos.loading}

@@ -970,6 +970,36 @@
   }
 }
 
+/* cards de altura fixa: o conteúdo rola por dentro (cuidados e histórico) */
+.card--fixed {
+  display: flex;
+  flex-direction: column;
+  max-height: 420px;
+  min-height: 0;
+}
+.card--fixed > .card__head,
+.card--fixed > .history__summary {
+  flex: none;
+}
+.care.card--fixed {
+  overflow-y: auto;
+}
+.card--fixed .history {
+  flex: 1;
+  min-height: 0;
+  margin-right: -8px;
+  padding-right: 8px;
+  overflow-y: auto;
+}
+.detail-grid__wide.card--fixed {
+  max-height: 600px;
+}
+@media (min-width: 640px) {
+  .card--fixed:not(.detail-grid__wide) {
+    height: 420px;
+  }
+}
+
 .allergy {
   display: flex;
   align-items: flex-start;
@@ -1075,6 +1105,23 @@
 @media (min-width: 1100px) {
   .crm {
     grid-template-columns: minmax(300px, 4fr) minmax(0, 8fr);
+    align-items: start;
+  }
+  /* a carteira mostra só o que cabe na tela; a lista rola por dentro */
+  .crm__list {
+    position: sticky;
+    top: 16px;
+    max-height: calc(100dvh - 32px);
+  }
+}
+@media (min-width: 1100px) and (min-height: 700px) {
+  .page--fit > .crm {
+    grid-template-rows: minmax(0, 1fr);
+    align-items: stretch;
+  }
+  .page--fit .crm__list {
+    position: static;
+    max-height: none;
   }
 }
 @media (min-width: 1100px) and (min-height: 700px) {
