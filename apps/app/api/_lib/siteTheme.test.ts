@@ -15,7 +15,7 @@ describe('paletas fixas', () => {
   const ids = Object.keys(PALETTES) as PaletteId[]
 
   it('são as sete combinações escolhidas, todas com cores #rrggbb', () => {
-    assert.equal(ids.length, 7)
+    assert.equal(ids.length, 8)
     for (const id of ids) {
       for (const [k, v] of Object.entries(PALETTES[id])) {
         if (['label', 'dark'].includes(k)) continue

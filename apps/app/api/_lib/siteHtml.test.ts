@@ -214,6 +214,15 @@ describe('renderSitePage', () => {
     assert.match(html, /<meta name="theme-color" content="#e8dccb">/)
   })
 
+  it('paleta preto e branco deixa a página escura (capa sem foto e contato sem bloco branco)', () => {
+    const html = page(base({}, { palette: 'preto-branco' }))
+    assert.match(html, /--bg:#000000/)
+    assert.match(html, /--ink:#ffffff/)
+    assert.match(html, /color-scheme:dark/)
+    assert.match(html, /\.contact\{background:var\(--soft\)/)
+    assert.doesNotMatch(page(base({}, { palette: 'vinho-preto' })), /\.contact\{background:var\(--soft\)/)
+  })
+
   it('paleta e fonte desconhecidas voltam a vinho e preto e à fonte moderna', () => {
     const html = page(base({}, { palette: 'neon', accent: 'x', font: 'comic' }))
     assert.match(html, /--bg:#f2eded/)
