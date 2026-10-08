@@ -117,26 +117,21 @@ const faqSchema = {
     </header>
 
     <div class="forwho__stage">
-      <div class="forwho__art" aria-hidden="true">
-        <span class="forwho__back"></span>
-        <div class="forwho__card">
-          <div class="forwho__row">
-            <span class="forwho__time">14:30</span>
-            <span class="forwho__ok">Confirmado</span>
-          </div>
-          <div class="ticker">
-            {crafts.map((c, i) => <span style={`--i:${i}`}>{c.name}</span>)}
-          </div>
-          <p class="forwho__tags">Agenda · Clientes · Caixa</p>
+      <div class="forwho__circle" aria-hidden="true">
+        <span class="forwho__time">Hoje, 14:30</span>
+        <div class="ticker">
+          {crafts.map((c, i) => <span style={`--i:${i}`}>{c.name}</span>)}
         </div>
       </div>
       <ol class="forwho__list">
         {
           crafts.map((c, i) => (
             <li class={`craft craft--${i + 1}`}>
-              <span class="craft__n">[{String(i + 1).padStart(2, '0')}]</span>
-              <strong>{c.name}</strong>
-              <span>{c.hint}</span>
+              <div class="craft__top">
+                <strong>{c.name}</strong>
+                <span class="craft__n">{String(i + 1).padStart(2, '0')}</span>
+              </div>
+              <p>{c.hint}</p>
             </li>
           ))
         }
