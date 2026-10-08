@@ -55,7 +55,18 @@ export function DeviceToggle({ device, onChange }: { device: Device; onChange: (
 }
 
 /** prévia fiel da página pública, dentro de um quadro que encolhe para caber no espaço disponível */
-export default function SiteFrame({ studio, device, height = 560 }: { studio: Studio; device: Device; height?: number | 'fill' }) {
+const BAR = 38
+
+/** prévia fiel da página pública, numa moldura de navegador que encolhe para caber no espaço disponível */
+export default function SiteFrame({
+  studio,
+  device,
+  height = 560,
+}: {
+  studio: Studio
+  device: Device
+  height?: number | 'fill'
+}) {
   const { professionals } = useAgenda()
   const html = useMemo(() => renderSitePage(toPublicSite(studio, professionals), { canonical: '#' }), [studio, professionals])
 
@@ -80,15 +91,27 @@ export default function SiteFrame({ studio, device, height = 560 }: { studio: St
   const width = WIDTH[device]
   const scale = avail > 0 ? Math.min(1, avail / width) : 1
   const shownWidth = Math.round(width * scale)
+  const viewH = h - BAR
+  const host = `${studio.site.slug || 'seu-salao'}.ikizy.com`
 
   return (
     <div ref={box} className={`siteframe siteframe--${device} ${fill ? 'siteframe--fill' : ''}`} style={fill ? undefined : { height }}>
       <div className="siteframe__chrome" style={{ width: shownWidth, height: h }}>
+        <div className="siteframe__bar" aria-hidden="true">
+          {device === 'desktop' && (
+            <span className="siteframe__dots">
+              <i />
+              <i />
+              <i />
+            </span>
+          )}
+          <span className="siteframe__url">{host}</span>
+        </div>
         <iframe
           title="Prévia do seu site"
           srcDoc={html}
           sandbox=""
-          style={{ width, height: h / scale, transform: `scale(${scale})`, transformOrigin: 'top left' }}
+          style={{ width, height: viewH / scale, transform: `scale(${scale})`, transformOrigin: 'top left' }}
         />
       </div>
     </div>

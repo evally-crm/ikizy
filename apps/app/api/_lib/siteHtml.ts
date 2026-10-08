@@ -123,7 +123,7 @@ em{font-family:Georgia,"Times New Roman",serif;font-style:italic;color:var(--acc
 .hero--cover .btn--ghost{color:#fff}
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
 .chip{display:inline-flex;align-items:center;min-height:34px;padding:0 14px;border-radius:999px;background:rgba(255,255,255,.88);color:var(--text);font-size:13px;text-decoration:none}
-.hero:not(.hero--cover) .chip{background:var(--panel);color:var(--text)}
+.hero:not(.hero--cover){background:radial-gradient(90% 80% at 88% 8%,color-mix(in srgb,var(--accent) 55%,#fff) 0%,transparent 60%),radial-gradient(70% 70% at 0% 100%,color-mix(in srgb,var(--accent) 70%,#000) 0%,transparent 70%),var(--accent);color:var(--on)}.hero:not(.hero--cover) h1,.hero:not(.hero--cover) h1 em,.hero:not(.hero--cover) .hero__lead{color:var(--on)}.hero:not(.hero--cover) .btn{background:var(--on);color:var(--accent);border-color:var(--on)}.hero:not(.hero--cover) .btn--ghost{background:transparent;color:var(--on);border-color:color-mix(in srgb,var(--on) 60%,transparent)}.hero:not(.hero--cover) .chip{background:color-mix(in srgb,var(--on) 14%,transparent);color:var(--on)}.hero__name{margin:0 0 18px;font-size:13px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;opacity:.85}.hero--cover .hero__name{color:#fff}
 
 .steps{display:grid;gap:12px;margin:0;padding:0;list-style:none;counter-reset:s}
 @media(min-width:720px){.steps{grid-template-columns:repeat(3,1fr);gap:16px}}
@@ -203,10 +203,12 @@ export function renderSitePage(site: PublicSite, opts: { canonical: string }): s
   const plans = (site.plans ?? []).filter((x) => x.name?.trim())
   const team = site.team ?? []
 
-  const tagline = (s.tagline ?? '').trim() || 'Seu cuidado começa aqui.'
-  const cut = tagline.lastIndexOf(' ')
-  const head = cut > 0 ? tagline.slice(0, cut) : ''
-  const tail = cut > 0 ? tagline.slice(cut + 1) : tagline
+  const ownTagline = (s.tagline ?? '').trim()
+  const tagline = ownTagline || 'Seu cuidado começa aqui.'
+  const heading = ownTagline || name
+  const cut = heading.lastIndexOf(' ')
+  const head = cut > 0 ? heading.slice(0, cut) : ''
+  const tail = cut > 0 ? heading.slice(cut + 1) : heading
   const about = (s.about ?? '').trim()
   const address = (s.address ?? '').trim()
   const hours = (s.hours ?? '').trim()
@@ -234,7 +236,7 @@ export function renderSitePage(site: PublicSite, opts: { canonical: string }): s
                 : ''
           const thumb = photoSrc(x.photo)
           return `<li>${thumb ? `<img class="thumb" src="${esc(thumb)}" alt="" width="52" height="52" loading="lazy" decoding="async">` : ''}<span>${esc(x.name)}<small>${esc(x.duration)} min</small></span>${
-            showPrices && x.price != null ? `<span class="price">${esc(formatPrice(x.price))}</span>` : ''
+            showPrices && x.price != null && x.price > 0 ? `<span class="price">${esc(formatPrice(x.price))}</span>` : ''
           }${go}</li>`
         })
         .join('')
@@ -263,7 +265,7 @@ export function renderSitePage(site: PublicSite, opts: { canonical: string }): s
       return `<article class="item">${
         src ? `<img class="item__img" src="${esc(src)}" alt="${esc(x.name)}" width="400" height="400" loading="lazy" decoding="async">` : `<span class="item__ph" aria-hidden="true">${esc((x.name.trim()[0] ?? '?').toUpperCase())}</span>`
       }<h3>${esc(x.name)}</h3>${x.description ? `<p>${esc(x.description)}</p>` : ''}${
-        showPrices && x.price != null ? `<span class="price">${esc(formatPrice(x.price))}</span>` : ''
+        showPrices && x.price != null && x.price > 0 ? `<span class="price">${esc(formatPrice(x.price))}</span>` : ''
       }${link ? `<a class="btn" href="${esc(link)}" rel="noopener">Quero este</a>` : ''}</article>`
     })
     .join('')
@@ -344,7 +346,7 @@ export function renderSitePage(site: PublicSite, opts: { canonical: string }): s
         : ''
   }</div></div></header>
 <main class="wrap">
-<section class="panel hero${cover ? ' hero--cover' : ''}">${cover ? `<img class="hero__img" src="${cover}" alt="">` : ''}<div class="hero__in"><h1>${head ? `${esc(head)} ` : ''}<em>${esc(tail)}</em></h1>${
+<section class="panel hero${cover ? ' hero--cover' : ''}">${cover ? `<img class="hero__img" src="${cover}" alt="">` : ''}<div class="hero__in">${ownTagline ? `<p class="hero__name">${esc(name)}</p>` : ''}<h1>${head ? `${esc(head)} ` : ''}<em>${esc(tail)}</em></h1>${
     about && !cover ? `<p class="hero__lead">${esc(about.slice(0, 140))}</p>` : ''
   }<div class="hero__cta">${
     online

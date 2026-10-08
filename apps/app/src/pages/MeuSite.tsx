@@ -609,7 +609,7 @@ export default function MeuSite() {
         <section className="gg__preview" aria-label="Prévia do seu site">
           {splitGuide && <DeviceToggle device={device} onChange={setDevice} />}
           <div className="gg__frame">
-            <SiteFrame studio={draft} device={splitGuide ? device : 'mobile'} height={!splitGuide ? 220 : device === 'mobile' ? 620 : 500} />
+            <SiteFrame studio={draft} device={splitGuide ? device : 'mobile'} height={splitGuide ? 'fill' : 240} />
           </div>
         </section>
       </div>

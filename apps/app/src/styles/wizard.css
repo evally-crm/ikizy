@@ -210,14 +210,14 @@
   align-items: center;
   justify-content: center;
   gap: 10px;
-  min-height: 56px;
+  min-height: 50px;
   padding: 0 28px;
   border: 1px solid var(--brand-900);
   border-radius: var(--radius-pill);
   background: var(--brand-900);
   color: var(--white);
   font: inherit;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 500;
   text-decoration: none;
   cursor: pointer;
@@ -281,8 +281,8 @@
   display: grid;
   flex: none;
   place-items: center;
-  width: 56px;
-  height: 56px;
+  width: 50px;
+  height: 50px;
   border: 1px solid var(--line-strong, var(--line));
   border-radius: 50%;
   background: var(--white);
@@ -290,27 +290,56 @@
   cursor: pointer;
 }
 @media (min-width: 900px) {
+  /* no computador o guia cabe exatamente na tela: cabeçalho, conteúdo e rodapé, sem nada por cima de nada */
+  .gg {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    overflow: hidden;
+  }
+  .gg__head {
+    padding: 18px 32px;
+  }
   .gg__main {
     flex-direction: row;
-    align-items: center;
+    align-items: stretch;
     gap: 56px;
-    padding-top: 24px;
+    min-height: 0;
+    max-width: 1320px;
+    padding: 4px 40px 20px;
   }
   .gg__form {
-    flex: 0 0 min(460px, 42%);
+    flex: 0 0 min(440px, 38%);
+    justify-content: center;
+    overflow-y: auto;
+    padding-right: 6px;
   }
   .gg__preview {
     position: static;
     order: 0;
     flex: 1;
+    min-height: 0;
     padding: 0;
   }
+  .gg__frame {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+  }
+  .gg__frame > .siteframe {
+    flex: 1;
+    min-height: 0;
+  }
+  .gg__foot {
+    gap: 16px;
+    padding: 0 32px 20px;
+    border-top: 0;
+  }
   .gg__nav {
-    justify-content: flex-end;
+    max-width: none;
   }
   .gg__nav .gg__btn {
     flex: 0 0 auto;
-    min-width: 200px;
+    min-width: 180px;
   }
   .gg__back {
     margin-right: auto;
@@ -452,4 +481,60 @@
   border-radius: 16px;
   background: var(--white);
   color: var(--ink-500);
+}
+
+/* moldura de navegador da prévia */
+.siteframe__chrome {
+  display: flex;
+  flex-direction: column;
+}
+.siteframe__bar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 12px;
+  height: 38px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg);
+}
+.siteframe__dots {
+  display: flex;
+  gap: 6px;
+}
+.siteframe__dots i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #e8695b;
+}
+.siteframe__dots i:nth-child(2) {
+  background: #e9b949;
+}
+.siteframe__dots i:nth-child(3) {
+  background: #5fbf6a;
+}
+.siteframe__url {
+  flex: 1;
+  max-width: 320px;
+  margin: 0 auto;
+  padding: 4px 14px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--white);
+  font-size: 12px;
+  color: var(--ink-500);
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.siteframe--desktop .siteframe__url {
+  margin-right: auto;
+}
+/* o iframe tem a altura calculada para a escala; não pode ser encolhido pelo flex */
+.siteframe iframe {
+  flex: none;
+}
+.gg__nav .gg__btn:last-child {
+  margin-left: auto;
 }
