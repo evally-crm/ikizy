@@ -16,7 +16,7 @@ export async function GET(request: Request) {
     if (!site) return html(renderNotFound(), 404, 'public, s-maxage=30')
     const page = renderSitePage(site, { canonical: `${appUrl()}/s/${slug}` })
     // cache curto: a edição publicada aparece em até 1 minuto
-    return html(page, 200, 'public, s-maxage=60, stale-while-revalidate=600')
+    return html(page, 200, 'public, s-maxage=60')
   } catch (error) {
     console.error('site', slug, error)
     return html(renderNotFound(), 500, 'no-store')

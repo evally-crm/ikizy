@@ -115,7 +115,7 @@ Regras importantes:
 - Seções: topo com logo, capa (foto ou fundo marcante na cor da paleta, com o nome do salão), "Agendar é simples" (3 passos),
   Sobre, Serviços (por categoria, com foto opcional e botão de agendar), Produtos à venda (vitrine), Planos por assinatura,
   Equipe, Contato (WhatsApp, Instagram, horário, endereço com mapa) e botão flutuante de agendar no celular.
-- Cache de 60 s na Vercel (uma publicação aparece em até ~1 minuto).
+- Cache de 60 s na Vercel, sem `stale-while-revalidate` (uma publicação aparece em no máximo 1 minuto; com ele, a versão antiga ainda era entregue depois disso).
 - Tudo que o negócio digita passa por `esc()`; fotos só entram por `photoSrc()` (id, `/api/photo` ou data URL de imagem).
 
 ### Personalização (fixa, poucas escolhas, por decisão de produto)
