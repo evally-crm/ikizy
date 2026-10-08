@@ -4,14 +4,7 @@ import { useAuth } from '../auth/AuthProvider'
 import { isNeonConfigured, neon } from '../lib/neon'
 import { parseAnamnesis, type Anamnesis } from '../lib/anamnesis'
 import type { AppointmentStatus } from '../types'
-import {
-  DEFAULT_LOYALTY,
-  getClients,
-  type Client,
-  type ClientAppointment,
-  type LoyaltyEntry,
-  type LoyaltySettings,
-} from './clients'
+import { getClients, type Client, type ClientAppointment } from './clients'
 import { professionals as mockProfessionals } from './mock'
 
 export interface ClientDraft {
@@ -77,14 +70,6 @@ interface AppointmentRow {
   status: AppointmentStatus
 }
 
-interface LoyaltyRow {
-  id: string
-  client_id: string
-  stamps: number
-  note: string
-  created_at: string
-}
-
 function friendly(error: { code?: string; message: string }) {
   if (error.code === '42501' || error.message.includes('row-level security')) return 'Seu acesso não permite alterar isso agora.'
   return 'Não foi possível salvar agora. Tente novamente.'
@@ -105,8 +90,8 @@ const draftColumns = (draft: ClientDraft) => ({
   referral: draft.referral,
 })
 
-/** monta a ficha a partir da linha da cliente, dos atendimentos e dos movimentos do cartão */
-function buildClient(row: ClientRow, rows: AppointmentRow[], loyalty: LoyaltyEntry[], fallbackProfessional: string): Client {
+/** monta a ficha a partir da linha da cliente e dos atendimentos */
+function buildClient(row: ClientRow, rows: AppointmentRow[], fallbackProfessional: string): Client {
   const appointments: ClientAppointment[] = rows
     .map((v) => ({
       date: new Date(v.starts_at),
@@ -150,7 +135,6 @@ function buildClient(row: ClientRow, rows: AppointmentRow[], loyalty: LoyaltyEnt
     anamnesisSignature: row.anamnesis_signature,
     history: done.map(({ status: _status, ...v }) => v),
     appointments,
-    loyalty,
   }
 }
 
@@ -163,7 +147,6 @@ export function useClientBook() {
 
   const [clients, setClients] = useState<Client[]>(() => (live ? [] : getClients()))
   const [professionals, setProfessionals] = useState<ProfessionalOption[]>(() => (live ? [] : mockProfessionals))
-  const [loyaltySettings, setLoyaltySettings] = useState<LoyaltySettings>(DEFAULT_LOYALTY)
   const [loading, setLoading] = useState(live)
   const [error, setError] = useState<string | null>(null)
   const [tick, setTick] = useState(0)
@@ -173,18 +156,16 @@ export function useClientBook() {
     let cancelled = false
     setLoading(true)
     void (async () => {
-      const [pros, cls, appts, entries, settings] = await Promise.all([
+      const [pros, cls, appts] = await Promise.all([
         neon.from('professionals').select('id, name').eq('salon_id', salonId).eq('active', true).order('name'),
         neon.from('clients').select(CLIENT_COLUMNS).eq('salon_id', salonId).order('name'),
         neon
           .from('appointments')
           .select('client_id, professional_id, service_name, starts_at, price, status')
           .eq('salon_id', salonId),
-        neon.from('loyalty_entries').select('id, client_id, stamps, note, created_at').eq('salon_id', salonId),
-        neon.from('loyalty_settings').select('enabled, stamps_per_reward, reward').eq('salon_id', salonId).maybeSingle(),
       ])
       if (cancelled) return
-      if (pros.error || cls.error || appts.error || entries.error || settings.error) {
+      if (pros.error || cls.error || appts.error) {
         setError('Não foi possível carregar as clientes. Verifique a conexão e tente de novo.')
         setLoading(false)
         return
@@ -195,20 +176,11 @@ export function useClientBook() {
         list.push(v)
         byClient.set(v.client_id, list)
       }
-      const loyaltyByClient = new Map<string, LoyaltyEntry[]>()
-      for (const e of (entries.data ?? []) as unknown as LoyaltyRow[]) {
-        const list = loyaltyByClient.get(e.client_id) ?? []
-        list.push({ id: e.id, stamps: e.stamps, note: e.note, date: new Date(e.created_at) })
-        loyaltyByClient.set(e.client_id, list)
-      }
-      for (const list of loyaltyByClient.values()) list.sort((a, b) => b.date.getTime() - a.date.getTime())
-      const s = settings.data as { enabled: boolean; stamps_per_reward: number; reward: string } | null
-      setLoyaltySettings(s ? { enabled: s.enabled, stampsPerReward: s.stamps_per_reward, reward: s.reward } : DEFAULT_LOYALTY)
       const proList = (pros.data ?? []).map((p) => ({ id: p.id as string, name: p.name as string }))
       setProfessionals(proList)
       setClients(
         ((cls.data ?? []) as unknown as ClientRow[]).map((c) =>
-          buildClient(c, byClient.get(c.id) ?? [], loyaltyByClient.get(c.id) ?? [], proList[0]?.id ?? ''),
+          buildClient(c, byClient.get(c.id) ?? [], proList[0]?.id ?? ''),
         ),
       )
       setError(null)
@@ -250,7 +222,6 @@ export function useClientBook() {
             anamnesisSignature: null,
             history: [],
             appointments: [],
-            loyalty: [],
           },
         ])
         return { id, error: null }
@@ -321,58 +292,11 @@ export function useClientBook() {
     [save],
   )
 
-  /** selo extra (stamps > 0) ou resgate de prêmio (stamps < 0) */
-  const addLoyalty = useCallback(
-    async (clientId: string, stamps: number, note: string): Promise<string | null> => {
-      const local = (entry: LoyaltyEntry) => patchLocal(clientId, (c) => ({ ...c, loyalty: [entry, ...c.loyalty] }))
-      if (!live || !neon || !salonId) {
-        local({ id: `l-${Date.now()}`, stamps, note, date: new Date() })
-        return null
-      }
-      const { data, error: err } = await neon
-        .from('loyalty_entries')
-        .insert({ salon_id: salonId, client_id: clientId, stamps, note })
-        .select('id, created_at')
-        .single()
-      if (err || !data) return friendly(err ?? { message: '' })
-      local({ id: data.id as string, stamps, note, date: new Date(data.created_at as string) })
-      return null
-    },
-    [live, salonId, patchLocal],
-  )
-
-  const removeLoyalty = useCallback(
-    async (clientId: string, entryId: string): Promise<string | null> => {
-      if (live && neon && salonId) {
-        const { error: err } = await neon.from('loyalty_entries').delete().eq('id', entryId)
-        if (err) return friendly(err)
-      }
-      patchLocal(clientId, (c) => ({ ...c, loyalty: c.loyalty.filter((e) => e.id !== entryId) }))
-      return null
-    },
-    [live, salonId, patchLocal],
-  )
-
-  const saveLoyaltySettings = useCallback(
-    async (next: LoyaltySettings): Promise<string | null> => {
-      if (live && neon && salonId) {
-        const { error: err } = await neon
-          .from('loyalty_settings')
-          .upsert({ salon_id: salonId, enabled: next.enabled, stamps_per_reward: next.stampsPerReward, reward: next.reward })
-        if (err) return friendly(err)
-      }
-      setLoyaltySettings(next)
-      return null
-    },
-    [live, salonId],
-  )
-
   return {
     live,
     canManage,
     clients,
     professionals,
-    loyaltySettings,
     loading,
     error,
     create,
@@ -380,9 +304,6 @@ export function useClientBook() {
     updateCare,
     saveAnamnesis,
     signAnamnesis,
-    addLoyalty,
-    removeLoyalty,
-    saveLoyaltySettings,
     reload,
   }
 }
