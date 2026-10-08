@@ -16,7 +16,7 @@ import {
   attentionPoints,
   type Anamnesis,
 } from '../lib/anamnesis'
-import { formatBRL } from '../lib/format'
+import { formatBRL, formatPhone } from '../lib/format'
 import { Button, Card, StatusBadge } from './ui'
 import { Stepper, Switch } from './controls'
 import { ConfirmDialog, Modal } from './Modal'
@@ -398,7 +398,7 @@ export function PersonalCard({
 }) {
   const pro = professionals.find((p) => p.id === client.professionalId)?.name
   const rows: [string, string][] = [
-    ['WhatsApp', client.phone],
+    ['WhatsApp', client.phone && formatPhone(client.phone)],
     ['E-mail', client.email],
     ['Instagram', client.instagram && `@${client.instagram}`],
     ['Aniversário', client.birthday && format(new Date(2000, Number(client.birthday.slice(0, 2)) - 1, Number(client.birthday.slice(3))), "dd 'de' MMMM", { locale: ptBR })],

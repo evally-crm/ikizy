@@ -154,7 +154,7 @@ function buildClient(row: ClientRow, rows: AppointmentRow[], loyalty: LoyaltyEnt
   }
 }
 
-/** carteira de clientes: dados reais do Neon, ou exemplos quando não há banco configurado */
+/** contatos (clientes): dados reais do Neon, ou exemplos quando não há banco configurado */
 export function useClientBook() {
   const { salon } = useAuth()
   const salonId = salon?.id

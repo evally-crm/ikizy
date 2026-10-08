@@ -51,7 +51,8 @@ body:has(dialog.sheet[open]){overflow:hidden}
 .bk-hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
 .bk-err{margin:0 0 12px;padding:12px 14px;border-radius:14px;background:#fdeaea;color:#8a1c1c;font-size:14px}
 .bk-sum{margin:0 0 16px;padding:14px 16px;border-radius:18px;background:var(--soft);line-height:1.5}
-.bk-ok{display:grid;place-items:center;width:64px;height:64px;margin:6px auto 14px;border-radius:50%;background:var(--accent);color:var(--on);font-size:30px}
+.bk-ok{display:grid;place-items:center;width:64px;height:64px;margin:6px auto 14px;border-radius:50%;background:#fbf0d9;color:#9a6200;font-size:30px}
+.bk-wait{margin:0 0 14px;padding:12px 14px;border-radius:14px;background:#fbf0d9;color:#6b4400;font-size:14px;line-height:1.5;text-align:left}
 .bk-done{text-align:center}
 .bk-done h3{font-size:26px;margin-bottom:8px}
 `
@@ -143,11 +144,11 @@ export const BOOKING_SCRIPT = `
       h+='<label class="bk-field"><span>Seu nome</span><input id="bk-name" name="name" autocomplete="name" maxlength="80" value="'+e(S.name)+'"></label>';
       h+='<label class="bk-field"><span>Seu WhatsApp (com DDD)</span><input id="bk-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" value="'+e(S.phone)+'"></label>';
       h+='<div class="bk-hp" aria-hidden="true"><label>Empresa<input id="bk-company" tabindex="-1" autocomplete="off"></label></div>';
-      h+='<p class="bk-note">Seu horário fica reservado e o salão confirma com você pelo WhatsApp.</p>';
+      h+='<p class="bk-note">Este é um pedido: o horário só fica confirmado quando o salão responder você pelo WhatsApp.</p>';
     }else{
       var b=S.done;
-      h+='<div class="bk-done"><div class="bk-ok" aria-hidden="true">✓</div><h3>Pedido enviado!</h3>';
-      h+='<p class="bk-lead">Seu horário está reservado e aguarda a confirmação do salão.</p>';
+      h+='<div class="bk-done"><div class="bk-ok" aria-hidden="true">⏳</div><h3>Pedido enviado</h3>';
+      h+='<p class="bk-wait" role="status"><strong>Ainda não está confirmado.</strong> O salão vai conferir e responder você pelo WhatsApp. Só considere o horário marcado depois dessa confirmação.</p>';
       h+='<div class="bk-sum"><strong>'+e(b.service)+'</strong><br>'+e(full(S.date))+' às '+hm(S.minute)+(b.professional?'<br>Com '+e(b.professional):'')+'</div></div>';
     }
     return h;

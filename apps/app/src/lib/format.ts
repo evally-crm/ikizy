@@ -7,3 +7,12 @@ export const formatTime = (minutes: number) => {
   const m = minutes % 60
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
 }
+
+/** telefone no jeito brasileiro: 11987654321 -> (11) 98765-4321; o que não reconhece fica como veio */
+export const formatPhone = (phone: string) => {
+  let d = phone.replace(/\D/g, '')
+  if (d.length > 11 && d.startsWith('55')) d = d.slice(2)
+  if (d.length === 11) return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`
+  if (d.length === 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`
+  return phone.trim()
+}
