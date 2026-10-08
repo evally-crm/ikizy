@@ -208,6 +208,9 @@ describe('renderSitePage', () => {
     assert.match(html, /--accent:#111111/)
     assert.match(html, /--du:uppercase/)
     assert.match(html, /--dw:800/)
+    assert.match(html, /--display:Raleway,/)
+    assert.match(html, /<link rel="stylesheet" href="https:\/\/fonts\.googleapis\.com\/css2\?family=Raleway:wght@800&display=swap">/)
+    assert.doesNotMatch(html, /family=Manrope|family=Forum/)
     assert.match(html, /<meta name="theme-color" content="#e8dccb">/)
   })
 
