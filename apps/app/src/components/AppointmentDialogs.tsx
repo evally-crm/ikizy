@@ -233,12 +233,15 @@ export function AppointmentDialog({
   onClose,
   notify,
   onDuplicate,
+  onMessage,
 }: {
   appointment: Appointment
   startRescheduling?: boolean
   onClose: () => void
   notify: (message: string) => void
   onDuplicate: (a: Appointment) => void
+  /** abre as mensagens prontas do WhatsApp para este horário */
+  onMessage: (a: Appointment) => void
 }) {
   const { professionals, appointments, workingHours, update } = useAgenda()
   const [rescheduling, setRescheduling] = useState(Boolean(startRescheduling))
@@ -376,10 +379,16 @@ export function AppointmentDialog({
                 {step.label}
               </Button>
             )}
-            {open && wa && (
-              <a className="btn btn--ghost" href={wa} target="_blank" rel="noreferrer">
-                <MessageCircle size={16} aria-hidden="true" /> WhatsApp
-              </a>
+            {wa && (
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  onMessage(appointment)
+                  onClose()
+                }}
+              >
+                <MessageCircle size={16} aria-hidden="true" /> Mensagem
+              </Button>
             )}
             {open && (
               <Button variant="ghost" onClick={() => setRescheduling(true)}>

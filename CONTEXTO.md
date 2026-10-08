@@ -227,7 +227,7 @@ Hoje: a cliente escolhe serviço, profissional, dia e horário livre, informa no
 | Prioridade | Melhoria | Por quê / como |
 |---|---|---|
 | P1 | **Planos por assinatura com cobrança de verdade** | Hoje os planos aparecem no site e a cobrança é por WhatsApp. Próximo passo: assinatura da cliente (cartão recorrente ou Pix mensal), controle de uso ("2 de 2 manutenções no mês") e aviso de vencimento. |
-| P2 | **Reativar clientes sumidas** | O app já sabe quem sumiu. Botão para mandar mensagem pronta pelo WhatsApp ("Faz 45 dias, que tal marcar?"), em lote. |
+| ~~P2~~ | **Mensagens prontas no WhatsApp** (feito) | Sem disparo automático, por decisão da usuária: o texto abre no WhatsApp da própria pessoa (wa.me). Tipos em `lib/messages.ts`; card "Mensagens de hoje" no Início (lembretes, pós, faltas, aniversário, prêmio, sumidas), botão Mensagem na agenda e na ficha. O "já enviei" fica só no navegador. Disparo automático (Meta oficial, Z-API ou Evolution) ficou para depois. |
 | P2 | **Aniversariantes** | Lista do mês com mensagem pronta e cupom. |
 | ~~P2~~ | **Fidelidade** (feito) | Cartão de selos configurável por salão (selos por prêmio e prêmio), selo extra, resgate e desfazer. Próximo: cashback. |
 | P3 | **Venda de produtos com estoque** | A vitrine existe; somar estoque, baixa na venda e alerta de reposição. |

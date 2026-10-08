@@ -2029,3 +2029,36 @@ button.textlink:disabled {
 .profile .roundbtn:hover {
   background: var(--gray-200);
 }
+
+/* mensagens prontas */
+.msg__input textarea {
+  padding-block: 12px;
+  line-height: 1.55;
+}
+.msg__warn {
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: var(--warning-soft);
+  font-size: 13px;
+  color: var(--warning);
+}
+.msgtag {
+  display: inline-flex;
+  margin-left: 4px;
+  padding: 1px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--blush);
+  box-shadow: inset 0 0 0 1px var(--pink-300);
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--brand-700);
+  white-space: nowrap;
+}
+.people__item.is-sent .upnext__name,
+.people__item.is-sent .card__sub {
+  opacity: 0.55;
+}
+.chevbtn.is-done {
+  background: var(--success-soft);
+  color: var(--success);
+}

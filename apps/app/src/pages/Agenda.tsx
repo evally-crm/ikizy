@@ -14,6 +14,7 @@ import { AppointmentDialog, NewAppointmentDialog, whatsappLink, type NewInitial 
 import { appointmentEntries } from '../components/appointmentMenu'
 import { ContextMenu, type MenuEntry } from '../components/ContextMenu'
 import { ConfirmDialog } from '../components/Modal'
+import { AppointmentMessageDialog } from '../components/MessageDialog'
 import { WorkingHoursDialog } from '../components/WorkingHoursDialog'
 import type { Appointment, AppointmentStatus } from '../types'
 
@@ -340,6 +341,7 @@ export default function Agenda() {
   const [creating, setCreating] = useState<NewInitial | null>(null)
   const [menu, setMenu] = useState<{ x: number; y: number; entries: MenuEntry[] } | null>(null)
   const [confirm, setConfirm] = useState<Appointment | null>(null)
+  const [messaging, setMessaging] = useState<Appointment | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const [view, setView] = useState<View>('semana')
   const [now, setNow] = useState(() => new Date())
@@ -465,7 +467,7 @@ export default function Agenda() {
             else void patch(a, { professionalId: id }, `${a.client} agora com ${name}`)
           },
           reschedule: () => setDialog({ id: a.id, reschedule: true }),
-          whatsapp: () => link && window.open(link, '_blank', 'noopener'),
+          whatsapp: () => setMessaging(a),
           duplicate: () => duplicate(a),
           fault: () => void patch(a, { status: 'faltou' }, `Falta registrada: ${a.client}`),
           cancel: () => setConfirm(a),
@@ -636,8 +638,10 @@ export default function Agenda() {
           onClose={() => setDialog(null)}
           notify={notify}
           onDuplicate={duplicate}
+          onMessage={setMessaging}
         />
       )}
+      {messaging && <AppointmentMessageDialog appointment={messaging} onClose={() => setMessaging(null)} />}
       {editingHours && <WorkingHoursDialog onClose={() => setEditingHours(false)} notify={notify} />}
       {creating && <NewAppointmentDialog initial={creating} onClose={() => setCreating(null)} notify={notify} />}
       {confirm && (
