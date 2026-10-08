@@ -1,4 +1,4 @@
-import { CATEGORIES, FONTS, THEMES, isFontId, isThemeId, resolveAccent } from '../../src/lib/siteTheme.js'
+import { CATEGORIES, FONTS, isFontId, paletteFor } from '../../src/lib/siteTheme.js'
 import { BOOKING_CSS, BOOKING_SCRIPT } from './bookingClient.js'
 
 /** formato devolvido por public.get_public_site(): só o que pode ser exibido ao público */
@@ -18,6 +18,7 @@ export interface PublicSite {
     address?: string
     online_booking?: boolean
     theme?: string
+    palette?: string
     font?: string
     booking_window_days?: number
     show_prices?: boolean
@@ -166,10 +167,8 @@ footer{padding:18px 0 28px;text-align:center;color:var(--muted);font-size:13px}
 /** monta a página pública completa (HTML) do negócio */
 export function renderSitePage(site: PublicSite, opts: { canonical: string }): string {
   const s = site.settings ?? {}
-  const themeId = isThemeId(s.theme) ? s.theme : 'claro'
-  const theme = THEMES[themeId]
+  const { p: pal } = paletteFor(s)
   const font = FONTS[isFontId(s.font) ? s.font : 'moderna']
-  const accent = resolveAccent(s.accent, s.accent_color, themeId)
   const logo = safeLogo(s.logo)
   const cover = safeLogo(s.cover)
   const name = site.name
@@ -281,7 +280,7 @@ export function renderSitePage(site: PublicSite, opts: { canonical: string }): s
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(description)}">
 <meta name="robots" content="index,follow,max-image-preview:large">
-<meta name="theme-color" content="${theme.bg}">
+<meta name="theme-color" content="${pal.bg}">
 <link rel="canonical" href="${esc(opts.canonical)}">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="pt_BR">
@@ -290,7 +289,7 @@ export function renderSitePage(site: PublicSite, opts: { canonical: string }): s
 <meta property="og:url" content="${esc(opts.canonical)}">
 <meta name="twitter:card" content="summary">
 <script type="application/ld+json">${jsonLd}</script>
-<style>:root{--accent:${accent.color};--soft:${accent.soft};--on:${accent.on};--bg:${theme.bg};--panel:${theme.panel};--ink:${theme.ink};--text:${theme.text};--muted:${theme.muted};--line:${theme.line};--display:${font.family};--dw:${font.weight};--du:${font.upper ? 'uppercase' : 'none'};color-scheme:${theme.dark ? 'dark' : 'light'}}${CSS}${online ? BOOKING_CSS : ''}</style>
+<style>:root{--accent:${pal.accent};--soft:${pal.soft};--on:${pal.on};--bg:${pal.bg};--panel:${pal.panel};--ink:${pal.ink};--text:${pal.text};--muted:${pal.muted};--line:${pal.line};--display:${font.family};--dw:${font.weight};--du:${font.upper ? 'uppercase' : 'none'};color-scheme:${pal.dark ? 'dark' : 'light'}}${CSS}${online ? BOOKING_CSS : ''}</style>
 </head>
 <body>
 <header class="top"><div class="wrap"><div class="bar"><span class="logo">${logo ? `<img src="${logo}" alt="">` : ''}<span>${esc(name)}</span></span><nav aria-label="Seções">${

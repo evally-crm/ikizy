@@ -21,11 +21,9 @@ function toPublicSite(studio: Studio, team: { name: string; role: string }[]): P
       instagram: site.instagram,
       hours: site.hours,
       address: site.address,
-      accent: site.accent,
-      accent_color: site.accentColor || null,
+      palette: site.palette,
       logo: site.logo || null,
       cover: site.cover || null,
-      theme: site.theme,
       font: site.font,
       show_prices: site.showPrices,
       show_team: site.showTeam,
@@ -54,34 +52,40 @@ export function DeviceToggle({ device, onChange }: { device: Device; onChange: (
 }
 
 /** prévia fiel da página pública, dentro de um quadro que encolhe para caber no espaço disponível */
-export default function SiteFrame({ studio, device, height = 560 }: { studio: Studio; device: Device; height?: number }) {
+export default function SiteFrame({ studio, device, height = 560 }: { studio: Studio; device: Device; height?: number | 'fill' }) {
   const { professionals } = useAgenda()
   const html = useMemo(() => renderSitePage(toPublicSite(studio, professionals), { canonical: '#' }), [studio, professionals])
 
   const box = useRef<HTMLDivElement>(null)
   const [avail, setAvail] = useState(0)
+  const [availH, setAvailH] = useState(0)
+  const fill = height === 'fill'
   useEffect(() => {
     const el = box.current
     if (!el) return
-    const update = () => setAvail(el.clientWidth)
+    const update = () => {
+      setAvail(el.clientWidth)
+      setAvailH(el.clientHeight)
+    }
     update()
     const ro = new ResizeObserver(update)
     ro.observe(el)
     return () => ro.disconnect()
   }, [])
 
+  const h = fill ? Math.max(240, availH) : height
   const width = WIDTH[device]
   const scale = avail > 0 ? Math.min(1, avail / width) : 1
   const shownWidth = Math.round(width * scale)
 
   return (
-    <div ref={box} className={`siteframe siteframe--${device}`} style={{ height }}>
-      <div className="siteframe__chrome" style={{ width: shownWidth, height }}>
+    <div ref={box} className={`siteframe siteframe--${device} ${fill ? 'siteframe--fill' : ''}`} style={fill ? undefined : { height }}>
+      <div className="siteframe__chrome" style={{ width: shownWidth, height: h }}>
         <iframe
           title="Prévia do seu site"
           srcDoc={html}
           sandbox=""
-          style={{ width, height: height / scale, transform: `scale(${scale})`, transformOrigin: 'top left' }}
+          style={{ width, height: h / scale, transform: `scale(${scale})`, transformOrigin: 'top left' }}
         />
       </div>
     </div>

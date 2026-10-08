@@ -2,12 +2,12 @@ import { useEffect, useId, useRef, useState, type ChangeEvent, type ReactNode } 
 import { createPortal } from 'react-dom'
 import { ArrowLeft, ArrowRight, ChevronDown, ExternalLink, ImagePlus, Plus, Rocket, Trash2, Undo2, X } from 'lucide-react'
 import {
-  ACCENTS,
+  PALETTES,
   CATEGORIES,
   computeMath,
   newId,
   useStudio,
-  type AccentId,
+  type PaletteId,
   type Category,
   type Product,
   type Service,
@@ -15,7 +15,7 @@ import {
 } from '../data/catalog'
 import { formatBRL } from '../lib/format'
 import { resizeToDataUrl } from '../lib/imageResize'
-import { FONTS, THEMES, isHexColor, resolveAccent, type FontId, type ThemeId } from '../lib/siteTheme'
+import { FONTS, type FontId } from '../lib/siteTheme'
 import { isReservedSlug, SITE_DOMAIN, siteHost } from '../lib/slug'
 import { useMediaQuery } from '../hooks/useMediaQuery'
 import SiteFrame, { DeviceToggle, type Device } from '../components/SiteFrame'
@@ -113,7 +113,6 @@ export default function MeuSite() {
   const active: Tab = isWide && tab === 'previa' ? 'pagina' : tab
   const { site, services, products } = draft
   const slugReserved = isReservedSlug(site.slug)
-  const accent = resolveAccent(site.accent, site.accentColor)
 
   const setSite = <K extends keyof SiteConfig>(key: K, value: SiteConfig[K]) =>
     setDraft((d) => ({ ...d, site: { ...d.site, [key]: value } }))
@@ -426,55 +425,20 @@ export default function MeuSite() {
     </div>
   )
 
-  const fieldsColor = (
-      <fieldset className="field">
-        <legend className="field__label">Cor de destaque</legend>
-        <div className="swatches">
-          {(Object.keys(ACCENTS) as AccentId[]).map((id) => (
-            <label key={id} className="swatch">
-              <input
-                type="radio"
-                name="accent"
-                checked={!site.accentColor && site.accent === id}
-                onChange={() => setDraft((d) => ({ ...d, site: { ...d.site, accent: id, accentColor: '' } }))}
-              />
-              <span className="swatch__dot" style={{ background: ACCENTS[id].color }} />
-              {ACCENTS[id].label}
-            </label>
-          ))}
-          <label className="swatch swatch--custom">
-            <input
-              type="color"
-              aria-label="Escolher outra cor"
-              value={isHexColor(site.accentColor) ? site.accentColor : accent.color}
-              onChange={(e) => setSite('accentColor', e.target.value)}
-            />
-            <span
-              className="swatch__dot"
-              style={{ background: site.accentColor ? accent.color : 'conic-gradient(#e44, #ea4, #6c6, #4ae, #a6e, #e44)' }}
-            />
-            {site.accentColor ? site.accentColor.toUpperCase() : 'Outra cor'}
-          </label>
-        </div>
-        {site.accentColor && accent.color !== site.accentColor.toLowerCase() && (
-          <p className="field__hint">Escurecemos um pouco essa cor para o texto branco continuar legível.</p>
-        )}
-      </fieldset>
-  )
-
-  const fieldsTheme = (
+  const fieldsPalette = (
     <fieldset className="field">
-      <legend className="field__label">Tema</legend>
-      <div className="choice">
-        {(Object.keys(THEMES) as ThemeId[]).map((id) => (
-          <label key={id} className="choice__item">
-            <input type="radio" name="theme" checked={site.theme === id} onChange={() => setSite('theme', id)} />
-            <span className="choice__swatch" style={{ background: THEMES[id].bg }}>
-              <i style={{ background: THEMES[id].panel }} />
-            </span>
-            {THEMES[id].label}
-          </label>
-        ))}
+      <legend className="field__label">Paleta de cores</legend>
+      <div className="swatches">
+        {(Object.keys(PALETTES) as PaletteId[]).map((id) => {
+          const p = PALETTES[id]
+          return (
+            <label key={id} className="swatch">
+              <input type="radio" name="palette" checked={site.palette === id} onChange={() => setSite('palette', id)} />
+              <span className="swatch__dot swatch__dot--duo" style={{ background: `linear-gradient(135deg, ${p.bg} 50%, ${p.accent} 50%)` }} />
+              {p.label}
+            </label>
+          )
+        })}
       </div>
     </fieldset>
   )
@@ -482,17 +446,13 @@ export default function MeuSite() {
   const fieldsFont = (
     <fieldset className="field">
       <legend className="field__label">Fonte dos títulos</legend>
-      <div className="choice">
+      <div className="swatches">
         {(Object.keys(FONTS) as FontId[]).map((id) => (
-          <label key={id} className="choice__item">
+          <label key={id} className="swatch swatch--font">
             <input type="radio" name="font" checked={site.font === id} onChange={() => setSite('font', id)} />
-            <span
-              className="choice__sample"
-              style={{ fontFamily: FONTS[id].family, fontWeight: FONTS[id].weight, textTransform: FONTS[id].upper ? 'uppercase' : 'none' }}
-            >
-              {FONTS[id].sample}
+            <span style={{ fontFamily: FONTS[id].family, fontWeight: FONTS[id].weight, textTransform: FONTS[id].upper ? 'uppercase' : 'none' }}>
+              {FONTS[id].label}
             </span>
-            {FONTS[id].label}
           </label>
         ))}
       </div>
@@ -501,8 +461,7 @@ export default function MeuSite() {
 
   const fieldsLook = (
     <>
-      {fieldsTheme}
-      {fieldsColor}
+      {fieldsPalette}
       {fieldsFont}
     </>
   )
@@ -551,14 +510,14 @@ export default function MeuSite() {
             <>
               <p className="gg__eyebrow">Criar seu site · passo 1 de 2</p>
               <h2 className="gg__title">Escolha o visual</h2>
-              <p className="gg__sub">São só três escolhas. Você muda tudo quando quiser.</p>
+              <p className="gg__sub">São só duas escolhas, com cores já combinadas. Você muda quando quiser.</p>
               {fieldsLook}
             </>
           )}
           {step === 1 && (
             <>
               <p className="gg__eyebrow">Criar seu site · passo 2 de 2</p>
-              <h2 className="gg__title">Escolha o endereço do seu site</h2>
+              <h2 className="gg__title">{isLive ? 'Confirme o endereço do seu site' : 'Escolha o endereço do seu site'}</h2>
               <p className="gg__sub">É o link que você divulga no Instagram e no WhatsApp.</p>
               <Field label="Nome do seu salão">
                 {(id) => (
@@ -642,7 +601,7 @@ export default function MeuSite() {
             ) : (
               <button type="button" className="gg__btn" disabled={!addressOk || publishing} onClick={() => void claim()}>
                 <Rocket size={18} aria-hidden="true" />
-                {publishing ? 'Publicando…' : 'Publicar site'}
+                {publishing ? 'Salvando…' : isLive ? 'Salvar alterações' : 'Publicar site'}
               </button>
             )}
           </div>
@@ -724,12 +683,28 @@ export default function MeuSite() {
           <div className="studio__body" id="studio-panel" role="tabpanel" aria-labelledby={`tab-${active}`}>
             {active === 'pagina' && (
               <div className="sects">
+                <div className="guidecard">
+                  <span>
+                    <strong>Personalizar em 2 passos</strong>
+                    <small>Visual e endereço, com a prévia ao lado.</small>
+                  </span>
+                  <Button
+                    variant="light"
+                    size="sm"
+                    onClick={() => {
+                      setStep(0)
+                      setWizardOn(true)
+                    }}
+                  >
+                    Abrir guia
+                  </Button>
+                </div>
                 <details className="fold">
                   <summary>Agendamento pelo site</summary>
                   <OnlineBookingChecklist whatsapp={site.whatsapp} online={site.onlineBooking} />
                 </details>
 
-                <Section title="Aparência" hint="Tema, cor e fonte." open>
+                <Section title="Aparência" hint="Paleta e fonte." open>
                   {fieldsLook}
                 </Section>
 
@@ -825,7 +800,7 @@ export default function MeuSite() {
               </p>
               <DeviceToggle device={device} onChange={setDevice} />
             </div>
-            <SiteFrame studio={draft} device={device} height={620} />
+            <SiteFrame studio={draft} device={device} height="fill" />
           </Card>
         )}
       </div>

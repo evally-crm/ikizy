@@ -2,9 +2,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '../auth/AuthProvider'
 import { isNeonConfigured, neon } from '../lib/neon'
 
-export { ACCENTS, CATEGORIES } from '../lib/siteTheme'
-export type { AccentId, Category, FontId, ThemeId } from '../lib/siteTheme'
-import type { AccentId, Category, FontId, ThemeId } from '../lib/siteTheme'
+export { CATEGORIES, PALETTES } from '../lib/siteTheme'
+export type { Category, FontId, PaletteId } from '../lib/siteTheme'
+import { paletteFor, type Category, type FontId, type PaletteId } from '../lib/siteTheme'
 
 export interface Product {
   id: string
@@ -33,13 +33,10 @@ export interface SiteConfig {
   whatsapp: string
   instagram: string
   hours: string
-  accent: AccentId
-  /** fundo da página: claro, bege ou escuro */
-  theme: ThemeId
+  /** paleta pronta (fundo, painéis e cor de destaque combinados) */
+  palette: PaletteId
   /** fonte dos títulos */
   font: FontId
-  /** cor própria (#rrggbb); vazia = usa a cor da lista */
-  accentColor: string
   /** logo reduzido, como data URL; vazio = sem logo */
   logo: string
   /** foto de capa do topo do site, como data URL; vazio = sem foto */
@@ -73,10 +70,8 @@ export const DEFAULT_STUDIO: Studio = {
     whatsapp: '(11) 98765-0000',
     instagram: '@studiomariabeauty',
     hours: 'Seg a Sáb · 09h às 19h',
-    accent: 'bordo',
-    theme: 'claro',
+    palette: 'bordo',
     font: 'moderna',
-    accentColor: '',
     logo: '',
     cover: '',
     address: '',
@@ -154,9 +149,10 @@ interface SettingsRow {
   whatsapp: string
   instagram: string
   hours: string
-  accent: AccentId
+  accent?: string
   accent_color?: string | null
-  theme?: ThemeId
+  theme?: string
+  palette?: PaletteId
   font?: FontId
   logo?: string | null
   cover?: string | null
@@ -222,9 +218,7 @@ export function useStudio() {
               whatsapp: row.whatsapp,
               instagram: row.instagram,
               hours: row.hours,
-              accent: row.accent,
-              accentColor: row.accent_color ?? '',
-              theme: row.theme ?? 'claro',
+              palette: paletteFor(row).id,
               font: row.font ?? 'moderna',
               logo: row.logo ?? '',
               cover: row.cover ?? '',
@@ -346,9 +340,8 @@ export function useStudio() {
           whatsapp: site.whatsapp,
           instagram: site.instagram,
           hours: site.hours,
-          accent: site.accent,
-          accent_color: site.accentColor || null,
-          theme: site.theme,
+          palette: site.palette,
+          accent_color: null,
           font: site.font,
           logo: site.logo || null,
           cover: site.cover || null,
