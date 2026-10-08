@@ -326,3 +326,43 @@
 .siteframe--fill {
   overflow: hidden;
 }
+
+/* passos do editor: tracinhos, como no cadastro */
+.stepbar {
+  flex: none;
+}
+.stepbar__bars {
+  display: flex;
+  gap: 4px;
+}
+.stepbar__bars button {
+  flex: 1;
+  min-height: 28px;
+  padding: 12px 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+.stepbar__bars i {
+  display: block;
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background: rgba(27, 27, 29, 0.14);
+  transition: background-color 0.25s;
+}
+.stepbar__bars button.is-done i {
+  background: var(--ink-900);
+}
+.stepbar__bars button:hover i {
+  background: var(--ink-700);
+}
+.stepbar__bars button:focus-visible {
+  outline: 2px solid var(--brand-500);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+.stepbar__label {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-500);
+}

@@ -66,36 +66,6 @@
   }
 }
 
-/* abas */
-.tabs {
-  flex: none;
-  display: flex;
-  gap: 6px;
-  padding: 4px;
-  overflow-x: auto;
-  border-radius: var(--radius-pill);
-  background: var(--bg);
-  scrollbar-width: none;
-}
-.tab {
-  flex: 1 0 auto;
-  min-height: 38px;
-  padding: 0 16px;
-  border: 0;
-  border-radius: var(--radius-pill);
-  background: transparent;
-  font-size: 13px;
-  white-space: nowrap;
-  transition: background-color 0.15s, color 0.15s;
-}
-.tab:hover {
-  background: var(--gray-200);
-}
-.tab[aria-selected='true'] {
-  background: var(--brand-900);
-  color: var(--white);
-}
-
 /* formulário */
 .form {
   display: flex;

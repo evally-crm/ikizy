@@ -663,22 +663,33 @@ export default function MeuSite() {
 
       <div className="studio">
         <Card className="studio__editor">
-          <div className="tabs" role="tablist" aria-label="Seções do editor">
-            {TABS.filter((t) => !t.narrowOnly || !isWide).map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                role="tab"
-                id={`tab-${t.id}`}
-                aria-selected={active === t.id}
-                aria-controls="studio-panel"
-                className="tab"
-                onClick={() => setTab(t.id)}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
+          {(() => {
+            const tabs = TABS.filter((t) => !t.narrowOnly || !isWide)
+            const at = Math.max(0, tabs.findIndex((t) => t.id === active))
+            return (
+              <div className="stepbar">
+                <div className="stepbar__bars" role="tablist" aria-label="Seções do editor">
+                  {tabs.map((t, i) => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      role="tab"
+                      id={`tab-${t.id}`}
+                      aria-selected={active === t.id}
+                      aria-controls="studio-panel"
+                      aria-label={t.label}
+                      title={t.label}
+                      className={i <= at ? 'is-done' : undefined}
+                      onClick={() => setTab(t.id)}
+                    >
+                      <i />
+                    </button>
+                  ))}
+                </div>
+                <p className="stepbar__label">{tabs[at].label}</p>
+              </div>
+            )
+          })()}
 
           <div className="studio__body" id="studio-panel" role="tabpanel" aria-labelledby={`tab-${active}`}>
             {active === 'pagina' && (
