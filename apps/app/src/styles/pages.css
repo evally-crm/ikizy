@@ -135,23 +135,48 @@
 /* ---------- financeiro (grade bento) ---------- */
 .fhead {
   display: flex;
-  flex-direction: column;
-  gap: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px 20px;
 }
 .fhead__text {
   min-width: 0;
 }
 .fhead__title {
-  font-size: clamp(32px, 5.4vw, 52px);
-  font-weight: 400;
-  line-height: 1.04;
-  letter-spacing: -0.035em;
+  overflow: hidden;
+  font-size: clamp(24px, 3vw, 30px);
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-@media (min-width: 768px) {
-  .fhead {
-    flex-direction: row;
-    align-items: flex-end;
-    justify-content: space-between;
+.fhead__crumb {
+  margin-top: 4px;
+  font-size: 12.5px;
+  color: var(--ink-500);
+}
+.fhead__crumb span {
+  margin: 0 4px;
+  opacity: 0.6;
+}
+.fhead__tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.fhead__tools .mseg {
+  flex: 1 1 100%;
+}
+@media (min-width: 640px) {
+  .fhead__tools {
+    flex-wrap: nowrap;
+  }
+  .fhead__tools .mseg {
+    flex: none;
   }
 }
 
@@ -170,8 +195,8 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-height: 40px;
-  padding: 0 18px;
+  min-height: 34px;
+  padding: 0 14px;
   border: 0;
   border-radius: var(--radius-pill);
   background: transparent;
@@ -186,7 +211,7 @@
   background: var(--brand-900);
   color: var(--white);
 }
-@media (min-width: 768px) {
+@media (min-width: 640px) {
   .mseg__item {
     flex: none;
   }
@@ -404,6 +429,13 @@
 }
 .fbars__bar.is-best {
   background: var(--brand-500);
+}
+.fhero__empty {
+  max-width: 340px;
+  margin-top: auto;
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.6);
 }
 .fhero__foot {
   display: flex;
@@ -947,12 +979,6 @@
   .receipt__table td:last-child {
     width: 96px;
   }
-}
-.receipt__actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px;
 }
 
 @media print {

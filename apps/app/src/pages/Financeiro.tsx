@@ -146,7 +146,7 @@ function Receipt({ month, closedAt, salonName }: { month: MonthClosing; closedAt
           </span>
         </div>
         <DailyLine daily={month.daily} />
-        {days.length > 0 && (
+        {bestDay.v > 0 && (
           <p className="receipt__best">
             Melhor dia: {format(bestDate, "EEE dd", { locale: ptBR }).replace('.', '')} · {formatBRL(bestDay.v)}
           </p>
@@ -345,12 +345,14 @@ function Gauge({ value }: { value: number }) {
     <div className="gauge" role="img" aria-label={`Margem de lucro: ${value}%`}>
       <svg viewBox="0 0 200 110" aria-hidden="true">
         <path d="M20 100 A80 80 0 0 1 180 100" className="gauge__track" pathLength={len} />
-        <path
-          d="M20 100 A80 80 0 0 1 180 100"
-          className="gauge__fill"
-          pathLength={len}
-          strokeDasharray={`${(len * pctValue) / 100} ${len}`}
-        />
+        {pctValue > 0 && (
+          <path
+            d="M20 100 A80 80 0 0 1 180 100"
+            className="gauge__fill"
+            pathLength={len}
+            strokeDasharray={`${(len * pctValue) / 100} ${len}`}
+          />
+        )}
       </svg>
       <span className="gauge__value">
         {value}
@@ -456,25 +458,45 @@ export default function Financeiro() {
     <div className="page">
       <header className="fhead">
         <div className="fhead__text">
-          <p className="eyebrow">Financeiro</p>
-          <h1 className="fhead__title">
-            Fechamento <Em>mensal</Em>
-          </h1>
+          <h1 className="fhead__title">Fechamento mensal</h1>
+          <p className="fhead__crumb">
+            Financeiro <span aria-hidden="true">/</span> {cap(month.label)} {format(month.date, 'yyyy')}
+          </p>
         </div>
-        <div className="mseg" role="tablist" aria-label="Mês">
-          {months.map((m) => (
-            <button
-              key={m.id}
-              type="button"
-              role="tab"
-              className="mseg__item"
-              aria-selected={m.id === month.id}
-              onClick={() => setSelectedId(m.id)}
-            >
-              {cap(m.label)}
-              {(m.closedAt || closedNow[m.id]) && <Lock size={12} aria-label="fechado" />}
-            </button>
-          ))}
+        <div className="fhead__tools">
+          <div className="mseg" role="tablist" aria-label="Mês">
+            {months.map((m) => (
+              <button
+                key={m.id}
+                type="button"
+                role="tab"
+                className="mseg__item"
+                aria-selected={m.id === month.id}
+                onClick={() => setSelectedId(m.id)}
+              >
+                {cap(m.label)}
+                {(m.closedAt || closedNow[m.id]) && <Lock size={12} aria-label="fechado" />}
+              </button>
+            ))}
+          </div>
+          <Button variant="soft" size="sm" onClick={() => window.print()}>
+            <Download size={15} aria-hidden="true" /> Exportar
+          </Button>
+          <a
+            className="btn btn--soft btn--sm btn--icon"
+            href={`https://wa.me/?text=${encodeURIComponent(summary)}`}
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Enviar resumo no WhatsApp"
+            title="Enviar no WhatsApp"
+          >
+            <Send size={15} aria-hidden="true" />
+          </a>
+          {!closedAt && fin.expensesAvailable && (
+            <Button size="sm" onClick={() => setAddingExpense(true)}>
+              <Plus size={15} aria-hidden="true" /> Saída
+            </Button>
+          )}
         </div>
       </header>
 
@@ -501,6 +523,9 @@ export default function Financeiro() {
             )}
           </div>
           <Money value={month.gross} size="xl" />
+          {month.gross === 0 && (
+            <p className="fhero__empty">O faturamento entra aqui sozinho, dia a dia, quando você conclui atendimentos na agenda.</p>
+          )}
           <DailyBars month={month} />
           <div className="fhero__foot">
             <span>dia 1</span>
@@ -539,7 +564,7 @@ export default function Financeiro() {
           <div className="ftile__head">
             <div>
               <p className="ftile__label">Lucro líquido</p>
-              <p className="ftile__hint">depois de comissões, produtos, saídas e taxas</p>
+              <p className="ftile__hint">o que sobra depois das saídas</p>
             </div>
           </div>
           <Money value={month.net} size="lg" />
@@ -580,14 +605,6 @@ export default function Financeiro() {
         {/* recibo */}
         <div className="fgrid__receipt">
           <Receipt month={month} closedAt={closedAt} salonName={salonName} />
-          <div className="receipt__actions">
-            <Button variant="soft" onClick={() => window.print()}>
-              <Download size={16} aria-hidden="true" /> Baixar PDF
-            </Button>
-            <a className="btn btn--soft" href={`https://wa.me/?text=${encodeURIComponent(summary)}`} target="_blank" rel="noreferrer">
-              <Send size={16} aria-hidden="true" /> Enviar no WhatsApp
-            </a>
-          </div>
         </div>
 
         {/* composição */}
