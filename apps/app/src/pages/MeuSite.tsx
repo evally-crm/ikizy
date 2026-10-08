@@ -1,5 +1,6 @@
-import { useId, useRef, useState, type ChangeEvent, type ReactNode } from 'react'
-import { ArrowLeft, ArrowRight, ChevronDown, ExternalLink, ImagePlus, Plus, Rocket, Trash2, Undo2 } from 'lucide-react'
+import { useEffect, useId, useRef, useState, type ChangeEvent, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
+import { ArrowLeft, ArrowRight, ChevronDown, ExternalLink, ImagePlus, Plus, Rocket, Trash2, Undo2, X } from 'lucide-react'
 import {
   ACCENTS,
   CATEGORIES,
@@ -14,10 +15,10 @@ import {
 } from '../data/catalog'
 import { formatBRL } from '../lib/format'
 import { resizeToDataUrl } from '../lib/imageResize'
-import { isHexColor, resolveAccent } from '../lib/siteTheme'
+import { FONTS, THEMES, isHexColor, resolveAccent, type FontId, type ThemeId } from '../lib/siteTheme'
 import { isReservedSlug, SITE_DOMAIN, siteHost } from '../lib/slug'
 import { useMediaQuery } from '../hooks/useMediaQuery'
-import SitePreview from '../components/SitePreview'
+import SiteFrame, { DeviceToggle, type Device } from '../components/SiteFrame'
 import OnlineBookingChecklist from '../components/OnlineBookingChecklist'
 import { Button, Card, Em } from '../components/ui'
 
@@ -97,12 +98,14 @@ function Switch({ checked, onChange, label, hint }: { checked: boolean; onChange
 export default function MeuSite() {
   const { draft, setDraft, dirty, publish, discard, loading, error: loadError, isLive, publishedSlug } = useStudio()
   const isWide = useMediaQuery('(min-width: 1100px)')
+  const splitGuide = useMediaQuery('(min-width: 900px)')
   const [tab, setTab] = useState<Tab>('pagina')
   const [justPublished, setJustPublished] = useState(false)
   const [publishing, setPublishing] = useState(false)
   const [publishError, setPublishError] = useState<string | null>(null)
   const [step, setStep] = useState(0)
-  const [skipWizard, setSkipWizard] = useState(false)
+  const [wizardOn, setWizardOn] = useState<boolean | null>(null)
+  const [device, setDevice] = useState<Device>(isWide ? 'desktop' : 'mobile')
   const [logoError, setLogoError] = useState<string | null>(null)
   const logoInput = useRef<HTMLInputElement>(null)
   const coverInput = useRef<HTMLInputElement>(null)
@@ -210,39 +213,6 @@ export default function MeuSite() {
         </p>
       )}
 
-      <fieldset className="field">
-        <legend className="field__label">Cor de destaque</legend>
-        <div className="swatches">
-          {(Object.keys(ACCENTS) as AccentId[]).map((id) => (
-            <label key={id} className="swatch">
-              <input
-                type="radio"
-                name="accent"
-                checked={!site.accentColor && site.accent === id}
-                onChange={() => setDraft((d) => ({ ...d, site: { ...d.site, accent: id, accentColor: '' } }))}
-              />
-              <span className="swatch__dot" style={{ background: ACCENTS[id].color }} />
-              {ACCENTS[id].label}
-            </label>
-          ))}
-          <label className="swatch swatch--custom">
-            <input
-              type="color"
-              aria-label="Escolher outra cor"
-              value={isHexColor(site.accentColor) ? site.accentColor : accent.color}
-              onChange={(e) => setSite('accentColor', e.target.value)}
-            />
-            <span
-              className="swatch__dot"
-              style={{ background: site.accentColor ? accent.color : 'conic-gradient(#e44, #ea4, #6c6, #4ae, #a6e, #e44)' }}
-            />
-            {site.accentColor ? site.accentColor.toUpperCase() : 'Outra cor'}
-          </label>
-        </div>
-        {site.accentColor && accent.color !== site.accentColor.toLowerCase() && (
-          <p className="field__hint">Escurecemos um pouco essa cor para o texto branco continuar legível.</p>
-        )}
-      </fieldset>
     </>
   )
 
@@ -456,89 +426,229 @@ export default function MeuSite() {
     </div>
   )
 
-  const STEPS = [
-    { title: 'Identidade', sub: 'Logo e cor do seu site.' },
-    { title: 'Textos', sub: 'Nome, frase de destaque e sobre o salão.' },
-    { title: 'Contato e endereço', sub: 'Como a cliente fala com você e encontra a página.' },
-    { title: 'Serviços', sub: 'O que você oferece, com preço e duração.' },
-    { title: 'Revisar e publicar', sub: 'Confira a prévia e coloque o site no ar.' },
-  ] as const
-  const stepOk = [
-    true,
-    site.salonName.trim().length >= 2,
-    site.slug.length >= 3 && !slugReserved,
-    true,
-    true,
-  ]
-  const last = STEPS.length - 1
+  const fieldsColor = (
+      <fieldset className="field">
+        <legend className="field__label">Cor de destaque</legend>
+        <div className="swatches">
+          {(Object.keys(ACCENTS) as AccentId[]).map((id) => (
+            <label key={id} className="swatch">
+              <input
+                type="radio"
+                name="accent"
+                checked={!site.accentColor && site.accent === id}
+                onChange={() => setDraft((d) => ({ ...d, site: { ...d.site, accent: id, accentColor: '' } }))}
+              />
+              <span className="swatch__dot" style={{ background: ACCENTS[id].color }} />
+              {ACCENTS[id].label}
+            </label>
+          ))}
+          <label className="swatch swatch--custom">
+            <input
+              type="color"
+              aria-label="Escolher outra cor"
+              value={isHexColor(site.accentColor) ? site.accentColor : accent.color}
+              onChange={(e) => setSite('accentColor', e.target.value)}
+            />
+            <span
+              className="swatch__dot"
+              style={{ background: site.accentColor ? accent.color : 'conic-gradient(#e44, #ea4, #6c6, #4ae, #a6e, #e44)' }}
+            />
+            {site.accentColor ? site.accentColor.toUpperCase() : 'Outra cor'}
+          </label>
+        </div>
+        {site.accentColor && accent.color !== site.accentColor.toLowerCase() && (
+          <p className="field__hint">Escurecemos um pouco essa cor para o texto branco continuar legível.</p>
+        )}
+      </fieldset>
+  )
+
+  const fieldsTheme = (
+    <fieldset className="field">
+      <legend className="field__label">Tema</legend>
+      <div className="choice">
+        {(Object.keys(THEMES) as ThemeId[]).map((id) => (
+          <label key={id} className="choice__item">
+            <input type="radio" name="theme" checked={site.theme === id} onChange={() => setSite('theme', id)} />
+            <span className="choice__swatch" style={{ background: THEMES[id].bg }}>
+              <i style={{ background: THEMES[id].panel }} />
+            </span>
+            {THEMES[id].label}
+          </label>
+        ))}
+      </div>
+    </fieldset>
+  )
+
+  const fieldsFont = (
+    <fieldset className="field">
+      <legend className="field__label">Fonte dos títulos</legend>
+      <div className="choice">
+        {(Object.keys(FONTS) as FontId[]).map((id) => (
+          <label key={id} className="choice__item">
+            <input type="radio" name="font" checked={site.font === id} onChange={() => setSite('font', id)} />
+            <span
+              className="choice__sample"
+              style={{ fontFamily: FONTS[id].family, fontWeight: FONTS[id].weight, textTransform: FONTS[id].upper ? 'uppercase' : 'none' }}
+            >
+              {FONTS[id].sample}
+            </span>
+            {FONTS[id].label}
+          </label>
+        ))}
+      </div>
+    </fieldset>
+  )
+
+  const fieldsLook = (
+    <>
+      {fieldsTheme}
+      {fieldsColor}
+      {fieldsFont}
+    </>
+  )
+
+  // guia de criação: abre sozinho para quem ainda não publicou; ?guia=1 abre de novo
   const forced = new URLSearchParams(window.location.search).has('guia')
-  const wizard = (!isLive || forced) && !loading && !loadError && !skipWizard
-  const goStep = (n: number) => {
-    setStep(Math.max(0, Math.min(last, n)))
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+  const wizard = !loading && !loadError && (wizardOn ?? (!isLive || forced))
+  // trava a rolagem da página enquanto o guia está aberto
+  useEffect(() => {
+    if (!wizard) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prev
+    }
+  }, [wizard])
+  const addressOk = site.salonName.trim().length >= 2 && site.slug.length >= 3 && !slugReserved
+  const closeWizard = () => setWizardOn(false)
+  const claim = async () => {
+    setPublishing(true)
+    setPublishError(null)
+    const problem = await publish()
+    setPublishing(false)
+    if (problem) {
+      setPublishError(problem)
+      return
+    }
+    setWizardOn(true)
+    setStep(2)
   }
 
-  const wizardCard = (
-    <Card className="studio__editor wiz">
-      <div className="wiz__top">
-        <p className="wiz__count">
-          Passo {step + 1} de {STEPS.length}
-        </p>
-        <button type="button" className="textlink" onClick={() => setSkipWizard(true)}>
-          Pular e editar tudo
+  const wizardOverlay = (
+    <div className="gg" role="dialog" aria-modal="true" aria-label="Criar seu site">
+      <header className="gg__head">
+        <span className="gg__logo">
+          IKIZY<b>.</b>
+        </span>
+        <button type="button" className="gg__x" aria-label="Fechar o guia" onClick={closeWizard}>
+          <X size={20} aria-hidden="true" />
         </button>
-      </div>
-      <ol className="wiz__bars" aria-label="Progresso">
-        {STEPS.map((st, i) => (
-          <li key={st.title} className={i < step ? 'is-done' : i === step ? 'is-now' : ''} aria-current={i === step ? 'step' : undefined}>
-            <span className="sr-only">{st.title}</span>
-          </li>
-        ))}
-      </ol>
-      <h2 className="wiz__title">{STEPS[step].title}</h2>
-      <p className="wiz__sub">{STEPS[step].sub}</p>
+      </header>
 
-      <div className="wiz__body form">
-        {step === 0 && fieldsIdentity}
-        {step === 1 && fieldsText}
-        {step === 2 && fieldsContact}
-        {step === 3 && servicesEditor}
-        {step === 4 && (
-          <>
-            {fieldsShow}
-            {!isWide && (
-              <div className="phone phone--inline">
-                <SitePreview studio={draft} />
+      <div className="gg__main">
+        <section className="gg__form">
+          {step === 0 && (
+            <>
+              <p className="gg__eyebrow">Criar seu site · passo 1 de 2</p>
+              <h2 className="gg__title">Escolha o visual</h2>
+              <p className="gg__sub">São só três escolhas. Você muda tudo quando quiser.</p>
+              {fieldsLook}
+            </>
+          )}
+          {step === 1 && (
+            <>
+              <p className="gg__eyebrow">Criar seu site · passo 2 de 2</p>
+              <h2 className="gg__title">Escolha o endereço do seu site</h2>
+              <p className="gg__sub">É o link que você divulga no Instagram e no WhatsApp.</p>
+              <Field label="Nome do seu salão">
+                {(id) => (
+                  <span className="input">
+                    <input id={id} value={site.salonName} maxLength={40} onChange={(e) => setSite('salonName', e.target.value)} />
+                  </span>
+                )}
+              </Field>
+              <Field label="Endereço do site" hint={slugReserved ? 'Esse endereço é reservado. Escolha outro.' : 'Você pode mudar depois.'}>
+                {(id) => (
+                  <span className="input input--suffix">
+                    <input
+                      id={id}
+                      value={site.slug}
+                      maxLength={40}
+                      aria-invalid={slugReserved}
+                      onChange={(e) => setSite('slug', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                    />
+                    <span aria-hidden="true">.{SITE_DOMAIN}</span>
+                  </span>
+                )}
+              </Field>
+            </>
+          )}
+          {step === 2 && (
+            <>
+              <p className="gg__eyebrow">Tudo certo</p>
+              <h2 className="gg__title">
+                Pronto! Seu site <Em>está no ar</Em>.
+              </h2>
+              <p className="gg__sub">Agora é só completar: logo, foto de capa, textos, contato e serviços. Leva poucos minutos.</p>
+              <div className="gg__done">
+                <a className="gg__btn gg__btn--light" href={`https://${siteHost(publishedSlug)}`} target="_blank" rel="noreferrer">
+                  Ver meu site
+                </a>
+                <button
+                  type="button"
+                  className="gg__btn"
+                  onClick={() => {
+                    closeWizard()
+                    setTab('pagina')
+                  }}
+                >
+                  Completar meu site
+                </button>
               </div>
+            </>
+          )}
+          {publishError && (
+            <p className="field__hint" role="alert">
+              {publishError}
+            </p>
+          )}
+        </section>
+
+        <section className="gg__preview" aria-label="Prévia do seu site">
+          {splitGuide && <DeviceToggle device={device} onChange={setDevice} />}
+          <div className="gg__frame">
+            <SiteFrame studio={draft} device={splitGuide ? device : 'mobile'} height={!splitGuide ? 220 : device === 'mobile' ? 620 : 500} />
+          </div>
+        </section>
+      </div>
+
+      <footer className="gg__foot">
+        <ol className="gg__bars" aria-label="Progresso">
+          {[0, 1, 2].map((i) => (
+            <li key={i} className={i < step ? 'is-done' : i === step ? 'is-now' : ''} />
+          ))}
+        </ol>
+        {step < 2 && (
+          <div className="gg__nav">
+            {step > 0 && (
+              <button type="button" className="gg__back" aria-label="Voltar" disabled={publishing} onClick={() => setStep(step - 1)}>
+                <ArrowLeft size={20} aria-hidden="true" />
+              </button>
             )}
-          </>
+            {step === 0 ? (
+              <button type="button" className="gg__btn" onClick={() => setStep(1)}>
+                Continuar <ArrowRight size={18} aria-hidden="true" />
+              </button>
+            ) : (
+              <button type="button" className="gg__btn" disabled={!addressOk || publishing} onClick={() => void claim()}>
+                <Rocket size={18} aria-hidden="true" />
+                {publishing ? 'Publicando…' : 'Publicar site'}
+              </button>
+            )}
+          </div>
         )}
-      </div>
-
-      {publishError && (
-        <p className="field__hint" role="alert">
-          {publishError}
-        </p>
-      )}
-
-      <div className="wiz__nav">
-        {step > 0 && (
-          <button type="button" className="wiz__back" aria-label="Voltar" disabled={publishing} onClick={() => goStep(step - 1)}>
-            <ArrowLeft size={20} aria-hidden="true" />
-          </button>
-        )}
-        {step < last ? (
-          <button type="button" className="wiz__next" disabled={!stepOk[step]} onClick={() => goStep(step + 1)}>
-            Continuar <ArrowRight size={18} aria-hidden="true" />
-          </button>
-        ) : (
-          <button type="button" className="wiz__next" disabled={publishing || !stepOk.every(Boolean)} onClick={() => void onPublish()}>
-            <Rocket size={18} aria-hidden="true" />
-            {publishing ? 'Publicando…' : 'Publicar meu site'}
-          </button>
-        )}
-      </div>
-    </Card>
+      </footer>
+    </div>
   )
 
   return (
@@ -593,7 +703,6 @@ export default function MeuSite() {
       )}
 
       <div className="studio">
-        {wizard ? wizardCard : (
         <Card className="studio__editor">
           <div className="tabs" role="tablist" aria-label="Seções do editor">
             {TABS.filter((t) => !t.narrowOnly || !isWide).map((t) => (
@@ -620,7 +729,11 @@ export default function MeuSite() {
                   <OnlineBookingChecklist whatsapp={site.whatsapp} online={site.onlineBooking} />
                 </details>
 
-                <Section title="Identidade" hint="Logo e cor do seu site." open>
+                <Section title="Aparência" hint="Tema, cor e fonte." open>
+                  {fieldsLook}
+                </Section>
+
+                <Section title="Identidade" hint="Logo e foto de capa.">
                   {fieldsIdentity}
                 </Section>
 
@@ -698,26 +811,25 @@ export default function MeuSite() {
             )}
 
             {active === 'previa' && (
-              <div className="phone phone--inline">
-                <SitePreview studio={draft} />
-              </div>
+              <SiteFrame studio={draft} device="mobile" height={600} />
             )}
           </div>
         </Card>
-        )}
 
         {isWide && (
           <Card variant="soft" className="studio__preview">
-            <p className="studio__label">
-              Prévia ao vivo
-              {dirty && <span className="tag tag--aniversario">Não publicada</span>}
-            </p>
-            <div className="phone">
-              <SitePreview studio={draft} />
+            <div className="studio__previewbar">
+              <p className="studio__label">
+                Prévia ao vivo
+                {dirty && <span className="tag tag--aniversario">Não publicada</span>}
+              </p>
+              <DeviceToggle device={device} onChange={setDevice} />
             </div>
+            <SiteFrame studio={draft} device={device} height={620} />
           </Card>
         )}
       </div>
+      {wizard && createPortal(wizardOverlay, document.body)}
     </div>
   )
 }

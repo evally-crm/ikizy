@@ -1,4 +1,4 @@
-import { CATEGORIES, resolveAccent } from '../../src/lib/siteTheme.js'
+import { CATEGORIES, FONTS, THEMES, isFontId, isThemeId, resolveAccent } from '../../src/lib/siteTheme.js'
 import { BOOKING_CSS, BOOKING_SCRIPT } from './bookingClient.js'
 
 /** formato devolvido por public.get_public_site(): só o que pode ser exibido ao público */
@@ -17,6 +17,8 @@ export interface PublicSite {
     cover?: string | null
     address?: string
     online_booking?: boolean
+    theme?: string
+    font?: string
     booking_window_days?: number
     show_prices?: boolean
     show_team?: boolean
@@ -67,28 +69,28 @@ export function safeLogo(raw: string | null | undefined): string | null {
 
 const CSS = `
 *{box-sizing:border-box}html{scroll-behavior:smooth}
-body{margin:0;background:#efebe5;color:#242424;font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased;padding-bottom:84px}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased;padding-bottom:84px}
 a{color:inherit}
-h1,h2,h3{font-weight:400;letter-spacing:-.035em;line-height:1.04;color:#0e0d0d;margin:0}
+h1,h2,h3{letter-spacing:-.035em;line-height:1.04;color:var(--ink);margin:0;font-family:var(--display);font-weight:var(--dw);text-transform:var(--du)}
 em{font-family:Georgia,"Times New Roman",serif;font-style:italic;color:var(--accent)}
 .wrap{max-width:1040px;margin:0 auto;padding:0 10px}
-.panel{background:#fff;border-radius:28px;margin:10px 0;padding:28px 22px}
+.panel{background:var(--panel);border-radius:28px;margin:10px 0;padding:28px 22px}
 @media(min-width:720px){.panel{padding:44px 44px}}
-.eyebrow{margin:0 0 14px;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:#6b6668}
+.eyebrow{margin:0 0 14px;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
 
 .top{position:sticky;top:0;z-index:20;padding:10px 0 0}
-.top .bar{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:60px;padding:8px 10px 8px 20px;border-radius:999px;background:rgba(255,255,255,.92);backdrop-filter:blur(14px);box-shadow:0 8px 28px -14px rgba(14,13,13,.35)}
-.logo{display:inline-flex;align-items:center;gap:10px;min-width:0;font-weight:600;letter-spacing:-.02em;font-size:18px;color:#0e0d0d}
+.top .bar{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:60px;padding:8px 10px 8px 20px;border-radius:999px;background:color-mix(in srgb,var(--panel) 92%,transparent);backdrop-filter:blur(14px);box-shadow:0 8px 28px -14px rgba(14,13,13,.35)}
+.logo{display:inline-flex;align-items:center;gap:10px;min-width:0;font-weight:600;letter-spacing:-.02em;font-size:18px;color:var(--ink)}
 .logo span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .logo img{flex:none;width:38px;height:38px;border-radius:12px;object-fit:cover}
-.top nav{display:none;gap:22px;font-size:14px;color:#6b6668}
+.top nav{display:none;gap:22px;font-size:14px;color:var(--muted)}
 @media(min-width:720px){.top nav{display:flex}}
 .top nav a{text-decoration:none}.top nav a:hover{color:var(--accent)}
 
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:50px;padding:0 28px;border-radius:999px;background:var(--accent);color:#fff;text-decoration:none;font-weight:500;font-size:15px;border:1px solid var(--accent)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:50px;padding:0 28px;border-radius:999px;background:var(--accent);color:var(--on);text-decoration:none;font-weight:500;font-size:15px;border:1px solid var(--accent)}
 .btn:hover{filter:brightness(1.12)}
 .btn--sm{min-height:42px;padding:0 20px;font-size:14px}
-.btn--light{background:#fff;color:#0e0d0d;border-color:#fff}
+.btn--light{background:var(--on);color:var(--accent);border-color:var(--on)}
 .btn--ghost{background:transparent;color:inherit;border-color:currentColor}
 
 .hero{position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;min-height:min(78vh,620px);padding:28px 22px;background:var(--soft)}
@@ -99,23 +101,23 @@ em{font-family:Georgia,"Times New Roman",serif;font-style:italic;color:var(--acc
 .hero h1{font-size:clamp(40px,10vw,84px)}
 .hero--cover h1,.hero--cover .hero__lead{color:#fff}
 .hero--cover h1 em{color:#fff}
-.hero__lead{margin:18px 0 0;max-width:46ch;color:#4d484a;font-size:17px}
+.hero__lead{margin:18px 0 0;max-width:46ch;color:var(--text);font-size:17px}
 .hero__cta{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
 .hero--cover .btn--ghost{color:#fff}
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
-.chip{display:inline-flex;align-items:center;min-height:34px;padding:0 14px;border-radius:999px;background:rgba(255,255,255,.88);color:#242424;font-size:13px;text-decoration:none}
-.hero:not(.hero--cover) .chip{background:#fff}
+.chip{display:inline-flex;align-items:center;min-height:34px;padding:0 14px;border-radius:999px;background:rgba(255,255,255,.88);color:var(--text);font-size:13px;text-decoration:none}
+.hero:not(.hero--cover) .chip{background:var(--panel);color:var(--text)}
 
 .steps{display:grid;gap:12px;margin:0;padding:0;list-style:none;counter-reset:s}
 @media(min-width:720px){.steps{grid-template-columns:repeat(3,1fr);gap:16px}}
 .steps li{counter-increment:s;display:flex;gap:14px;align-items:flex-start;padding:18px;border-radius:22px;background:var(--soft)}
-.steps li:before{content:counter(s);flex:none;display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--accent);color:#fff;font-weight:600}
-.steps strong{display:block;color:#0e0d0d;font-weight:500}.steps small{color:#6b6668;font-size:14px}
+.steps li:before{content:counter(s);flex:none;display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--accent);color:var(--on);font-weight:600}
+.steps strong{display:block;color:var(--ink);font-weight:500}.steps small{color:var(--muted);font-size:14px}
 
 .about{display:grid;gap:12px}
 @media(min-width:720px){.about{grid-template-columns:1fr 2fr;gap:40px}}
-.about p{margin:0;font-size:clamp(20px,3vw,28px);line-height:1.35;letter-spacing:-.02em;color:#0e0d0d}
-.about p.eyebrow{margin:0;font-size:13px;line-height:1.5;letter-spacing:.04em;color:#6b6668}
+.about p{margin:0;font-size:clamp(20px,3vw,28px);line-height:1.35;letter-spacing:-.02em;color:var(--ink)}
+.about p.eyebrow{margin:0;font-size:13px;line-height:1.5;letter-spacing:.04em;color:var(--muted)}
 
 .panel>h2{font-size:clamp(30px,6vw,52px);margin-bottom:26px}
 .cats{display:grid;gap:12px}
@@ -123,40 +125,40 @@ em{font-family:Georgia,"Times New Roman",serif;font-style:italic;color:var(--acc
 .cat{padding:22px;border-radius:24px;background:var(--soft)}
 .cat h3{font-family:Georgia,"Times New Roman",serif;font-style:italic;font-size:26px;color:var(--accent);margin-bottom:6px}
 .cat ul{list-style:none;margin:0;padding:0}
-.cat li{display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid rgba(0,0,0,.08)}
+.cat li{display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid color-mix(in srgb,var(--ink) 12%,transparent)}
 .cat li:last-child{border-bottom:0}
 .cat li>span:first-child{flex:1;min-width:0}
-.cat small{display:block;color:#6b6668;font-size:13px}
+.cat small{display:block;color:var(--muted);font-size:13px}
 .price{font-weight:600;color:var(--accent);white-space:nowrap}
-.go{flex:none;display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:var(--accent);color:#fff;text-decoration:none;font-size:18px}
+.go{flex:none;display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:var(--accent);color:var(--on);text-decoration:none;font-size:18px;border:0;cursor:pointer;font-family:inherit}
 .go:hover{filter:brightness(1.15)}
 
 .plans{display:grid;gap:14px}
 @media(min-width:720px){.plans{grid-template-columns:repeat(2,1fr)}}
 .plan{position:relative;display:flex;flex-direction:column;gap:10px;padding:24px;border-radius:24px;background:var(--soft)}
 .plan h3{font-size:26px}
-.plan .desc{margin:0;color:#6b6668;font-size:15px}
-.plan .pp{font-size:36px;letter-spacing:-.04em;color:#0e0d0d}.plan .pp small{font-size:14px;color:#6b6668;letter-spacing:0}
+.plan .desc{margin:0;color:var(--muted);font-size:15px}
+.plan .pp{font-size:36px;letter-spacing:-.04em;color:var(--ink)}.plan .pp small{font-size:14px;color:var(--muted);letter-spacing:0}
 .plan ul{list-style:none;margin:4px 0 8px;padding:0;display:grid;gap:6px;font-size:15px}
 .plan li:before{content:"";display:inline-block;width:8px;height:8px;margin-right:10px;border-radius:50%;background:var(--accent)}
 .plan .btn{margin-top:auto}
-.tag{align-self:flex-start;padding:3px 12px;border-radius:999px;background:var(--accent);color:#fff;font-size:12px;font-weight:600;letter-spacing:.02em}
+.tag{align-self:flex-start;padding:3px 12px;border-radius:999px;background:var(--accent);color:var(--on);font-size:12px;font-weight:600;letter-spacing:.02em}
 
 .team{list-style:none;margin:0;padding:0;display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}
 .team li{display:flex;align-items:center;gap:14px}
 .avatar{display:grid;place-items:center;width:54px;height:54px;border-radius:50%;background:var(--soft);color:var(--accent);font-weight:600;font-size:20px}
-.team small{display:block;color:#6b6668;font-size:13px}
+.team small{display:block;color:var(--muted);font-size:13px}
 
-.contact{background:var(--accent);color:#fff}
-.contact h2{color:#fff}.contact h2 em{color:#fff}
+.contact{background:var(--accent);color:var(--on)}
+.contact h2,.contact h2 em{color:var(--on)}
 .contact__grid{display:grid;gap:12px;margin-top:26px}
 @media(min-width:720px){.contact__grid{grid-template-columns:repeat(2,1fr)}}
-.info{display:flex;flex-direction:column;gap:2px;padding:18px 20px;border-radius:22px;background:rgba(255,255,255,.14);font-size:15px}
-.info small{color:rgba(255,255,255,.7);font-size:12px;letter-spacing:.04em;text-transform:uppercase}
-.info a{color:#fff}
+.info{display:flex;flex-direction:column;gap:2px;padding:18px 20px;border-radius:22px;background:color-mix(in srgb,var(--on) 16%,transparent);font-size:15px}
+.info small{opacity:.75;font-size:12px;letter-spacing:.04em;text-transform:uppercase}
+.info a{color:inherit}
 .contact .hero__cta{margin-top:22px}
 
-footer{padding:18px 0 28px;text-align:center;color:#6b6668;font-size:13px}
+footer{padding:18px 0 28px;text-align:center;color:var(--muted);font-size:13px}
 .float{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));z-index:30;transform:translateX(-50%);width:min(420px,calc(100% - 28px));box-shadow:0 14px 34px -10px rgba(0,0,0,.45)}
 @media(min-width:720px){.float{width:auto;left:auto;right:24px;transform:none}}
 `
@@ -164,7 +166,10 @@ footer{padding:18px 0 28px;text-align:center;color:#6b6668;font-size:13px}
 /** monta a página pública completa (HTML) do negócio */
 export function renderSitePage(site: PublicSite, opts: { canonical: string }): string {
   const s = site.settings ?? {}
-  const accent = resolveAccent(s.accent, s.accent_color)
+  const themeId = isThemeId(s.theme) ? s.theme : 'claro'
+  const theme = THEMES[themeId]
+  const font = FONTS[isFontId(s.font) ? s.font : 'moderna']
+  const accent = resolveAccent(s.accent, s.accent_color, themeId)
   const logo = safeLogo(s.logo)
   const cover = safeLogo(s.cover)
   const name = site.name
@@ -276,7 +281,7 @@ export function renderSitePage(site: PublicSite, opts: { canonical: string }): s
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(description)}">
 <meta name="robots" content="index,follow,max-image-preview:large">
-<meta name="theme-color" content="${accent.color}">
+<meta name="theme-color" content="${theme.bg}">
 <link rel="canonical" href="${esc(opts.canonical)}">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="pt_BR">
@@ -285,7 +290,7 @@ export function renderSitePage(site: PublicSite, opts: { canonical: string }): s
 <meta property="og:url" content="${esc(opts.canonical)}">
 <meta name="twitter:card" content="summary">
 <script type="application/ld+json">${jsonLd}</script>
-<style>:root{--accent:${accent.color};--soft:${accent.soft}}${CSS}${online ? BOOKING_CSS : ''}</style>
+<style>:root{--accent:${accent.color};--soft:${accent.soft};--on:${accent.on};--bg:${theme.bg};--panel:${theme.panel};--ink:${theme.ink};--text:${theme.text};--muted:${theme.muted};--line:${theme.line};--display:${font.family};--dw:${font.weight};--du:${font.upper ? 'uppercase' : 'none'};color-scheme:${theme.dark ? 'dark' : 'light'}}${CSS}${online ? BOOKING_CSS : ''}</style>
 </head>
 <body>
 <header class="top"><div class="wrap"><div class="bar"><span class="logo">${logo ? `<img src="${logo}" alt="">` : ''}<span>${esc(name)}</span></span><nav aria-label="Seções">${

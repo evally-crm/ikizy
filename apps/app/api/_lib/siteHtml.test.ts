@@ -202,6 +202,22 @@ describe('renderSitePage', () => {
     assert.doesNotMatch(html, /<img src=x/)
   })
 
+  it('tema escuro e fonte forte entram como variáveis da página', () => {
+    const html = page(base({}, { theme: 'escuro', font: 'forte' }))
+    assert.match(html, /--bg:#0e0d0d/)
+    assert.match(html, /color-scheme:dark/)
+    assert.match(html, /--du:uppercase/)
+    assert.match(html, /--dw:800/)
+    assert.match(html, /<meta name="theme-color" content="#0e0d0d">/)
+  })
+
+  it('tema e fonte desconhecidos voltam ao claro e à fonte moderna', () => {
+    const html = page(base({}, { theme: 'neon', font: 'comic' }))
+    assert.match(html, /--bg:#efebe5/)
+    assert.match(html, /color-scheme:light/)
+    assert.match(html, /--du:none/)
+  })
+
   it('página 404 não é indexada', () => {
     assert.match(renderNotFound(), /name="robots" content="noindex"/)
   })

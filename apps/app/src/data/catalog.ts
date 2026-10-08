@@ -3,8 +3,8 @@ import { useAuth } from '../auth/AuthProvider'
 import { isNeonConfigured, neon } from '../lib/neon'
 
 export { ACCENTS, CATEGORIES } from '../lib/siteTheme'
-export type { AccentId, Category } from '../lib/siteTheme'
-import type { AccentId, Category } from '../lib/siteTheme'
+export type { AccentId, Category, FontId, ThemeId } from '../lib/siteTheme'
+import type { AccentId, Category, FontId, ThemeId } from '../lib/siteTheme'
 
 export interface Product {
   id: string
@@ -34,6 +34,10 @@ export interface SiteConfig {
   instagram: string
   hours: string
   accent: AccentId
+  /** fundo da página: claro, bege ou escuro */
+  theme: ThemeId
+  /** fonte dos títulos */
+  font: FontId
   /** cor própria (#rrggbb); vazia = usa a cor da lista */
   accentColor: string
   /** logo reduzido, como data URL; vazio = sem logo */
@@ -70,6 +74,8 @@ export const DEFAULT_STUDIO: Studio = {
     instagram: '@studiomariabeauty',
     hours: 'Seg a Sáb · 09h às 19h',
     accent: 'bordo',
+    theme: 'claro',
+    font: 'moderna',
     accentColor: '',
     logo: '',
     cover: '',
@@ -150,6 +156,8 @@ interface SettingsRow {
   hours: string
   accent: AccentId
   accent_color?: string | null
+  theme?: ThemeId
+  font?: FontId
   logo?: string | null
   cover?: string | null
   address?: string
@@ -216,6 +224,8 @@ export function useStudio() {
               hours: row.hours,
               accent: row.accent,
               accentColor: row.accent_color ?? '',
+              theme: row.theme ?? 'claro',
+              font: row.font ?? 'moderna',
               logo: row.logo ?? '',
               cover: row.cover ?? '',
               address: row.address ?? '',
@@ -338,6 +348,8 @@ export function useStudio() {
           hours: site.hours,
           accent: site.accent,
           accent_color: site.accentColor || null,
+          theme: site.theme,
+          font: site.font,
           logo: site.logo || null,
           cover: site.cover || null,
           address: site.address.trim(),
