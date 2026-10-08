@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom'
+import { useAuth } from '../auth/AuthProvider'
 import { useSubscription } from '../billing/SubscriptionProvider'
+import { can } from '../lib/permissions'
 import { dash } from '../lib/routes'
 import { daysLeft, periodEnd, WARN_DAYS } from '../lib/plans'
 
@@ -8,7 +10,18 @@ const fmt = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' 
 /** aviso no topo do sistema: só aparece quando a pessoa precisa agir (teste acabando, Pix vencendo, cartão com falha, sem acesso) */
 export default function BillingBanner() {
   const { sub, state, loading } = useSubscription()
+  const { salon } = useAuth()
   if (loading || !sub) return null
+
+  // a equipe não paga: só fica sabendo quando o sistema trava, e a quem pedir
+  if (!can(salon?.role, 'billing')) {
+    if (state !== 'expired') return null
+    return (
+      <div className="billing-banner billing-banner--alert" role="status">
+        <p>O acesso do negócio terminou e o sistema está só para leitura. Fale com a dona para renovar o plano.</p>
+      </div>
+    )
+  }
 
   const days = daysLeft(sub.accessUntil)
   let tone: 'info' | 'warn' | 'alert' | null = null

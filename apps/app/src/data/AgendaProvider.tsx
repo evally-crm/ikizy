@@ -202,7 +202,7 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
     let cancelled = false
     void (async () => {
       const [pros, cls, svcs, hrs] = await Promise.all([
-        neon.from('professionals').select('id, name, title').eq('salon_id', salonId).eq('active', true).order('name'),
+        neon.from('professionals').select('id, name, title, user_id').eq('salon_id', salonId).eq('active', true).order('name'),
         neon.from('clients').select('id, name, phone').eq('salon_id', salonId).order('name'),
         neon.from('services').select('id, name, price, duration').eq('salon_id', salonId).order('name'),
         neon.from('working_hours').select('professional_id, weekday, start_minute, end_minute').eq('salon_id', salonId),
@@ -225,7 +225,7 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
         setHoursAvailable(true)
         setWorkingHours(byPro)
       }
-      setProfessionals((pros.data ?? []).map((p) => ({ id: p.id, name: p.name, role: p.title })))
+      setProfessionals((pros.data ?? []).map((p) => ({ id: p.id, name: p.name, role: p.title, userId: p.user_id ?? null })))
       setClients((cls.data ?? []).map((c) => ({ id: c.id, name: c.name, phone: c.phone })))
       setServices((svcs.data ?? []).map((s) => ({ id: s.id, name: s.name, price: Number(s.price), duration: s.duration })))
     })()

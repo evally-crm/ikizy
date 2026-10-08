@@ -5,17 +5,25 @@ import { useAuth } from '../../auth/AuthProvider'
 import { SubscriptionProvider, useSubscription } from '../../billing/SubscriptionProvider'
 import { AgendaProvider } from '../../data/AgendaProvider'
 import BillingBanner from '../BillingBanner'
-import { navItems } from './nav'
+import { navFor } from './nav'
 import { describeSubscription } from '../../lib/plans'
+import { can, ROLE_LABEL } from '../../lib/permissions'
 import { dash, ROUTES } from '../../lib/routes'
 import { Avatar, Button } from '../ui'
 
-// topo (desktop): as seções principais; o resto vai em 'Mais'
-const topItems = navItems.filter((i) => i.core)
-const topMore = navItems.filter((i) => !i.core)
-// barra inferior (celular)
-const barItems = navItems.filter((i) => i.primary)
-const barMore = navItems.filter((i) => !i.primary)
+/** seções que o papel de quem está logada pode ver */
+function useNav() {
+  const { salon } = useAuth()
+  const items = navFor(salon?.role)
+  return {
+    // topo (desktop): as seções principais; o resto vai em 'Mais'
+    topItems: items.filter((i) => i.core),
+    topMore: items.filter((i) => !i.core),
+    // barra inferior (celular)
+    barItems: items.filter((i) => i.primary),
+    barMore: items.filter((i) => !i.primary),
+  }
+}
 
 function Logo() {
   return (
@@ -38,6 +46,7 @@ function useCloseOn(open: boolean, close: () => void) {
 
 /** navegação em pílula (desktop) */
 function PillNav() {
+  const { topItems, topMore } = useNav()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const { pathname } = useLocation()
@@ -89,6 +98,7 @@ function PillNav() {
 
 /** barra flutuante (mobile/tablet) */
 function BottomNav() {
+  const { barItems, barMore } = useNav()
   const [open, setOpen] = useState(false)
   const close = useRef(() => setOpen(false)).current
   useCloseOn(open, close)
@@ -157,6 +167,7 @@ function ProfileDialog({ onClose }: { onClose: () => void }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const canEditSalon = !salon || salon.role === 'owner' || salon.role === 'manager'
+  const seesBilling = can(salon?.role, 'billing')
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
@@ -229,7 +240,7 @@ function ProfileDialog({ onClose }: { onClose: () => void }) {
               </span>
             </label>
           )}
-          {sub && (
+          {sub && seesBilling && (
             <div className="account-plan">
               <div>
                 <span className="field__label">Assinatura</span>
@@ -303,7 +314,10 @@ export default function AppShell() {
               <Avatar name={displayName} />
               <div className="user__text">
                 <p className="user__name">{displayName}</p>
-                <p className="user__role">{salon?.name ?? 'Studio Maria Beauty'}</p>
+                <p className="user__role">
+                  {salon?.name ?? 'Studio Maria Beauty'}
+                  {salon && salon.role !== 'owner' && ` · ${ROLE_LABEL[salon.role]}`}
+                </p>
               </div>
             </button>
           </div>

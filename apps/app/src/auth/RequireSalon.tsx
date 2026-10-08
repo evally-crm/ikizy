@@ -1,4 +1,5 @@
 import { Navigate, Outlet } from 'react-router-dom'
+import { noSalonPath } from '../lib/invite'
 import { ROUTES } from '../lib/routes'
 import { useAuth } from './AuthProvider'
 
@@ -17,6 +18,6 @@ export default function RequireSalon() {
     )
   }
   if (status === 'signed-out') return <Navigate to={ROUTES.login} replace />
-  if (status === 'no-salon') return <Navigate to={ROUTES.createSalon} replace />
+  if (status === 'no-salon') return <Navigate to={noSalonPath()} replace />
   return <Outlet />
 }

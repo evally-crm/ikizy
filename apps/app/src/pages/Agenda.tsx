@@ -87,7 +87,7 @@ function FirstProfessional() {
   return (
     <Card className="agenda__empty">
       <h2 className="card__title">Cadastre quem atende</h2>
-      <p className="card__sub">A agenda é organizada por profissional. Comece com a primeira; as outras entram depois.</p>
+      <p className="card__sub">A agenda é organizada por profissional. Comece com a primeira; as outras você cadastra e convida em Equipe.</p>
       <form className="form" onSubmit={onSubmit}>
         <div className="form__pair">
           <label className="field">
@@ -334,9 +334,14 @@ export default function Agenda() {
   const { professionals, appointments, workingHours, loading, error, focus, reload, update } = useAgenda()
   const [params, setParams] = useSearchParams()
   const { sub, loading: subLoading } = useSubscription()
+  const { salon, session } = useAuth()
+  const managesTeam = !salon || salon.role === 'owner' || salon.role === 'manager'
   const [editingHours, setEditingHours] = useState(false)
   const [date, setDate] = useState(() => new Date())
-  const [proFilter, setProFilter] = useState<string>('all')
+  const [pickedPro, setProFilter] = useState<string | null>(null)
+  // a profissional abre a agenda já na própria coluna; as demais pessoas veem todas
+  const ownPro = salon?.role === 'professional' ? professionals.find((p) => p.userId && p.userId === session?.user.id)?.id : undefined
+  const proFilter = pickedPro ?? ownPro ?? 'all'
   const [dialog, setDialog] = useState<{ id: string; reschedule: boolean } | null>(null)
   const [creating, setCreating] = useState<NewInitial | null>(null)
   const [menu, setMenu] = useState<{ x: number; y: number; entries: MenuEntry[] } | null>(null)
@@ -524,7 +529,16 @@ export default function Agenda() {
         )}
 
         {!loading && professionals.length === 0 && !error ? (
-          subLoading ? null : sub && sub.plan !== 'solo' ? <FirstProfessional /> : <SoloProfessional />
+          subLoading ? null : !managesTeam ? (
+            <Card className="agenda__empty">
+              <h2 className="card__title">A agenda ainda está vazia</h2>
+              <p className="card__sub">Quem atende é cadastrado pela dona ou pela gerente, em Equipe. Assim que houver alguém, a agenda aparece aqui.</p>
+            </Card>
+          ) : sub && sub.plan !== 'solo' ? (
+            <FirstProfessional />
+          ) : (
+            <SoloProfessional />
+          )
         ) : (
           <>
             <div className="chips" role="group" aria-label="Filtrar por profissional">

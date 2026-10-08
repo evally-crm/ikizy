@@ -2,6 +2,7 @@ import { useMemo, useState, type FormEvent } from 'react'
 import { Navigate } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, Check, User } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
+import { noSalonPath, pendingInvite } from '../../lib/invite'
 import { ROUTES } from '../../lib/routes'
 import { isReservedSlug, SITE_DOMAIN, SLUG_PATTERN, siteHost, slugify } from '../../lib/slug'
 import { PLAN_FOR_TEAM, SEGMENTS, TEAM_SIZES, type SalonSetup, type TeamSize } from '../../lib/segments'
@@ -94,6 +95,7 @@ export default function Onboarding() {
   }, [team, picked.length])
 
   if (status === 'signed-out') return <Navigate to={ROUTES.login} replace />
+  if (status === 'no-salon' && pendingInvite()) return <Navigate to={noSalonPath()} replace />
   if (status === 'ready' || status === 'demo') return <Navigate to={ROUTES.dashboard} replace />
 
   const step = steps[Math.min(index, steps.length - 1)]

@@ -6,6 +6,7 @@ export const ROUTES = {
   recover: '/recuperar-senha',
   reset: '/redefinir-senha',
   dashboard: '/dashboard',
+  invite: '/convite',
 } as const
 
 /** caminho dentro do dashboard: dash('/agenda') => '/dashboard/agenda' */

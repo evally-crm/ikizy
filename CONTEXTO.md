@@ -21,7 +21,13 @@ Módulos do sistema (`app.ikizy.com/dashboard`):
 | Clientes | carteira, VIP, novas, sumidas, histórico |
 | Financeiro | fechamento mensal (recibo), saídas, comissões, formas de pagamento |
 | Meu site | editor do site público do negócio (detalhado na seção 5) |
+| Equipe | quem atende (limite do plano), quem entra no sistema (papéis), convites por link (copiar ou WhatsApp) |
 | Assinatura | plano do IKIZY (Stripe: cartão e Pix) |
+
+**Papéis** (`apps/app/src/lib/permissions.ts`; o banco garante o essencial via RLS):
+dona = tudo; gerente = tudo menos assinatura e equipe; recepção e profissional = Início (sem valores), Agenda e Clientes.
+A profissional abre a agenda já na própria coluna. Convite: Equipe → "Convidar pessoa" → link `/convite/<token>`;
+quem abre sem conta cria a conta ou entra, e o navegador guarda o convite (`lib/invite.ts`) para voltar a ele depois.
 
 Planos do IKIZY: Solo R$ 9,90 (1 profissional), Studio R$ 29,90 (até 4), Salão R$ 59,90 (sem limite) (fonte única: `apps/app/src/lib/plans.ts`; o limite também está em `plan_professional_limit()` no banco).
 Todo plano tem 30 dias grátis: o cadastro ("Só eu" / "2 a 4" / "5 ou mais") define o plano do teste, e dá para trocar de plano sem pagar durante o teste.
@@ -105,6 +111,7 @@ npm run build
 | `20261019000000_palette_dark` | paleta escura `preto-branco` aceita no banco |
 | `20261020000000_client_file` | ficha completa da cliente (e-mail, Instagram, endereço, profissão, como conheceu, anamnese em jsonb, assinatura do termo), `loyalty_settings`, `loyalty_entries` (selos extras e resgates) e `client_notes` |
 | `20261022000000_plan_limits` | **ainda não aplicada.** Limite de profissionais ativas por plano (Solo 1, Studio 4, Salão sem limite; gatilho no banco), teste grátis de 30 dias em todos os planos (`create_salon` recebe o plano escolhido no cadastro; `set_trial_plan()` troca durante o teste), cortesia para beta (`grant_courtesy()` / `end_courtesy()`, só pelo console do banco) |
+| `20261023000000_team` | **ainda não aplicada (depois da plan_limits).** Equipe: `invites` (convite por link, 7 dias, uso único), `get_invite()` / `accept_invite()`, `members.name`; quem sai da equipe perde o vínculo com a profissional; cadastro de profissionais só dona/gerente; saídas e fechamentos só dona/gerente leem |
 | `20261021000000_client_photos` | fotos de antes e depois na ficha (`client_photos`: miniatura + foto, só membros do salão leem; não passam pela página pública) |
 
 Regras importantes:

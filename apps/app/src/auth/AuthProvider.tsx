@@ -30,6 +30,8 @@ interface AuthState {
   signOut: () => Promise<void>
   /** cria o negócio e, se houver `setup`, já cadastra serviços e a profissional sugeridos pelo questionário */
   createSalon: (name: string, slug: string, setup?: SalonSetup) => Promise<string | null>
+  /** aceita um convite para a equipe de outro negócio; devolve a mensagem de erro ou null */
+  acceptInvite: (token: string) => Promise<string | null>
   /** nome de exibição de quem está logada (cadastro > e-mail > padrão) */
   displayName: string
   /** edita o cadastro: nome da pessoa e nome do negócio (só dono/gerente altera o negócio) */
@@ -194,6 +196,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (setup.professionalName) {
             await neon.from('professionals').insert({ salon_id: salonId, user_id: userId, name: setup.professionalName })
           }
+        }
+        await loadSalon(userId)
+        return null
+      },
+      async acceptInvite(token) {
+        if (!neon || !userId) return 'Você precisa estar logada.'
+        const { error } = await neon.rpc('accept_invite', { p_token: token, p_name: displayName })
+        if (error) {
+          const hint = (error as { hint?: string }).hint
+          if (hint === 'invite_used') return 'Este convite já foi usado. Peça um novo link para a dona do negócio.'
+          if (hint === 'invite_expired') return 'Este convite venceu. Peça um novo link para a dona do negócio.'
+          if (hint === 'already_member') return 'Esta conta já faz parte de um negócio no IKIZY.'
+          if (hint === 'invite_not_found') return 'Convite não encontrado. Confira o link.'
+          return 'Não foi possível aceitar o convite agora. Tente novamente.'
         }
         await loadSalon(userId)
         return null

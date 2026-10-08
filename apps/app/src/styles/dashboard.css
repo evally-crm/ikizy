@@ -178,6 +178,25 @@
   }
 }
 
+/* recepção e profissional: sem os cartões de dinheiro, agenda e mensagens lado a lado */
+@media (min-width: 768px) {
+  .dash--team > .dash__people {
+    grid-column: span 2;
+  }
+}
+@media (min-width: 1100px) {
+  .dash--team .dash__next {
+    grid-column: 1 / span 7;
+    grid-row: auto;
+    contain: none;
+    min-height: 420px;
+  }
+  .dash--team > .dash__people {
+    grid-column: 8 / span 5;
+    min-height: 420px;
+  }
+}
+
 /* telas que cabem na viewport (desktop com altura suficiente) */
 @media (min-width: 1100px) and (min-height: 700px) {
   .page--fit {

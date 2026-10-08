@@ -20,9 +20,9 @@ export function useSubscription() {
 
 const DAY = 24 * 60 * 60 * 1000
 
-/** modo demonstração (sem Neon): um teste do Solo com 21 dias restantes */
+/** modo demonstração (sem Neon): um teste do Studio (os dados de exemplo têm equipe) com 21 dias restantes */
 const demoSubscription = (): SubscriptionInfo => ({
-  plan: 'solo',
+  plan: 'studio',
   status: 'trialing',
   trialEndsAt: new Date(Date.now() + 21 * DAY),
   accessUntil: new Date(Date.now() + 21 * DAY),

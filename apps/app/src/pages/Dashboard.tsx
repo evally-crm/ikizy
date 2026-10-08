@@ -8,6 +8,7 @@ import { useAgenda } from '../data/AgendaProvider'
 import { ACTIVE_STATUSES } from '../types'
 import { MONTHLY_GOAL, getMonths } from '../data/finance'
 import { TodayMessages } from '../components/TodayMessages'
+import { can } from '../lib/permissions'
 import { formatBRL, formatTime } from '../lib/format'
 import { useAuth } from '../auth/AuthProvider'
 import { dash } from '../lib/routes'
@@ -47,7 +48,9 @@ function Ticks({ ratio, label }: { ratio: number; label: string }) {
 }
 
 export default function Dashboard() {
-  const { displayName } = useAuth()
+  const { displayName, salon } = useAuth()
+  // recepção e profissional não veem valores do caixa
+  const seesMoney = can(salon?.role, 'finance')
   const now = useMemo(() => new Date(), [])
   const { professionals, appointments } = useAgenda()
   const proName = (id: string) => professionals.find((p) => p.id === id)?.name ?? ''
@@ -96,14 +99,18 @@ export default function Dashboard() {
         </h1>
         <div className="bar__side">
         <dl className="minis">
-          <div className="mini">
-            <dt>Previsto hoje</dt>
-            <dd>{short(expected)}</dd>
-          </div>
-          <div className="mini">
-            <dt>No caixa</dt>
-            <dd>{short(realized)}</dd>
-          </div>
+          {seesMoney && (
+            <>
+              <div className="mini">
+                <dt>Previsto hoje</dt>
+                <dd>{short(expected)}</dd>
+              </div>
+              <div className="mini">
+                <dt>No caixa</dt>
+                <dd>{short(realized)}</dd>
+              </div>
+            </>
+          )}
           <div className="mini">
             <dt>Concluídos</dt>
             <dd>
@@ -118,8 +125,9 @@ export default function Dashboard() {
         </div>
       </header>
 
-      <div className="dash">
+      <div className={`dash ${seesMoney ? '' : 'dash--team'}`}>
         {/* faturamento da semana */}
+        {seesMoney && (
         <Card className="dash__tracker tracker">
           <div className="tracker__head">
             <div className="tracker__title">
@@ -168,6 +176,7 @@ export default function Dashboard() {
             </div>
           </div>
         </Card>
+        )}
 
         {/* próximos atendimentos */}
         <Card className="dash__next upnext">
@@ -223,6 +232,9 @@ export default function Dashboard() {
         {/* relacionamento: mensagens prontas para o WhatsApp */}
         <TodayMessages />
 
+        {/* fechamento, números do mês e ranking: só quem vê o financeiro */}
+        {seesMoney && (
+        <>
         {/* fechamento do mês */}
         <Card className="dash__close closecard">
           <div className="closecard__orb" aria-hidden="true" />
@@ -315,6 +327,8 @@ export default function Dashboard() {
             ))}
           </ol>
         </Card>
+        </>
+        )}
       </div>
     </div>
   )

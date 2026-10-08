@@ -16,6 +16,8 @@ export interface Professional {
   id: string
   name: string
   role: string
+  /** conta ligada a esta profissional (quem entra com o próprio login) */
+  userId?: string | null
 }
 
 export interface Appointment {

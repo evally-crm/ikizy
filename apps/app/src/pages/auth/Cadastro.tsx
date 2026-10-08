@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { Lock, Mail } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
+import { noSalonPath } from '../../lib/invite'
 import { ROUTES } from '../../lib/routes'
 import { Em } from '../../components/ui'
 import { AuthCard, AuthField, AuthLayout, AuthSubmit, FormMessages, GoogleButton } from './AuthLayout'
@@ -15,7 +16,7 @@ export default function Cadastro() {
   const [notice, setNotice] = useState<string | null>(null)
 
   if (status === 'ready' || status === 'demo') return <Navigate to={ROUTES.dashboard} replace />
-  if (status === 'no-salon') return <Navigate to={ROUTES.createSalon} replace />
+  if (status === 'no-salon') return <Navigate to={noSalonPath()} replace />
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault()
