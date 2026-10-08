@@ -343,6 +343,13 @@ export default function Agenda() {
     setParams({}, { replace: true })
   }, [params, setParams])
 
+  // /dashboard/agenda?nova=1&cliente=Nome abre um agendamento novo já com a cliente (atalho da ficha)
+  useEffect(() => {
+    if (params.get('nova') !== '1' || loading) return
+    setCreating({ date: dayKey(new Date()), start: null, clientName: params.get('cliente') ?? undefined })
+    setParams({}, { replace: true })
+  }, [params, setParams, loading])
+
   const newNow = () => setCreating({ date: today, start: null })
 
   /** minuto do dia sob o cursor na coluna, de 15 em 15 */

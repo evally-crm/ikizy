@@ -2,7 +2,16 @@ import { useCallback, useEffect, useState } from 'react'
 import { format, parseISO } from 'date-fns'
 import { useAuth } from '../auth/AuthProvider'
 import { isNeonConfigured, neon } from '../lib/neon'
-import { getClients, type Client, type Visit } from './clients'
+import { parseAnamnesis, type Anamnesis } from '../lib/anamnesis'
+import type { AppointmentStatus } from '../types'
+import {
+  DEFAULT_LOYALTY,
+  getClients,
+  type Client,
+  type ClientAppointment,
+  type LoyaltyEntry,
+  type LoyaltySettings,
+} from './clients'
 import { professionals as mockProfessionals } from './mock'
 
 export interface ClientDraft {
@@ -14,6 +23,11 @@ export interface ClientDraft {
   professionalId: string | null
   allergies: string[]
   preferences: string[]
+  email: string
+  instagram: string
+  address: string
+  occupation: string
+  referral: string
 }
 
 export interface ProfessionalOption {
@@ -21,8 +35,17 @@ export interface ProfessionalOption {
   name: string
 }
 
+export interface ClientNote {
+  id: string
+  body: string
+  date: Date
+}
+
 const DAY = 24 * 60 * 60 * 1000
 const DEFAULT_INTERVAL = 30
+
+const CLIENT_COLUMNS =
+  'id, name, phone, birthday, vip, preferred_professional, allergies, preferences, anamnesis_signed_at, created_at, email, instagram, address, occupation, referral, anamnesis, anamnesis_updated_at, anamnesis_signature'
 
 interface ClientRow {
   id: string
@@ -35,26 +58,65 @@ interface ClientRow {
   preferences: string[] | null
   anamnesis_signed_at: string | null
   created_at: string
+  email: string | null
+  instagram: string | null
+  address: string | null
+  occupation: string | null
+  referral: string | null
+  anamnesis: unknown
+  anamnesis_updated_at: string | null
+  anamnesis_signature: string | null
 }
 
-interface VisitRow {
+interface AppointmentRow {
   client_id: string
   professional_id: string
   service_name: string
   starts_at: string
   price: number | string
+  status: AppointmentStatus
+}
+
+interface LoyaltyRow {
+  id: string
+  client_id: string
+  stamps: number
+  note: string
+  created_at: string
 }
 
 function friendly(error: { code?: string; message: string }) {
-  if (error.code === '42501' || error.message.includes('row-level security')) return 'Seu acesso não permite alterar clientes agora.'
+  if (error.code === '42501' || error.message.includes('row-level security')) return 'Seu acesso não permite alterar isso agora.'
   return 'Não foi possível salvar agora. Tente novamente.'
 }
 
-/** monta a ficha a partir da linha da cliente e dos atendimentos concluídos dela */
-function buildClient(row: ClientRow, visits: VisitRow[], fallbackProfessional: string): Client {
-  const done = visits
-    .map((v) => ({ date: new Date(v.starts_at), service: v.service_name, professionalId: v.professional_id, price: Number(v.price) }))
+const draftColumns = (draft: ClientDraft) => ({
+  name: draft.name,
+  phone: draft.phone,
+  birthday: draft.birthday || null,
+  vip: draft.vip,
+  preferred_professional: draft.professionalId,
+  allergies: draft.allergies,
+  preferences: draft.preferences,
+  email: draft.email,
+  instagram: draft.instagram,
+  address: draft.address,
+  occupation: draft.occupation,
+  referral: draft.referral,
+})
+
+/** monta a ficha a partir da linha da cliente, dos atendimentos e dos movimentos do cartão */
+function buildClient(row: ClientRow, rows: AppointmentRow[], loyalty: LoyaltyEntry[], fallbackProfessional: string): Client {
+  const appointments: ClientAppointment[] = rows
+    .map((v) => ({
+      date: new Date(v.starts_at),
+      service: v.service_name,
+      professionalId: v.professional_id,
+      price: Number(v.price),
+      status: v.status,
+    }))
     .sort((a, b) => b.date.getTime() - a.date.getTime())
+  const done = appointments.filter((a) => a.status === 'concluido')
   const since = new Date(row.created_at)
   const lastVisit = done[0]?.date ?? since
   // intervalo médio entre as visitas; com menos de duas, usamos um padrão
@@ -63,7 +125,6 @@ function buildClient(row: ClientRow, visits: VisitRow[], fallbackProfessional: s
     const span = done[0].date.getTime() - done[done.length - 1].date.getTime()
     interval = Math.max(1, Math.round(span / DAY / (done.length - 1)))
   }
-  const history: Visit[] = done.slice(0, 6)
   return {
     id: row.id,
     name: row.name,
@@ -79,7 +140,17 @@ function buildClient(row: ClientRow, visits: VisitRow[], fallbackProfessional: s
     allergies: row.allergies ?? [],
     preferences: row.preferences ?? [],
     anamnesisSignedAt: row.anamnesis_signed_at ? new Date(row.anamnesis_signed_at) : null,
-    history,
+    email: row.email ?? '',
+    instagram: row.instagram ?? '',
+    address: row.address ?? '',
+    occupation: row.occupation ?? '',
+    referral: row.referral ?? '',
+    anamnesis: parseAnamnesis(row.anamnesis),
+    anamnesisUpdatedAt: row.anamnesis_updated_at ? new Date(row.anamnesis_updated_at) : null,
+    anamnesisSignature: row.anamnesis_signature,
+    history: done.map(({ status: _status, ...v }) => v),
+    appointments,
+    loyalty,
   }
 }
 
@@ -88,9 +159,11 @@ export function useClientBook() {
   const { salon } = useAuth()
   const salonId = salon?.id
   const live = isNeonConfigured && Boolean(neon) && Boolean(salonId)
+  const canManage = !live || salon?.role === 'owner' || salon?.role === 'manager'
 
   const [clients, setClients] = useState<Client[]>(() => (live ? [] : getClients()))
   const [professionals, setProfessionals] = useState<ProfessionalOption[]>(() => (live ? [] : mockProfessionals))
+  const [loyaltySettings, setLoyaltySettings] = useState<LoyaltySettings>(DEFAULT_LOYALTY)
   const [loading, setLoading] = useState(live)
   const [error, setError] = useState<string | null>(null)
   const [tick, setTick] = useState(0)
@@ -100,34 +173,44 @@ export function useClientBook() {
     let cancelled = false
     setLoading(true)
     void (async () => {
-      const [pros, cls, visits] = await Promise.all([
+      const [pros, cls, appts, entries, settings] = await Promise.all([
         neon.from('professionals').select('id, name').eq('salon_id', salonId).eq('active', true).order('name'),
-        neon
-          .from('clients')
-          .select('id, name, phone, birthday, vip, preferred_professional, allergies, preferences, anamnesis_signed_at, created_at')
-          .eq('salon_id', salonId)
-          .order('name'),
+        neon.from('clients').select(CLIENT_COLUMNS).eq('salon_id', salonId).order('name'),
         neon
           .from('appointments')
-          .select('client_id, professional_id, service_name, starts_at, price')
-          .eq('salon_id', salonId)
-          .eq('status', 'concluido'),
+          .select('client_id, professional_id, service_name, starts_at, price, status')
+          .eq('salon_id', salonId),
+        neon.from('loyalty_entries').select('id, client_id, stamps, note, created_at').eq('salon_id', salonId),
+        neon.from('loyalty_settings').select('enabled, stamps_per_reward, reward').eq('salon_id', salonId).maybeSingle(),
       ])
       if (cancelled) return
-      if (pros.error || cls.error || visits.error) {
+      if (pros.error || cls.error || appts.error || entries.error || settings.error) {
         setError('Não foi possível carregar as clientes. Verifique a conexão e tente de novo.')
         setLoading(false)
         return
       }
-      const byClient = new Map<string, VisitRow[]>()
-      for (const v of (visits.data ?? []) as unknown as VisitRow[]) {
+      const byClient = new Map<string, AppointmentRow[]>()
+      for (const v of (appts.data ?? []) as unknown as AppointmentRow[]) {
         const list = byClient.get(v.client_id) ?? []
         list.push(v)
         byClient.set(v.client_id, list)
       }
+      const loyaltyByClient = new Map<string, LoyaltyEntry[]>()
+      for (const e of (entries.data ?? []) as unknown as LoyaltyRow[]) {
+        const list = loyaltyByClient.get(e.client_id) ?? []
+        list.push({ id: e.id, stamps: e.stamps, note: e.note, date: new Date(e.created_at) })
+        loyaltyByClient.set(e.client_id, list)
+      }
+      for (const list of loyaltyByClient.values()) list.sort((a, b) => b.date.getTime() - a.date.getTime())
+      const s = settings.data as { enabled: boolean; stamps_per_reward: number; reward: string } | null
+      setLoyaltySettings(s ? { enabled: s.enabled, stampsPerReward: s.stamps_per_reward, reward: s.reward } : DEFAULT_LOYALTY)
       const proList = (pros.data ?? []).map((p) => ({ id: p.id as string, name: p.name as string }))
       setProfessionals(proList)
-      setClients(((cls.data ?? []) as unknown as ClientRow[]).map((c) => buildClient(c, byClient.get(c.id) ?? [], proList[0]?.id ?? '')))
+      setClients(
+        ((cls.data ?? []) as unknown as ClientRow[]).map((c) =>
+          buildClient(c, byClient.get(c.id) ?? [], loyaltyByClient.get(c.id) ?? [], proList[0]?.id ?? ''),
+        ),
+      )
       setError(null)
       setLoading(false)
     })()
@@ -138,6 +221,11 @@ export function useClientBook() {
 
   const reload = useCallback(() => setTick((t) => t + 1), [])
 
+  /** troca a cliente na lista local (modo demonstração e resposta imediata na tela) */
+  const patchLocal = useCallback((id: string, patch: (c: Client) => Client) => {
+    setClients((list) => list.map((c) => (c.id === id ? patch(c) : c)))
+  }, [])
+
   /** devolve o id da cliente criada (ou a mensagem de erro) */
   const create = useCallback(
     async (draft: ClientDraft): Promise<{ id: string | null; error: string | null }> => {
@@ -147,37 +235,29 @@ export function useClientBook() {
         setClients((list) => [
           ...list,
           {
+            ...draft,
             id,
-            name: draft.name,
-            phone: draft.phone,
             since: now,
             birthday: draft.birthday ? draft.birthday.slice(5) : '',
-            vip: draft.vip,
             professionalId: draft.professionalId ?? professionals[0]?.id ?? '',
             visits: 0,
             totalSpent: 0,
             lastVisit: now,
             interval: DEFAULT_INTERVAL,
-            allergies: draft.allergies,
-            preferences: draft.preferences,
             anamnesisSignedAt: null,
+            anamnesis: { answers: {}, notes: '' },
+            anamnesisUpdatedAt: null,
+            anamnesisSignature: null,
             history: [],
+            appointments: [],
+            loyalty: [],
           },
         ])
         return { id, error: null }
       }
       const { data, error: err } = await neon
         .from('clients')
-        .insert({
-          salon_id: salonId,
-          name: draft.name,
-          phone: draft.phone,
-          birthday: draft.birthday || null,
-          vip: draft.vip,
-          preferred_professional: draft.professionalId,
-          allergies: draft.allergies,
-          preferences: draft.preferences,
-        })
+        .insert({ salon_id: salonId, ...draftColumns(draft) })
         .select('id')
         .single()
       if (err || !data) return { id: null, error: friendly(err ?? { message: '' }) }
@@ -187,66 +267,191 @@ export function useClientBook() {
     [live, salonId, professionals, reload],
   )
 
+  /** grava colunas da cliente e atualiza a tela; devolve a mensagem de erro, se houver */
+  const save = useCallback(
+    async (id: string, columns: Record<string, unknown>, patch: (c: Client) => Client): Promise<string | null> => {
+      if (!live || !neon || !salonId) {
+        patchLocal(id, patch)
+        return null
+      }
+      const { data, error: err } = await neon.from('clients').update(columns).eq('id', id).select('id')
+      if (err || !data?.length) return friendly(err ?? { message: '' })
+      patchLocal(id, patch)
+      return null
+    },
+    [live, salonId, patchLocal],
+  )
+
   const update = useCallback(
-    async (id: string, draft: ClientDraft): Promise<string | null> => {
+    (id: string, draft: ClientDraft) =>
+      save(id, draftColumns(draft), (c) => ({
+        ...c,
+        ...draft,
+        birthday: draft.birthday ? draft.birthday.slice(5) : '',
+        professionalId: draft.professionalId ?? c.professionalId,
+      })),
+    [save],
+  )
+
+  /** preferências e alergias editadas direto no card de cuidados */
+  const updateCare = useCallback(
+    (id: string, care: { preferences: string[]; allergies: string[] }) =>
+      save(id, care, (c) => ({ ...c, ...care })),
+    [save],
+  )
+
+  const saveAnamnesis = useCallback(
+    (id: string, anamnesis: Anamnesis) => {
+      const at = new Date()
+      return save(id, { anamnesis, anamnesis_updated_at: at.toISOString() }, (c) => ({ ...c, anamnesis, anamnesisUpdatedAt: at }))
+    },
+    [save],
+  )
+
+  /** registra a assinatura do termo (desenhada na tela) ou a remove para assinar de novo */
+  const signAnamnesis = useCallback(
+    (id: string, signature: string | null) => {
+      const at = signature ? new Date() : null
+      return save(
+        id,
+        { anamnesis_signed_at: at ? at.toISOString() : null, anamnesis_signature: signature },
+        (c) => ({ ...c, anamnesisSignedAt: at, anamnesisSignature: signature }),
+      )
+    },
+    [save],
+  )
+
+  /** selo extra (stamps > 0) ou resgate de prêmio (stamps < 0) */
+  const addLoyalty = useCallback(
+    async (clientId: string, stamps: number, note: string): Promise<string | null> => {
+      const local = (entry: LoyaltyEntry) => patchLocal(clientId, (c) => ({ ...c, loyalty: [entry, ...c.loyalty] }))
       if (!live || !neon || !salonId) {
-        setClients((list) =>
-          list.map((c) =>
-            c.id === id
-              ? {
-                  ...c,
-                  name: draft.name,
-                  phone: draft.phone,
-                  birthday: draft.birthday ? draft.birthday.slice(5) : '',
-                  vip: draft.vip,
-                  professionalId: draft.professionalId ?? c.professionalId,
-                  allergies: draft.allergies,
-                  preferences: draft.preferences,
-                }
-              : c,
-          ),
-        )
+        local({ id: `l-${Date.now()}`, stamps, note, date: new Date() })
         return null
       }
       const { data, error: err } = await neon
-        .from('clients')
-        .update({
-          name: draft.name,
-          phone: draft.phone,
-          birthday: draft.birthday || null,
-          vip: draft.vip,
-          preferred_professional: draft.professionalId,
-          allergies: draft.allergies,
-          preferences: draft.preferences,
-        })
-        .eq('id', id)
-        .select('id')
-      if (err || !data?.length) return friendly(err ?? { message: '' })
-      reload()
+        .from('loyalty_entries')
+        .insert({ salon_id: salonId, client_id: clientId, stamps, note })
+        .select('id, created_at')
+        .single()
+      if (err || !data) return friendly(err ?? { message: '' })
+      local({ id: data.id as string, stamps, note, date: new Date(data.created_at as string) })
       return null
     },
-    [live, salonId, reload],
+    [live, salonId, patchLocal],
   )
 
-  /** registra que a ficha de anamnese foi assinada (a assinatura em si é feita fora do sistema por enquanto) */
-  const markAnamnesis = useCallback(
-    async (id: string, signed: boolean): Promise<string | null> => {
-      const at = signed ? new Date() : null
+  const removeLoyalty = useCallback(
+    async (clientId: string, entryId: string): Promise<string | null> => {
+      if (live && neon && salonId) {
+        const { error: err } = await neon.from('loyalty_entries').delete().eq('id', entryId)
+        if (err) return friendly(err)
+      }
+      patchLocal(clientId, (c) => ({ ...c, loyalty: c.loyalty.filter((e) => e.id !== entryId) }))
+      return null
+    },
+    [live, salonId, patchLocal],
+  )
+
+  const saveLoyaltySettings = useCallback(
+    async (next: LoyaltySettings): Promise<string | null> => {
+      if (live && neon && salonId) {
+        const { error: err } = await neon
+          .from('loyalty_settings')
+          .upsert({ salon_id: salonId, enabled: next.enabled, stamps_per_reward: next.stampsPerReward, reward: next.reward })
+        if (err) return friendly(err)
+      }
+      setLoyaltySettings(next)
+      return null
+    },
+    [live, salonId],
+  )
+
+  return {
+    live,
+    canManage,
+    clients,
+    professionals,
+    loyaltySettings,
+    loading,
+    error,
+    create,
+    update,
+    updateCare,
+    saveAnamnesis,
+    signAnamnesis,
+    addLoyalty,
+    removeLoyalty,
+    saveLoyaltySettings,
+    reload,
+  }
+}
+
+/** anotações de uma cliente (carregadas só quando a ficha dela está aberta) */
+export function useClientNotes(clientId: string | undefined) {
+  const { salon } = useAuth()
+  const salonId = salon?.id
+  const live = isNeonConfigured && Boolean(neon) && Boolean(salonId)
+  const [notes, setNotes] = useState<ClientNote[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    setNotes([])
+    setError(null)
+    if (!clientId || !live || !neon || !salonId) return
+    let cancelled = false
+    setLoading(true)
+    void (async () => {
+      const { data, error: err } = await neon
+        .from('client_notes')
+        .select('id, body, created_at')
+        .eq('salon_id', salonId)
+        .eq('client_id', clientId)
+        .order('created_at', { ascending: false })
+      if (cancelled) return
+      setLoading(false)
+      if (err) {
+        setError('Não foi possível carregar as anotações.')
+        return
+      }
+      setNotes(((data ?? []) as { id: string; body: string; created_at: string }[]).map((n) => ({ id: n.id, body: n.body, date: new Date(n.created_at) })))
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [clientId, live, salonId])
+
+  const add = useCallback(
+    async (body: string): Promise<string | null> => {
+      if (!clientId) return null
       if (!live || !neon || !salonId) {
-        setClients((list) => list.map((c) => (c.id === id ? { ...c, anamnesisSignedAt: at } : c)))
+        setNotes((list) => [{ id: `n-${Date.now()}`, body, date: new Date() }, ...list])
         return null
       }
       const { data, error: err } = await neon
-        .from('clients')
-        .update({ anamnesis_signed_at: at ? at.toISOString() : null })
-        .eq('id', id)
-        .select('id')
-      if (err || !data?.length) return friendly(err ?? { message: '' })
-      reload()
+        .from('client_notes')
+        .insert({ salon_id: salonId, client_id: clientId, body })
+        .select('id, created_at')
+        .single()
+      if (err || !data) return friendly(err ?? { message: '' })
+      setNotes((list) => [{ id: data.id as string, body, date: new Date(data.created_at as string) }, ...list])
       return null
     },
-    [live, salonId, reload],
+    [clientId, live, salonId],
   )
 
-  return { live, clients, professionals, loading, error, create, update, markAnamnesis, reload }
+  const remove = useCallback(
+    async (id: string): Promise<string | null> => {
+      if (live && neon && salonId) {
+        const { error: err } = await neon.from('client_notes').delete().eq('id', id)
+        if (err) return friendly(err)
+      }
+      setNotes((list) => list.filter((n) => n.id !== id))
+      return null
+    },
+    [live, salonId],
+  )
+
+  return { notes, loading, error, add, remove }
 }

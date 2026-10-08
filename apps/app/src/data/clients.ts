@@ -1,4 +1,6 @@
 import { addDays, differenceInCalendarDays, format, subDays } from 'date-fns'
+import { emptyAnamnesis, type Anamnesis } from '../lib/anamnesis'
+import type { AppointmentStatus } from '../types'
 
 export type ClientTag = 'vip' | 'nova' | 'sumida' | 'aniversario'
 
@@ -8,6 +10,27 @@ export interface Visit {
   professionalId: string
   price: number
 }
+
+/** qualquer atendimento da cliente (concluído, futuro, cancelado, falta) */
+export interface ClientAppointment extends Visit {
+  status: AppointmentStatus
+}
+
+/** movimento do cartão fidelidade: selo extra (> 0) ou prêmio resgatado (< 0) */
+export interface LoyaltyEntry {
+  id: string
+  stamps: number
+  note: string
+  date: Date
+}
+
+export interface LoyaltySettings {
+  enabled: boolean
+  stampsPerReward: number
+  reward: string
+}
+
+export const DEFAULT_LOYALTY: LoyaltySettings = { enabled: true, stampsPerReward: 10, reward: 'Um serviço grátis' }
 
 export interface Client {
   id: string
@@ -26,7 +49,21 @@ export interface Client {
   allergies: string[]
   preferences: string[]
   anamnesisSignedAt: Date | null
+  email: string
+  instagram: string
+  address: string
+  occupation: string
+  /** como conheceu o salão */
+  referral: string
+  anamnesis: Anamnesis
+  anamnesisUpdatedAt: Date | null
+  /** assinatura do termo (PNG em data URL) */
+  anamnesisSignature: string | null
+  /** atendimentos concluídos, do mais recente para o mais antigo */
   history: Visit[]
+  /** todos os atendimentos (inclusive futuros, cancelados e faltas), do mais recente para o mais antigo */
+  appointments: ClientAppointment[]
+  loyalty: LoyaltyEntry[]
 }
 
 /** dias sem aparecer para considerar a cliente "sumida" */
@@ -87,7 +124,19 @@ function buildClient(s: Seed, today: Date): Client {
     allergies: s.allergies ?? [],
     preferences: s.preferences,
     anamnesisSignedAt: s.anamnesis ? subDays(today, Math.min(s.sinceDays, 180)) : null,
+    email: '',
+    instagram: '',
+    address: '',
+    occupation: '',
+    referral: '',
+    anamnesis: s.anamnesis
+      ? { answers: { gestante: { yes: false }, medicamento: { yes: false }, lentes: { yes: s.professionalId === 'bia' }, sol: { yes: false }, fumante: { yes: false } }, notes: '' }
+      : emptyAnamnesis(),
+    anamnesisUpdatedAt: s.anamnesis ? subDays(today, Math.min(s.sinceDays, 180)) : null,
+    anamnesisSignature: null,
     history,
+    appointments: history.map((v) => ({ ...v, status: 'concluido' as const })),
+    loyalty: [],
   }
 }
 
@@ -115,5 +164,18 @@ export const TAG_LABEL: Record<ClientTag, string> = {
   aniversario: 'Aniversário',
 }
 
-/** selos no cartão fidelidade (a cada 10 visitas, 1 serviço grátis) */
-export const STAMPS_PER_REWARD = 10
+/** situação do cartão: cada atendimento concluído vale um selo; selos extras somam e resgates descontam */
+export function loyaltyState(c: Client, settings: LoyaltySettings) {
+  const per = settings.stampsPerReward
+  const available = Math.max(0, c.visits + c.loyalty.reduce((sum, e) => sum + e.stamps, 0))
+  const redeemed = c.loyalty.filter((e) => e.stamps < 0).length
+  return {
+    available,
+    /** selos marcados no cartão atual */
+    filled: Math.min(available, per),
+    /** prêmios prontos para resgatar */
+    ready: Math.floor(available / per),
+    missing: available >= per ? 0 : per - available,
+    redeemed,
+  }
+}
