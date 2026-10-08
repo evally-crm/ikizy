@@ -133,11 +133,11 @@ describe('renderSitePage', () => {
     assert.match(page(base({}, { accent: 'rubi' })), /--accent:#bf0c22/)
   })
 
-  it('cor própria vale no lugar da lista; cor clara demais é escurecida para o texto branco', () => {
-    assert.match(page(base({}, { accent: 'rubi', accent_color: '#1a7f5a' })), /--accent:#1a7f5a/)
-    const light = page(base({}, { accent_color: '#ffff00' })).match(/--accent:(#[0-9a-f]{6})/)?.[1]
-    assert.ok(light && light !== '#ffff00')
-    assert.match(page(base({}, { accent: 'rubi', accent_color: 'vermelho' })), /--accent:#bf0c22/)
+  it('paleta escolhida define as cores da página; sem paleta, vale a cor antiga', () => {
+    assert.match(page(base({}, { palette: 'floresta' })), /--accent:#1f4d3a/)
+    assert.match(page(base({}, { palette: 'marinho', accent: 'rubi' })), /--accent:#1b2f55/)
+    assert.match(page(base({}, { palette: 'noir' })), /--bg:#0e0d0d/)
+    assert.match(page(base({}, { palette: 'neon' })), /--accent:#bf0c22/)
   })
 
   it('logo só entra se for data URL de imagem válida', () => {
@@ -200,6 +200,67 @@ describe('renderSitePage', () => {
     assert.doesNotMatch(data, /<\/script/i)
     assert.equal(JSON.parse(data).pros[0].name, evil)
     assert.doesNotMatch(html, /<img src=x/)
+  })
+
+  it('paleta escura e fonte forte entram como variáveis da página', () => {
+    const html = page(base({}, { palette: 'noir', font: 'forte' }))
+    assert.match(html, /--bg:#0e0d0d/)
+    assert.match(html, /color-scheme:dark/)
+    assert.match(html, /--du:uppercase/)
+    assert.match(html, /--dw:800/)
+    assert.match(html, /<meta name="theme-color" content="#0e0d0d">/)
+  })
+
+  it('paleta e fonte desconhecidas voltam ao bordô claro e à fonte moderna', () => {
+    const html = page(base({}, { palette: 'neon', accent: 'x', font: 'comic' }))
+    assert.match(html, /--bg:#efebe5/)
+    assert.match(html, /color-scheme:light/)
+    assert.match(html, /--du:none/)
+  })
+
+  const PHOTO = '351b4862-88ae-4ba3-9daa-8e39ef498b04'
+
+  it('vitrine: produtos com foto, preço e botão do WhatsApp; link no menu', () => {
+    const site = base()
+    site.showcase = [
+      { name: 'Óleo de cutícula', description: 'Hidrata e protege', price: 35.5, photo: PHOTO },
+      { name: 'Lixa', description: '', price: 8, photo: null },
+    ]
+    const html = page(site)
+    assert.match(html, /id="produtos"/)
+    assert.match(html, /<a href="#produtos">Produtos<\/a>/)
+    assert.match(html, new RegExp(`<img class="item__img" src="/api/photo\\?id=${PHOTO}" alt="Óleo de cutícula"`))
+    assert.match(html, /R\$\s35,50/)
+    assert.match(html, /Tenho%20interesse%20no%20produto%20%22%C3%93leo%20de%20cut%C3%ADcula%22/)
+    assert.match(html, /class="item__ph"[^>]*>L</)
+  })
+
+  it('sem produtos, a seção e o link somem; sem mostrar preços, o valor some', () => {
+    assert.doesNotMatch(page(base()), /id="produtos"|href="#produtos"/)
+    const site = base({}, { show_prices: false })
+    site.showcase = [{ name: 'Óleo', description: '', price: null, photo: null }]
+    assert.doesNotMatch(page(site), /R\$/)
+  })
+
+  it('foto de serviço aparece como miniatura; fotos só em formatos seguros', () => {
+    const site = base()
+    site.services[0].photo = PHOTO
+    assert.match(page(site), new RegExp(`<img class="thumb" src="/api/photo\\?id=${PHOTO}"`))
+    for (const bad of ['javascript:alert(1)', 'http://evil.example/a.png', 'data:image/svg+xml;base64,AAAA', 'https://evil.example/x.png', '"><script>']) {
+      site.services[0].photo = bad
+      assert.doesNotMatch(page(site), /class="thumb"/, bad)
+    }
+    site.services[0].photo = `https://app.ikizy.com/api/photo?id=${PHOTO}`
+    assert.match(page(site), /class="thumb" src="https:\/\/app\.ikizy\.com\/api\/photo\?id=/)
+  })
+
+  it('texto do produto nunca vira HTML', () => {
+    const evil = '<img src=x onerror=alert(1)>'
+    const site = base()
+    site.showcase = [{ name: evil, description: evil, price: 1, photo: null }]
+    const html = page(site)
+    assert.doesNotMatch(html, /<img src=x/)
+    assert.match(html, /&lt;img src=x onerror=alert\(1\)&gt;/)
   })
 
   it('página 404 não é indexada', () => {
