@@ -1,6 +1,6 @@
 ---
 import Base from '../layouts/Base.astro'
-import { LINKS } from '../lib/site'
+import { CTA, LINKS } from '../lib/site'
 ---
 
 <Base title="Página não encontrada" description="A página que você procura não existe ou mudou de endereço." noindex>
@@ -10,7 +10,7 @@ import { LINKS } from '../lib/site'
     <p class="lead">O endereço pode ter mudado ou estar digitado errado. Volte ao início ou comece a usar a IKIZY.</p>
     <div class="btn-row" style="margin-top: 28px;">
       <a class="btn btn--primary" href="/">Ir para o início</a>
-      <a class="btn btn--ghost" href={LINKS.signup}>Teste agora</a>
+      <a class="btn btn--ghost" href={LINKS.signup}>{CTA.short}</a>
     </div>
   </section>
 </Base>
