@@ -26,9 +26,15 @@ body:has(dialog.sheet[open]){overflow:hidden}
 .bk-chosen{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;margin-bottom:14px;border-radius:18px;background:var(--soft)}
 .bk-chosen button{border:0;background:none;color:var(--accent);font:inherit;text-decoration:underline;cursor:pointer}
 .bk-label{margin:14px 0 8px;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:#6b6668}
-.bk-days{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 10px;scrollbar-width:thin}
-.bk-day{flex:none;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:64px;min-height:68px;justify-content:center;border:1px solid #e5e1dc;border-radius:18px;background:#fff;font:inherit;color:inherit;cursor:pointer}
-.bk-day small{font-size:12px;color:#6b6668;text-transform:capitalize}
+.bk-wk{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:14px 0 8px}
+.bk-wk span{font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:#6b6668}
+.bk-wk div{display:flex;gap:8px}
+.bk-arrow{display:grid;place-items:center;width:44px;height:44px;border:1px solid #e5e1dc;border-radius:50%;background:#fff;font:inherit;font-size:20px;line-height:1;color:#242424;cursor:pointer}
+.bk-arrow:disabled{opacity:.35;cursor:not-allowed}
+.bk-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.bk-day{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:0;min-height:64px;padding:0;border:1px solid #e5e1dc;border-radius:16px;background:#fff;font:inherit;color:inherit;cursor:pointer}
+.bk-day small{font-size:11px;color:#6b6668;text-transform:capitalize}
+.bk-day:disabled{opacity:.3;cursor:default}
 .bk-day[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:#fff}
 .bk-day[aria-pressed=true] small{color:rgba(255,255,255,.8)}
 .bk-times{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
@@ -57,7 +63,7 @@ export const BOOKING_SCRIPT = `
   var D=JSON.parse(document.getElementById('book-data').textContent);
   var body=document.getElementById('book-body'), foot=document.getElementById('book-foot');
   var TZ='America/Sao_Paulo';
-  var S={step:0,service:null,date:null,minute:null,pro:'',slots:null,error:'',name:'',phone:'',done:null,busy:false,token:0};
+  var S={off:0,step:0,service:null,date:null,minute:null,pro:'',slots:null,error:'',name:'',phone:'',done:null,busy:false,token:0};
   var ESC={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'};
   function e(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return ESC[c]})}
   function money(n){return n==null?'':new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:n%1?2:0}).format(n)}
@@ -70,7 +76,7 @@ export const BOOKING_SCRIPT = `
   function svc(id){for(var i=0;i<D.services.length;i++){if(D.services[i].id===id)return D.services[i]}return null}
 
   function openSheet(id){
-    S.service=id||null;S.step=id?1:0;S.date=null;S.minute=null;S.slots=null;S.error='';S.done=null;S.busy=false;
+    S.service=id||null;S.step=id?1:0;S.off=0;S.date=null;S.minute=null;S.slots=null;S.error='';S.done=null;S.busy=false;
     render();
     if(!dlg.open)dlg.showModal();
     if(id)pickDay(today());
@@ -115,16 +121,21 @@ export const BOOKING_SCRIPT = `
         D.pros.forEach(function(p){h+='<button type="button" class="bk-pro" data-act="pro" data-id="'+e(p.id)+'" aria-pressed="'+(S.pro===p.id?'true':'false')+'">'+e(p.name)+'</button>'});
         h+='</div>';
       }
-      h+='<p class="bk-label">Dia</p><div class="bk-days">';
-      var t0=today();
-      for(var i=0;i<=D.windowDays;i++){var d=addDays(t0,i);h+='<button type="button" class="bk-day" data-act="day" data-id="'+d+'" aria-pressed="'+(S.date===d?'true':'false')+'"><small>'+e(wd(d))+'</small><strong>'+d.slice(8)+'</strong></button>'}
+      var t0=today(),last=D.windowDays,first=addDays(t0,S.off);
+      h+='<div class="bk-wk"><span>'+e(mk(first).toLocaleDateString('pt-BR',{month:'long',year:'numeric',timeZone:'UTC'}))+'</span><div>'
+        +'<button type="button" class="bk-arrow" data-act="wk" data-id="-1" aria-label="Semana anterior" '+(S.off<=0?'disabled':'')+'>&lsaquo;</button>'
+        +'<button type="button" class="bk-arrow" data-act="wk" data-id="1" aria-label="Próxima semana" '+(S.off+7>last?'disabled':'')+'>&rsaquo;</button></div></div><div class="bk-days">';
+      for(var i=0;i<7;i++){
+        var n=S.off+i,d=addDays(t0,n);
+        h+='<button type="button" class="bk-day" data-act="day" data-id="'+d+'" aria-pressed="'+(S.date===d?'true':'false')+'" '+(n>last?'disabled':'')+'><small>'+e(wd(d))+'</small><strong>'+d.slice(8)+'</strong></button>';
+      }
       h+='</div>';
       if(S.date){
         h+='<p class="bk-label">Horários · '+e(full(S.date))+'</p>';
         if(S.error)h+='<p class="bk-err" role="alert">'+e(S.error)+'</p>';
         if(S.slots===null)h+='<p class="bk-note">Buscando horários…</p>';
-        else if(!minutes().length)h+='<p class="bk-note">Sem horários livres neste dia. Escolha outro dia.</p>';
-        else{h+='<div class="bk-times">';minutes().forEach(function(m){h+='<button type="button" class="bk-time" data-act="time" data-id="'+m+'" aria-pressed="'+(S.minute===m?'true':'false')+'">'+hm(m)+'</button>'});h+='</div>'}
+        else if(!minutes().length&&!S.error)h+='<p class="bk-note">Sem horários livres neste dia. Escolha outro dia.</p>';
+        else if(minutes().length){h+='<div class="bk-times">';minutes().forEach(function(m){h+='<button type="button" class="bk-time" data-act="time" data-id="'+m+'" aria-pressed="'+(S.minute===m?'true':'false')+'">'+hm(m)+'</button>'});h+='</div>'}
       }
     }else if(S.step===2){
       h+='<div class="bk-sum"><strong>'+e(s.name)+'</strong><br>'+e(full(S.date))+' às '+hm(S.minute)+'</div>';
@@ -186,6 +197,7 @@ export const BOOKING_SCRIPT = `
     else if(act==='svc'){S.service=id;S.step=1;S.date=null;S.minute=null;S.slots=null;pickDay(today())}
     else if(act==='change'){S.step=0;render()}
     else if(act==='pro'){S.pro=id||'';if(S.date)pickDay(S.date);else render()}
+    else if(act==='wk'){S.off=Math.max(0,S.off+7*(+id));render()}
     else if(act==='day')pickDay(id);
     else if(act==='time'){S.minute=+id;render()}
     else if(act==='next'){S.step=2;S.error='';render()}
