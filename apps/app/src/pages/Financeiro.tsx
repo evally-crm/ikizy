@@ -1,12 +1,12 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { Download, Lock, Plus, Send, Trash2, X } from 'lucide-react'
+import { ArrowDownRight, ArrowUpRight, Download, Lock, Plus, Send, Trash2, X } from 'lucide-react'
 import { useAuth } from '../auth/AuthProvider'
 import { type MonthClosing } from '../data/finance'
 import { CARD_FEE_PCT, useFinance, type Expense } from '../data/useFinance'
 import { formatBRL } from '../lib/format'
-import { Avatar, Button, Card, Em, Money } from '../components/ui'
+import { Avatar, Button, Em, Money } from '../components/ui'
 
 const cap = (s: string) => s[0].toUpperCase() + s.slice(1)
 const pct = (part: number, total: number) => (total ? Math.round((part / total) * 100) : 0)
@@ -317,6 +317,75 @@ function ExpenseDialog({
   )
 }
 
+/** barras do faturamento diário (uma por dia do mês) */
+function DailyBars({ month }: { month: MonthClosing }) {
+  const values = month.daily.map((v) => v ?? 0)
+  const max = Math.max(...values, 1)
+  const best = values.indexOf(Math.max(...values))
+  const today = month.isCurrent ? month.elapsedDays - 1 : -1
+  return (
+    <div className="fbars" role="img" aria-label={`Faturamento por dia em ${month.label}`}>
+      {month.daily.map((v, i) => (
+        <span
+          key={i}
+          className={`fbars__bar${v === null ? ' is-future' : ''}${i === best && v ? ' is-best' : ''}${i === today ? ' is-today' : ''}`}
+          style={{ height: `${v ? Math.max((v / max) * 100, 6) : 6}%` }}
+        />
+      ))}
+    </div>
+  )
+}
+
+/** meia-lua com a margem de lucro */
+function Gauge({ value }: { value: number }) {
+  const pctValue = Math.min(Math.max(value, 0), 100)
+  const r = 80
+  const len = Math.PI * r
+  return (
+    <div className="gauge" role="img" aria-label={`Margem de lucro: ${value}%`}>
+      <svg viewBox="0 0 200 110" aria-hidden="true">
+        <path d="M20 100 A80 80 0 0 1 180 100" className="gauge__track" pathLength={len} />
+        <path
+          d="M20 100 A80 80 0 0 1 180 100"
+          className="gauge__fill"
+          pathLength={len}
+          strokeDasharray={`${(len * pctValue) / 100} ${len}`}
+        />
+      </svg>
+      <span className="gauge__value">
+        {value}
+        <small>%</small>
+      </span>
+    </div>
+  )
+}
+
+/** grade de pontos: cada ponto vale 2% do faturamento */
+function DotWaffle({ parts, total }: { parts: { label: string; value: number; cls: string }[]; total: number }) {
+  const DOTS = 50
+  const raw = parts.map((p) => (total ? (p.value / total) * DOTS : 0))
+  const counts = raw.map(Math.floor)
+  let left = total ? DOTS - counts.reduce((a, b) => a + b, 0) : 0
+  raw
+    .map((v, i) => ({ i, r: v - Math.floor(v) }))
+    .sort((a, b) => b.r - a.r)
+    .forEach(({ i }) => {
+      if (left > 0 && raw[i] > 0) {
+        counts[i]++
+        left--
+      }
+    })
+  const dots = parts.flatMap((p, i) => Array.from({ length: counts[i] }, () => p.cls))
+  while (dots.length < DOTS) dots.push('')
+  return (
+    <div className="waffle" aria-hidden="true">
+      {dots.slice(0, DOTS).map((cls, i) => (
+        <i key={i} className={`waffle__dot ${cls}`} />
+      ))}
+    </div>
+  )
+}
+
 export default function Financeiro() {
   const { salon } = useAuth()
   const fin = useFinance()
@@ -355,6 +424,8 @@ export default function Financeiro() {
   const growth = prev && prev.gross ? Math.round(((month.gross - prev.gross) / prev.gross) * 100) : null
   const monthExpenses = fin.expenses.filter((e) => e.date.startsWith(month.id))
   const salonName = salon?.name ?? 'Studio Maria Beauty'
+  const margin = pct(Math.max(month.net, 0), month.gross)
+  const outflow = month.commissionsTotal + month.products + month.expenses + month.cardFees
 
   const composition = [
     { label: 'Lucro', value: Math.max(month.net, 0), cls: 'is-net' },
@@ -362,7 +433,8 @@ export default function Financeiro() {
     { label: 'Produtos', value: month.products, cls: 'is-prod' },
     { label: 'Despesas', value: month.expenses, cls: 'is-exp' },
     { label: 'Taxas', value: month.cardFees, cls: 'is-fee' },
-  ].filter((c) => c.value > 0 || c.cls === 'is-net')
+  ]
+  const paymentsTotal = month.payments.reduce((a, p) => a + p.total, 0)
   const maxPayment = Math.max(...month.payments.map((p) => p.total), 1)
   const summary = `Fechamento de ${month.label} - ${salonName}\nFaturamento: ${formatBRL(month.gross)}\nLucro líquido: ${formatBRL(month.net)}\nAtendimentos: ${month.appointments}`
 
@@ -382,20 +454,20 @@ export default function Financeiro() {
 
   return (
     <div className="page">
-      <header className="hero">
-        <div>
-          <p className="hero__hello">Financeiro</p>
-          <h1 className="hero__title">
+      <header className="fhead">
+        <div className="fhead__text">
+          <p className="eyebrow">Financeiro</p>
+          <h1 className="fhead__title">
             Fechamento <Em>mensal</Em>
           </h1>
         </div>
-        <div className="chips" role="tablist" aria-label="Mês">
+        <div className="mseg" role="tablist" aria-label="Mês">
           {months.map((m) => (
             <button
               key={m.id}
               type="button"
               role="tab"
-              className="chip"
+              className="mseg__item"
               aria-selected={m.id === month.id}
               onClick={() => setSelectedId(m.id)}
             >
@@ -412,35 +484,101 @@ export default function Financeiro() {
         </p>
       )}
 
-      <section className="kpis-fin" aria-label={`Resumo de ${month.label}`}>
-        <div className="kpi">
-          <span className="kpi__label">
-            Faturamento bruto{' '}
+      <div className="fgrid">
+        {/* faturamento: destaque escuro */}
+        <section className="ftile ftile--dark ftile--hero" aria-label={`Faturamento de ${month.label}`}>
+          <div className="ftile__head">
+            <div>
+              <p className="ftile__label">Faturamento bruto</p>
+              <p className="ftile__hint">{cap(month.label)} {format(month.date, 'yyyy')}</p>
+            </div>
             {growth !== null && !month.isCurrent && (
-              <span className={`badge ${growth >= 0 ? 'badge--up' : 'badge--pendente'}`}>
+              <span className={`trend ${growth >= 0 ? 'trend--up' : 'trend--down'}`}>
+                {growth >= 0 ? <ArrowUpRight size={14} aria-hidden="true" /> : <ArrowDownRight size={14} aria-hidden="true" />}
                 {growth >= 0 ? '+' : ''}
-                {growth}%
+                {growth}% vs {prev?.label}
               </span>
             )}
-          </span>
+          </div>
           <Money value={month.gross} size="xl" />
-        </div>
-        <div className="kpi">
-          <span className="kpi__label">Lucro líquido</span>
-          <Money value={month.net} size="lg" />
-        </div>
-        <div className="kpi">
-          <span className="kpi__label">Ticket médio</span>
-          <Money value={month.ticket} size="lg" />
-        </div>
-        <div className="kpi">
-          <span className="kpi__label">Atendimentos</span>
-          <span className="kpi__plain">{month.appointments}</span>
-        </div>
-      </section>
+          <DailyBars month={month} />
+          <div className="fhero__foot">
+            <span>dia 1</span>
+            <span>dia {month.daysInMonth}</span>
+          </div>
+        </section>
 
-      <div className="fin">
-        <div className="fin__receipt">
+        {/* fechamento */}
+        {closedAt ? (
+          <section className="ftile ftile--done">
+            <span className="ftile__icon" aria-hidden="true">
+              <Lock size={18} />
+            </span>
+            <div>
+              <h2 className="ftile__title">{cap(month.label)} está fechado</h2>
+              <p className="ftile__hint">Fechado em {format(closedAt, "dd/MM 'às' HH:mm")}. Os números não mudam mais.</p>
+            </div>
+          </section>
+        ) : (
+          <section className="ftile ftile--brand ftile--cta">
+            <p className="ftile__hint">
+              {month.isCurrent ? `${month.daysInMonth - month.elapsedDays} dias para o fim do mês` : 'Mês já terminou'}
+            </p>
+            <h2 className="fcta__title">
+              Pronta para fechar <Em>{month.label}</Em>?
+            </h2>
+            <p className="fcta__text">Confira o recibo e trave os lançamentos do mês.</p>
+            <Button variant="light" onClick={() => setConfirming(true)}>
+              <Lock size={16} aria-hidden="true" /> Fechar {month.label}
+            </Button>
+          </section>
+        )}
+
+        {/* lucro + margem */}
+        <section className="ftile ftile--profit">
+          <div className="ftile__head">
+            <div>
+              <p className="ftile__label">Lucro líquido</p>
+              <p className="ftile__hint">depois de comissões, produtos, saídas e taxas</p>
+            </div>
+          </div>
+          <Money value={month.net} size="lg" />
+          <Gauge value={margin} />
+          <ul className="flegend flegend--row">
+            <li>
+              <i className="fdot is-net" /> Fica com você
+            </li>
+            <li>
+              <i className="fdot is-out" /> Saídas {formatBRL(outflow).replace(',00', '')}
+            </li>
+          </ul>
+        </section>
+
+        {/* números rápidos */}
+        <section className="ftile ftile--stats" aria-label="Indicadores">
+          <div className="fstat">
+            <p className="ftile__label">Ticket médio</p>
+            <Money value={month.ticket} size="md" />
+          </div>
+          <div className="fstat">
+            <p className="ftile__label">Atendimentos</p>
+            <span className="fstat__num">{month.appointments}</span>
+          </div>
+          <div className="fstat">
+            <p className="ftile__label">Novas clientes</p>
+            <span className="fstat__num">{month.newClients}</span>
+          </div>
+          <div className="fstat">
+            <p className="ftile__label">Retorno</p>
+            <span className="fstat__num">
+              {month.returnRate}
+              <small>%</small>
+            </span>
+          </div>
+        </section>
+
+        {/* recibo */}
+        <div className="fgrid__receipt">
           <Receipt month={month} closedAt={closedAt} salonName={salonName} />
           <div className="receipt__actions">
             <Button variant="soft" onClick={() => window.print()}>
@@ -452,155 +590,132 @@ export default function Financeiro() {
           </div>
         </div>
 
-        <div className="fin__side">
-          {closedAt ? (
-            <Card className="closecta closecta--done">
-              <Lock size={20} aria-hidden="true" />
-              <div>
-                <h2 className="card__title">{cap(month.label)} está fechado</h2>
-                <p className="card__sub">Fechado em {format(closedAt, "dd/MM 'às' HH:mm")}. Os números não mudam mais.</p>
-              </div>
-            </Card>
-          ) : (
-            <Card variant="brand" className="closecta">
-              <div>
-                <p className="eyebrow" style={{ color: 'rgba(255,255,255,0.75)' }}>
-                  {month.isCurrent ? `${month.daysInMonth - month.elapsedDays} dias para o fim do mês` : 'Mês já terminou'}
-                </p>
-                <h2 className="closecta__title">
-                  Pronta para fechar <Em>{month.label}</Em>?
-                </h2>
-                <p className="closecta__text">Confira o recibo e trave os lançamentos do mês.</p>
-              </div>
-              <Button variant="light" onClick={() => setConfirming(true)}>
-                <Lock size={16} aria-hidden="true" /> Fechar {month.label}
-              </Button>
-            </Card>
-          )}
-
-          <Card variant="dark">
-            <div className="card__head">
-              <div>
-                <p className="card__sub">Para onde foi o dinheiro</p>
-                <h2 className="card__title">Composição do faturamento</h2>
-              </div>
+        {/* composição */}
+        <section className="ftile ftile--comp">
+          <div className="ftile__head">
+            <div>
+              <p className="ftile__label">Para onde foi o dinheiro</p>
+              <h2 className="ftile__title">Composição do faturamento</h2>
             </div>
-            <div className="split" role="img" aria-label="Distribuição do faturamento">
-              {composition.map((c) => (
-                <div key={c.label} className={`split__seg ${c.cls}`} style={{ flexGrow: Math.max(c.value, 1) }}>
-                  <span className="split__pct">{pct(c.value, month.gross)}%</span>
-                  <span className="split__bar" />
+          </div>
+          <DotWaffle parts={composition} total={month.gross} />
+          <ul className="flegend">
+            {composition.map((c) => (
+              <li key={c.label}>
+                <i className={`fdot ${c.cls}`} />
+                <span>{c.label}</span>
+                <span className="flegend__pct">{pct(c.value, month.gross)}%</span>
+                <strong>{formatBRL(c.value)}</strong>
+              </li>
+            ))}
+          </ul>
+          <p className="ftile__note">
+            Cada ponto vale 2% do faturamento. Taxas de cartão estimadas em {CARD_FEE_PCT.toString().replace('.', ',')}% do crédito e do débito;
+            produtos vêm do gasto mensal cadastrado em Meu site.
+          </p>
+        </section>
+
+        {/* formas de pagamento */}
+        <section className="ftile ftile--pay">
+          <div className="ftile__head">
+            <div>
+              <p className="ftile__label">Recebimentos</p>
+              <h2 className="ftile__title">Formas de pagamento</h2>
+            </div>
+          </div>
+          {month.payments.length === 0 ? (
+            <div className="fempty">
+              <div className="paycols paycols--empty" aria-hidden="true">
+                {[60, 38, 80, 24].map((h) => (
+                  <span key={h} className="paycols__bar" style={{ height: `${h}%` }} />
+                ))}
+              </div>
+              <p className="ftile__hint">Os recebimentos aparecem quando você conclui atendimentos na agenda.</p>
+            </div>
+          ) : (
+            <div className="paycols">
+              {month.payments.map((p) => (
+                <div key={p.method} className="paycols__col">
+                  <span className="paycols__value">{formatBRL(p.total).replace(',00', '')}</span>
+                  <div className="paycols__track">
+                    <div
+                      className={`paycols__bar ${p.total === maxPayment ? 'is-top' : ''}`}
+                      style={{ height: `${Math.max((p.total / maxPayment) * 100, 8)}%` }}
+                    >
+                      <span className="paycols__pct">{pct(p.total, paymentsTotal)}%</span>
+                    </div>
+                  </div>
+                  <span className="paycols__label">{p.method}</span>
                 </div>
               ))}
             </div>
-            <ul className="split__legend">
-              {composition.map((c) => (
-                <li key={c.label}>
-                  <i className={`split__dot ${c.cls}`} />
-                  <span>{c.label}</span>
-                  <strong>{formatBRL(c.value)}</strong>
+          )}
+        </section>
+
+        {/* comissões */}
+        <section className="ftile ftile--team">
+          <div className="ftile__head">
+            <div>
+              <p className="ftile__label">Equipe</p>
+              <h2 className="ftile__title">Comissões</h2>
+            </div>
+            {month.commissionsTotal > 0 && <strong className="ftile__total">{formatBRL(month.commissionsTotal)}</strong>}
+          </div>
+          {month.commissions.length === 0 ? (
+            <p className="ftile__hint">Sem comissões neste mês. Defina o percentual de cada profissional para calcular.</p>
+          ) : (
+            <ul className="list">
+              {month.commissions.map((c) => {
+                const name = professionals.find((p) => p.id === c.professionalId)?.name ?? 'Profissional'
+                return (
+                  <li key={c.professionalId} className="list__item">
+                    <Avatar name={name} size="sm" soft />
+                    <span className="list__text">
+                      {name}
+                      <small className="list__small">{c.qty} atendimentos</small>
+                    </span>
+                    <strong className="list__value">{formatBRL(c.total)}</strong>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </section>
+
+        {/* saídas */}
+        <section className="ftile ftile--exp">
+          <div className="ftile__head">
+            <div>
+              <p className="ftile__label">Caixa</p>
+              <h2 className="ftile__title">Saídas do mês</h2>
+            </div>
+            {!closedAt && fin.expensesAvailable && (
+              <Button size="sm" onClick={() => setAddingExpense(true)}>
+                <Plus size={16} aria-hidden="true" /> Lançar
+              </Button>
+            )}
+          </div>
+          {!fin.expensesAvailable ? (
+            <p className="ftile__hint">As saídas ficam disponíveis assim que a atualização do banco for aplicada.</p>
+          ) : monthExpenses.length === 0 ? (
+            <p className="ftile__hint">Nenhuma saída lançada em {month.label}. Aluguel, luz e material entram aqui.</p>
+          ) : (
+            <ul className="list">
+              {monthExpenses.map((e) => (
+                <li key={e.id} className="list__item">
+                  <span className="fexp__date">{format(new Date(`${e.date}T12:00:00`), 'dd/MM')}</span>
+                  <span className="list__text">{e.description}</span>
+                  <strong className="list__value">{formatBRL(e.amount)}</strong>
+                  {!closedAt && (
+                    <button type="button" className="chevbtn" aria-label={`Apagar ${e.description}`} onClick={() => void onRemove(e)}>
+                      <Trash2 size={16} aria-hidden="true" />
+                    </button>
+                  )}
                 </li>
               ))}
             </ul>
-            <p className="card__sub" style={{ marginTop: 10 }}>
-              Taxas de cartão estimadas em {CARD_FEE_PCT.toString().replace('.', ',')}% do crédito e do débito. Produtos vêm do gasto mensal cadastrado em
-              Meu site.
-            </p>
-          </Card>
-
-          <Card>
-            <div className="card__head">
-              <div>
-                <p className="eyebrow">Caixa</p>
-                <h2 className="card__title">Saídas do mês</h2>
-              </div>
-              {!closedAt && fin.expensesAvailable && (
-                <Button variant="soft" size="sm" onClick={() => setAddingExpense(true)}>
-                  <Plus size={16} aria-hidden="true" /> Lançar
-                </Button>
-              )}
-            </div>
-            {!fin.expensesAvailable ? (
-              <p className="card__sub">As saídas ficam disponíveis assim que a atualização do banco for aplicada.</p>
-            ) : monthExpenses.length === 0 ? (
-              <p className="card__sub">Nenhuma saída lançada em {month.label}.</p>
-            ) : (
-              <ul className="list">
-                {monthExpenses.map((e) => (
-                  <li key={e.id} className="list__item">
-                    <span className="list__text">
-                      {e.description}
-                      <small className="list__small">{format(new Date(`${e.date}T12:00:00`), 'dd/MM')}</small>
-                    </span>
-                    <strong className="list__value">{formatBRL(e.amount)}</strong>
-                    {!closedAt && (
-                      <button type="button" className="chevbtn" aria-label={`Apagar ${e.description}`} onClick={() => void onRemove(e)}>
-                        <Trash2 size={16} aria-hidden="true" />
-                      </button>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Card>
-
-          <div className="fin__pair">
-            <Card>
-              <div className="card__head">
-                <div>
-                  <p className="eyebrow">Equipe</p>
-                  <h2 className="card__title">Comissões</h2>
-                </div>
-              </div>
-              {month.commissions.length === 0 ? (
-                <p className="card__sub">Sem comissões neste mês. Defina o percentual de cada profissional para calcular.</p>
-              ) : (
-                <ul className="list">
-                  {month.commissions.map((c) => {
-                    const name = professionals.find((p) => p.id === c.professionalId)?.name ?? 'Profissional'
-                    return (
-                      <li key={c.professionalId} className="list__item">
-                        <Avatar name={name} size="sm" />
-                        <span className="list__text">
-                          {name}
-                          <small className="list__small">{c.qty} atendimentos</small>
-                        </span>
-                        <strong className="list__value">{formatBRL(c.total)}</strong>
-                      </li>
-                    )
-                  })}
-                </ul>
-              )}
-            </Card>
-
-            <Card>
-              <div className="card__head">
-                <div>
-                  <p className="eyebrow">Recebimentos</p>
-                  <h2 className="card__title">Formas de pagamento</h2>
-                </div>
-              </div>
-              {month.payments.length === 0 ? (
-                <p className="card__sub">Os recebimentos aparecem quando você conclui atendimentos na agenda.</p>
-              ) : (
-                <div className="paybars">
-                  {month.payments.map((p) => (
-                    <div key={p.method} className="paybars__col">
-                      <span className="paybars__value">{formatBRL(p.total).replace(',00', '')}</span>
-                      <div className="paybars__track">
-                        <div
-                          className={`paybars__bar ${p.total === maxPayment ? 'is-top' : ''}`}
-                          style={{ height: `${Math.max((p.total / maxPayment) * 100, 4)}%` }}
-                        />
-                      </div>
-                      <span className="paybars__label">{p.method}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </Card>
-          </div>
-        </div>
+          )}
+        </section>
       </div>
 
       {addingExpense && <ExpenseDialog month={month} onSave={fin.addExpense} onClose={() => setAddingExpense(false)} />}
