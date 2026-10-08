@@ -291,8 +291,9 @@
 .dialog {
   width: 100%;
   max-width: 480px;
-  max-height: 90dvh;
+  max-height: 92dvh;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 26px var(--gutter) calc(26px + env(safe-area-inset-bottom));
   background: var(--white);
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
@@ -338,6 +339,14 @@
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+  /* mobile primeiro: os botões ficam presos no rodapé da janela, sem sumir ao rolar */
+  position: sticky;
+  bottom: calc(-26px - env(safe-area-inset-bottom));
+  z-index: 2;
+  margin-inline: calc(-1 * var(--gutter));
+  padding: 12px var(--gutter) calc(14px + env(safe-area-inset-bottom));
+  background: var(--white);
+  border-top: 1px solid var(--line);
 }
 .dialog__actions .btn {
   flex: 1 1 160px;
@@ -369,5 +378,9 @@
   .dialog {
     border-radius: var(--radius-lg);
     padding-bottom: 26px;
+  }
+  .dialog__actions {
+    bottom: -26px;
+    padding-bottom: 14px;
   }
 }
