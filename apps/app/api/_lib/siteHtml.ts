@@ -122,7 +122,7 @@ em{font-family:Georgia,"Times New Roman",serif;font-style:italic;color:var(--acc
 .hero__cta{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
 .hero--cover .btn--ghost{color:#fff}
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
-.chip{display:inline-flex;align-items:center;min-height:34px;padding:0 14px;border-radius:999px;background:rgba(255,255,255,.88);color:var(--text);font-size:13px;text-decoration:none}
+.chip{display:inline-flex;align-items:center;min-height:34px;padding:0 14px;border-radius:999px;background:color-mix(in srgb,var(--panel) 88%,transparent);color:var(--text);font-size:13px;text-decoration:none}
 .hero:not(.hero--cover){background:radial-gradient(90% 80% at 88% 8%,color-mix(in srgb,var(--accent) 55%,#fff) 0%,transparent 60%),radial-gradient(70% 70% at 0% 100%,color-mix(in srgb,var(--accent) 70%,#000) 0%,transparent 70%),var(--accent);color:var(--on)}.hero:not(.hero--cover) h1,.hero:not(.hero--cover) h1 em,.hero:not(.hero--cover) .hero__lead{color:var(--on)}.hero:not(.hero--cover) .btn{background:var(--on);color:var(--accent);border-color:var(--on)}.hero:not(.hero--cover) .btn--ghost{background:transparent;color:var(--on);border-color:color-mix(in srgb,var(--on) 60%,transparent)}.hero:not(.hero--cover) .chip{background:color-mix(in srgb,var(--on) 14%,transparent);color:var(--on)}.hero__name{margin:0 0 18px;font-size:13px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;opacity:.85}.hero--cover .hero__name{color:#fff}
 
 .steps{display:grid;gap:12px;margin:0;padding:0;list-style:none;counter-reset:s}
@@ -188,6 +188,19 @@ em{font-family:Georgia,"Times New Roman",serif;font-style:italic;color:var(--acc
 footer{padding:18px 0 28px;text-align:center;color:var(--muted);font-size:13px}
 .float{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));z-index:30;transform:translateX(-50%);width:min(420px,calc(100% - 28px));box-shadow:0 14px 34px -10px rgba(0,0,0,.45)}
 @media(min-width:720px){.float{width:auto;left:auto;right:24px;transform:none}}
+`
+
+/** paleta escura: o destaque é branco, então capa sem foto e contato continuam escuros em vez de virar blocos brancos */
+const DARK_CSS = `
+.hero:not(.hero--cover){background:radial-gradient(90% 80% at 88% 8%,#2a2a2a 0%,transparent 60%),var(--panel);color:var(--ink)}
+.hero:not(.hero--cover) h1,.hero:not(.hero--cover) h1 em,.hero:not(.hero--cover) .hero__lead{color:var(--ink)}
+.hero:not(.hero--cover) .btn{background:var(--accent);color:var(--on);border-color:var(--accent)}
+.hero:not(.hero--cover) .btn--ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.hero:not(.hero--cover) .chip{background:var(--soft);color:var(--text)}
+.contact{background:var(--soft);color:var(--text)}
+.contact h2,.contact h2 em{color:var(--ink)}
+.info{background:var(--panel)}
+.contact .btn--light{background:var(--accent);color:var(--on);border-color:var(--accent)}
 `
 
 /** monta a página pública completa (HTML) do negócio */
@@ -335,7 +348,7 @@ export function renderSitePage(site: PublicSite, opts: { canonical: string }): s
 <meta property="og:url" content="${esc(opts.canonical)}">
 <meta name="twitter:card" content="summary">
 <script type="application/ld+json">${jsonLd}</script>
-<style>:root{--accent:${pal.accent};--soft:${pal.soft};--on:${pal.on};--bg:${pal.bg};--panel:${pal.panel};--ink:${pal.ink};--text:${pal.text};--muted:${pal.muted};--line:${pal.line};--display:${font.family};--dw:${font.weight};--du:${font.upper ? 'uppercase' : 'none'};color-scheme:${pal.dark ? 'dark' : 'light'}}${CSS}${online ? BOOKING_CSS : ''}</style>
+<style>:root{--accent:${pal.accent};--soft:${pal.soft};--on:${pal.on};--bg:${pal.bg};--panel:${pal.panel};--ink:${pal.ink};--text:${pal.text};--muted:${pal.muted};--line:${pal.line};--display:${font.family};--dw:${font.weight};--du:${font.upper ? 'uppercase' : 'none'};color-scheme:${pal.dark ? 'dark' : 'light'}}${CSS}${pal.dark ? DARK_CSS : ''}${online ? BOOKING_CSS : ''}</style>
 </head>
 <body>
 <header class="top"><div class="wrap"><div class="bar"><span class="logo">${logo ? `<img src="${logo}" alt="">` : ''}<span>${esc(name)}</span></span><nav aria-label="Seções">${
