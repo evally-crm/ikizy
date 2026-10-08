@@ -75,11 +75,14 @@ export function paletteFor(settings: { palette?: unknown; accent?: unknown; them
 
 export type FontId = 'moderna' | 'elegante' | 'forte'
 
-export const FONTS: Record<FontId, { label: string; sample: string; family: string; weight: number; upper: boolean }> = {
-  moderna: { label: 'Moderna', sample: 'Leve e atual', family: 'system-ui,-apple-system,"Segoe UI",Roboto,sans-serif', weight: 400, upper: false },
-  elegante: { label: 'Elegante', sample: 'Fina e sofisticada', family: 'Georgia,"Times New Roman",serif', weight: 400, upper: false },
-  forte: { label: 'Forte', sample: 'MARCANTE', family: '"Arial Narrow","Helvetica Neue",Arial,sans-serif', weight: 800, upper: true },
+export const FONTS: Record<FontId, { label: string; sample: string; family: string; weight: number; upper: boolean; google: string }> = {
+  moderna: { label: 'Manrope', sample: 'Moderna', family: 'Manrope,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif', weight: 600, upper: false, google: 'Manrope:wght@600' },
+  elegante: { label: 'Forum', sample: 'Elegante', family: 'Forum,Georgia,"Times New Roman",serif', weight: 400, upper: false, google: 'Forum' },
+  forte: { label: 'Raleway', sample: 'Forte', family: 'Raleway,"Helvetica Neue",Arial,sans-serif', weight: 800, upper: true, google: 'Raleway:wght@800' },
 }
+
+/** folha do Google Fonts com só a fonte escolhida (a página pública carrega apenas o necessário) */
+export const fontHref = (id: FontId) => `https://fonts.googleapis.com/css2?family=${FONTS[id].google}&display=swap`
 
 export const isFontId = (v: unknown): v is FontId => typeof v === 'string' && v in FONTS
 

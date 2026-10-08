@@ -1,4 +1,4 @@
-import { CATEGORIES, FONTS, isFontId, paletteFor } from '../../src/lib/siteTheme.js'
+import { CATEGORIES, FONTS, fontHref, isFontId, paletteFor } from '../../src/lib/siteTheme.js'
 import { BOOKING_CSS, BOOKING_SCRIPT } from './bookingClient.js'
 
 /** formato devolvido por public.get_public_site(): só o que pode ser exibido ao público */
@@ -113,8 +113,8 @@ em{font-family:Georgia,"Times New Roman",serif;font-style:italic;color:var(--acc
 .hero{position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;min-height:min(78vh,620px);padding:28px 22px;background:var(--soft)}
 @media(min-width:720px){.hero{padding:48px}}
 .hero__img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.hero--cover:before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.05) 25%,rgba(0,0,0,.72))}
-.hero__in{position:relative;max-width:640px}
+.hero--cover:before{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(90deg,rgba(0,0,0,.46) 0%,rgba(0,0,0,.24) 45%,rgba(0,0,0,0) 80%),linear-gradient(180deg,rgba(0,0,0,.14) 0%,rgba(0,0,0,.04) 45%,rgba(0,0,0,.5))}
+.hero__in{position:relative;z-index:2;max-width:640px}
 .hero h1{font-size:clamp(40px,10vw,84px)}
 .hero--cover h1,.hero--cover .hero__lead{color:#fff}
 .hero--cover h1 em{color:#fff}
@@ -194,7 +194,8 @@ footer{padding:18px 0 28px;text-align:center;color:var(--muted);font-size:13px}
 export function renderSitePage(site: PublicSite, opts: { canonical: string }): string {
   const s = site.settings ?? {}
   const { p: pal } = paletteFor(s)
-  const font = FONTS[isFontId(s.font) ? s.font : 'moderna']
+  const fontId = isFontId(s.font) ? s.font : 'moderna'
+  const font = FONTS[fontId]
   const logo = safeLogo(s.logo)
   const cover = safeLogo(s.cover)
   const name = site.name
@@ -324,6 +325,9 @@ export function renderSitePage(site: PublicSite, opts: { canonical: string }): s
 <meta name="robots" content="index,follow,max-image-preview:large">
 <meta name="theme-color" content="${pal.bg}">
 <link rel="canonical" href="${esc(opts.canonical)}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="${fontHref(fontId)}">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="pt_BR">
 <meta property="og:title" content="${esc(title)}">
