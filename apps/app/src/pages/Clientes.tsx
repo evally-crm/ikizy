@@ -93,12 +93,10 @@ function ClientList({
   clients,
   selectedId,
   today,
-  reward,
 }: {
   clients: Client[]
   selectedId?: string
   today: Date
-  reward?: string
 }) {
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<Filter>('todas')
@@ -229,7 +227,6 @@ function ClientList({
       {bulk && (
         <BulkMessageDialog
           clients={clients.filter((c) => picked.has(c.id))}
-          reward={reward}
           onClose={() => setBulk(false)}
         />
       )}
@@ -679,7 +676,7 @@ export default function Clientes() {
         </Card>
       ) : (
         <div className="crm">
-          <ClientList clients={clients} selectedId={selected?.id} today={today} reward={book.loyaltySettings.reward} />
+          <ClientList clients={clients} selectedId={selected?.id} today={today} />
           {detail(false)}
         </div>
       )}
