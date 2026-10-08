@@ -12,6 +12,8 @@ import {
   type Product,
   type Service,
   type SiteConfig,
+  photoUrl,
+  type ShowcaseItem,
 } from '../data/catalog'
 import { formatBRL } from '../lib/format'
 import { resizeToDataUrl } from '../lib/imageResize'
@@ -20,13 +22,15 @@ import { isReservedSlug, SITE_DOMAIN, siteHost } from '../lib/slug'
 import { useMediaQuery } from '../hooks/useMediaQuery'
 import SiteFrame, { DeviceToggle, type Device } from '../components/SiteFrame'
 import OnlineBookingChecklist from '../components/OnlineBookingChecklist'
+import PhotoPick from '../components/PhotoPick'
 import { Button, Card, Em } from '../components/ui'
 
-type Tab = 'pagina' | 'servicos' | 'produtos' | 'previa'
+type Tab = 'pagina' | 'servicos' | 'vitrine' | 'produtos' | 'previa'
 
 const TABS: { id: Tab; label: string; narrowOnly?: boolean }[] = [
   { id: 'pagina', label: 'Página' },
   { id: 'servicos', label: 'Serviços e preços' },
+  { id: 'vitrine', label: 'Produtos à venda' },
   { id: 'produtos', label: 'Produtos e custos' },
   { id: 'previa', label: 'Prévia', narrowOnly: true },
 ]
@@ -118,7 +122,7 @@ export default function MeuSite() {
   const coverInput = useRef<HTMLInputElement>(null)
 
   const active: Tab = isWide && tab === 'previa' ? 'pagina' : tab
-  const { site, services, products } = draft
+  const { site, services, products, showcase } = draft
   const slugReserved = isReservedSlug(site.slug)
 
   const setSite = <K extends keyof SiteConfig>(key: K, value: SiteConfig[K]) =>
@@ -132,10 +136,18 @@ export default function MeuSite() {
       ...d,
       services: [
         ...d.services,
-        { id: newId('s'), name: '', category: 'Unhas', price: 0, duration: 60, monthlyVolume: 10, productId: null, visible: true },
+        { id: newId('s'), name: '', category: 'Unhas', price: 0, duration: 60, monthlyVolume: 10, productId: null, visible: true, photo: '', photoId: null },
       ],
     }))
   const removeService = (id: string) => setDraft((d) => ({ ...d, services: d.services.filter((s) => s.id !== id) }))
+  const patchShowcase = (id: string, patch: Partial<ShowcaseItem>) =>
+    setDraft((d) => ({ ...d, showcase: d.showcase.map((x) => (x.id === id ? { ...x, ...patch } : x)) }))
+  const addShowcase = () =>
+    setDraft((d) => ({
+      ...d,
+      showcase: [...d.showcase, { id: newId('v'), name: '', description: '', price: 0, visible: true, photo: '', photoId: null }],
+    }))
+  const removeShowcase = (id: string) => setDraft((d) => ({ ...d, showcase: d.showcase.filter((x) => x.id !== id) }))
   const addProduct = () =>
     setDraft((d) => ({ ...d, products: [...d.products, { id: newId('p'), name: '', monthlySpend: 0 }] }))
   const removeProduct = (id: string) =>
@@ -366,6 +378,12 @@ export default function MeuSite() {
           return (
             <li key={s.id} className={`row ${s.visible ? '' : 'is-hidden'}`}>
               <div className="row__top">
+                <PhotoPick
+                  src={photoUrl(s)}
+                  label={s.name || 'serviço'}
+                  onPick={(photo) => patchService(s.id, { photo })}
+                  onClear={() => patchService(s.id, { photo: '', photoId: null })}
+                />
                 <span className="input row__name">
                   <input aria-label="Nome do serviço" placeholder="Nome do serviço" value={s.name} maxLength={50} onChange={(e) => patchService(s.id, { name: e.target.value })} />
                 </span>
@@ -778,8 +796,57 @@ export default function MeuSite() {
 
             {active === 'servicos' && servicesEditor}
 
+            {active === 'vitrine' && (
+              <div className="catalog">
+                <p className="catalog__intro">
+                  Produtos que você vende (óleos, cremes, kits). Aparecem na sua página com foto, preço e um botão para a cliente pedir pelo WhatsApp.
+                </p>
+                {showcase.length === 0 && <p className="catalog__empty">Nenhum produto ainda. Comece adicionando o primeiro.</p>}
+                <ul className="rows">
+                  {showcase.map((x) => (
+                    <li key={x.id} className={`row ${x.visible ? '' : 'is-hidden'}`}>
+                      <div className="row__top">
+                        <PhotoPick
+                          src={photoUrl(x)}
+                          label={x.name || 'produto'}
+                          onPick={(photo) => patchShowcase(x.id, { photo })}
+                          onClear={() => patchShowcase(x.id, { photo: '', photoId: null })}
+                        />
+                        <span className="input row__name">
+                          <input aria-label="Nome do produto à venda" placeholder="Nome do produto" value={x.name} maxLength={60} onChange={(e) => patchShowcase(x.id, { name: e.target.value })} />
+                        </span>
+                        <Switch checked={x.visible} onChange={(v) => patchShowcase(x.id, { visible: v })} label="No site" />
+                        <button type="button" className="chevbtn" aria-label={`Remover ${x.name || 'produto'}`} onClick={() => removeShowcase(x.id)}>
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                      <div className="row__grid">
+                        <label className="mini-field">
+                          <span>Preço</span>
+                          <Money label="Preço" value={x.price} onChange={(v) => patchShowcase(x.id, { price: v })} />
+                        </label>
+                        <label className="mini-field mini-field--wide">
+                          <span>Descrição curta</span>
+                          <span className="input">
+                            <input value={x.description} maxLength={120} placeholder="Ex.: hidrata e protege a cutícula" onChange={(e) => patchShowcase(x.id, { description: e.target.value })} />
+                          </span>
+                        </label>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+                <Button variant="ghost" onClick={addShowcase} disabled={showcase.length >= 24} className="catalog__add">
+                  <Plus size={16} aria-hidden="true" /> Novo produto à venda
+                </Button>
+              </div>
+            )}
+
             {active === 'produtos' && (
               <div className="catalog">
+                <p className="catalog__intro">
+                  Aqui ficam seus gastos com material, só para calcular a margem de cada serviço. Isso não aparece no site. Para vender produtos, use a etapa{' '}
+                  <strong>Produtos à venda</strong>.
+                </p>
                 <div className="sumrow">
                   <div>
                     <p className="card__sub">Gasto com produtos / mês</p>

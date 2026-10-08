@@ -23,7 +23,29 @@ export interface Service {
   monthlyVolume: number
   productId: string | null
   visible: boolean
+  /** foto nova escolhida e ainda não publicada (data URL); vazio = nada de novo */
+  photo: string
+  /** foto já salva (id em site_photos); null = sem foto */
+  photoId: string | null
 }
+
+/** produto que o negócio vende, mostrado na página pública (diferente de Product, que é gasto interno) */
+export interface ShowcaseItem {
+  id: string
+  name: string
+  description: string
+  price: number
+  visible: boolean
+  photo: string
+  photoId: string | null
+}
+
+/** endereço de onde as fotos já salvas são servidas (a página pública usa o mesmo caminho) */
+const PHOTO_BASE = 'https://app.ikizy.com'
+
+/** o que mostrar como foto: a nova, se houver, senão a já salva */
+export const photoUrl = (item: { photo: string; photoId: string | null }) =>
+  item.photo || (item.photoId ? `${PHOTO_BASE}/api/photo?id=${item.photoId}` : '')
 
 export interface SiteConfig {
   slug: string
@@ -58,9 +80,15 @@ export interface Studio {
   site: SiteConfig
   services: Service[]
   products: Product[]
+  showcase: ShowcaseItem[]
 }
 
-export const DEFAULT_STUDIO: Studio = {
+type StudioInput = Pick<Studio, 'site' | 'products'> & {
+  services: (Omit<Service, 'photo' | 'photoId'> & Partial<Pick<Service, 'photo' | 'photoId'>>)[]
+  showcase?: ShowcaseItem[]
+}
+
+const DEMO_STUDIO: StudioInput = {
   site: {
     slug: 'studio-maria-beauty',
     salonName: 'Studio Maria Beauty',
@@ -100,6 +128,15 @@ export const DEFAULT_STUDIO: Studio = {
   ],
 }
 
+/** completa o que faltar (rascunhos antigos guardados no navegador não tinham foto nem vitrine) */
+const normalize = (studio: StudioInput): Studio => ({
+  ...studio,
+  services: studio.services.map((sv) => ({ ...sv, photo: sv.photo ?? '', photoId: sv.photoId ?? null })),
+  showcase: studio.showcase ?? [],
+})
+
+export const DEFAULT_STUDIO: Studio = normalize(DEMO_STUDIO)
+
 export interface ServiceMath {
   /** custo de produto por atendimento */
   cost: number
@@ -124,7 +161,7 @@ const STORAGE_KEY = 'ikizy:studio:v1'
 function load(): Studio {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) return { ...DEFAULT_STUDIO, ...JSON.parse(raw) }
+    if (raw) return normalize({ ...DEFAULT_STUDIO, ...JSON.parse(raw) })
   } catch {
     /* sem storage: segue com o padrão */
   }
@@ -141,6 +178,7 @@ const blankStudio = (name: string, slug: string): Studio => ({
   site: { ...DEFAULT_STUDIO.site, slug, salonName: name, tagline: '', about: '', whatsapp: '', instagram: '', hours: '', logo: '', cover: '', address: '' },
   services: [],
   products: [],
+  showcase: [],
 })
 
 interface SettingsRow {
@@ -191,17 +229,24 @@ export function useStudio() {
     if (!live || !neon || !salonId) return
     let cancelled = false
     void (async () => {
-      const [settings, svcs, prods, salonRow] = await Promise.all([
+      const [settings, svcs, prods, salonRow, shop] = await Promise.all([
         neon.from('site_settings').select('*').eq('salon_id', salonId).maybeSingle(),
         neon
           .from('services')
-          .select('id, name, category, price, duration, monthly_volume, product_id, visible')
+          .select('id, name, category, price, duration, monthly_volume, product_id, visible, photo_id')
           .eq('salon_id', salonId)
           .order('created_at'),
         neon.from('products').select('id, name, monthly_spend').eq('salon_id', salonId).order('created_at'),
         neon.from('salons').select('name, slug').eq('id', salonId).maybeSingle(),
+        neon
+          .from('showcase_items')
+          .select('id, name, description, price, photo_id, visible')
+          .eq('salon_id', salonId)
+          .order('position')
+          .order('created_at'),
       ])
       if (cancelled) return
+      // a vitrine pode não existir ainda neste ambiente (migration pendente): o resto do editor continua funcionando
       if (settings.error || svcs.error || prods.error || salonRow.error || !salonRow.data) {
         setError('Não foi possível carregar o seu site. Verifique a conexão e tente de novo.')
         setLoading(false)
@@ -241,7 +286,20 @@ export function useStudio() {
           monthlyVolume: s.monthly_volume as number,
           productId: (s.product_id as string | null) ?? null,
           visible: s.visible as boolean,
+          photo: '',
+          photoId: (s.photo_id as string | null) ?? null,
         })),
+        showcase: shop.error
+          ? []
+          : (shop.data ?? []).map((x) => ({
+              id: x.id as string,
+              name: x.name as string,
+              description: (x.description as string) ?? '',
+              price: Number(x.price),
+              visible: x.visible as boolean,
+              photo: '',
+              photoId: (x.photo_id as string | null) ?? null,
+            })),
       }
       setPublished(studio)
       setDraft(studio)
@@ -301,7 +359,19 @@ export function useStudio() {
         if (r.error) return friendlyPublishError(r.error)
       }
 
-      // 3) serviços
+      // 3) fotos novas: sobem primeiro, para os serviços e a vitrine apontarem para elas
+      const photoOf = new Map<string, string | null>()
+      for (const item of [...draft.services, ...draft.showcase]) {
+        if (item.photo) {
+          const r = await neon.from('site_photos').insert({ salon_id: salonId, data: item.photo }).select('id').single()
+          if (r.error || !r.data) return 'Não foi possível salvar uma das fotos. Tente com uma imagem menor.'
+          photoOf.set(item.id, r.data.id as string)
+        } else {
+          photoOf.set(item.id, item.photoId)
+        }
+      }
+
+      // 4) serviços
       const serviceIds = new Map<string, string>()
       for (const s of draft.services) {
         const fields = {
@@ -312,6 +382,7 @@ export function useStudio() {
           monthly_volume: s.monthlyVolume,
           product_id: s.productId ? (productIds.get(s.productId) ?? null) : null,
           visible: s.visible,
+          photo_id: photoOf.get(s.id) ?? null,
         }
         if (isUuid(s.id)) {
           const r = await neon.from('services').update(fields).eq('id', s.id).eq('salon_id', salonId)
@@ -330,7 +401,42 @@ export function useStudio() {
         if (r.error) return friendlyPublishError(r.error)
       }
 
-      // 4) textos e opções da página; marcar como publicado liga o site público
+      // 5) vitrine de produtos à venda
+      const showcaseIds = new Map<string, string>()
+      let position = 0
+      for (const x of draft.showcase) {
+        const fields = {
+          name: x.name.trim() || 'Produto',
+          description: x.description.trim().slice(0, 120),
+          price: x.price,
+          visible: x.visible,
+          photo_id: photoOf.get(x.id) ?? null,
+          position: position++,
+        }
+        if (isUuid(x.id)) {
+          const r = await neon.from('showcase_items').update(fields).eq('id', x.id).eq('salon_id', salonId)
+          if (r.error) return friendlyPublishError(r.error)
+          showcaseIds.set(x.id, x.id)
+        } else {
+          const r = await neon.from('showcase_items').insert({ ...fields, salon_id: salonId }).select('id').single()
+          if (r.error || !r.data) return friendlyPublishError(r.error ?? { message: '' })
+          showcaseIds.set(x.id, r.data.id as string)
+        }
+      }
+      const keepShowcase = [...showcaseIds.values()]
+      const oldShowcase = published.showcase.map((x) => x.id).filter((id) => !keepShowcase.includes(id))
+      if (oldShowcase.length) {
+        const r = await neon.from('showcase_items').delete().in('id', oldShowcase).eq('salon_id', salonId)
+        if (r.error) return friendlyPublishError(r.error)
+      }
+
+      // fotos que ninguém usa mais (trocadas ou removidas) saem do banco
+      const keepPhotos = [...photoOf.values()].filter((id): id is string => Boolean(id))
+      const clean = neon.from('site_photos').delete().eq('salon_id', salonId)
+      const cleaned = keepPhotos.length ? await clean.not('id', 'in', `(${keepPhotos.join(',')})`) : await clean
+      if (cleaned.error) console.error('limpeza de fotos', cleaned.error)
+
+      // 6) textos e opções da página; marcar como publicado liga o site público
       const st = await neon
         .from('site_settings')
         .upsert({
@@ -368,6 +474,14 @@ export function useStudio() {
           ...s,
           id: serviceIds.get(s.id) ?? s.id,
           productId: s.productId ? (productIds.get(s.productId) ?? null) : null,
+          photo: '',
+          photoId: photoOf.get(s.id) ?? null,
+        })),
+        showcase: draft.showcase.map((x) => ({
+          ...x,
+          id: showcaseIds.get(x.id) ?? x.id,
+          photo: '',
+          photoId: photoOf.get(x.id) ?? null,
         })),
       }
       setDraft(next)

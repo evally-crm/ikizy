@@ -24,11 +24,27 @@ export interface PublicSite {
     show_prices?: boolean
     show_team?: boolean
   }
-  services: { id?: string; name: string; category: string; duration: number; price: number | null }[]
+  services: { id?: string; name: string; category: string; duration: number; price: number | null; photo?: string | null }[]
+  /** produtos à venda; photo = id da foto (página pública) ou um endereço já pronto (prévia no app) */
+  showcase?: { id?: string; name: string; description: string; price: number | null; photo?: string | null }[]
   plans: { name: string; description: string; includes: string[]; is_new: boolean; price: number | null }[]
   team: { name: string; title: string }[]
   /** só vem preenchido com o agendamento online ligado */
   professionals?: { id: string; name: string }[]
+}
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/**
+ * Endereço de uma foto, só nos formatos esperados: id (vira /api/photo?id=), endereço https de /api/photo
+ * (prévia no app) ou data URL de imagem. Qualquer outra coisa é ignorada.
+ */
+export function photoSrc(value: string | null | undefined): string | null {
+  if (typeof value !== 'string' || !value) return null
+  if (UUID.test(value)) return `/api/photo?id=${value.toLowerCase()}`
+  if (/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(value)) return value
+  if (/^https:\/\/[a-z0-9.-]+(:\d+)?\/api\/photo\?id=[0-9a-f-]{36}$/i.test(value)) return value
+  return null
 }
 
 const ESCAPES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }
@@ -159,6 +175,16 @@ em{font-family:Georgia,"Times New Roman",serif;font-style:italic;color:var(--acc
 .info a{color:inherit}
 .contact .hero__cta{margin-top:22px}
 
+.thumb{flex:none;width:52px;height:52px;border-radius:14px;object-fit:cover;background:var(--panel)}
+.shop{display:grid;gap:12px;grid-template-columns:repeat(2,minmax(0,1fr))}
+@media(min-width:720px){.shop{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}}
+.item{display:flex;flex-direction:column;gap:6px;min-width:0;padding:10px 10px 16px;border-radius:24px;background:var(--soft)}
+.item__img{display:block;width:100%;aspect-ratio:1;border-radius:18px;object-fit:cover;background:var(--panel)}
+.item__ph{display:grid;place-items:center;width:100%;aspect-ratio:1;border-radius:18px;background:var(--panel);color:var(--accent);font-size:42px;font-family:var(--display)}
+.item h3{padding:6px 6px 0;font-size:19px}
+.item p{margin:0;padding:0 6px;color:var(--muted);font-size:14px;line-height:1.4}
+.item .price{padding:0 6px;font-size:18px}
+.item .btn{margin:6px 6px 0;min-height:44px;font-size:14px}
 footer{padding:18px 0 28px;text-align:center;color:var(--muted);font-size:13px}
 .float{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));z-index:30;transform:translateX(-50%);width:min(420px,calc(100% - 28px));box-shadow:0 14px 34px -10px rgba(0,0,0,.45)}
 @media(min-width:720px){.float{width:auto;left:auto;right:24px;transform:none}}
@@ -206,7 +232,8 @@ export function renderSitePage(site: PublicSite, opts: { canonical: string }): s
               : link
                 ? `<a class="go" href="${esc(link)}" rel="noopener" aria-label="Agendar ${esc(x.name)} pelo WhatsApp">&rarr;</a>`
                 : ''
-          return `<li><span>${esc(x.name)}<small>${esc(x.duration)} min</small></span>${
+          const thumb = photoSrc(x.photo)
+          return `<li>${thumb ? `<img class="thumb" src="${esc(thumb)}" alt="" width="52" height="52" loading="lazy" decoding="async">` : ''}<span>${esc(x.name)}<small>${esc(x.duration)} min</small></span>${
             showPrices && x.price != null ? `<span class="price">${esc(formatPrice(x.price))}</span>` : ''
           }${go}</li>`
         })
@@ -225,6 +252,19 @@ export function renderSitePage(site: PublicSite, opts: { canonical: string }): s
       }${
         p.includes?.length ? `<ul>${p.includes.map((i) => `<li>${esc(i)}</li>`).join('')}</ul>` : ''
       }${link ? `<a class="btn" href="${esc(link)}" rel="noopener">Quero este plano</a>` : ''}</article>`
+    })
+    .join('')
+
+  const showcase = (site.showcase ?? []).filter((x) => x.name?.trim())
+  const showcaseHtml = showcase
+    .map((x) => {
+      const src = photoSrc(x.photo)
+      const link = whatsappLink(s.whatsapp, `Olá! Tenho interesse no produto "${x.name}" do ${name}.`)
+      return `<article class="item">${
+        src ? `<img class="item__img" src="${esc(src)}" alt="${esc(x.name)}" width="400" height="400" loading="lazy" decoding="async">` : `<span class="item__ph" aria-hidden="true">${esc((x.name.trim()[0] ?? '?').toUpperCase())}</span>`
+      }<h3>${esc(x.name)}</h3>${x.description ? `<p>${esc(x.description)}</p>` : ''}${
+        showPrices && x.price != null ? `<span class="price">${esc(formatPrice(x.price))}</span>` : ''
+      }${link ? `<a class="btn" href="${esc(link)}" rel="noopener">Quero este</a>` : ''}</article>`
     })
     .join('')
 
@@ -294,7 +334,7 @@ export function renderSitePage(site: PublicSite, opts: { canonical: string }): s
 <body>
 <header class="top"><div class="wrap"><div class="bar"><span class="logo">${logo ? `<img src="${logo}" alt="">` : ''}<span>${esc(name)}</span></span><nav aria-label="Seções">${
     groups.length ? '<a href="#servicos">Serviços</a>' : ''
-  }${plans.length ? '<a href="#planos">Planos</a>' : ''}${team.length ? '<a href="#equipe">Equipe</a>' : ''}${
+  }${plans.length ? '<a href="#planos">Planos</a>' : ''}${showcase.length ? '<a href="#produtos">Produtos</a>' : ''}${team.length ? '<a href="#equipe">Equipe</a>' : ''}${
     contactCards ? '<a href="#contato">Contato</a>' : ''
   }</nav>${
     online
@@ -326,6 +366,8 @@ export function renderSitePage(site: PublicSite, opts: { canonical: string }): s
     about ? `<section class="panel about"><p class="eyebrow">Sobre nós</p><p>${esc(about)}</p></section>` : ''
   }${
     groups.length ? `<section id="servicos" class="panel"><h2>Nossos <em>serviços</em></h2><div class="cats">${servicesHtml}</div></section>` : ''
+  }${
+    showcase.length ? `<section id="produtos" class="panel"><h2>Para levar <em>para casa</em></h2><div class="shop">${showcaseHtml}</div></section>` : ''
   }${
     plans.length ? `<section id="planos" class="panel"><h2>Planos por <em>assinatura</em></h2><div class="plans">${plansHtml}</div></section>` : ''
   }${

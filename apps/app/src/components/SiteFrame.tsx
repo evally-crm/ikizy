@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Monitor, Smartphone } from 'lucide-react'
 import { renderSitePage, type PublicSite } from '../../api/_lib/siteHtml.ts'
-import type { Studio } from '../data/catalog'
+import { photoUrl, type Studio } from '../data/catalog'
 import { useAgenda } from '../data/AgendaProvider'
 
 export type Device = 'mobile' | 'desktop'
@@ -32,7 +32,10 @@ function toPublicSite(studio: Studio, team: { name: string; role: string }[]): P
     },
     services: services
       .filter((s) => s.visible && s.name.trim())
-      .map((s) => ({ name: s.name, category: s.category, duration: s.duration, price: site.showPrices ? s.price : null })),
+      .map((s) => ({ name: s.name, category: s.category, duration: s.duration, price: site.showPrices ? s.price : null, photo: photoUrl(s) || null })),
+    showcase: studio.showcase
+      .filter((x) => x.visible && x.name.trim())
+      .map((x) => ({ name: x.name, description: x.description, price: site.showPrices ? x.price : null, photo: photoUrl(x) || null })),
     plans: [],
     team: site.showTeam ? team.map((p) => ({ name: p.name, title: p.role })) : [],
   }

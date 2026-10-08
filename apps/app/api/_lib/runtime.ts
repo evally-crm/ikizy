@@ -133,6 +133,13 @@ export async function fetchPublicSite(slug: string): Promise<PublicSite | null> 
   return rows[0]?.site ?? null
 }
 
+/** foto (data URL) de um negócio publicado; null se não existe ou o site não está publicado */
+export async function fetchPublicPhoto(id: string): Promise<string | null> {
+  const sql = neon(env('DATABASE_URL'))
+  const rows = (await sql`select public.get_public_photo(${id}::uuid) as d`) as { d: string | null }[]
+  return rows[0]?.d ?? null
+}
+
 /** horários livres e reserva do agendamento online (funções do banco, chamadas só pelo servidor) */
 export function createBookingDb(): BookingDb {
   const sql = neon(env('DATABASE_URL'))

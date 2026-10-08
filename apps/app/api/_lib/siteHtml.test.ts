@@ -218,6 +218,51 @@ describe('renderSitePage', () => {
     assert.match(html, /--du:none/)
   })
 
+  const PHOTO = '351b4862-88ae-4ba3-9daa-8e39ef498b04'
+
+  it('vitrine: produtos com foto, preço e botão do WhatsApp; link no menu', () => {
+    const site = base()
+    site.showcase = [
+      { name: 'Óleo de cutícula', description: 'Hidrata e protege', price: 35.5, photo: PHOTO },
+      { name: 'Lixa', description: '', price: 8, photo: null },
+    ]
+    const html = page(site)
+    assert.match(html, /id="produtos"/)
+    assert.match(html, /<a href="#produtos">Produtos<\/a>/)
+    assert.match(html, new RegExp(`<img class="item__img" src="/api/photo\\?id=${PHOTO}" alt="Óleo de cutícula"`))
+    assert.match(html, /R\$\s35,50/)
+    assert.match(html, /Tenho%20interesse%20no%20produto%20%22%C3%93leo%20de%20cut%C3%ADcula%22/)
+    assert.match(html, /class="item__ph"[^>]*>L</)
+  })
+
+  it('sem produtos, a seção e o link somem; sem mostrar preços, o valor some', () => {
+    assert.doesNotMatch(page(base()), /id="produtos"|href="#produtos"/)
+    const site = base({}, { show_prices: false })
+    site.showcase = [{ name: 'Óleo', description: '', price: null, photo: null }]
+    assert.doesNotMatch(page(site), /R\$/)
+  })
+
+  it('foto de serviço aparece como miniatura; fotos só em formatos seguros', () => {
+    const site = base()
+    site.services[0].photo = PHOTO
+    assert.match(page(site), new RegExp(`<img class="thumb" src="/api/photo\\?id=${PHOTO}"`))
+    for (const bad of ['javascript:alert(1)', 'http://evil.example/a.png', 'data:image/svg+xml;base64,AAAA', 'https://evil.example/x.png', '"><script>']) {
+      site.services[0].photo = bad
+      assert.doesNotMatch(page(site), /class="thumb"/, bad)
+    }
+    site.services[0].photo = `https://app.ikizy.com/api/photo?id=${PHOTO}`
+    assert.match(page(site), /class="thumb" src="https:\/\/app\.ikizy\.com\/api\/photo\?id=/)
+  })
+
+  it('texto do produto nunca vira HTML', () => {
+    const evil = '<img src=x onerror=alert(1)>'
+    const site = base()
+    site.showcase = [{ name: evil, description: evil, price: 1, photo: null }]
+    const html = page(site)
+    assert.doesNotMatch(html, /<img src=x/)
+    assert.match(html, /&lt;img src=x onerror=alert\(1\)&gt;/)
+  })
+
   it('página 404 não é indexada', () => {
     assert.match(renderNotFound(), /name="robots" content="noindex"/)
   })
