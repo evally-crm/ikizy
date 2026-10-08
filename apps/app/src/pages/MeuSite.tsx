@@ -1,5 +1,5 @@
 import { useId, useRef, useState, type ChangeEvent, type ReactNode } from 'react'
-import { ChevronDown, ExternalLink, ImagePlus, Plus, Rocket, Trash2, Undo2 } from 'lucide-react'
+import { ArrowLeft, ArrowRight, ChevronDown, ExternalLink, ImagePlus, Plus, Rocket, Trash2, Undo2 } from 'lucide-react'
 import {
   ACCENTS,
   CATEGORIES,
@@ -105,6 +105,7 @@ export default function MeuSite() {
   const [skipWizard, setSkipWizard] = useState(false)
   const [logoError, setLogoError] = useState<string | null>(null)
   const logoInput = useRef<HTMLInputElement>(null)
+  const coverInput = useRef<HTMLInputElement>(null)
 
   const active: Tab = isWide && tab === 'previa' ? 'pagina' : tab
   const { site, services, products } = draft
@@ -135,13 +136,13 @@ export default function MeuSite() {
       services: d.services.map((s) => (s.productId === id ? { ...s, productId: null } : s)),
     }))
 
-  const onLogo = async (e: ChangeEvent<HTMLInputElement>) => {
+  const onImage = async (e: ChangeEvent<HTMLInputElement>, kind: 'logo' | 'cover') => {
     const file = e.target.files?.[0]
     e.target.value = ''
     if (!file) return
     setLogoError(null)
     try {
-      setSite('logo', await resizeToDataUrl(file))
+      setSite(kind, kind === 'logo' ? await resizeToDataUrl(file) : await resizeToDataUrl(file, 1000, 280_000))
     } catch (err) {
       setLogoError(err instanceof Error ? err.message : 'Não foi possível usar essa imagem.')
     }
@@ -175,12 +176,30 @@ export default function MeuSite() {
           <p>{site.logo ? 'Seu logo' : 'Adicione seu logo'}</p>
           <small>PNG, JPG ou WebP</small>
         </div>
-        <input ref={logoInput} type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={(e) => void onLogo(e)} />
+        <input ref={logoInput} type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={(e) => void onImage(e, 'logo')} />
         <Button variant="light" size="sm" onClick={() => logoInput.current?.click()}>
           {site.logo ? 'Trocar' : 'Escolher'}
         </Button>
         {site.logo && (
           <button type="button" className="chevbtn" aria-label="Remover logo" onClick={() => setSite('logo', '')}>
+            <Trash2 size={15} />
+          </button>
+        )}
+      </div>
+      <div className="logofield">
+        <span className="logofield__thumb logofield__thumb--wide" aria-hidden="true">
+          {site.cover ? <img src={site.cover} alt="" /> : <ImagePlus size={22} />}
+        </span>
+        <div className="logofield__text">
+          <p>{site.cover ? 'Foto de capa' : 'Adicione uma foto de capa'}</p>
+          <small>Foto grande do topo do site</small>
+        </div>
+        <input ref={coverInput} type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={(e) => void onImage(e, 'cover')} />
+        <Button variant="light" size="sm" onClick={() => coverInput.current?.click()}>
+          {site.cover ? 'Trocar' : 'Escolher'}
+        </Button>
+        {site.cover && (
+          <button type="button" className="chevbtn" aria-label="Remover foto de capa" onClick={() => setSite('cover', '')}>
             <Trash2 size={15} />
           </button>
         )}
@@ -288,6 +307,13 @@ export default function MeuSite() {
           )}
         </Field>
       </div>
+      <Field label="Endereço do salão" hint="Aparece na página com link para o mapa. Deixe vazio se atende em domicílio.">
+        {(id) => (
+          <span className="input">
+            <input id={id} value={site.address} maxLength={120} autoComplete="street-address" onChange={(e) => setSite('address', e.target.value)} />
+          </span>
+        )}
+      </Field>
       <Field label="Horário de atendimento">
         {(id) => (
           <span className="input">
@@ -467,18 +493,20 @@ export default function MeuSite() {
       )}
 
       <div className="wiz__nav">
-        <Button variant="light" disabled={step === 0 || publishing} onClick={() => goStep(step - 1)}>
-          Voltar
-        </Button>
+        {step > 0 && (
+          <button type="button" className="wiz__back" aria-label="Voltar" disabled={publishing} onClick={() => goStep(step - 1)}>
+            <ArrowLeft size={20} aria-hidden="true" />
+          </button>
+        )}
         {step < last ? (
-          <Button disabled={!stepOk[step]} onClick={() => goStep(step + 1)}>
-            Continuar
-          </Button>
+          <button type="button" className="wiz__next" disabled={!stepOk[step]} onClick={() => goStep(step + 1)}>
+            Continuar <ArrowRight size={18} aria-hidden="true" />
+          </button>
         ) : (
-          <Button disabled={publishing || !stepOk.every(Boolean)} onClick={() => void onPublish()}>
-            <Rocket size={15} aria-hidden="true" />
-            {publishing ? 'Publicando…' : 'Publicar site'}
-          </Button>
+          <button type="button" className="wiz__next" disabled={publishing || !stepOk.every(Boolean)} onClick={() => void onPublish()}>
+            <Rocket size={18} aria-hidden="true" />
+            {publishing ? 'Publicando…' : 'Publicar meu site'}
+          </button>
         )}
       </div>
     </Card>

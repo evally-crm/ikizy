@@ -13,6 +13,8 @@ export interface PublicSite {
     accent?: string
     accent_color?: string | null
     logo?: string | null
+    cover?: string | null
+    address?: string
     show_prices?: boolean
     show_team?: boolean
   }
@@ -53,59 +55,105 @@ export function instagramHandle(raw: string | undefined): string | null {
   return /^[A-Za-z0-9._]{1,30}$/.test(cleaned) ? cleaned : null
 }
 
-/** logo vem do banco como data URL; só entra no HTML se tiver exatamente o formato esperado */
+/** logo e capa vêm do banco como data URL; só entra no HTML se tiver exatamente o formato esperado */
 export function safeLogo(raw: string | null | undefined): string | null {
   return typeof raw === 'string' && /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(raw) ? raw : null
 }
 
 const CSS = `
 *{box-sizing:border-box}html{scroll-behavior:smooth}
-body{margin:0;background:#fff;color:#242424;font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+body{margin:0;background:#efebe5;color:#242424;font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased;padding-bottom:84px}
 a{color:inherit}
-.wrap{max-width:880px;margin:0 auto;padding:0 20px}
-.top{position:sticky;top:0;z-index:5;background:rgba(255,255,255,.94);border-bottom:1px solid #eee}
-.top .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;height:60px}
-.logo{display:inline-flex;align-items:center;gap:10px;font-weight:600;letter-spacing:-.02em;font-size:18px;color:#0e0d0d}
-.logo img{width:36px;height:36px;border-radius:10px;object-fit:cover}
-.top nav{display:flex;gap:18px;font-size:14px;color:#6b6668}
-.top nav a{text-decoration:none}
-.top nav a:hover{color:var(--accent)}
-h1,h2,h3{font-weight:400;letter-spacing:-.03em;line-height:1.1;color:#0e0d0d;margin:0}
+h1,h2,h3{font-weight:400;letter-spacing:-.035em;line-height:1.04;color:#0e0d0d;margin:0}
 em{font-family:Georgia,"Times New Roman",serif;font-style:italic;color:var(--accent)}
-.hero{padding:56px 20px 40px}
-.hero h1{font-size:clamp(36px,8vw,64px);max-width:14ch}
-.hero p{max-width:52ch;margin:18px 0 0;color:#6b6668;font-size:17px}
-.btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 26px;border-radius:999px;background:var(--accent);color:#fff;text-decoration:none;font-weight:500;font-size:15px}
-.btn:hover{filter:brightness(1.1)}
-.btn--ghost{background:transparent;color:var(--accent);border:1px solid var(--accent)}
-.hero .btn{margin-top:26px}
-section.block{padding:36px 20px}
-section.block>h2{font-size:clamp(26px,5vw,38px);margin-bottom:20px}
-.group{margin-bottom:22px}
-.group h3{font-family:Georgia,"Times New Roman",serif;font-style:italic;font-size:22px;color:var(--accent);margin-bottom:6px}
-.group ul{list-style:none;margin:0;padding:0;background:var(--soft);border-radius:20px;padding:6px 20px}
-.group li{display:flex;justify-content:space-between;gap:16px;padding:14px 0;border-bottom:1px solid rgba(0,0,0,.07)}
-.group li:last-child{border-bottom:0}
-.group small{display:block;color:#6b6668;font-size:13px}
+.wrap{max-width:1040px;margin:0 auto;padding:0 10px}
+.panel{background:#fff;border-radius:28px;margin:10px 0;padding:28px 22px}
+@media(min-width:720px){.panel{padding:44px 44px}}
+.eyebrow{margin:0 0 14px;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:#6b6668}
+
+.top{position:sticky;top:0;z-index:20;padding:10px 0 0}
+.top .bar{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:60px;padding:8px 10px 8px 20px;border-radius:999px;background:rgba(255,255,255,.92);backdrop-filter:blur(14px);box-shadow:0 8px 28px -14px rgba(14,13,13,.35)}
+.logo{display:inline-flex;align-items:center;gap:10px;min-width:0;font-weight:600;letter-spacing:-.02em;font-size:18px;color:#0e0d0d}
+.logo span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.logo img{flex:none;width:38px;height:38px;border-radius:12px;object-fit:cover}
+.top nav{display:none;gap:22px;font-size:14px;color:#6b6668}
+@media(min-width:720px){.top nav{display:flex}}
+.top nav a{text-decoration:none}.top nav a:hover{color:var(--accent)}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:50px;padding:0 28px;border-radius:999px;background:var(--accent);color:#fff;text-decoration:none;font-weight:500;font-size:15px;border:1px solid var(--accent)}
+.btn:hover{filter:brightness(1.12)}
+.btn--sm{min-height:42px;padding:0 20px;font-size:14px}
+.btn--light{background:#fff;color:#0e0d0d;border-color:#fff}
+.btn--ghost{background:transparent;color:inherit;border-color:currentColor}
+
+.hero{position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;min-height:min(78vh,620px);padding:28px 22px;background:var(--soft)}
+@media(min-width:720px){.hero{padding:48px}}
+.hero__img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.hero--cover:before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.05) 25%,rgba(0,0,0,.72))}
+.hero__in{position:relative;max-width:640px}
+.hero h1{font-size:clamp(40px,10vw,84px)}
+.hero--cover h1,.hero--cover .hero__lead{color:#fff}
+.hero--cover h1 em{color:#fff}
+.hero__lead{margin:18px 0 0;max-width:46ch;color:#4d484a;font-size:17px}
+.hero__cta{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
+.hero--cover .btn--ghost{color:#fff}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+.chip{display:inline-flex;align-items:center;min-height:34px;padding:0 14px;border-radius:999px;background:rgba(255,255,255,.88);color:#242424;font-size:13px;text-decoration:none}
+.hero:not(.hero--cover) .chip{background:#fff}
+
+.steps{display:grid;gap:12px;margin:0;padding:0;list-style:none;counter-reset:s}
+@media(min-width:720px){.steps{grid-template-columns:repeat(3,1fr);gap:16px}}
+.steps li{counter-increment:s;display:flex;gap:14px;align-items:flex-start;padding:18px;border-radius:22px;background:var(--soft)}
+.steps li:before{content:counter(s);flex:none;display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--accent);color:#fff;font-weight:600}
+.steps strong{display:block;color:#0e0d0d;font-weight:500}.steps small{color:#6b6668;font-size:14px}
+
+.about{display:grid;gap:12px}
+@media(min-width:720px){.about{grid-template-columns:1fr 2fr;gap:40px}}
+.about p{margin:0;font-size:clamp(20px,3vw,28px);line-height:1.35;letter-spacing:-.02em;color:#0e0d0d}
+.about p.eyebrow{margin:0;font-size:13px;line-height:1.5;letter-spacing:.04em;color:#6b6668}
+
+.panel>h2{font-size:clamp(30px,6vw,52px);margin-bottom:26px}
+.cats{display:grid;gap:12px}
+@media(min-width:720px){.cats{grid-template-columns:repeat(2,1fr);gap:16px}}
+.cat{padding:22px;border-radius:24px;background:var(--soft)}
+.cat h3{font-family:Georgia,"Times New Roman",serif;font-style:italic;font-size:26px;color:var(--accent);margin-bottom:6px}
+.cat ul{list-style:none;margin:0;padding:0}
+.cat li{display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid rgba(0,0,0,.08)}
+.cat li:last-child{border-bottom:0}
+.cat li>span:first-child{flex:1;min-width:0}
+.cat small{display:block;color:#6b6668;font-size:13px}
 .price{font-weight:600;color:var(--accent);white-space:nowrap}
+.go{flex:none;display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:var(--accent);color:#fff;text-decoration:none;font-size:18px}
+.go:hover{filter:brightness(1.15)}
+
 .plans{display:grid;gap:14px}
 @media(min-width:720px){.plans{grid-template-columns:repeat(2,1fr)}}
 .plan{position:relative;display:flex;flex-direction:column;gap:10px;padding:24px;border-radius:24px;background:var(--soft)}
-.plan h3{font-size:24px}
+.plan h3{font-size:26px}
 .plan .desc{margin:0;color:#6b6668;font-size:15px}
-.plan .pp{font-size:34px;letter-spacing:-.04em;color:#0e0d0d}.plan .pp small{font-size:14px;color:#6b6668;letter-spacing:0}
+.plan .pp{font-size:36px;letter-spacing:-.04em;color:#0e0d0d}.plan .pp small{font-size:14px;color:#6b6668;letter-spacing:0}
 .plan ul{list-style:none;margin:4px 0 8px;padding:0;display:grid;gap:6px;font-size:15px}
 .plan li:before{content:"";display:inline-block;width:8px;height:8px;margin-right:10px;border-radius:50%;background:var(--accent)}
 .plan .btn{margin-top:auto}
 .tag{align-self:flex-start;padding:3px 12px;border-radius:999px;background:var(--accent);color:#fff;font-size:12px;font-weight:600;letter-spacing:.02em}
-.team{list-style:none;margin:0;padding:0;display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
-.team li{display:flex;align-items:center;gap:12px}
-.avatar{display:grid;place-items:center;width:46px;height:46px;border-radius:50%;background:var(--soft);color:var(--accent);font-weight:600}
+
+.team{list-style:none;margin:0;padding:0;display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}
+.team li{display:flex;align-items:center;gap:14px}
+.avatar{display:grid;place-items:center;width:54px;height:54px;border-radius:50%;background:var(--soft);color:var(--accent);font-weight:600;font-size:20px}
 .team small{display:block;color:#6b6668;font-size:13px}
-footer{margin-top:24px;padding:32px 20px 40px;background:#0e0d0d;color:rgba(255,255,255,.75);font-size:15px}
-footer .wrap{display:grid;gap:6px}
-footer a{color:#fff}
-footer small{margin-top:14px;color:rgba(255,255,255,.5)}
+
+.contact{background:var(--accent);color:#fff}
+.contact h2{color:#fff}.contact h2 em{color:#fff}
+.contact__grid{display:grid;gap:12px;margin-top:26px}
+@media(min-width:720px){.contact__grid{grid-template-columns:repeat(2,1fr)}}
+.info{display:flex;flex-direction:column;gap:2px;padding:18px 20px;border-radius:22px;background:rgba(255,255,255,.14);font-size:15px}
+.info small{color:rgba(255,255,255,.7);font-size:12px;letter-spacing:.04em;text-transform:uppercase}
+.info a{color:#fff}
+.contact .hero__cta{margin-top:22px}
+
+footer{padding:18px 0 28px;text-align:center;color:#6b6668;font-size:13px}
+.float{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));z-index:30;transform:translateX(-50%);width:min(420px,calc(100% - 28px));box-shadow:0 14px 34px -10px rgba(0,0,0,.45)}
+@media(min-width:720px){.float{width:auto;left:auto;right:24px;transform:none}}
 `
 
 /** monta a página pública completa (HTML) do negócio */
@@ -113,6 +161,7 @@ export function renderSitePage(site: PublicSite, opts: { canonical: string }): s
   const s = site.settings ?? {}
   const accent = resolveAccent(s.accent, s.accent_color)
   const logo = safeLogo(s.logo)
+  const cover = safeLogo(s.cover)
   const name = site.name
   const showPrices = s.show_prices !== false
   const services = (site.services ?? []).filter((x) => x.name?.trim())
@@ -124,25 +173,29 @@ export function renderSitePage(site: PublicSite, opts: { canonical: string }): s
   const head = cut > 0 ? tagline.slice(0, cut) : ''
   const tail = cut > 0 ? tagline.slice(cut + 1) : tagline
   const about = (s.about ?? '').trim()
+  const address = (s.address ?? '').trim()
+  const hours = (s.hours ?? '').trim()
 
   const bookLink = whatsappLink(s.whatsapp, `Olá! Gostaria de agendar um horário no ${name}.`)
   const insta = instagramHandle(s.instagram)
+  const mapLink = address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${name} ${address}`)}` : null
 
   const groups = CATEGORIES.map((category) => ({ category, items: services.filter((x) => x.category === category) })).filter(
     (g) => g.items.length > 0,
   )
 
   const servicesHtml = groups
-    .map(
-      (g) => `<div class="group"><h3>${esc(g.category)}</h3><ul>${g.items
-        .map(
-          (x) =>
-            `<li><span>${esc(x.name)}<small>${esc(x.duration)} min</small></span>${
-              showPrices && x.price != null ? `<span class="price">${esc(formatPrice(x.price))}</span>` : ''
-            }</li>`,
-        )
-        .join('')}</ul></div>`,
-    )
+    .map((g) => {
+      const rows = g.items
+        .map((x) => {
+          const link = whatsappLink(s.whatsapp, `Olá! Gostaria de agendar "${x.name}" no ${name}.`)
+          return `<li><span>${esc(x.name)}<small>${esc(x.duration)} min</small></span>${
+            showPrices && x.price != null ? `<span class="price">${esc(formatPrice(x.price))}</span>` : ''
+          }${link ? `<a class="go" href="${esc(link)}" rel="noopener" aria-label="Agendar ${esc(x.name)} pelo WhatsApp">&rarr;</a>` : ''}</li>`
+        })
+        .join('')
+      return `<div class="cat"><h3>${esc(g.category)}</h3><ul>${rows}</ul></div>`
+    })
     .join('')
 
   const plansHtml = plans
@@ -162,6 +215,10 @@ export function renderSitePage(site: PublicSite, opts: { canonical: string }): s
     .map((m) => `<li><span class="avatar" aria-hidden="true">${esc((m.name || '?').trim()[0]?.toUpperCase() ?? '?')}</span><span>${esc(m.name)}${m.title ? `<small>${esc(m.title)}</small>` : ''}</span></li>`)
     .join('')
 
+  const chips = [hours ? `<span class="chip">${esc(hours)}</span>` : '', address ? `<span class="chip">${esc(address)}</span>` : '']
+    .filter(Boolean)
+    .join('')
+
   const description = (about || `${name}: ${tagline}`).slice(0, 160)
   const title = `${name} · ${tagline}`
 
@@ -172,8 +229,18 @@ export function renderSitePage(site: PublicSite, opts: { canonical: string }): s
     description,
     url: opts.canonical,
     ...(s.whatsapp ? { telephone: s.whatsapp } : {}),
+    ...(address ? { address } : {}),
     ...(insta ? { sameAs: [`https://instagram.com/${insta}`] } : {}),
   }).replace(/</g, '\\u003c')
+
+  const contactCards = [
+    s.whatsapp && bookLink ? `<div class="info"><small>WhatsApp</small><a href="${esc(bookLink)}" rel="noopener">${esc(s.whatsapp)}</a></div>` : '',
+    insta ? `<div class="info"><small>Instagram</small><a href="https://instagram.com/${esc(insta)}" rel="noopener">@${esc(insta)}</a></div>` : '',
+    hours ? `<div class="info"><small>Horário</small><span>${esc(hours)}</span></div>` : '',
+    address && mapLink ? `<div class="info"><small>Endereço</small><a href="${esc(mapLink)}" rel="noopener">${esc(address)}</a></div>` : '',
+  ]
+    .filter(Boolean)
+    .join('')
 
   return `<!doctype html>
 <html lang="pt-BR">
@@ -195,23 +262,39 @@ export function renderSitePage(site: PublicSite, opts: { canonical: string }): s
 <style>:root{--accent:${accent.color};--soft:${accent.soft}}${CSS}</style>
 </head>
 <body>
-<header class="top"><div class="wrap"><span class="logo">${logo ? `<img src="${logo}" alt="">` : ''}${esc(name)}</span><nav aria-label="Seções">${
+<header class="top"><div class="wrap"><div class="bar"><span class="logo">${logo ? `<img src="${logo}" alt="">` : ''}<span>${esc(name)}</span></span><nav aria-label="Seções">${
     groups.length ? '<a href="#servicos">Serviços</a>' : ''
-  }${plans.length ? '<a href="#planos">Planos</a>' : ''}${team.length ? '<a href="#equipe">Equipe</a>' : ''}</nav></div></header>
-<main>
-<section class="hero wrap"><h1>${head ? `${esc(head)} ` : ''}<em>${esc(tail)}</em></h1>${about ? `<p>${esc(about)}</p>` : ''}${
-    bookLink ? `<a class="btn" href="${esc(bookLink)}" rel="noopener">Agendar pelo WhatsApp</a>` : ''
-  }</section>${
-    groups.length ? `<section id="servicos" class="block wrap"><h2>Nossos serviços</h2>${servicesHtml}</section>` : ''
+  }${plans.length ? '<a href="#planos">Planos</a>' : ''}${team.length ? '<a href="#equipe">Equipe</a>' : ''}${
+    contactCards ? '<a href="#contato">Contato</a>' : ''
+  }</nav>${bookLink ? `<a class="btn btn--sm" href="${esc(bookLink)}" rel="noopener">Agendar</a>` : ''}</div></div></header>
+<main class="wrap">
+<section class="panel hero${cover ? ' hero--cover' : ''}">${cover ? `<img class="hero__img" src="${cover}" alt="">` : ''}<div class="hero__in"><h1>${head ? `${esc(head)} ` : ''}<em>${esc(tail)}</em></h1>${
+    about && !cover ? `<p class="hero__lead">${esc(about.slice(0, 140))}</p>` : ''
+  }<div class="hero__cta">${bookLink ? `<a class="btn" href="${esc(bookLink)}" rel="noopener">Agendar pelo WhatsApp</a>` : ''}${
+    groups.length ? '<a class="btn btn--ghost" href="#servicos">Ver serviços</a>' : ''
+  }</div>${chips ? `<div class="chips">${chips}</div>` : ''}</div></section>${
+    bookLink
+      ? `<section class="panel"><p class="eyebrow">Agendar é simples</p><ol class="steps"><li><span><strong>Escolha o serviço</strong><small>Veja os valores e a duração abaixo.</small></span></li><li><span><strong>Chame no WhatsApp</strong><small>A mensagem já vai pronta, é só enviar.</small></span></li><li><span><strong>Receba a confirmação</strong><small>Combinamos o melhor dia e horário.</small></span></li></ol></section>`
+      : ''
   }${
-    plans.length ? `<section id="planos" class="block wrap"><h2>Planos por <em>assinatura</em></h2><div class="plans">${plansHtml}</div></section>` : ''
+    about ? `<section class="panel about"><p class="eyebrow">Sobre nós</p><p>${esc(about)}</p></section>` : ''
   }${
-    team.length ? `<section id="equipe" class="block wrap"><h2>Quem cuida de você</h2><ul class="team">${teamHtml}</ul></section>` : ''
+    groups.length ? `<section id="servicos" class="panel"><h2>Nossos <em>serviços</em></h2><div class="cats">${servicesHtml}</div></section>` : ''
+  }${
+    plans.length ? `<section id="planos" class="panel"><h2>Planos por <em>assinatura</em></h2><div class="plans">${plansHtml}</div></section>` : ''
+  }${
+    team.length ? `<section id="equipe" class="panel"><h2>Quem cuida de você</h2><ul class="team">${teamHtml}</ul></section>` : ''
+  }${
+    contactCards || bookLink
+      ? `<section id="contato" class="panel contact"><h2>Vamos <em>agendar?</em></h2><div class="contact__grid">${contactCards}</div>${
+          bookLink ? `<div class="hero__cta"><a class="btn btn--light" href="${esc(bookLink)}" rel="noopener">Chamar no WhatsApp</a></div>` : ''
+        }</section>`
+      : ''
   }
 </main>
-<footer><div class="wrap">${s.hours ? `<span>${esc(s.hours)}</span>` : ''}${
-    s.whatsapp && bookLink ? `<span>WhatsApp: <a href="${esc(bookLink)}" rel="noopener">${esc(s.whatsapp)}</a></span>` : ''
-  }${insta ? `<span>Instagram: <a href="https://instagram.com/${esc(insta)}" rel="noopener">@${esc(insta)}</a></span>` : ''}<small>Página criada com <a href="https://ikizy.com">IKIZY</a></small></div></footer>
+<footer>Página criada com <a href="https://ikizy.com">IKIZY</a></footer>${
+    bookLink ? `<a class="btn float" href="${esc(bookLink)}" rel="noopener">Agendar pelo WhatsApp</a>` : ''
+  }
 </body>
 </html>`
 }

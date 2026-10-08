@@ -34,7 +34,8 @@ export default function SitePreview({ studio }: { studio: Studio }) {
         </span>
       </header>
 
-      <section className="sp__hero">
+      <section className={`sp__hero ${site.cover ? 'sp__hero--cover' : ''}`}>
+        {site.cover && <img className="sp__cover" src={site.cover} alt="" />}
         <p className="sp__eyebrow">Designed for Beauty</p>
         <h3 className="sp__title">
           {head} <em>{tail}</em>
@@ -90,6 +91,7 @@ export default function SitePreview({ studio }: { studio: Studio }) {
         <p>
           <Clock size={13} aria-hidden="true" /> {site.hours}
         </p>
+        {site.address && <p>{site.address}</p>}
         {site.whatsapp && (
           <p>
             <MessageCircle size={13} aria-hidden="true" /> {site.whatsapp}

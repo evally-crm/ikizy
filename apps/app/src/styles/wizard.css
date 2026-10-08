@@ -38,6 +38,16 @@
   font-size: 13px;
   color: var(--ink-500);
 }
+.wiz__top .textlink {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 13px;
+  color: var(--brand-700, var(--brand-900));
+  text-decoration: underline;
+  cursor: pointer;
+}
 .wiz__bars {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -51,8 +61,7 @@
   border-radius: 5px;
   background: var(--gray-200);
 }
-.wiz__bars li.is-done,
-.wiz__bars li.is-now {
+.wiz__bars li.is-done {
   background: var(--brand-900);
 }
 .wiz__bars li.is-now {
@@ -74,38 +83,92 @@
   border-radius: 20px;
   background: var(--bg);
 }
+
+/* botões do guia: voltar redondo e continuar grande, no fim do cartão */
 .wiz__nav {
-  position: sticky;
-  bottom: calc(var(--bottomnav-h, 0px) + 28px + env(safe-area-inset-bottom));
-  z-index: 3;
   display: flex;
-  gap: 8px;
-  margin-top: 14px;
-  padding: 8px;
-  border-radius: var(--radius-pill);
-  background: rgba(255, 255, 255, 0.94);
-  backdrop-filter: blur(16px);
-  box-shadow: 0 12px 34px -12px rgba(14, 13, 13, 0.3), 0 0 0 1px var(--line);
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
 }
-.wiz__nav .btn {
+.wiz__back {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border: 1px solid var(--line-strong, var(--line));
+  border-radius: 50%;
+  background: var(--white);
+  color: var(--ink-900);
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+.wiz__back:hover:not(:disabled) {
+  border-color: var(--ink-900);
+}
+.wiz__next {
+  display: inline-flex;
   flex: 1;
-  min-height: 46px;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 56px;
+  padding: 0 24px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--brand-900);
+  color: var(--white);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s, transform 0.15s;
+}
+.wiz__next:hover:not(:disabled) {
+  background: var(--brand-700, var(--brand-900));
+}
+.wiz__next:active:not(:disabled) {
+  transform: scale(0.99);
+}
+.wiz__next:disabled,
+.wiz__back:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 .bar__publish.is-off {
   display: none !important;
 }
-@media (min-width: 768px) {
-  .wiz__nav {
-    bottom: 16px;
-  }
+
+/* capa na prévia do app */
+.logofield .btn {
+  flex: 1 1 140px;
 }
-.wiz__top .textlink {
-  border: 0;
-  background: none;
-  padding: 0;
-  font: inherit;
-  font-size: 13px;
-  color: var(--brand-700, var(--brand-900));
-  text-decoration: underline;
-  cursor: pointer;
+.logofield .chevbtn {
+  margin-left: auto;
+}
+.sp__hero {
+  position: relative;
+}
+.sp__cover {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  object-fit: cover;
+}
+.sp__hero--cover > :not(.sp__cover) {
+  position: relative;
+  z-index: 1;
+  color: #fff;
+}
+.sp__hero--cover::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.65));
 }
