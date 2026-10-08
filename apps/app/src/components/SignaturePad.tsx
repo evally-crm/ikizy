@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState, type PointerEvent } from 'react'
+import { Eraser } from 'lucide-react'
 
 const W = 560
-const H = 180
+const H = 200
 
 /** campo para assinar com o dedo ou o mouse; devolve PNG em data URL (ou null quando vazio) */
-export function SignaturePad({ onChange }: { onChange: (dataUrl: string | null) => void }) {
+export function SignaturePad({ label, onChange }: { label: string; onChange: (dataUrl: string | null) => void }) {
   const canvas = useRef<HTMLCanvasElement>(null)
   const drawing = useRef(false)
   const [empty, setEmpty] = useState(true)
@@ -60,25 +61,30 @@ export function SignaturePad({ onChange }: { onChange: (dataUrl: string | null) 
 
   return (
     <div className="sigpad">
-      <canvas
-        ref={canvas}
-        width={W}
-        height={H}
-        className="sigpad__canvas"
-        aria-label="Assine aqui com o dedo ou o mouse"
-        role="img"
-        onPointerDown={start}
-        onPointerMove={move}
-        onPointerUp={end}
-        onPointerCancel={end}
-      />
-      <div className="sigpad__foot">
-        <span>{empty ? 'Assine na linha acima' : 'Assinatura da cliente'}</span>
-        {!empty && (
-          <button type="button" className="textlink" onClick={clear}>
-            Limpar
-          </button>
-        )}
+      <span className="sigpad__label">{label}</span>
+      <div className={`sigpad__box ${empty ? '' : 'is-signed'}`}>
+        <canvas
+          ref={canvas}
+          width={W}
+          height={H}
+          className="sigpad__canvas"
+          aria-label="Assine aqui com o dedo ou o mouse"
+          role="img"
+          onPointerDown={start}
+          onPointerMove={move}
+          onPointerUp={end}
+          onPointerCancel={end}
+        />
+        <button type="button" className="sigpad__clear" onClick={clear} disabled={empty}>
+          <Eraser size={15} aria-hidden="true" /> Limpar
+        </button>
+        <span className="sigpad__x" aria-hidden="true">
+          ×
+        </span>
+        <span className="sigpad__line" aria-hidden="true" />
+        <span className="sigpad__hint" aria-hidden="true">
+          Assine aqui com o dedo ou o mouse
+        </span>
       </div>
     </div>
   )
