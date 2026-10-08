@@ -12,23 +12,6 @@ const crafts = [
 
 const ticker = ['Agenda online', 'Clientes que voltam', 'Financeiro descomplicado', 'Site do seu negócio', 'Comissões da equipe', 'Lembretes por WhatsApp', 'Relatórios']
 
-const floaters = [
-  { x: 4, y: 12, r: -8, w: 92, h: 112, tone: 'rose' },
-  { x: 15, y: 54, r: 6, w: 84, h: 84, tone: 'wine', label: 'Unhas em gel' },
-  { x: 8, y: 80, r: -4, w: 70, h: 70, tone: 'blush' },
-  { x: 25, y: 20, r: 10, w: 64, h: 78, tone: 'wine' },
-  { x: 33, y: 6, r: -6, w: 58, h: 58, tone: 'rose', label: '14:30' },
-  { x: 36, y: 82, r: 8, w: 76, h: 56, tone: 'sand' },
-  { x: 62, y: 8, r: 7, w: 70, h: 70, tone: 'sand' },
-  { x: 70, y: 84, r: -9, w: 62, h: 80, tone: 'rose' },
-  { x: 76, y: 18, r: -5, w: 96, h: 74, tone: 'blush', label: 'Confirmado' },
-  { x: 88, y: 6, r: 9, w: 66, h: 66, tone: 'wine' },
-  { x: 86, y: 44, r: -7, w: 90, h: 112, tone: 'rose' },
-  { x: 92, y: 74, r: 6, w: 70, h: 70, tone: 'sand', label: 'Lash design' },
-  { x: 76, y: 60, r: 4, w: 56, h: 56, tone: 'wine' },
-  { x: 22, y: 36, r: -10, w: 52, h: 52, tone: 'blush' },
-]
-
 const pains = [
   { was: 'Cliente esqueceu o horário', title: 'Lembrete automático', text: 'Confirmação e lembrete por WhatsApp antes do horário, para reduzir faltas.' },
   { was: 'Caixa no caderno', title: 'Financeiro em um lugar', text: 'Entradas, saídas e formas de pagamento. O fechamento do mês sai como um recibo.' },
@@ -127,26 +110,40 @@ const faqSchema = {
   </section>
 
   <!-- PARA QUEM -->
-  <section class="screen forwho" aria-labelledby="forwho-title">
-    <div class="forwho__field" aria-hidden="true">
-      {
-        floaters.map((f, i) => (
-          <span
-            class={`float float--${f.tone}${f.y > 28 && f.y < 72 ? ' float--mid' : ''}`}
-            style={`--x:${f.x}%;--y:${f.y}%;--r:${f.r}deg;--w:${f.w}px;--h:${f.h}px;--d:${(i % 5) * -1.4}s`}
-          >
-            {f.label && <b>{f.label}</b>}
-          </span>
-        ))
-      }
-    </div>
-    <div class="forwho__center">
-      <p class="eyebrow">A IKIZY é feita para</p>
-      <h2 id="forwho-title" class="sr-only">Para quem é a IKIZY</h2>
-      <ul class="sr-only">{crafts.map((c) => <li>{c.name}: {c.hint}</li>)}</ul>
-      <div class="ticker" aria-hidden="true">
-        {crafts.map((c, i) => <span style={`--i:${i}`}>{c.name}</span>)}
+  <section class="section screen container forwho" aria-labelledby="forwho-title">
+    <header class="forwho__head">
+      <p class="eyebrow">Para quem é</p>
+      <h2 id="forwho-title" class="forwho__title">A IKIZY é feita <em>para você</em></h2>
+    </header>
+
+    <div class="forwho__stage">
+      <div class="forwho__art" aria-hidden="true">
+        <span class="forwho__back"></span>
+        <div class="forwho__card">
+          <div class="forwho__row">
+            <span class="forwho__time">14:30</span>
+            <span class="forwho__ok">Confirmado</span>
+          </div>
+          <div class="ticker">
+            {crafts.map((c, i) => <span style={`--i:${i}`}>{c.name}</span>)}
+          </div>
+          <p class="forwho__tags">Agenda · Clientes · Caixa</p>
+        </div>
       </div>
+      <ol class="forwho__list">
+        {
+          crafts.map((c, i) => (
+            <li class={`craft craft--${i + 1}`}>
+              <span class="craft__n">[{String(i + 1).padStart(2, '0')}]</span>
+              <strong>{c.name}</strong>
+              <span>{c.hint}</span>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+
+    <div class="forwho__foot">
       <p class="lead">De quem atende sozinha ao salão com equipe: agenda, clientes e caixa no mesmo lugar.</p>
       <a class="btn btn--primary" href={LINKS.signup}>{CTA.main}</a>
     </div>
