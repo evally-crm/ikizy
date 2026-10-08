@@ -1396,3 +1396,37 @@
 .dialog__more button:hover:not(:disabled) {
   color: var(--brand-500);
 }
+
+/* notebook/desktop: primeira linha mais baixa */
+@media (min-width: 1100px) {
+  .ftile--hero {
+    gap: 12px;
+  }
+  .ftile--hero .money--xl {
+    font-size: 46px;
+  }
+  .fbars {
+    height: 76px;
+  }
+  .ftile--profit {
+    gap: 10px;
+  }
+  .ftile--profit .money--lg {
+    font-size: 30px;
+  }
+  .gauge {
+    max-width: 170px;
+    margin-top: -4px;
+  }
+  .gauge__value {
+    font-size: 26px;
+  }
+  .ftile--profit .flegend--row {
+    font-size: 11.5px;
+  }
+}
+@media (min-width: 1100px) and (max-height: 820px) {
+  .fbars {
+    height: 64px;
+  }
+}
