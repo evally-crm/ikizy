@@ -12,32 +12,6 @@ const crafts = [
 
 const ticker = ['Agenda online', 'Clientes que voltam', 'Financeiro descomplicado', 'Site do seu negócio', 'Comissões da equipe', 'Lembretes por WhatsApp', 'Relatórios']
 
-const floaters = [
-  { x: 4, y: 12, r: -8, w: 92, h: 112, tone: 'rose' },
-  { x: 15, y: 54, r: 6, w: 84, h: 84, tone: 'wine', label: 'Unhas em gel' },
-  { x: 8, y: 80, r: -4, w: 70, h: 70, tone: 'blush' },
-  { x: 25, y: 20, r: 10, w: 64, h: 78, tone: 'wine' },
-  { x: 33, y: 6, r: -6, w: 58, h: 58, tone: 'rose', label: '14:30' },
-  { x: 36, y: 82, r: 8, w: 76, h: 56, tone: 'sand' },
-  { x: 62, y: 8, r: 7, w: 70, h: 70, tone: 'sand' },
-  { x: 70, y: 84, r: -9, w: 62, h: 80, tone: 'rose' },
-  { x: 76, y: 18, r: -5, w: 96, h: 74, tone: 'blush', label: 'Confirmado' },
-  { x: 88, y: 6, r: 9, w: 66, h: 66, tone: 'wine' },
-  { x: 86, y: 44, r: -7, w: 90, h: 112, tone: 'rose' },
-  { x: 92, y: 74, r: 6, w: 70, h: 70, tone: 'sand', label: 'Lash design' },
-  { x: 76, y: 60, r: 4, w: 56, h: 56, tone: 'wine' },
-  { x: 22, y: 36, r: -10, w: 52, h: 52, tone: 'blush' },
-]
-
-const chips = [
-  { t: 'Cliente esqueceu o horário', x: 6, y: 14, d: 0, hot: true },
-  { t: 'Caixa no caderno', x: 70, y: 8, d: -2 },
-  { t: 'Planilha desatualizada', x: 80, y: 46, d: -4, hot: true },
-  { t: 'Mensagens perdidas no WhatsApp', x: 4, y: 62, d: -1 },
-  { t: 'Sem saber o lucro do mês', x: 60, y: 82, d: -5 },
-  { t: 'Comissão na calculadora', x: 22, y: 86, d: -3 },
-]
-
 const pains = [
   { was: 'Cliente esqueceu o horário', title: 'Lembrete automático', text: 'Confirmação e lembrete por WhatsApp antes do horário, para reduzir faltas.' },
   { was: 'Caixa no caderno', title: 'Financeiro em um lugar', text: 'Entradas, saídas e formas de pagamento. O fechamento do mês sai como um recibo.' },
@@ -136,26 +110,35 @@ const faqSchema = {
   </section>
 
   <!-- PARA QUEM -->
-  <section class="screen forwho" aria-labelledby="forwho-title">
-    <div class="forwho__field" aria-hidden="true">
-      {
-        floaters.map((f, i) => (
-          <span
-            class={`float float--${f.tone}`}
-            style={`--x:${f.x}%;--y:${f.y}%;--r:${f.r}deg;--w:${f.w}px;--h:${f.h}px;--d:${(i % 5) * -1.4}s`}
-          >
-            {f.label && <b>{f.label}</b>}
-          </span>
-        ))
-      }
-    </div>
-    <div class="forwho__center">
-      <p class="eyebrow">A IKIZY é feita para</p>
-      <h2 id="forwho-title" class="sr-only">Para quem é a IKIZY</h2>
-      <ul class="sr-only">{crafts.map((c) => <li>{c.name}: {c.hint}</li>)}</ul>
-      <div class="ticker" aria-hidden="true">
-        {crafts.map((c, i) => <span style={`--i:${i}`}>{c.name}</span>)}
+  <section class="section screen container forwho" aria-labelledby="forwho-title">
+    <header class="forwho__head">
+      <p class="eyebrow">Para quem é</p>
+      <h2 id="forwho-title" class="forwho__title">A IKIZY é feita <em>para você</em></h2>
+    </header>
+
+    <div class="forwho__stage">
+      <div class="forwho__circle" aria-hidden="true">
+        <span class="forwho__time">Hoje, 14:30</span>
+        <div class="ticker">
+          {crafts.map((c, i) => <span style={`--i:${i}`}>{c.name}</span>)}
+        </div>
       </div>
+      <ol class="forwho__list">
+        {
+          crafts.map((c, i) => (
+            <li class={`craft craft--${i + 1}`}>
+              <div class="craft__top">
+                <strong>{c.name}</strong>
+                <span class="craft__n">{String(i + 1).padStart(2, '0')}</span>
+              </div>
+              <p>{c.hint}</p>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+
+    <div class="forwho__foot">
       <p class="lead">De quem atende sozinha ao salão com equipe: agenda, clientes e caixa no mesmo lugar.</p>
       <a class="btn btn--primary" href={LINKS.signup}>{CTA.main}</a>
     </div>
@@ -163,23 +146,28 @@ const faqSchema = {
 
   <!-- DORES -->
   <section class="section screen container pains" aria-labelledby="pains-title">
-    <div class="pains__head">
-      <div aria-hidden="true">
-        {chips.map((c) => <span class={`chip ${c.hot ? 'chip--hot' : ''}`} style={`--x:${c.x}%;--y:${c.y}%;--d:${c.d}s`}>{c.t}</span>)}
-      </div>
+    <header class="pains__head">
+      <p class="eyebrow">Antes e depois</p>
       <h2 id="pains-title" class="pains__title">Do caderno ao <em>sistema</em></h2>
-    </div>
-    <div class="pains__cards">
+      <p class="lead">O que hoje toma o seu tempo no salão passa a acontecer sozinho.</p>
+    </header>
+    <ol class="pains__list">
       {
-        pains.map((x) => (
-          <article class="pain">
-            <p class="pain__was">{x.was}</p>
-            <h3>{x.title}</h3>
-            <p>{x.text}</p>
-          </article>
+        pains.map((x, i) => (
+          <li class="pain">
+            <span class="pain__n" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+            <div class="pain__body">
+              <p class="pain__was">
+                <span>Antes</span>
+                <s>{x.was}</s>
+              </p>
+              <h3>{x.title}</h3>
+              <p class="pain__text">{x.text}</p>
+            </div>
+          </li>
         ))
       }
-    </div>
+    </ol>
   </section>
 
   <!-- POR QUE NÓS -->

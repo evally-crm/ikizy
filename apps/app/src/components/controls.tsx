@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type RefObject } from 'react'
 import { Check, ChevronDown, Minus, Plus } from 'lucide-react'
+import { formatPhone } from '../lib/format'
 
 /** fecha o que estiver aberto ao clicar fora */
 export function useOutside(ref: RefObject<HTMLElement | null>, onOutside: () => void, active = true) {
@@ -197,7 +198,7 @@ export function ClientField({
                   onClick={() => pick(c.name)}
                 >
                   <span>{c.name}</span>
-                  {c.phone && <small>{c.phone}</small>}
+                  {c.phone && <small>{formatPhone(c.phone)}</small>}
                 </button>
               </li>
             ))}
