@@ -24,7 +24,7 @@ app.ikizy.com (Vercel) ──/api/whatsapp──► Evolution (VPS) ◄──►
    - `EVOLUTION_API_KEY` = a mesma do `.env`
    - `EVOLUTION_WEBHOOK_SECRET` = um segredo novo (`openssl rand -hex 32`)
    - `CRON_SECRET` = o mesmo do `.env`
-6. **Banco do app:** aplicar `neon/migrations/20261022000000_offer_campaigns.sql` (como as demais migrations).
+6. **Banco do app:** a migration `neon/migrations/20261022000000_offer_campaigns.sql` já foi aplicada em produção (08/10).
 
 Sem as variáveis da Evolution na Vercel, a tela de Campanhas mostra "ainda não foi ativado" e nada é enviado.
 
