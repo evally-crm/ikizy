@@ -174,15 +174,81 @@ Regras importantes:
 
 ---
 
-## 8. Estado atual e próximos passos
+## 8. Estado atual
 
-- `main` em produção: tudo até o merge `6673998` (paletas combinadas, guia no UX da criação de conta, tela cheia, vitrine e fotos, agendamento online).
-- `dev` **à frente da `main`** com o commit `f3e5e8a`: setas entre as etapas, serviços agrupados, planos por assinatura (Novidade) e guia sem rolagem. **Falta levar para a `main`.**
-- Salão de teste: slug `salao` (12 serviços, 1 profissional). O site foi zerado e depois publicado pela usuária durante os testes.
+- `main` e `dev` iguais e em produção (merge `2e61050`): setas entre as etapas, serviços agrupados, planos por assinatura (Novidade), guia sem rolagem, paletas combinadas, guia no UX da criação de conta, tela cheia, vitrine e fotos, agendamento online.
+- Salão de teste: slug `salao` (12 serviços, 1 profissional), site publicado pela usuária durante os testes.
 
-Ideias e pendências conversadas:
-1. **Aviso de novo pedido** de agendamento para o salão (hoje só aparece na agenda como pendente).
-2. **Sinal por Pix** no agendamento (o campo de % existe, a cobrança não).
-3. **Fundos prontos para a capa** (texturas/fotos de banco livre) para o site nascer bonito sem o salão enviar foto.
-4. Confirmação automática para a cliente quando o salão confirma.
-5. Fuso horário por salão (hoje fixo em São Paulo).
+---
+
+## 9. Sugestões de melhoria (priorizadas)
+
+Ordem pensada para o que mais faz um salão **contratar e continuar pagando**. Cada item diz o que já existe e o que falta.
+Prioridade: **P1** = próximo a fazer, **P2** = logo depois, **P3** = quando houver tempo.
+
+### 9.1 Agendamento da cliente pelo site (o diferencial principal)
+
+Hoje: a cliente escolhe serviço, profissional, dia e horário livre, informa nome e WhatsApp, e o pedido entra na agenda como **pendente**.
+
+| Prioridade | Melhoria | Por quê / como |
+|---|---|---|
+| P1 | **Aviso de novo pedido para o salão** | Hoje o pedido só aparece na agenda. Mostrar no sininho do app (contagem de pendentes), destacar na Agenda e no Início ("3 pedidos para confirmar"), e opcionalmente e-mail/push. Sem isso o salão perde pedidos. |
+| P1 | **Confirmar/recusar em um toque** | Lista "Pedidos online" com botões Confirmar e Recusar; ao confirmar, abrir o WhatsApp da cliente com mensagem pronta ("Seu horário de X, dia Y às Z, está confirmado"). |
+| P1 | **Confirmação automática (opcional)** | Chave "confirmar sozinho" por salão: pedidos dentro do expediente já entram como confirmados. |
+| P1 | **Link da cliente para ver, remarcar ou cancelar** | Após o pedido, um link único (token) com o status; cancelar libera a vaga; remarcar reaproveita a escolha de horário. Regra de antecedência para cancelar. |
+| P2 | **Sinal por Pix** | O campo "% de sinal" já existe no site. Gerar cobrança Pix (Stripe ou PSP brasileiro) no pedido; a vaga fica reservada por X minutos até o pagamento. Reduz faltas. |
+| P2 | **Lembrete antes do horário** | Mensagem de lembrete (24 h e 2 h antes) com botão de confirmar presença. Via WhatsApp Business API, ou pelo menos e-mail/SMS. Cron na Vercel. |
+| P2 | **Serviço × profissional** | Hoje toda profissional faz todos os serviços. Marcar quem faz o quê; o site só oferece a profissional certa. |
+| P2 | **Intervalo entre atendimentos e bloqueios** | Tempo de limpeza após cada serviço; bloquear horários (almoço extra, folga, férias) sem precisar mudar o expediente. |
+| P2 | **Mais de um serviço no mesmo pedido** | Ex.: mão + pé: soma as durações e procura um horário contínuo. |
+| P3 | **Lista de espera** | Dia cheio: a cliente entra na fila e é avisada se abrir vaga. |
+| P3 | **Fuso horário por salão** | Hoje fixo em America/Sao_Paulo (problema para Acre, Amazonas e Fernando de Noronha). |
+| P3 | **Política de cancelamento e no-show** | Texto exibido no agendamento e cobrança do sinal em caso de falta. |
+
+### 9.2 Site do salão
+
+| Prioridade | Melhoria | Por quê / como |
+|---|---|---|
+| P1 | **Fundos prontos para a capa** | Hoje, sem foto, a capa é um degradê na cor da paleta. Oferecer 6 a 10 fotos/texturas de banco livre por segmento (unhas, cílios, cabelo...) no guia. É o que faz o site nascer bonito, como na GlossGenius. |
+| P1 | **Galeria / portfólio** | Fotos dos trabalhos (antes e depois), em grade. Salões vendem pelo visual. Reaproveita `site_photos`. |
+| P2 | **Depoimentos** | Avaliações das clientes (o salão escolhe quais mostrar). Depois: pedir avaliação automaticamente após o atendimento concluído. |
+| P2 | **SEO local e compartilhamento** | Imagem de compartilhamento (og:image) gerada com a capa e o nome; dados de horário e endereço no JSON-LD; sitemap dos sites publicados. |
+| P2 | **Domínio próprio** | `www.studiomaria.com.br` apontando para o site (Vercel Domains API). Recurso para os planos Studio/Salão. |
+| P3 | **Instagram no site** | Últimas fotos do Instagram ou link em destaque. |
+| P3 | **Perguntas frequentes** | Bloco de FAQ editável (formas de pagamento, estacionamento, atraso). |
+| P3 | **Métricas do site** | Visitas, cliques em "Agendar" e no WhatsApp, pedidos gerados. Mostra ao salão o valor do site. |
+
+### 9.3 Clientes, fidelização e vendas
+
+| Prioridade | Melhoria | Por quê / como |
+|---|---|---|
+| P1 | **Planos por assinatura com cobrança de verdade** | Hoje os planos aparecem no site e a cobrança é por WhatsApp. Próximo passo: assinatura da cliente (cartão recorrente ou Pix mensal), controle de uso ("2 de 2 manutenções no mês") e aviso de vencimento. |
+| P2 | **Reativar clientes sumidas** | O app já sabe quem sumiu. Botão para mandar mensagem pronta pelo WhatsApp ("Faz 45 dias, que tal marcar?"), em lote. |
+| P2 | **Aniversariantes** | Lista do mês com mensagem pronta e cupom. |
+| P2 | **Fidelidade / cashback** | Pontos ou "a cada 10, ganhe 1". |
+| P3 | **Venda de produtos com estoque** | A vitrine existe; somar estoque, baixa na venda e alerta de reposição. |
+| P3 | **Ficha da cliente** | Anamnese/consentimento assinado no celular (campos já existem em `clients`), fotos do atendimento. |
+
+### 9.4 Agenda, equipe e financeiro
+
+| Prioridade | Melhoria | Por quê / como |
+|---|---|---|
+| P2 | **Arrastar para remarcar** na grade da agenda | Mais rápido que abrir o menu. |
+| P2 | **Atendimentos recorrentes** | "Toda quinzena às 10h" (manutenção de unha/cílios). |
+| P2 | **Acesso da profissional** | Cada profissional vê a própria agenda e comissões no celular (papel `professional` já existe no banco). |
+| P2 | **Pagamento na hora (Pix/cartão)** | Registrar e, depois, cobrar pelo app; alimenta o financeiro sem digitar. |
+| P3 | **Relatórios** | Serviços mais vendidos, ticket médio por profissional, horários ociosos, taxa de faltas. |
+| P3 | **Várias unidades** | Plano Salão com mais de um endereço. |
+
+### 9.5 Produto e plataforma
+
+| Prioridade | Melhoria | Por quê / como |
+|---|---|---|
+| P1 | **Checklist de primeiros passos no Início** | "Defina seu horário → cadastre serviços → publique o site → ligue o agendamento". Guia o salão até ter valor no primeiro dia (a GlossGenius faz isso). |
+| P1 | **App instalável (PWA) + notificações push** | Base para avisar novos pedidos e lembretes. |
+| P2 | **Indique e ganhe** | Como o "Give $30, get $30" da GlossGenius: link de indicação, crédito na assinatura das duas. Crescimento barato. |
+| P2 | **Testes de ponta a ponta** | Playwright para o fluxo cadastro → site → agendamento; hoje há só testes das funções do servidor (81). |
+| P2 | **Monitoramento de erros** | Sentry (ou similar) no app e nas funções da Vercel. |
+| P3 | **Branch de banco para desenvolvimento** | Hoje o `localhost` usa o banco de produção. Usar uma branch do Neon para dev/preview e aplicar migrations primeiro nela. |
+| P3 | **LGPD** | Termo de consentimento no agendamento, exportar/apagar dados da cliente. |
+| P3 | **Ferramenta de migrations** | Registrar quais já foram aplicadas (tabela de controle) em vez de aplicar à mão. |
