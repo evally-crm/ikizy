@@ -147,17 +147,33 @@ export default function MeuSite() {
               <span className="mini__val">{siteHost(site.slug)} · ainda não publicado</span>
             </span>
           )}
+          <div className="bar__publish">
+            {dirty && (
+              <Button variant="ghost" size="sm" onClick={discard}>
+                <Undo2 size={15} aria-hidden="true" /> Descartar
+              </Button>
+            )}
+            <Button size="sm" disabled={(!dirty && !justPublished && isLive) || slugReserved || publishing || loading} onClick={() => void onPublish()}>
+              <Rocket size={15} aria-hidden="true" />
+              {publishing ? 'Publicando…' : justPublished ? 'Publicado!' : !isLive ? 'Publicar site' : dirty ? 'Publicar alterações' : 'Tudo publicado'}
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      {(dirty || !isLive) && (
+        <div className="publishbar" role="region" aria-label="Publicar o site">
           {dirty && (
-            <Button variant="ghost" size="sm" onClick={discard}>
+            <Button variant="light" size="sm" onClick={discard}>
               <Undo2 size={15} aria-hidden="true" /> Descartar
             </Button>
           )}
-          <Button size="sm" disabled={(!dirty && !justPublished && isLive) || slugReserved || publishing || loading} onClick={() => void onPublish()}>
+          <Button size="sm" disabled={slugReserved || publishing || loading} onClick={() => void onPublish()}>
             <Rocket size={15} aria-hidden="true" />
-            {publishing ? 'Publicando…' : justPublished ? 'Publicado!' : !isLive ? 'Publicar site' : dirty ? 'Publicar alterações' : 'Tudo publicado'}
+            {publishing ? 'Publicando…' : !isLive ? 'Publicar site' : 'Publicar alterações'}
           </Button>
         </div>
-      </header>
+      )}
 
       {(loadError || publishError) && (
         <p className="field__hint" role="alert">

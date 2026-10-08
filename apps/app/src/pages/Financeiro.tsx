@@ -412,7 +412,7 @@ export default function Financeiro() {
         </p>
       )}
 
-      <section className="kpis" aria-label={`Resumo de ${month.label}`}>
+      <section className="kpis-fin" aria-label={`Resumo de ${month.label}`}>
         <div className="kpi">
           <span className="kpi__label">
             Faturamento bruto{' '}
