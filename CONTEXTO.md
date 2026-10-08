@@ -96,7 +96,8 @@ npm run build
 | `20261015000000_site_theme_font` | tema e fonte (tema depois virou paleta) |
 | `20261016000000_site_palette` | coluna `palette` |
 | `20261017000000_showcase` | `site_photos`, `showcase_items` (produtos à venda), `services.photo_id`, `get_public_photo()` |
-| `20261018000000_palette_combos` | paletas reduzidas às 7 combinações atuais |
+| `20261018000000_palette_combos` | paletas reduzidas às 7 combinações de então |
+| `20261019000000_palette_dark` | paleta escura `preto-branco` aceita no banco |
 
 Regras importantes:
 - Toda tabela tem `salon_id` + RLS. Escrita de catálogo/site só `owner`/`manager`; sem assinatura ativa, escrita bloqueada (políticas restritivas).
@@ -120,11 +121,12 @@ Regras importantes:
 
 ### Personalização (fixa, poucas escolhas, por decisão de produto)
 
-- **Paletas fixas** (`apps/app/src/lib/siteTheme.ts`), só estas 7, cada uma com duas cores:
-  Branco e bege, Rosa bebê, Bege e preto, Azul gelo, Azul-marinho, **Vinho e preto (padrão)**, Creme e pinho (`#fffbda` + `#00371c`).
+- **Paletas fixas** (`apps/app/src/lib/siteTheme.ts`), só estas 8, cada uma com duas cores:
+  Branco e bege, Rosa bebê, Bege e preto, Azul gelo, Azul-marinho, **Vinho e preto (padrão)**, Creme e pinho (`#fffbda` + `#00371c`)
+  e **Preto e branco**, a única escura (fundo preto, texto e botões brancos; `DARK_CSS` em `siteHtml.ts` mantém capa sem foto e contato escuros).
   Em cores claras o destaque usa um tom mais fechado da mesma cor para passar no contraste (há teste que garante 4,5:1).
   **Não** há cor livre: a usuária pediu explicitamente para tirar.
-- **Fontes dos títulos:** Moderna, Elegante, Forte (fontes do sistema, sem carregar nada de fora).
+- **Fontes dos títulos:** Manrope, Forum e Raleway (ids no banco: `moderna`, `elegante`, `forte`), do Google Fonts; a página carrega só a escolhida.
 
 ### Editor (`apps/app/src/pages/MeuSite.tsx`)
 

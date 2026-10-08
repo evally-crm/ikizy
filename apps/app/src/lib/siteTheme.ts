@@ -2,7 +2,7 @@
 
 // ---------------------------------------------------------------- paletas (cores fixas, já combinadas e testadas)
 
-export type PaletteId = 'branco-bege' | 'rosa-branco' | 'bege-preto' | 'gelo-branco' | 'marinho-branco' | 'vinho-preto' | 'creme-pinho'
+export type PaletteId = 'branco-bege' | 'rosa-branco' | 'bege-preto' | 'gelo-branco' | 'marinho-branco' | 'vinho-preto' | 'creme-pinho' | 'preto-branco'
 
 export interface Palette {
   label: string
@@ -30,6 +30,7 @@ export interface Palette {
 /**
  * Só as combinações escolhidas para o produto (duas cores cada). Nas cores claras (bege, rosa bebê, azul gelo),
  * o destaque usa um tom mais fechado da mesma cor para o texto continuar legível.
+ * "Preto e branco" é a única escura: fundo preto, texto e botões brancos.
  */
 export const PALETTES: Record<PaletteId, Palette> = {
   'branco-bege': { label: 'Branco e bege', bg: '#f6f1ea', panel: '#ffffff', ink: '#1f1a14', text: '#2e2720', muted: '#6e6356', line: '#e8dfd3', accent: '#6f5c48', soft: '#efe6da', on: '#ffffff', dark: false },
@@ -39,6 +40,7 @@ export const PALETTES: Record<PaletteId, Palette> = {
   'marinho-branco': { label: 'Azul-marinho', bg: '#f4f6fa', panel: '#ffffff', ink: '#0d1530', text: '#1a2340', muted: '#59627a', line: '#e1e6ef', accent: '#1b2a55', soft: '#e2e7f2', on: '#ffffff', dark: false },
   'vinho-preto': { label: 'Vinho e preto', bg: '#f2eded', panel: '#ffffff', ink: '#0e0d0d', text: '#1f1c1c', muted: '#6b6566', line: '#e6dfdf', accent: '#6e1423', soft: '#f4e1e4', on: '#ffffff', dark: false },
   'creme-pinho': { label: 'Creme e pinho', bg: '#fffbda', panel: '#fffdf0', ink: '#00371c', text: '#10301f', muted: '#4f5f53', line: '#ede7bf', accent: '#00371c', soft: '#f3efc8', on: '#fffbda', dark: false },
+  'preto-branco': { label: 'Preto e branco', bg: '#000000', panel: '#121212', ink: '#ffffff', text: '#f2f2f2', muted: '#a3a3a3', line: '#2a2a2a', accent: '#ffffff', soft: '#1c1c1c', on: '#000000', dark: true },
 }
 
 export const DEFAULT_PALETTE: PaletteId = 'vinho-preto'
