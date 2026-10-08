@@ -279,9 +279,8 @@
   .fgrid {
     grid-template-columns: minmax(340px, 400px) repeat(2, minmax(0, 1fr));
     grid-template-areas:
-      'receipt hero hero'
-      'receipt cta profit'
-      'receipt stats stats'
+      'receipt hero profit'
+      'receipt cta stats'
       'receipt comp comp'
       'receipt pay team'
       'receipt exp exp';
@@ -321,9 +320,8 @@
 @media (min-width: 1100px) {
   .fgrid--solo {
     grid-template-areas:
-      'receipt hero hero'
-      'receipt cta profit'
-      'receipt stats stats'
+      'receipt hero profit'
+      'receipt cta stats'
       'receipt comp comp'
       'receipt pay exp';
   }
@@ -419,6 +417,7 @@
 }
 .ftile--hero {
   overflow: hidden;
+  gap: 12px;
   background:
     radial-gradient(80% 120% at 100% 0%, rgba(191, 12, 34, 0.35), transparent 60%),
     var(--ink-900);
@@ -444,6 +443,7 @@
 }
 .fhero__body {
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: 16px;
 }
@@ -462,34 +462,58 @@
   text-decoration: underline;
   text-underline-offset: 3px;
 }
-.fbars {
+.fweeks {
+  display: flex;
+  flex: 1;
+  gap: 8px;
+  min-height: 84px;
+}
+.fweeks__col {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.fweeks__track {
   display: flex;
   align-items: flex-end;
-  gap: 3px;
-  height: 56px;
-}
-.fbars__bar {
+  justify-content: center;
   flex: 1;
-  min-width: 0;
-  height: 4px;
-  border-radius: 99px;
-  background: rgba(255, 255, 255, 0.3);
+  width: 100%;
 }
-.fbars__bar.is-future {
+.fweeks__bar {
+  width: 100%;
+  max-width: 40px;
+  height: 6px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.28);
+}
+.fweeks__bar.is-future {
   background: rgba(255, 255, 255, 0.08);
 }
-.fbars__bar.is-best {
+.fweeks__bar.is-best {
   background: var(--brand-500);
 }
-.fbars__bar.is-today {
+.fweeks__bar.is-current {
   background: var(--white);
 }
-@media (min-width: 900px) {
+.fweeks__label {
+  font-size: 10.5px;
+  color: rgba(255, 255, 255, 0.45);
+  white-space: nowrap;
+}
+
+@media (min-width: 900px) and (max-width: 1099px), (min-width: 1440px) {
   .fhero__body {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
-    align-items: end;
+    align-items: stretch;
     gap: 28px;
+  }
+  .fhero__body .fhero__main {
+    align-self: end;
   }
 }
 
@@ -739,7 +763,7 @@
   }
 }
 
-@media (min-width: 1440px) {
+@media (min-width: 1100px) {
   .ftile--stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1322,21 +1346,11 @@
   .ftile--hero {
     gap: 12px;
   }
-  .ftile--hero .money--xl {
-    font-size: 44px;
-  }
   .ftile--profit {
     gap: 10px;
   }
   .ftile--profit .money--lg {
     font-size: 30px;
-  }
-  .gauge {
-    max-width: 170px;
-    margin-top: -4px;
-  }
-  .gauge__value {
-    font-size: 26px;
   }
   .ftile--profit .flegend--row {
     font-size: 11.5px;

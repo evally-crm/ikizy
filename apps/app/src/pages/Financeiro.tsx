@@ -321,21 +321,38 @@ function ExpenseDialog({
   )
 }
 
-/** barras do faturamento diário (uma por dia do mês) */
-function DailyBars({ month }: { month: MonthClosing }) {
-  const values = month.daily.map((v) => v ?? 0)
-  const max = Math.max(...values, 1)
-  const best = values.indexOf(Math.max(...values))
-  const today = month.isCurrent ? month.elapsedDays - 1 : -1
+/** faturamento do mês agrupado por semana (1–7, 8–14, 15–21, 22–28, 29–fim) */
+function weeksOf(month: MonthClosing) {
+  const weeks: { label: string; total: number; future: boolean; current: boolean }[] = []
+  for (let start = 0; start < month.daily.length; start += 7) {
+    const days = month.daily.slice(start, start + 7)
+    const today = month.isCurrent ? month.elapsedDays - 1 : -1
+    weeks.push({
+      label: `Sem ${weeks.length + 1}`,
+      total: days.reduce<number>((t, v) => t + (v ?? 0), 0),
+      future: days.every((v) => v === null),
+      current: today >= start && today < start + 7,
+    })
+  }
+  return weeks
+}
+
+function WeeklyBars({ month }: { month: MonthClosing }) {
+  const weeks = weeksOf(month)
+  const max = Math.max(...weeks.map((w) => w.total), 1)
+  const best = weeks.reduce((b, w, i) => (w.total > weeks[b].total ? i : b), 0)
   return (
-    <div className="fbars" role="img" aria-label={`Faturamento por dia em ${month.label}`}>
-      {month.daily.map((v, i) => (
-        <span
-          key={i}
-          className={`fbars__bar${v === null ? ' is-future' : ''}${i === best && v ? ' is-best' : ''}${i === today ? ' is-today' : ''}`}
-          style={{ height: v ? `${Math.max((v / max) * 100, 10)}%` : undefined }}
-          title={v === null ? undefined : `Dia ${i + 1}: ${formatBRL(v)}`}
-        />
+    <div className="fweeks" role="img" aria-label={`Faturamento por semana em ${month.label}`}>
+      {weeks.map((w, i) => (
+        <div key={w.label} className="fweeks__col" title={`${w.label}: ${formatBRL(w.total)}`}>
+          <div className="fweeks__track">
+            <span
+              className={`fweeks__bar${w.future ? ' is-future' : ''}${i === best && w.total ? ' is-best' : ''}${w.current ? ' is-current' : ''}`}
+              style={{ height: w.total ? `${Math.max((w.total / max) * 100, 12)}%` : undefined }}
+            />
+          </div>
+          <span className="fweeks__label">{w.label}</span>
+        </div>
       ))}
     </div>
   )
@@ -438,9 +455,6 @@ export default function Financeiro() {
   ].filter((c) => c.value > 0 || c.cls === 'is-net')
   // card de comissões só faz sentido com equipe (ou se já houve comissão)
   const showTeam = professionals.length > 1 || month.commissionsTotal > 0
-  const worked = month.daily.filter((v): v is number => v !== null && v > 0)
-  const perDay = worked.length ? month.gross / worked.length : 0
-  const bestIdx = month.daily.reduce<number>((best, v, i) => ((v ?? 0) > (month.daily[best] ?? 0) ? i : best), 0)
   const paymentsTotal = month.payments.reduce((a, p) => a + p.total, 0)
   const maxPayment = Math.max(...month.payments.map((p) => p.total), 1)
   const summary = `Fechamento de ${month.label} - ${salonName}\nFaturamento: ${formatBRL(month.gross)}\nLucro líquido: ${formatBRL(month.net)}\nAtendimentos: ${month.appointments}`
@@ -531,10 +545,10 @@ export default function Financeiro() {
           </div>
           <div className="fhero__body">
             <div className="fhero__main">
-              <Money value={month.gross} size="xl" />
+              <Money value={month.gross} size="lg" />
               {month.gross > 0 ? (
                 <p className="fhero__line">
-                  Média de {formatBRL(Math.round(perDay)).replace(',00', '')} por dia · melhor dia {String(bestIdx + 1).padStart(2, '0')}
+                  Média de {formatBRL(Math.round(month.gross / weeksOf(month).filter((w) => !w.future).length)).replace(',00', '')} por semana
                 </p>
               ) : (
                 <p className="fhero__line">
@@ -545,7 +559,7 @@ export default function Financeiro() {
                 </p>
               )}
             </div>
-            <DailyBars month={month} />
+            <WeeklyBars month={month} />
           </div>
         </section>
 
