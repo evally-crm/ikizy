@@ -442,134 +442,54 @@
   background: rgba(255, 138, 152, 0.16);
   color: #ff8a98;
 }
-.fhero__go {
-  display: grid;
-  flex: none;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--white);
-  color: var(--ink-900);
-  transition: transform 0.15s;
-}
-.fhero__go:hover {
-  transform: rotate(45deg);
+.fhero__body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 .fhero__main {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-}
-.fhero__chips {
-  display: flex;
-  flex-wrap: wrap;
   gap: 6px;
-  margin: 0;
+  min-width: 0;
 }
-.fhero__chips > div {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 8px 14px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(6px);
+.fhero__line {
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.55);
 }
-.fhero__chips dt {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.5);
-}
-.fhero__chips dd {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 500;
-  white-space: nowrap;
-}
-@media (min-width: 900px) {
-  .fhero__main {
-    flex-direction: row;
-    align-items: flex-end;
-    justify-content: space-between;
-  }
-  .fhero__chips {
-    justify-content: flex-end;
-  }
-}
-
-.fhero__chart {
-  position: relative;
-  margin-top: auto;
+.fhero__link {
+  color: var(--white);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 .fbars {
   display: flex;
-  align-items: stretch;
-  gap: 3px;
-  height: 120px;
-}
-.fbars__col {
-  position: relative;
-  display: flex;
   align-items: flex-end;
+  gap: 3px;
+  height: 56px;
+}
+.fbars__bar {
   flex: 1;
   min-width: 0;
-  overflow: hidden;
+  height: 4px;
   border-radius: 99px;
-  background: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0 3px, transparent 3px 6px);
+  background: rgba(255, 255, 255, 0.3);
 }
-.fbars__col.is-future {
-  background: rgba(255, 255, 255, 0.03);
+.fbars__bar.is-future {
+  background: rgba(255, 255, 255, 0.08);
 }
-.fbars__fill {
-  width: 100%;
-  border-radius: 99px;
-  background: linear-gradient(to top, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.5));
+.fbars__bar.is-best {
+  background: var(--brand-500);
 }
-.fbars__col.is-best .fbars__fill {
-  background: linear-gradient(to top, var(--brand-700), var(--brand-500));
-}
-.fbars__col.is-today {
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
-}
-.fbars__col.is-today .fbars__fill {
+.fbars__bar.is-today {
   background: var(--white);
 }
-.fhero__chart.is-empty .fbars__col.is-today {
-  box-shadow: none;
-}
-.fhero__chart.is-empty .fbars {
-  opacity: 0.7;
-  mask-image: linear-gradient(to top, #000 10%, transparent 95%);
-}
-.fhero__empty {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 0 12px;
-  text-align: center;
-}
-.fhero__empty p {
-  max-width: 300px;
-  font-size: 13px;
-  line-height: 1.45;
-  color: rgba(255, 255, 255, 0.75);
-}
-.fhero__foot {
-  display: flex;
-  justify-content: space-between;
-  margin-top: -4px;
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.4);
-}
-@media (min-width: 640px) {
-  .fbars {
-    gap: 4px;
-    height: 140px;
+@media (min-width: 900px) {
+  .fhero__body {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: end;
+    gap: 28px;
   }
 }
 
@@ -1403,10 +1323,7 @@
     gap: 12px;
   }
   .ftile--hero .money--xl {
-    font-size: 46px;
-  }
-  .fbars {
-    height: 76px;
+    font-size: 44px;
   }
   .ftile--profit {
     gap: 10px;
@@ -1423,10 +1340,5 @@
   }
   .ftile--profit .flegend--row {
     font-size: 11.5px;
-  }
-}
-@media (min-width: 1100px) and (max-height: 820px) {
-  .fbars {
-    height: 64px;
   }
 }

@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { ArrowDownRight, ArrowUpRight, CalendarDays, Download, Lock, Plus, Send, Trash2, X } from 'lucide-react'
+import { ArrowDownRight, ArrowUpRight, Download, Lock, Plus, Send, Trash2, X } from 'lucide-react'
 import { useAuth } from '../auth/AuthProvider'
 import { type MonthClosing } from '../data/finance'
 import { CARD_FEE_PCT, useFinance, type Expense } from '../data/useFinance'
@@ -321,7 +321,7 @@ function ExpenseDialog({
   )
 }
 
-/** barras do faturamento diário (uma por dia do mês, com trilho listrado) */
+/** barras do faturamento diário (uma por dia do mês) */
 function DailyBars({ month }: { month: MonthClosing }) {
   const values = month.daily.map((v) => v ?? 0)
   const max = Math.max(...values, 1)
@@ -329,14 +329,14 @@ function DailyBars({ month }: { month: MonthClosing }) {
   const today = month.isCurrent ? month.elapsedDays - 1 : -1
   return (
     <div className="fbars" role="img" aria-label={`Faturamento por dia em ${month.label}`}>
-      {month.daily.map((v, i) => {
-        const cls = ['fbars__col', v === null && 'is-future', i === best && v ? 'is-best' : '', i === today && 'is-today'].filter(Boolean).join(' ')
-        return (
-          <span key={i} className={cls} title={v === null ? undefined : `Dia ${i + 1}: ${formatBRL(v)}`}>
-            {v ? <span className="fbars__fill" style={{ height: `${Math.max((v / max) * 100, 8)}%` }} /> : null}
-          </span>
-        )
-      })}
+      {month.daily.map((v, i) => (
+        <span
+          key={i}
+          className={`fbars__bar${v === null ? ' is-future' : ''}${i === best && v ? ' is-best' : ''}${i === today ? ' is-today' : ''}`}
+          style={{ height: v ? `${Math.max((v / max) * 100, 10)}%` : undefined }}
+          title={v === null ? undefined : `Dia ${i + 1}: ${formatBRL(v)}`}
+        />
+      ))}
     </div>
   )
 }
@@ -439,10 +439,8 @@ export default function Financeiro() {
   // card de comissões só faz sentido com equipe (ou se já houve comissão)
   const showTeam = professionals.length > 1 || month.commissionsTotal > 0
   const worked = month.daily.filter((v): v is number => v !== null && v > 0)
-  const todayValue = month.isCurrent ? (month.daily[month.elapsedDays - 1] ?? 0) : null
   const perDay = worked.length ? month.gross / worked.length : 0
   const bestIdx = month.daily.reduce<number>((best, v, i) => ((v ?? 0) > (month.daily[best] ?? 0) ? i : best), 0)
-  const bestValue = month.daily[bestIdx] ?? 0
   const paymentsTotal = month.payments.reduce((a, p) => a + p.total, 0)
   const maxPayment = Math.max(...month.payments.map((p) => p.total), 1)
   const summary = `Fechamento de ${month.label} - ${salonName}\nFaturamento: ${formatBRL(month.gross)}\nLucro líquido: ${formatBRL(month.net)}\nAtendimentos: ${month.appointments}`
@@ -514,7 +512,7 @@ export default function Financeiro() {
       )}
 
       <div className={`fgrid${showTeam ? '' : ' fgrid--solo'}`}>
-        {/* faturamento: destaque escuro */}
+        {/* faturamento: destaque escuro, enxuto */}
         <section className="ftile ftile--dark ftile--hero" aria-label={`Faturamento de ${month.label}`}>
           <div className="ftile__head">
             <div>
@@ -523,54 +521,31 @@ export default function Financeiro() {
                 {cap(month.label)} {format(month.date, 'yyyy')} · {closedAt ? 'fechado' : month.isCurrent ? 'mês em aberto' : 'aguardando fechamento'}
               </p>
             </div>
-            {growth !== null && !month.isCurrent ? (
+            {growth !== null && !month.isCurrent && (
               <span className={`trend ${growth >= 0 ? 'trend--up' : 'trend--down'}`}>
                 {growth >= 0 ? <ArrowUpRight size={14} aria-hidden="true" /> : <ArrowDownRight size={14} aria-hidden="true" />}
                 {growth >= 0 ? '+' : ''}
                 {growth}% vs {prev?.label}
               </span>
-            ) : (
-              <Link to={dash('/agenda')} className="fhero__go" aria-label="Abrir agenda">
-                <ArrowUpRight size={18} aria-hidden="true" />
-              </Link>
             )}
           </div>
-
-          <div className="fhero__main">
-            <Money value={month.gross} size="xl" />
-            <dl className="fhero__chips">
-              {todayValue !== null && (
-                <div>
-                  <dt>Hoje</dt>
-                  <dd>{formatBRL(todayValue).replace(',00', '')}</dd>
-                </div>
+          <div className="fhero__body">
+            <div className="fhero__main">
+              <Money value={month.gross} size="xl" />
+              {month.gross > 0 ? (
+                <p className="fhero__line">
+                  Média de {formatBRL(Math.round(perDay)).replace(',00', '')} por dia · melhor dia {String(bestIdx + 1).padStart(2, '0')}
+                </p>
+              ) : (
+                <p className="fhero__line">
+                  Entra aqui conforme você conclui atendimentos.{' '}
+                  <Link to={dash('/agenda')} className="fhero__link">
+                    Abrir agenda
+                  </Link>
+                </p>
               )}
-              <div>
-                <dt>Média por dia</dt>
-                <dd>{perDay ? formatBRL(Math.round(perDay)).replace(',00', '') : '—'}</dd>
-              </div>
-              <div>
-                <dt>Melhor dia</dt>
-                <dd>{bestValue ? `${String(bestIdx + 1).padStart(2, '0')} · ${formatBRL(bestValue).replace(',00', '')}` : '—'}</dd>
-              </div>
-            </dl>
-          </div>
-
-          <div className={`fhero__chart${month.gross === 0 ? ' is-empty' : ''}`}>
+            </div>
             <DailyBars month={month} />
-            {month.gross === 0 && (
-              <div className="fhero__empty">
-                <p>Seu faturamento aparece aqui, dia a dia, conforme você conclui atendimentos.</p>
-                <Link to={dash('/agenda')} className="btn btn--light btn--sm">
-                  <CalendarDays size={15} aria-hidden="true" /> Abrir agenda
-                </Link>
-              </div>
-            )}
-          </div>
-          <div className="fhero__foot" aria-hidden="true">
-            <span>dia 1</span>
-            <span>dia {Math.ceil(month.daysInMonth / 2)}</span>
-            <span>dia {month.daysInMonth}</span>
           </div>
         </section>
 
