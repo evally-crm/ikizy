@@ -421,18 +421,101 @@
   font-size: 14px;
 }
 
+/* mobile/tablet: as colunas não existem, tudo segue a pilha da página */
+.agendapage__side,
+.agendapage__main {
+  display: contents;
+}
+
+/* desktop: calendário e atendimentos do dia à esquerda, agenda ocupando o resto */
 @media (min-width: 1100px) {
   .agendapage {
     display: grid;
-    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    grid-template-columns: minmax(300px, 340px) minmax(0, 1fr);
     align-items: stretch;
+    gap: 16px;
+    height: var(--fit-h);
+    min-height: 600px;
+  }
+  .agendapage__side,
+  .agendapage__main {
+    display: flex;
+    flex-direction: column;
     gap: 14px;
+    min-height: 0;
   }
-  .agendapage > :not(.calcard):not(.evcard) {
-    grid-column: 1 / -1;
+  .agendapage__side > .calcard {
+    flex: none;
+    padding: 16px 16px 12px;
   }
-  .agendapage > .evcard {
-    contain: size;
-    min-height: 400px;
+  .agendapage__side .calcard__month {
+    font-size: 19px;
+  }
+  .agendapage__side .calcard__nav button {
+    width: 32px;
+    height: 32px;
+  }
+  .agendapage__side .calcard__nav .calcard__today {
+    height: 32px;
+    min-height: 32px;
+    padding: 0 12px;
+    font-size: 12px;
+  }
+  .agendapage__side .monthgrid {
+    gap: 0;
+  }
+  .agendapage__side .monthgrid__num {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    font-size: 13px;
+  }
+  .agendapage__side .monthgrid__day {
+    gap: 1px;
+    padding: 1px 0;
+  }
+  .agendapage__side .monthgrid__day:hover {
+    background: transparent;
+  }
+  .agendapage__side .monthgrid__day:hover:not(.is-selected) .monthgrid__num {
+    background: var(--bg);
+  }
+  .agendapage__side .arc__dot {
+    width: 4px;
+    height: 4px;
+  }
+  .agendapage__side > .evcard {
+    flex: 1;
+    min-height: 0;
+    padding: 16px;
+  }
+  .agendapage__side .evcard__title {
+    font-size: 19px;
+  }
+  .agendapage__side .ev__time {
+    min-width: 46px;
+    padding-right: 12px;
+  }
+  .agendapage__side .ev__time strong {
+    font-size: 16px;
+  }
+  .agendapage__main > .agenda {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .agendapage__main .agenda__head {
+    flex: none;
+  }
+  .agenda__scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+  }
+  .agendapage__main > .agenda__empty,
+  .agendapage__main > .card {
+    align-self: flex-start;
+    width: 100%;
   }
 }

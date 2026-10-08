@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { addDays, addMonths, endOfMonth, format, getDay, isSameDay, startOfMonth } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -328,6 +328,17 @@ export default function Agenda() {
   const showNow = isToday && nowMinutes >= START_HOUR * 60 && nowMinutes < END_HOUR * 60
   const gridHeight = hours.length * HOUR_H
 
+  // no desktop a grade rola por dentro: abre perto do horário atual (ou do primeiro atendimento)
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const firstStart = dayAppointments.reduce((m, a) => Math.min(m, a.start), Infinity)
+  const anchor = isToday ? nowMinutes : firstStart
+  const hasAnchor = Number.isFinite(anchor)
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el || !hasAnchor) return
+    el.scrollTop = Math.max(0, toY(anchor) - HOUR_H)
+  }, [today, hasAnchor, isDesktop]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const notify = useCallback((message: string) => setToast(message), [])
   useEffect(() => {
     if (!toast) return
@@ -418,150 +429,156 @@ export default function Agenda() {
 
   return (
     <div className="page agendapage">
-      <CalendarCard
-        side={isDesktop}
-        date={date}
-        now={now}
-        view={view}
-        counts={countByDay}
-        summary={
-          loading
-            ? 'Carregando…'
-            : dayAppointments.length === 0
-              ? 'Nenhum atendimento neste dia'
-              : `${dayAppointments.length} ${dayAppointments.length === 1 ? 'atendimento' : 'atendimentos'} em ${format(date, "d 'de' MMMM", { locale: ptBR })}`
-        }
-        canCreate={professionals.length > 0}
-        onView={setView}
-        onDate={setDate}
-        onNew={newNow}
-      />
-
-      {isDesktop && (
-        <DayList
+      <div className="agendapage__side">
+        <CalendarCard
+          side={isDesktop}
           date={date}
-          items={dayAppointments}
-          professionals={professionals}
-          loading={loading}
+          now={now}
+          view={view}
+          counts={countByDay}
+          summary={
+            loading
+              ? 'Carregando…'
+              : dayAppointments.length === 0
+                ? 'Nenhum atendimento neste dia'
+                : `${dayAppointments.length} ${dayAppointments.length === 1 ? 'atendimento' : 'atendimentos'} em ${format(date, "d 'de' MMMM", { locale: ptBR })}`
+          }
           canCreate={professionals.length > 0}
-          onOpen={(id) => setDialog({ id, reschedule: false })}
-          onMenu={appointmentMenu}
+          onView={setView}
+          onDate={setDate}
           onNew={newNow}
         />
-      )}
 
-      {error && (
-        <p className="dialog__error" role="alert">
-          {error}{' '}
-          <button type="button" className="textlink" onClick={reload}>
-            Tentar de novo
-          </button>
-        </p>
-      )}
+        {isDesktop && (
+          <DayList
+            date={date}
+            items={dayAppointments}
+            professionals={professionals}
+            loading={loading}
+            canCreate={professionals.length > 0}
+            onOpen={(id) => setDialog({ id, reschedule: false })}
+            onMenu={appointmentMenu}
+            onNew={newNow}
+          />
+        )}
+      </div>
 
-      {!loading && professionals.length === 0 && !error ? (
-        <FirstProfessional />
-      ) : (
-        <>
-          <div className="chips" role="group" aria-label="Filtrar por profissional">
-            {!isMobile && (
-              <button type="button" className="chip" aria-pressed={activePro === 'all'} onClick={() => setProFilter('all')}>
-                Todas
-              </button>
-            )}
-            {professionals.map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                className="chip"
-                aria-pressed={activePro === p.id}
-                onClick={() => setProFilter(p.id)}
-              >
-                {p.name}
-              </button>
-            ))}
-            <button type="button" className="chip chip--ghost" onClick={() => setEditingHours(true)}>
-              <Clock size={14} aria-hidden="true" /> Horário de atendimento
+      <div className="agendapage__main">
+        {error && (
+          <p className="dialog__error" role="alert">
+            {error}{' '}
+            <button type="button" className="textlink" onClick={reload}>
+              Tentar de novo
             </button>
-          </div>
+          </p>
+        )}
 
-          <div className="agenda">
-            <div className="agenda__head" style={{ gridTemplateColumns: `52px repeat(${visiblePros.length}, minmax(0, 1fr))` }}>
-              <span />
-              {visiblePros.map((p) => (
-                <div key={p.id} className="agenda__pro">
-                  <Avatar name={p.name} size="sm" />
-                  <div className="agenda__pro-text">
-                    <p className="agenda__pro-name">{p.name}</p>
-                    <p className="agenda__pro-role">{p.role}</p>
-                  </div>
-                </div>
+        {!loading && professionals.length === 0 && !error ? (
+          <FirstProfessional />
+        ) : (
+          <>
+            <div className="chips" role="group" aria-label="Filtrar por profissional">
+              {!isMobile && (
+                <button type="button" className="chip" aria-pressed={activePro === 'all'} onClick={() => setProFilter('all')}>
+                  Todas
+                </button>
+              )}
+              {professionals.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  className="chip"
+                  aria-pressed={activePro === p.id}
+                  onClick={() => setProFilter(p.id)}
+                >
+                  {p.name}
+                </button>
               ))}
+              <button type="button" className="chip chip--ghost" onClick={() => setEditingHours(true)}>
+                <Clock size={14} aria-hidden="true" /> Horário de atendimento
+              </button>
             </div>
 
-            <div
-              className="agenda__body"
-              style={{ height: gridHeight, gridTemplateColumns: `52px repeat(${visiblePros.length}, minmax(0, 1fr))` }}
-            >
-              <div className="agenda__hours" aria-hidden="true">
-                {hours.map((h) => (
-                  <span key={h} className="agenda__hour" style={{ top: (h - START_HOUR) * HOUR_H }}>
-                    {String(h).padStart(2, '0')}:00
-                  </span>
+            <div className="agenda">
+              <div className="agenda__head" style={{ gridTemplateColumns: `52px repeat(${visiblePros.length}, minmax(0, 1fr))` }}>
+                <span />
+                {visiblePros.map((p) => (
+                  <div key={p.id} className="agenda__pro">
+                    <Avatar name={p.name} size="sm" />
+                    <div className="agenda__pro-text">
+                      <p className="agenda__pro-name">{p.name}</p>
+                      <p className="agenda__pro-role">{p.role}</p>
+                    </div>
+                  </div>
                 ))}
               </div>
 
-              {visiblePros.map((p) => (
-                <div key={p.id} className="agenda__col agenda__col--click" onClick={(e) => openSlot(e, p.id)} onContextMenu={(e) => slotMenu(e, p.id)}>
-                  {hours.map((h) => (
-                    <div key={h} className="agenda__line" style={{ top: (h - START_HOUR) * HOUR_H }} />
-                  ))}
-                  {closedRanges(workingHours[p.id], date.getDay()).map(([from, to]) => (
-                    <div
-                      key={from}
-                      className="agenda__closed"
-                      style={{ top: toY(from), height: ((to - from) / 60) * HOUR_H }}
-                      title="Fora do horário de atendimento"
-                    />
-                  ))}
-                  {dayAppointments
-                    .filter((a) => a.professionalId === p.id)
-                    .map((a) => (
-                      <button
-                        key={a.id}
-                        type="button"
-                        className={`appt appt--${a.status}`}
-                        style={{ top: toY(a.start) + 2, height: (a.duration / 60) * HOUR_H - 4 }}
-                        onClick={() => setDialog({ id: a.id, reschedule: false })}
-                        onContextMenu={(e) => appointmentMenu(e, a)}
-                      >
-                        <span className="appt__time">
-                          {formatTime(a.start)} – {formatTime(a.start + a.duration)}
-                        </span>
-                        <span className="appt__client">{a.client}</span>
-                        <span className="appt__service">{a.service}</span>
-                      </button>
+              <div className="agenda__scroll" ref={scrollRef}>
+                <div
+                  className="agenda__body"
+                  style={{ height: gridHeight, gridTemplateColumns: `52px repeat(${visiblePros.length}, minmax(0, 1fr))` }}
+                >
+                  <div className="agenda__hours" aria-hidden="true">
+                    {hours.map((h) => (
+                      <span key={h} className="agenda__hour" style={{ top: (h - START_HOUR) * HOUR_H }}>
+                        {String(h).padStart(2, '0')}:00
+                      </span>
                     ))}
-                </div>
-              ))}
+                  </div>
 
-              {showNow && (
-                <div className="agenda__now" style={{ top: toY(nowMinutes) }} aria-hidden="true">
-                  <span className="agenda__now-dot" />
+                  {visiblePros.map((p) => (
+                    <div key={p.id} className="agenda__col agenda__col--click" onClick={(e) => openSlot(e, p.id)} onContextMenu={(e) => slotMenu(e, p.id)}>
+                      {hours.map((h) => (
+                        <div key={h} className="agenda__line" style={{ top: (h - START_HOUR) * HOUR_H }} />
+                      ))}
+                      {closedRanges(workingHours[p.id], date.getDay()).map(([from, to]) => (
+                        <div
+                          key={from}
+                          className="agenda__closed"
+                          style={{ top: toY(from), height: ((to - from) / 60) * HOUR_H }}
+                          title="Fora do horário de atendimento"
+                        />
+                      ))}
+                      {dayAppointments
+                        .filter((a) => a.professionalId === p.id)
+                        .map((a) => (
+                          <button
+                            key={a.id}
+                            type="button"
+                            className={`appt appt--${a.status}`}
+                            style={{ top: toY(a.start) + 2, height: (a.duration / 60) * HOUR_H - 4 }}
+                            onClick={() => setDialog({ id: a.id, reschedule: false })}
+                            onContextMenu={(e) => appointmentMenu(e, a)}
+                          >
+                            <span className="appt__time">
+                              {formatTime(a.start)} – {formatTime(a.start + a.duration)}
+                            </span>
+                            <span className="appt__client">{a.client}</span>
+                            <span className="appt__service">{a.service}</span>
+                          </button>
+                        ))}
+                    </div>
+                  ))}
+
+                  {showNow && (
+                    <div className="agenda__now" style={{ top: toY(nowMinutes) }} aria-hidden="true">
+                      <span className="agenda__now-dot" />
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
-          </div>
 
-          <ul className="legend" aria-label="Legenda de status">
-            <li><span className="legend__dot legend__dot--confirmado" />Confirmado</li>
-            <li><span className="legend__dot legend__dot--pendente" />Aguardando</li>
-            <li><span className="legend__dot legend__dot--atendimento" />Em atendimento</li>
-            <li><span className="legend__dot legend__dot--concluido" />Concluído</li>
-            <li><span className="legend__dot legend__dot--faltou" />Faltou</li>
-          </ul>
-        </>
-      )}
+            <ul className="legend" aria-label="Legenda de status">
+              <li><span className="legend__dot legend__dot--confirmado" />Confirmado</li>
+              <li><span className="legend__dot legend__dot--pendente" />Aguardando</li>
+              <li><span className="legend__dot legend__dot--atendimento" />Em atendimento</li>
+              <li><span className="legend__dot legend__dot--concluido" />Concluído</li>
+              <li><span className="legend__dot legend__dot--faltou" />Faltou</li>
+            </ul>
+          </>
+        )}
+      </div>
 
       {selected && dialog && (
         <AppointmentDialog
