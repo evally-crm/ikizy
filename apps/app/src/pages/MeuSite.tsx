@@ -109,13 +109,7 @@ export default function MeuSite() {
   const [publishError, setPublishError] = useState<string | null>(null)
   const [step, setStep] = useState(0)
   const [wizardOn, setWizardOn] = useState<boolean | null>(null)
-  const [fullPref, setFullPref] = useState(() => {
-    try {
-      return localStorage.getItem('ikizy:site:full') !== '0'
-    } catch {
-      return true
-    }
-  })
+  const [fullPref, setFullPref] = useState(true)
   const [device, setDevice] = useState<Device>(isWide ? 'desktop' : 'mobile')
   const [logoError, setLogoError] = useState<string | null>(null)
   const logoInput = useRef<HTMLInputElement>(null)
@@ -494,16 +488,9 @@ export default function MeuSite() {
   // guia de criação: abre sozinho para quem ainda não publicou; ?guia=1 abre de novo
   const forced = new URLSearchParams(window.location.search).has('guia')
   const wizard = !loading && !loadError && (wizardOn ?? (!isLive || forced))
-  // tela cheia: só em telas largas; a escolha fica guardada
+  // tela cheia: padrão em telas largas; o X minimiza só nesta visita
   const full = fullPref && isWide
-  const setFull = (on: boolean) => {
-    setFullPref(on)
-    try {
-      localStorage.setItem('ikizy:site:full', on ? '1' : '0')
-    } catch {
-      /* sem storage: vale só nesta visita */
-    }
-  }
+  const setFull = setFullPref
   useEffect(() => {
     if (!full) return
     const prev = document.body.style.overflow
@@ -772,7 +759,7 @@ export default function MeuSite() {
                   <OnlineBookingChecklist whatsapp={site.whatsapp} online={site.onlineBooking} />
                 </details>
 
-                <Section title="Aparência" hint="Paleta e fonte." open>
+                <Section title="Aparência" hint="Paleta e fonte.">
                   {fieldsLook}
                 </Section>
 
@@ -780,7 +767,7 @@ export default function MeuSite() {
                   {fieldsIdentity}
                 </Section>
 
-                <Section title="Textos" hint="O que a cliente lê primeiro." open>
+                <Section title="Textos" hint="O que a cliente lê primeiro.">
                   {fieldsText}
                 </Section>
 
