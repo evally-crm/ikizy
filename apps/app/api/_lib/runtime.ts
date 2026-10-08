@@ -2,6 +2,7 @@ import { neon } from '@neondatabase/serverless'
 import { createRemoteJWKSet, jwtVerify } from 'jose'
 import Stripe from 'stripe'
 import { HttpError, type BillingDb, type Membership, type SubscriptionRow } from './billing.js'
+import type { BookingDb, BookingResult, Slot } from './booking.js'
 import type { PublicSite } from './siteHtml.js'
 
 /** lê uma variável de ambiente obrigatória (configurada na Vercel, nunca no código) */
@@ -130,6 +131,25 @@ export async function fetchPublicSite(slug: string): Promise<PublicSite | null> 
   const sql = neon(env('DATABASE_URL'))
   const rows = (await sql`select public.get_public_site(${slug}) as site`) as { site: PublicSite | null }[]
   return rows[0]?.site ?? null
+}
+
+/** horários livres e reserva do agendamento online (funções do banco, chamadas só pelo servidor) */
+export function createBookingDb(): BookingDb {
+  const sql = neon(env('DATABASE_URL'))
+  return {
+    async slots(q) {
+      const rows = (await sql`
+        select public.get_available_slots(${q.slug}, ${q.service}::uuid, ${q.date}::date, ${q.professional}::uuid) as s`) as { s: Slot[] }[]
+      return rows[0]?.s ?? []
+    },
+    async book(i) {
+      const rows = (await sql`
+        select public.book_appointment(${i.slug}, ${i.service}::uuid, ${i.professional}::uuid, ${i.date}::date, ${i.minute}, ${i.name}, ${i.phone}) as r`) as {
+        r: BookingResult
+      }[]
+      return rows[0].r
+    },
+  }
 }
 
 // ---------------------------------------------------------------- respostas HTTP
