@@ -10,6 +10,7 @@ import {
   Cake,
   CalendarCheck,
   CalendarPlus,
+  Check,
   FileSignature,
   Heart,
   Pencil,
@@ -45,6 +46,7 @@ import {
 import { answeredCount } from '../lib/anamnesis'
 import { CLIENT_KINDS, type MessageKind } from '../lib/messages'
 import { MessageDialog } from '../components/MessageDialog'
+import { BulkMessageDialog } from '../components/BulkMessageDialog'
 import { useSalonInfo } from '../hooks/useSalonInfo'
 import { formatBRL } from '../lib/format'
 import { dash } from '../lib/routes'
@@ -90,13 +92,18 @@ function ClientList({
   clients,
   selectedId,
   today,
+  reward,
 }: {
   clients: Client[]
   selectedId?: string
   today: Date
+  reward?: string
 }) {
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<Filter>('todas')
+  // bolinhas para marcar várias clientes e mandar a mesma mensagem
+  const [picked, setPicked] = useState<Set<string>>(new Set())
+  const [bulk, setBulk] = useState(false)
 
   const visible = useMemo(() => {
     const q = normalize(query.trim())
@@ -134,9 +141,42 @@ function ClientList({
         ))}
       </div>
 
-      <p className="crm__count">
-        {visible.length} {visible.length === 1 ? 'cliente' : 'clientes'}
-      </p>
+      {picked.size > 0 ? (
+        <div className="crm__pickbar">
+          <span>
+            {picked.size} {picked.size === 1 ? 'selecionada' : 'selecionadas'}
+          </span>
+          <button type="button" className="textlink" onClick={() => setPicked(new Set())}>
+            Limpar
+          </button>
+          <Button size="sm" onClick={() => setBulk(true)}>
+            <MessageCircle size={14} aria-hidden="true" /> Enviar mensagem
+          </Button>
+        </div>
+      ) : (
+        <p className="crm__count">
+          {visible.length} {visible.length === 1 ? 'contato' : 'contatos'} · marque a bolinha para enviar para várias
+        </p>
+      )}
+      {visible.length > 0 && (
+        <button
+          type="button"
+          className="textlink crm__pickall"
+          onClick={() =>
+            setPicked((p) => {
+              const all = visible.every((c) => p.has(c.id))
+              const nextSet = new Set(p)
+              for (const c of visible) {
+                if (all) nextSet.delete(c.id)
+                else nextSet.add(c.id)
+              }
+              return nextSet
+            })
+          }
+        >
+          {visible.every((c) => picked.has(c.id)) ? 'Desmarcar todas' : `Selecionar todas (${visible.length})`}
+        </button>
+      )}
 
       {visible.length === 0 ? (
         <p className="crm__empty">Nenhuma cliente encontrada.</p>
@@ -144,8 +184,26 @@ function ClientList({
         <ul className="clist">
           {visible.map((c) => {
             const days = daysSince(c.lastVisit, today)
+            const on = picked.has(c.id)
             return (
-              <li key={c.id}>
+              <li key={c.id} className="clist__row">
+                <button
+                  type="button"
+                  className={`pick ${on ? 'is-on' : ''}`}
+                  role="checkbox"
+                  aria-checked={on}
+                  aria-label={`Selecionar ${c.name}`}
+                  onClick={() =>
+                    setPicked((p) => {
+                      const nextSet = new Set(p)
+                      if (on) nextSet.delete(c.id)
+                      else nextSet.add(c.id)
+                      return nextSet
+                    })
+                  }
+                >
+                  {on && <Check size={14} aria-hidden="true" />}
+                </button>
                 <Link
                   to={dash(`/clientes/${c.id}`)}
                   className={`clist__item ${c.id === selectedId ? 'is-active' : ''}`}
@@ -154,6 +212,7 @@ function ClientList({
                   <Avatar name={c.name} soft={c.id !== selectedId} />
                   <span className="clist__body">
                     <span className="clist__name">{c.name}</span>
+                    <span className="clist__phone">{c.phone || 'Sem WhatsApp'}</span>
                     <span className="clist__meta">
                       {c.visits === 0 ? 'Ainda sem visitas' : `${lastVisitLabel(days)} · ${c.visits} ${c.visits === 1 ? 'visita' : 'visitas'}`}
                     </span>
@@ -165,6 +224,13 @@ function ClientList({
             )
           })}
         </ul>
+      )}
+      {bulk && (
+        <BulkMessageDialog
+          clients={clients.filter((c) => picked.has(c.id))}
+          reward={reward}
+          onClose={() => setBulk(false)}
+        />
       )}
     </Card>
   )
@@ -580,7 +646,7 @@ export default function Clientes() {
     <div className="page page--fit">
       <header className="bar">
         <h1 className="bar__title">
-          Sua <Em>carteira</Em>
+          Seus <Em>contatos</Em>
         </h1>
         <div className="bar__side">
         <dl className="minis">
@@ -630,7 +696,7 @@ export default function Clientes() {
         </Card>
       ) : (
         <div className="crm">
-          <ClientList clients={clients} selectedId={selected?.id} today={today} />
+          <ClientList clients={clients} selectedId={selected?.id} today={today} reward={book.loyaltySettings.reward} />
           {detail(false)}
         </div>
       )}

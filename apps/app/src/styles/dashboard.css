@@ -2062,3 +2062,73 @@ button.textlink:disabled {
   background: var(--success-soft);
   color: var(--success);
 }
+
+/* seleção de várias clientes (bolinhas) e envio em sequência */
+.crm__pickbar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.crm__pickbar .btn {
+  margin-left: auto;
+}
+.crm__pickall {
+  flex: none;
+  align-self: flex-start;
+  font-size: 12px;
+}
+.clist__row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.clist__row .clist__item {
+  flex: 1;
+  min-width: 0;
+}
+.pick {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin-left: 4px;
+  padding: 0;
+  border: 2px solid var(--gray-300);
+  border-radius: 50%;
+  background: var(--white);
+  color: var(--white);
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+.pick:hover {
+  border-color: var(--brand-500);
+}
+.pick.is-on {
+  border-color: var(--brand-500);
+  background: var(--brand-500);
+}
+.clist__phone {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.bulk__list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 46vh;
+  overflow-y: auto;
+}
+.bulk__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  border-radius: 16px;
+}
+.bulk__item.is-sent {
+  opacity: 0.6;
+}
