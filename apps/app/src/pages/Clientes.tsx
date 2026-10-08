@@ -32,9 +32,9 @@ import { useClientBook, useClientNotes } from '../data/useClientBook'
 import { useAuth } from '../auth/AuthProvider'
 import { ClientDialog } from '../components/ClientDialog'
 import {
-  AnamnesisCard,
+  AnamnesisDialog,
+  AnamnesisSummary,
   CareCard,
-  ConsentCard,
   HistoryCard,
   LoyaltyCard,
   LoyaltySettingsDialog,
@@ -203,6 +203,7 @@ function ClientDetail({
 }) {
   const navigate = useNavigate()
   const [tab, setTab] = useState<Tab>('resumo')
+  const [fileOpen, setFileOpen] = useState(false)
   const notes = useClientNotes(client.id)
   const { professionals } = book
   const proName = (id: string) => professionals.find((p) => p.id === id)?.name ?? ''
@@ -224,6 +225,7 @@ function ClientDetail({
   if (shownId !== client.id) {
     setShownId(client.id)
     setTab('resumo')
+    setFileOpen(false)
   }
 
   const info = [
@@ -422,7 +424,7 @@ function ClientDetail({
                   </h3>
                   <p className="card__sub">Anamnese e termo de consentimento antes do próximo atendimento, direto no celular.</p>
                 </div>
-                <Button size="sm" onClick={() => setTab('ficha')}>
+                <Button size="sm" onClick={() => setFileOpen(true)}>
                   Preencher ficha
                 </Button>
               </Card>
@@ -458,9 +460,18 @@ function ClientDetail({
         {tab === 'ficha' && (
           <>
             <PersonalCard client={client} professionals={professionals} onEdit={onEdit} />
-            <AnamnesisCard key={`a-${client.id}`} client={client} onSave={(a) => book.saveAnamnesis(client.id, a)} />
-            <ConsentCard key={`c-${client.id}`} client={client} salonName={salonName} onSign={(sig) => book.signAnamnesis(client.id, sig)} />
+            <AnamnesisSummary client={client} onOpen={() => setFileOpen(true)} />
           </>
+        )}
+
+        {fileOpen && (
+          <AnamnesisDialog
+            client={client}
+            salonName={salonName}
+            onSave={(a) => book.saveAnamnesis(client.id, a)}
+            onSign={(sig) => book.signAnamnesis(client.id, sig)}
+            onClose={() => setFileOpen(false)}
+          />
         )}
 
         {tab === 'historico' && <HistoryCard appointments={client.appointments} proName={proName} />}

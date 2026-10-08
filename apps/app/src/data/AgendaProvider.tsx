@@ -56,7 +56,8 @@ interface AgendaState {
   reload: () => void
   create: (input: NewAppointment) => Promise<string | null>
   update: (id: string, patch: AppointmentPatch) => Promise<string | null>
-  addProfessional: (name: string, title: string) => Promise<string | null>
+  /** userId liga a profissional à conta de quem atende (no Solo, a própria dona) */
+  addProfessional: (name: string, title: string, userId?: string) => Promise<string | null>
 }
 
 const AgendaContext = createContext<AgendaState | null>(null)
@@ -369,13 +370,13 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
   )
 
   const addProfessional = useCallback(
-    async (name: string, title: string) => {
+    async (name: string, title: string, userId?: string) => {
       const clean = name.trim()
       if (clean.length < 2) return 'Informe o nome da profissional.'
       if (live && neon && salonId) {
         const { data, error: err } = await neon
           .from('professionals')
-          .insert({ salon_id: salonId, name: clean, title: title.trim() })
+          .insert({ salon_id: salonId, name: clean, title: title.trim(), ...(userId ? { user_id: userId } : {}) })
           .select('id, name, title')
           .single()
         if (err || !data) return friendly(err ?? { message: '' })

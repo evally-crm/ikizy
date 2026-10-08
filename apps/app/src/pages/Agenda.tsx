@@ -4,6 +4,8 @@ import { addDays, addMonths, endOfMonth, format, getDay, isSameDay, startOfMonth
 import { ptBR } from 'date-fns/locale'
 import { CalendarPlus, ChevronLeft, ChevronRight, Clock, Plus, RotateCcw } from 'lucide-react'
 import { findConflict, useAgenda } from '../data/AgendaProvider'
+import { useAuth } from '../auth/AuthProvider'
+import { useSubscription } from '../billing/SubscriptionProvider'
 import { END_HOUR, START_HOUR, closedRanges, dayKey } from '../lib/agendaTime'
 import { formatBRL, formatTime } from '../lib/format'
 import { useMediaQuery } from '../hooks/useMediaQuery'
@@ -28,6 +30,44 @@ const STATUS_NAME: Record<AppointmentStatus, string> = {
   faltou: 'falta',
 }
 
+/** no Solo quem atende é a própria dona: a agenda já nasce com ela, sem perguntar nada */
+function SoloProfessional() {
+  const { addProfessional } = useAgenda()
+  const { displayName, session } = useAuth()
+  const [error, setError] = useState<string | null>(null)
+  const started = useRef(false)
+
+  const create = useCallback(async () => {
+    setError(null)
+    setError(await addProfessional(displayName, '', session?.user.id))
+  }, [addProfessional, displayName, session])
+
+  useEffect(() => {
+    if (started.current) return
+    started.current = true
+    void create()
+  }, [create])
+
+  return (
+    <Card className="agenda__empty">
+      {error ? (
+        <>
+          <h2 className="card__title">Não deu para preparar sua agenda</h2>
+          <p className="dialog__error" role="alert">
+            {error}
+          </p>
+          <Button onClick={() => void create()}>Tentar de novo</Button>
+        </>
+      ) : (
+        <p className="card__sub" role="status">
+          Preparando sua agenda…
+        </p>
+      )}
+    </Card>
+  )
+}
+
+/** planos com equipe: a agenda é organizada por profissional, então a primeira é cadastrada aqui */
 function FirstProfessional() {
   const { addProfessional } = useAgenda()
   const [name, setName] = useState('')
@@ -292,6 +332,7 @@ export default function Agenda() {
   const isDesktop = useMediaQuery('(min-width: 1100px)')
   const { professionals, appointments, workingHours, loading, error, focus, reload, update } = useAgenda()
   const [params, setParams] = useSearchParams()
+  const { sub, loading: subLoading } = useSubscription()
   const [editingHours, setEditingHours] = useState(false)
   const [date, setDate] = useState(() => new Date())
   const [proFilter, setProFilter] = useState<string>('all')
@@ -481,7 +522,7 @@ export default function Agenda() {
         )}
 
         {!loading && professionals.length === 0 && !error ? (
-          <FirstProfessional />
+          subLoading ? null : sub && sub.plan !== 'solo' ? <FirstProfessional /> : <SoloProfessional />
         ) : (
           <>
             <div className="chips" role="group" aria-label="Filtrar por profissional">

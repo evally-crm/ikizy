@@ -441,221 +441,219 @@ export function PersonalCard({
   )
 }
 
-/* ------------------------------------------------------------------ anamnese */
+/* ------------------------------------------------------------------ ficha de anamnese (resumo + modal) */
 
-export function AnamnesisCard({ client, onSave }: { client: Client; onSave: (a: Anamnesis) => Result }) {
+/** resumo da ficha na aba "Ficha"; o preenchimento e a assinatura ficam no modal */
+export function AnamnesisSummary({ client, onOpen }: { client: Client; onOpen: () => void }) {
+  const answered = answeredCount(client.anamnesis)
+  const attention = attentionPoints(client.anamnesis)
+  const signed = Boolean(client.anamnesisSignedAt)
+  const started = answered > 0 || signed
+
+  return (
+    <Card className={`detail-grid__wide anamnesis ${signed ? 'is-signed' : ''}`}>
+      <div className="card__head">
+        <div>
+          <p className="eyebrow">Ficha de anamnese</p>
+          <h3 className="card__title">{signed ? 'Assinada' : started ? 'Falta assinar' : 'Ainda não preenchida'}</h3>
+          <p className="card__sub">
+            {answered} de {ANAMNESIS_TOTAL} perguntas respondidas
+            {client.anamnesisSignedAt && ` · assinada em ${format(client.anamnesisSignedAt, 'dd/MM/yyyy')}`}
+          </p>
+        </div>
+        <FileSignature size={20} aria-hidden="true" />
+      </div>
+
+      {attention.length > 0 ? (
+        <ul className="attention">
+          {attention.map((a) => (
+            <li key={a}>{a}</li>
+          ))}
+        </ul>
+      ) : (
+        answered > 0 && <p className="card__sub">Nenhum ponto de atenção.</p>
+      )}
+      {client.anamnesis.notes && <p className="anam__notes">{client.anamnesis.notes}</p>}
+      {client.anamnesisSignature && <img className="consent__sig consent__sig--sm" src={client.anamnesisSignature} alt={`Assinatura de ${client.name}`} />}
+
+      <Button size="sm" className="card__cta" onClick={onOpen}>
+        {started ? 'Abrir ficha' : 'Preencher ficha'}
+      </Button>
+    </Card>
+  )
+}
+
+/** ficha completa num modal: perguntas, observações, termo e assinatura, tudo salvo de uma vez */
+export function AnamnesisDialog({
+  client,
+  salonName,
+  onSave,
+  onSign,
+  onClose,
+}: {
+  client: Client
+  salonName: string
+  onSave: (a: Anamnesis) => Result
+  onSign: (signature: string | null) => Result
+  onClose: () => void
+}) {
   const [draft, setDraft] = useState<Anamnesis>(client.anamnesis)
   const [dirty, setDirty] = useState(false)
+  const [signature, setSignature] = useState<string | null>(null)
+  const [redo, setRedo] = useState(!client.anamnesisSignedAt)
   const [busy, setBusy] = useState(false)
-  const [status, setStatus] = useState<{ ok: boolean; text: string } | null>(null)
+  const [error, setError] = useState<string | null>(null)
   const answered = answeredCount(draft)
+  const firstName = client.name.split(' ')[0]
 
-  const setAnswer = (id: string, yes: boolean) => {
-    setDraft((d) => {
+  const change = (fn: (d: Anamnesis) => Anamnesis) => {
+    setDraft(fn)
+    setDirty(true)
+    setError(null)
+  }
+
+  const setAnswer = (id: string, yes: boolean) =>
+    change((d) => {
       const prev = d.answers[id]
       const answers = { ...d.answers }
       if (prev && prev.yes === yes) delete answers[id]
       else answers[id] = { yes, detail: yes ? prev?.detail : undefined }
       return { ...d, answers }
     })
-    setDirty(true)
-    setStatus(null)
-  }
-  const setDetail = (id: string, detail: string) => {
-    setDraft((d) => ({ ...d, answers: { ...d.answers, [id]: { yes: true, detail } } }))
-    setDirty(true)
-    setStatus(null)
-  }
 
   /** agiliza a ficha: o que ainda não foi respondido vira "não" e só se ajustam os "sim" */
-  const fillRest = () => {
-    setDraft((d) => {
+  const fillRest = () =>
+    change((d) => {
       const answers = { ...d.answers }
       for (const g of ANAMNESIS_GROUPS) for (const q of g.questions) if (!(q.id in answers)) answers[q.id] = { yes: false }
       return { ...d, answers }
     })
-    setDirty(true)
-    setStatus(null)
-  }
 
   const save = async () => {
     setBusy(true)
-    const err = await onSave(draft)
+    let err: string | null = null
+    if (dirty) err = await onSave(draft)
+    if (!err && signature) err = await onSign(signature)
     setBusy(false)
-    if (err) setStatus({ ok: false, text: err })
-    else {
-      setDirty(false)
-      setStatus({ ok: true, text: 'Ficha salva.' })
-    }
+    if (err) setError(err)
+    else onClose()
   }
 
   return (
-    <Card className="detail-grid__wide anam">
-      <div className="card__head">
+    <Modal label={`Ficha de ${client.name}`} onClose={onClose} wide>
+      <div className="dialog__head">
         <div>
           <p className="eyebrow">Ficha de anamnese</p>
-          <h3 className="card__title">
-            {answered} de {ANAMNESIS_TOTAL} respondidas
-          </h3>
-          {client.anamnesisUpdatedAt && (
-            <p className="card__sub">Atualizada em {format(client.anamnesisUpdatedAt, 'dd/MM/yyyy')}</p>
-          )}
+          <h2>{client.name}</h2>
         </div>
-        <span className="anam__meter" aria-hidden="true">
-          <span style={{ width: `${(answered / ANAMNESIS_TOTAL) * 100}%` }} />
-        </span>
-      </div>
-
-      {answered < ANAMNESIS_TOTAL && (
-        <button type="button" className="chip chip--ghost chip--sm anam__rest" onClick={fillRest}>
-          <Check size={14} aria-hidden="true" /> {answered === 0 ? 'Marcar tudo como “não”' : 'Marcar o resto como “não”'}
-        </button>
-      )}
-
-      <div className="anam__groups">
-      {ANAMNESIS_GROUPS.map((g) => (
-        <fieldset key={g.title} className="anam__group">
-          <legend>{g.title}</legend>
-          {g.questions.map((q) => {
-            const a = draft.answers[q.id]
-            return (
-              <div key={q.id} className={`anam__q ${a?.yes ? 'is-yes' : ''}`}>
-                <span className="anam__text">{q.text}</span>
-                <span className="yn" role="group" aria-label={q.text}>
-                  <button type="button" aria-pressed={a?.yes === false} onClick={() => setAnswer(q.id, false)}>
-                    Não
-                  </button>
-                  <button type="button" aria-pressed={a?.yes === true} onClick={() => setAnswer(q.id, true)}>
-                    Sim
-                  </button>
-                </span>
-                {a?.yes && q.ask && (
-                  <span className="input input--sm anam__detail">
-                    <input value={a.detail ?? ''} onChange={(e) => setDetail(q.id, e.target.value)} maxLength={120} placeholder={q.ask} aria-label={q.ask} />
-                  </span>
-                )}
-              </div>
-            )
-          })}
-        </fieldset>
-      ))}
-      </div>
-
-      <label className="field">
-        <span className="field__label">Observações da avaliação</span>
-        <span className="input">
-          <textarea
-            value={draft.notes}
-            rows={3}
-            maxLength={1000}
-            placeholder="Tipo de pele, estado das unhas, curvatura dos cílios, o que foi combinado..."
-            onChange={(e) => {
-              setDraft((d) => ({ ...d, notes: e.target.value }))
-              setDirty(true)
-              setStatus(null)
-            }}
-          />
-        </span>
-      </label>
-
-      <div className={`anam__save ${dirty ? 'is-dirty' : ''}`}>
-        {status && (
-          <p className={status.ok ? 'anam__ok' : 'dialog__error'} role={status.ok ? 'status' : 'alert'}>
-            {status.text}
-          </p>
-        )}
-        <Button disabled={!dirty || busy} onClick={save}>
-          {busy ? 'Salvando…' : 'Salvar ficha'}
+        <Button variant="ghost" size="sm" icon aria-label="Fechar" onClick={onClose}>
+          <X size={18} />
         </Button>
       </div>
-    </Card>
-  )
-}
 
-/* ------------------------------------------------------------------ termo de consentimento */
-
-export function ConsentCard({
-  client,
-  salonName,
-  onSign,
-}: {
-  client: Client
-  salonName: string
-  onSign: (signature: string | null) => Result
-}) {
-  const [signature, setSignature] = useState<string | null>(null)
-  const [redo, setRedo] = useState(false)
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const signed = Boolean(client.anamnesisSignedAt) && !redo
-  const outdated =
-    client.anamnesisSignedAt && client.anamnesisUpdatedAt && isAfter(client.anamnesisUpdatedAt, client.anamnesisSignedAt)
-
-  const sign = async () => {
-    if (!signature) return
-    setBusy(true)
-    const err = await onSign(signature)
-    setBusy(false)
-    setError(err)
-    if (!err) {
-      setRedo(false)
-      setSignature(null)
-    }
-  }
-
-  return (
-    <Card className={`detail-grid__wide anamnesis ${signed ? 'is-signed' : ''}`}>
-      <div className="card__head">
-        <div>
-          <p className="eyebrow">Termo de consentimento</p>
-          <h3 className="card__title">{signed ? 'Assinado' : 'Falta assinar'}</h3>
+      <div className="anam">
+        <div className="anam__top">
+          <span className="card__sub">
+            {answered} de {ANAMNESIS_TOTAL} respondidas
+          </span>
+          <span className="anam__meter" aria-hidden="true">
+            <span style={{ width: `${(answered / ANAMNESIS_TOTAL) * 100}%` }} />
+          </span>
         </div>
-        <FileSignature size={20} aria-hidden="true" />
+        {answered < ANAMNESIS_TOTAL && (
+          <button type="button" className="chip chip--ghost chip--sm anam__rest" onClick={fillRest}>
+            <Check size={14} aria-hidden="true" /> {answered === 0 ? 'Marcar tudo como “não”' : 'Marcar o resto como “não”'}
+          </button>
+        )}
+
+        {ANAMNESIS_GROUPS.map((g) => (
+          <fieldset key={g.title} className="anam__group">
+            <legend>{g.title}</legend>
+            {g.questions.map((q) => {
+              const a = draft.answers[q.id]
+              return (
+                <div key={q.id} className={`anam__q ${a?.yes ? 'is-yes' : ''}`}>
+                  <span className="anam__text">{q.text}</span>
+                  <span className="yn" role="group" aria-label={q.text}>
+                    <button type="button" aria-pressed={a?.yes === false} onClick={() => setAnswer(q.id, false)}>
+                      Não
+                    </button>
+                    <button type="button" aria-pressed={a?.yes === true} onClick={() => setAnswer(q.id, true)}>
+                      Sim
+                    </button>
+                  </span>
+                  {a?.yes && q.ask && (
+                    <span className="input input--sm anam__detail">
+                      <input
+                        value={a.detail ?? ''}
+                        onChange={(e) => change((d) => ({ ...d, answers: { ...d.answers, [q.id]: { yes: true, detail: e.target.value } } }))}
+                        maxLength={120}
+                        placeholder={q.ask}
+                        aria-label={q.ask}
+                      />
+                    </span>
+                  )}
+                </div>
+              )
+            })}
+          </fieldset>
+        ))}
+
+        <label className="field">
+          <span className="field__label">Observações da avaliação</span>
+          <span className="input">
+            <textarea
+              value={draft.notes}
+              rows={3}
+              maxLength={1000}
+              placeholder="Tipo de pele, estado das unhas, curvatura dos cílios, o que foi combinado..."
+              onChange={(e) => change((d) => ({ ...d, notes: e.target.value }))}
+            />
+          </span>
+        </label>
+
+        <div className="consent">
+          <p className="anam__legend">Termo de consentimento</p>
+          <p className="consent__text">
+            Eu, <strong>{client.name}</strong>, declaro que as informações desta ficha são verdadeiras, que fui orientada sobre os
+            cuidados antes e depois dos procedimentos e autorizo {salonName || 'o salão'} a realizá-los e a guardar estes dados para o
+            meu atendimento, conforme a LGPD.
+          </p>
+          {redo ? (
+            <SignaturePad label={`Assinatura de ${firstName}`} onChange={setSignature} />
+          ) : (
+            <div className="consent__done">
+              {client.anamnesisSignature ? (
+                <img className="consent__sig" src={client.anamnesisSignature} alt={`Assinatura de ${client.name}`} />
+              ) : (
+                <p className="card__sub">Assinatura colhida em papel.</p>
+              )}
+              <p className="card__sub">
+                Assinado em {format(client.anamnesisSignedAt!, "dd/MM/yyyy 'às' HH:mm")}.{' '}
+                <button type="button" className="textlink" onClick={() => setRedo(true)}>
+                  Assinar de novo
+                </button>
+              </p>
+            </div>
+          )}
+        </div>
       </div>
 
-      <p className="consent__text">
-        Eu, <strong>{client.name}</strong>, declaro que as informações da minha ficha são verdadeiras, que fui orientada sobre os
-        cuidados antes e depois dos procedimentos e autorizo {salonName || 'o salão'} a realizá-los e a guardar estes dados
-        para o meu atendimento, conforme a LGPD.
-      </p>
-
-      {signed ? (
-        <>
-          {client.anamnesisSignature ? (
-            <img className="consent__sig" src={client.anamnesisSignature} alt={`Assinatura de ${client.name}`} />
-          ) : (
-            <p className="card__sub">Assinatura colhida em papel.</p>
-          )}
-          <p className="card__sub">
-            Assinado em {format(client.anamnesisSignedAt!, "dd/MM/yyyy 'às' HH:mm")}.
-            {outdated && ' A ficha mudou depois da assinatura.'}{' '}
-            <button type="button" className="textlink" onClick={() => setRedo(true)}>
-              Assinar de novo
-            </button>
-          </p>
-        </>
-      ) : (
-        <>
-          <SignaturePad onChange={setSignature} />
-          <div className="consent__actions">
-            {redo && (
-              <Button variant="light" size="sm" onClick={() => setRedo(false)}>
-                Cancelar
-              </Button>
-            )}
-            <Button size="sm" disabled={!signature || busy} onClick={sign}>
-              {busy ? 'Salvando…' : 'Registrar assinatura'}
-            </Button>
-          </div>
-          <p className="card__sub">Passe o celular ou o tablet para a cliente assinar com o dedo.</p>
-        </>
-      )}
       {error && (
         <p className="dialog__error" role="alert">
           {error}
         </p>
       )}
-    </Card>
+
+      <div className="dialog__actions">
+        <Button variant="light" onClick={onClose}>
+          Cancelar
+        </Button>
+        <Button disabled={busy || (!dirty && !signature)} onClick={save}>
+          {busy ? 'Salvando…' : signature ? 'Salvar e assinar' : 'Salvar ficha'}
+        </Button>
+      </div>
+    </Modal>
   )
 }
 

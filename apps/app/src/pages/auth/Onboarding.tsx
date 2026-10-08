@@ -60,15 +60,20 @@ const COPY: Record<StepId, { title: React.ReactNode; subtitle?: string }> = {
   },
 }
 
-const SKIPPABLE: StepId[] = ['profissional', 'precos']
+// quem atende sozinha precisa estar na agenda: o nome não pode ser pulado
+const SKIPPABLE: StepId[] = ['precos']
 
 /** /cadastro/salao: questionário em passos que já monta o negócio conforme o setor de beleza */
 export default function Onboarding() {
-  const { status, createSalon, signOut } = useAuth()
+  const { status, session, createSalon, signOut } = useAuth()
   const [index, setIndex] = useState(0)
   const [segments, setSegments] = useState<string[]>([])
   const [team, setTeam] = useState<TeamSize | null>(null)
-  const [proName, setProName] = useState('')
+  // já vem com o nome do cadastro (Google ou formulário), quando houver
+  const [proName, setProName] = useState(() => {
+    const meta = session?.user.user_metadata?.displayName
+    return typeof meta === 'string' ? meta.trim() : ''
+  })
   const [picked, setPicked] = useState<string[]>([])
   const [prices, setPrices] = useState<Record<string, string>>({})
   const [name, setName] = useState('')
@@ -118,7 +123,6 @@ export default function Onboarding() {
     setIndex(Math.max(0, index - 1))
   }
   const skip = () => {
-    if (step === 'profissional') setProName('')
     if (step === 'precos') setPrices({})
     next()
   }
