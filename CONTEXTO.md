@@ -98,6 +98,7 @@ npm run build
 | `20261017000000_showcase` | `site_photos`, `showcase_items` (produtos à venda), `services.photo_id`, `get_public_photo()` |
 | `20261018000000_palette_combos` | paletas reduzidas às 7 combinações de então |
 | `20261019000000_palette_dark` | paleta escura `preto-branco` aceita no banco |
+| `20261020000000_client_file` | **ainda não aplicada**: ficha completa da cliente (e-mail, Instagram, endereço, profissão, como conheceu, anamnese em jsonb, assinatura do termo), `loyalty_settings`, `loyalty_entries` (selos extras e resgates) e `client_notes` |
 
 Regras importantes:
 - Toda tabela tem `salon_id` + RLS. Escrita de catálogo/site só `owner`/`manager`; sem assinatura ativa, escrita bloqueada (políticas restritivas).
@@ -227,9 +228,9 @@ Hoje: a cliente escolhe serviço, profissional, dia e horário livre, informa no
 | P1 | **Planos por assinatura com cobrança de verdade** | Hoje os planos aparecem no site e a cobrança é por WhatsApp. Próximo passo: assinatura da cliente (cartão recorrente ou Pix mensal), controle de uso ("2 de 2 manutenções no mês") e aviso de vencimento. |
 | P2 | **Reativar clientes sumidas** | O app já sabe quem sumiu. Botão para mandar mensagem pronta pelo WhatsApp ("Faz 45 dias, que tal marcar?"), em lote. |
 | P2 | **Aniversariantes** | Lista do mês com mensagem pronta e cupom. |
-| P2 | **Fidelidade / cashback** | Pontos ou "a cada 10, ganhe 1". |
+| ~~P2~~ | **Fidelidade** (feito) | Cartão de selos configurável por salão (selos por prêmio e prêmio), selo extra, resgate e desfazer. Próximo: cashback. |
 | P3 | **Venda de produtos com estoque** | A vitrine existe; somar estoque, baixa na venda e alerta de reposição. |
-| P3 | **Ficha da cliente** | Anamnese/consentimento assinado no celular (campos já existem em `clients`), fotos do atendimento. |
+| ~~P3~~ | **Ficha da cliente** (feito) | Abas Resumo/Ficha/Histórico/Anotações; anamnese com 20 perguntas, termo assinado com o dedo, pontos de atenção no resumo. Falta: fotos antes/depois (precisa de armazenamento). |
 
 ### 9.4 Agenda, equipe e financeiro
 

@@ -1,15 +1,18 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { addDays, format } from 'date-fns'
+import { addDays, format, isAfter } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import {
   AlertTriangle,
   ArrowLeft,
+  AtSign,
+  Briefcase,
+  Cake,
+  CalendarCheck,
   CalendarPlus,
   Camera,
-  Check,
   FileSignature,
-  Gift,
+  Heart,
   Pencil,
   MessageCircle,
   Phone,
@@ -19,15 +22,26 @@ import {
 } from 'lucide-react'
 import {
   MISSING_AFTER,
-  STAMPS_PER_REWARD,
   TAG_LABEL,
   clientTags,
   daysSince,
   type Client,
   type ClientTag,
 } from '../data/clients'
-import { useClientBook, type ProfessionalOption } from '../data/useClientBook'
+import { useClientBook, useClientNotes } from '../data/useClientBook'
+import { useAuth } from '../auth/AuthProvider'
 import { ClientDialog } from '../components/ClientDialog'
+import {
+  AnamnesisCard,
+  CareCard,
+  ConsentCard,
+  HistoryCard,
+  LoyaltyCard,
+  LoyaltySettingsDialog,
+  NotesCard,
+  PersonalCard,
+} from '../components/ClientFile'
+import { answeredCount } from '../lib/anamnesis'
 import { formatBRL } from '../lib/format'
 import { dash } from '../lib/routes'
 import { useMediaQuery } from '../hooks/useMediaQuery'
@@ -159,25 +173,38 @@ function ClientList({
   )
 }
 
+type Tab = 'resumo' | 'ficha' | 'historico' | 'notas'
+
+const TABS: { id: Tab; label: string }[] = [
+  { id: 'resumo', label: 'Resumo' },
+  { id: 'ficha', label: 'Ficha' },
+  { id: 'historico', label: 'Histórico' },
+  { id: 'notas', label: 'Anotações' },
+]
+
 function ClientDetail({
   client,
   today,
   showBack,
   live,
-  professionals,
+  book,
+  salonName,
   onEdit,
-  onAnamnesis,
+  onLoyaltySettings,
 }: {
   client: Client
   today: Date
   showBack: boolean
   live: boolean
-  professionals: ProfessionalOption[]
+  book: ReturnType<typeof useClientBook>
+  salonName: string
   onEdit: () => void
-  onAnamnesis: () => Promise<string | null>
+  onLoyaltySettings: () => void
 }) {
   const navigate = useNavigate()
-  const [anamnesisError, setAnamnesisError] = useState<string | null>(null)
+  const [tab, setTab] = useState<Tab>('resumo')
+  const notes = useClientNotes(client.id)
+  const { professionals } = book
   const proName = (id: string) => professionals.find((p) => p.id === id)?.name ?? ''
   const hasVisits = client.visits > 0
   const tags = clientTags(client, today)
@@ -185,9 +212,29 @@ function ClientDetail({
   const nextExpected = addDays(client.lastVisit, client.interval)
   const overdue = hasVisits ? daysSince(nextExpected, today) : 0
   const ticket = hasVisits ? Math.round(client.totalSpent / client.visits) : 0
-  const stamps = client.visits % STAMPS_PER_REWARD
-  const rewards = Math.floor(client.visits / STAMPS_PER_REWARD)
   const firstName = client.name.split(' ')[0]
+  const wa = whatsappUrl(client.phone)
+  const upcoming = client.appointments
+    .filter((a) => (a.status === 'pendente' || a.status === 'confirmado') && isAfter(a.date, today))
+    .sort((a, b) => a.date.getTime() - b.date.getTime())[0]
+  const fileDone = Boolean(client.anamnesisSignedAt) && answeredCount(client.anamnesis) > 0
+
+  // ao trocar de cliente, volta para o resumo
+  const [shownId, setShownId] = useState(client.id)
+  if (shownId !== client.id) {
+    setShownId(client.id)
+    setTab('resumo')
+  }
+
+  const info = [
+    client.birthday && {
+      icon: <Cake size={14} aria-hidden="true" />,
+      text: format(new Date(2000, Number(client.birthday.slice(0, 2)) - 1, Number(client.birthday.slice(3))), "dd 'de' MMM", { locale: ptBR }),
+    },
+    client.instagram && { icon: <AtSign size={14} aria-hidden="true" />, text: client.instagram, href: `https://instagram.com/${client.instagram}` },
+    client.referral && { icon: <Heart size={14} aria-hidden="true" />, text: client.referral },
+    client.occupation && { icon: <Briefcase size={14} aria-hidden="true" />, text: client.occupation },
+  ].filter(Boolean) as { icon: ReactNode; text: string; href?: string }[]
 
   return (
     <div className="crm__detail">
@@ -204,6 +251,7 @@ function ClientDetail({
             <span className="profile__avatar" aria-hidden="true">
               {client.name
                 .split(' ')
+                .filter(Boolean)
                 .slice(0, 2)
                 .map((p) => p[0])
                 .join('')}
@@ -218,28 +266,46 @@ function ClientDetail({
             </div>
           </div>
           <div className="profile__actions">
-            <a className="roundbtn" href={`tel:${client.phone.replace(/\D/g, '')}`} aria-label={`Ligar para ${firstName}`}>
-              <Phone size={18} />
-            </a>
-            {whatsappUrl(client.phone) && (
-              <a
-                className="roundbtn"
-                href={whatsappUrl(client.phone) ?? undefined}
-                target="_blank"
-                rel="noreferrer"
-                aria-label={`Mensagem no WhatsApp para ${firstName}`}
-              >
+            {wa && (
+              <a className="roundbtn" href={wa} target="_blank" rel="noreferrer" aria-label={`Mensagem no WhatsApp para ${firstName}`}>
                 <MessageCircle size={18} />
+              </a>
+            )}
+            {client.phone.replace(/\D/g, '') && (
+              <a className="roundbtn" href={`tel:${client.phone.replace(/\D/g, '')}`} aria-label={`Ligar para ${firstName}`}>
+                <Phone size={18} />
               </a>
             )}
             <button type="button" className="roundbtn" aria-label={`Editar ${firstName}`} onClick={onEdit}>
               <Pencil size={18} />
             </button>
-            <Button variant="accent" icon aria-label={`Agendar ${firstName}`} onClick={() => navigate(dash('/agenda'))}>
+            <Button
+              variant="accent"
+              icon
+              aria-label={`Agendar ${firstName}`}
+              onClick={() => navigate(dash(`/agenda?nova=1&cliente=${encodeURIComponent(client.name)}`))}
+            >
               <CalendarPlus size={18} />
             </Button>
           </div>
         </div>
+
+        {info.length > 0 && (
+          <ul className="profile__info">
+            {info.map((i) => (
+              <li key={i.text}>
+                {i.icon}
+                {i.href ? (
+                  <a href={i.href} target="_blank" rel="noreferrer">
+                    {i.text}
+                  </a>
+                ) : (
+                  i.text
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
 
         <div className="profile__stats">
           <div>
@@ -269,15 +335,23 @@ function ClientDetail({
           </div>
         </div>
 
-        <div className={`profile__return ${overdue > 0 ? 'is-late' : ''}`}>
-          {overdue > 0 ? (
+        <div className={`profile__return ${overdue > 0 && !upcoming ? 'is-late' : ''}`}>
+          {upcoming ? (
+            <>
+              <CalendarCheck size={18} aria-hidden="true" />
+              <p>
+                Próximo horário: <strong>{format(upcoming.date, "EEE, dd 'de' MMM 'às' HH:mm", { locale: ptBR })}</strong> · {upcoming.service}
+                {upcoming.status === 'pendente' && ' (aguardando confirmação)'}
+              </p>
+            </>
+          ) : overdue > 0 ? (
             <>
               <AlertTriangle size={18} aria-hidden="true" />
               <p>
                 {days > MISSING_AFTER ? `${firstName} sumiu há ${days} dias.` : `Retorno atrasado ${overdue} ${overdue === 1 ? 'dia' : 'dias'}.`}{' '}
                 <strong>Mande um convite com cupom de retorno.</strong>
               </p>
-              {whatsappUrl(client.phone) && (
+              {wa && (
                 <a
                   className="btn btn--light btn--sm"
                   href={whatsappUrl(client.phone, `Oi, ${firstName}! Sentimos sua falta por aqui. Vamos marcar um horário?`) ?? undefined}
@@ -305,143 +379,102 @@ function ClientDetail({
         </div>
       </Card>
 
-      <div className="detail-grid">
-        {/* fidelidade */}
-        <Card className="loyalty">
-          <div className="card__head">
-            <div>
-              <p className="eyebrow">Cartão fidelidade</p>
-              <h3 className="card__title">
-                {stamps} de {STAMPS_PER_REWARD} selos
-              </h3>
-            </div>
-            <Gift size={20} aria-hidden="true" className="loyalty__icon" />
-          </div>
-          <div className="stamps" role="img" aria-label={`${stamps} de ${STAMPS_PER_REWARD} selos`}>
-            {Array.from({ length: STAMPS_PER_REWARD }, (_, i) => (
-              <span key={i} className={`stamps__item ${i < stamps ? 'is-on' : ''}`}>
-                {i < stamps && <Check size={14} aria-hidden="true" />}
-              </span>
-            ))}
-          </div>
-          <p className="card__sub">
-            Faltam {STAMPS_PER_REWARD - stamps} visitas para ganhar um serviço.
-            {rewards > 0 && ` Já resgatou ${rewards} ${rewards === 1 ? 'prêmio' : 'prêmios'}.`}
-          </p>
-        </Card>
+      <div className="ftabs" role="tablist" aria-label={`Ficha de ${firstName}`}>
+        {TABS.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            role="tab"
+            className="ftabs__item"
+            aria-selected={tab === t.id}
+            onClick={() => setTab(t.id)}
+          >
+            {t.label}
+            {t.id === 'ficha' && !fileDone && <span className="ftabs__dot" aria-label="pendente" />}
+            {t.id === 'notas' && notes.notes.length > 0 && <span className="ftabs__count">{notes.notes.length}</span>}
+          </button>
+        ))}
+      </div>
 
-        {/* cuidados */}
-        <Card>
-          <div className="card__head">
-            <div>
-              <p className="eyebrow">Cuidados</p>
-              <h3 className="card__title">Preferências</h3>
-            </div>
-          </div>
-          {client.allergies.length > 0 && (
-            <div className="allergy">
-              <AlertTriangle size={16} aria-hidden="true" />
-              <span>
-                <strong>Atenção:</strong> {client.allergies.join(', ')}
-              </span>
-            </div>
-          )}
-          <ul className="prefs">
-            {client.preferences.map((p) => (
-              <li key={p}>{p}</li>
-            ))}
-          </ul>
-          {client.preferences.length === 0 && client.allergies.length === 0 && (
-            <p className="card__sub">
-              Nada anotado ainda.{' '}
-              <button type="button" className="textlink" onClick={onEdit}>
-                Adicionar
-              </button>
-            </p>
-          )}
-        </Card>
-
-        {/* histórico */}
-        <Card className="detail-grid__wide">
-          <div className="card__head">
-            <div>
-              <p className="eyebrow">Histórico</p>
-              <h3 className="card__title">Últimos atendimentos</h3>
-            </div>
-            <span className="card__sub">{client.visits} no total</span>
-          </div>
-          {client.history.length === 0 && <p className="card__sub">Os atendimentos concluídos aparecem aqui.</p>}
-          <ol className="history">
-            {client.history.map((v, i) => (
-              <li key={i} className="history__item">
-                <span className="history__date">
-                  <strong>{format(v.date, 'dd')}</strong>
-                  {format(v.date, 'MMM', { locale: ptBR }).replace('.', '')}
-                </span>
-                <span className="history__body">
-                  <span className="history__service">{v.service}</span>
-                  {proName(v.professionalId) && <span className="card__sub">com {proName(v.professionalId)}</span>}
-                </span>
-                <span className="history__price">{formatBRL(v.price)}</span>
-              </li>
-            ))}
-          </ol>
-        </Card>
-
-        {/* galeria (ainda sem armazenamento de fotos: só na demonstração) */}
-        {!live && (
-        <Card>
-          <div className="card__head">
-            <div>
-              <p className="eyebrow">Galeria</p>
-              <h3 className="card__title">Antes e depois</h3>
-            </div>
-          </div>
-          <div className="gallery">
-            {client.history.slice(0, 2).map((v, i) => (
-              <figure key={i} className={`gallery__item gallery__item--${i}`}>
-                <figcaption>
-                  {i === 0 ? 'Depois' : 'Antes'} · {format(v.date, 'dd/MM')}
-                </figcaption>
-              </figure>
-            ))}
-            <button type="button" className="gallery__add">
-              <Camera size={20} aria-hidden="true" />
-              Adicionar
-            </button>
-          </div>
-        </Card>
+      <div className="detail-grid" role="tabpanel">
+        {tab === 'resumo' && (
+          <>
+            <LoyaltyCard
+              client={client}
+              settings={book.loyaltySettings}
+              canManage={book.canManage}
+              onAdd={(stamps, note) => book.addLoyalty(client.id, stamps, note)}
+              onRemove={(entryId) => book.removeLoyalty(client.id, entryId)}
+              onSettings={onLoyaltySettings}
+            />
+            <CareCard
+              key={client.id}
+              client={client}
+              onSave={(care) => book.updateCare(client.id, care)}
+              onOpenFile={() => setTab('ficha')}
+            />
+            {!fileDone && (
+              <Card className="detail-grid__wide filecta">
+                <FileSignature size={22} aria-hidden="true" />
+                <div>
+                  <h3 className="card__title">
+                    {client.anamnesisSignedAt ? 'Complete a anamnese' : `${firstName} ainda não assinou a ficha`}
+                  </h3>
+                  <p className="card__sub">Anamnese e termo de consentimento antes do próximo atendimento, direto no celular.</p>
+                </div>
+                <Button size="sm" onClick={() => setTab('ficha')}>
+                  Preencher ficha
+                </Button>
+              </Card>
+            )}
+            <HistoryCard appointments={client.appointments} proName={proName} limit={3} onSeeAll={() => setTab('historico')} />
+            {/* galeria (ainda sem armazenamento de fotos: só na demonstração) */}
+            {!live && (
+              <Card>
+                <div className="card__head">
+                  <div>
+                    <p className="eyebrow">Galeria</p>
+                    <h3 className="card__title">Antes e depois</h3>
+                  </div>
+                </div>
+                <div className="gallery">
+                  {client.history.slice(0, 2).map((v, i) => (
+                    <figure key={i} className={`gallery__item gallery__item--${i}`}>
+                      <figcaption>
+                        {i === 0 ? 'Depois' : 'Antes'} · {format(v.date, 'dd/MM')}
+                      </figcaption>
+                    </figure>
+                  ))}
+                  <button type="button" className="gallery__add">
+                    <Camera size={20} aria-hidden="true" />
+                    Adicionar
+                  </button>
+                </div>
+              </Card>
+            )}
+          </>
         )}
 
-        {/* anamnese */}
-        <Card className={`anamnesis ${client.anamnesisSignedAt ? 'is-signed' : ''}`}>
-          <div className="card__head">
-            <div>
-              <p className="eyebrow">Ficha de anamnese</p>
-              <h3 className="card__title">{client.anamnesisSignedAt ? 'Assinada' : 'Pendente'}</h3>
-            </div>
-            <FileSignature size={20} aria-hidden="true" />
-          </div>
-          {client.anamnesisSignedAt ? (
-            <p className="card__sub">
-              Termo de consentimento registrado em {format(client.anamnesisSignedAt, 'dd/MM/yyyy')}.
-            </p>
-          ) : (
-            <>
-              <p className="card__sub">
-                {firstName} ainda não assinou a ficha. Colha a assinatura antes do próximo atendimento e registre aqui.
-              </p>
-              <Button size="sm" className="anamnesis__btn" onClick={async () => setAnamnesisError(await onAnamnesis())}>
-                Marcar como assinada
-              </Button>
-              {anamnesisError && (
-                <p className="dialog__error" role="alert">
-                  {anamnesisError}
-                </p>
-              )}
-            </>
-          )}
-        </Card>
+        {tab === 'ficha' && (
+          <>
+            <PersonalCard client={client} professionals={professionals} onEdit={onEdit} />
+            <AnamnesisCard key={`a-${client.id}`} client={client} onSave={(a) => book.saveAnamnesis(client.id, a)} />
+            <ConsentCard key={`c-${client.id}`} client={client} salonName={salonName} onSign={(sig) => book.signAnamnesis(client.id, sig)} />
+          </>
+        )}
+
+        {tab === 'historico' && <HistoryCard appointments={client.appointments} proName={proName} />}
+
+        {tab === 'notas' && (
+          <NotesCard
+            key={`n-${client.id}`}
+            notes={notes.notes}
+            loading={notes.loading}
+            loadError={notes.error}
+            onAdd={notes.add}
+            onRemove={notes.remove}
+          />
+        )}
       </div>
     </div>
   )
@@ -451,10 +484,11 @@ export default function Clientes() {
   const today = useMemo(() => new Date(), [])
   const book = useClientBook()
   const { clients, professionals, live } = book
+  const { salon } = useAuth()
   const { id } = useParams()
   const navigate = useNavigate()
   const isWide = useMediaQuery('(min-width: 1100px)')
-  const [dialog, setDialog] = useState<'new' | 'edit' | null>(null)
+  const [dialog, setDialog] = useState<'new' | 'edit' | 'loyalty' | null>(null)
 
   const selected = clients.find((c) => c.id === id) ?? (isWide ? clients[0] : undefined)
   const missing = clients.filter((c) => clientTags(c, today).includes('sumida')).length
@@ -482,6 +516,9 @@ export default function Clientes() {
           onSave={(draft) => book.update(selected.id, draft)}
         />
       )}
+      {dialog === 'loyalty' && (
+        <LoyaltySettingsDialog settings={book.loyaltySettings} onSave={book.saveLoyaltySettings} onClose={() => setDialog(null)} />
+      )}
     </>
   )
 
@@ -492,9 +529,10 @@ export default function Clientes() {
         today={today}
         showBack={showBack}
         live={live}
-        professionals={professionals}
+        book={book}
+        salonName={salon?.name ?? ''}
         onEdit={() => setDialog('edit')}
-        onAnamnesis={() => book.markAnamnesis(selected.id, true)}
+        onLoyaltySettings={() => setDialog('loyalty')}
       />
     )
 
