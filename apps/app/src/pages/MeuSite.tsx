@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState, type ChangeEvent, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import { ArrowLeft, ArrowRight, ChevronDown, ExternalLink, ImagePlus, Maximize2, Plus, Rocket, Trash2, Undo2, X } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Check, ChevronDown, ExternalLink, ImagePlus, Maximize2, Plus, Rocket, Trash2, Undo2, X } from 'lucide-react'
 import {
   PALETTES,
   CATEGORIES,
@@ -538,20 +538,66 @@ export default function MeuSite() {
       </header>
 
       <div className="gg__main">
-        <section className="gg__form">
+        {/* mesmo jeito da criação de conta: progresso no topo, pílulas e o disco escuro para seguir */}
+        <section className="gg__form wiz">
+          <div className="wiz__bar">
+            <button type="button" className="wiz__back" onClick={() => setStep(step - 1)} disabled={step !== 1 || publishing} aria-label="Voltar">
+              <ArrowLeft size={18} aria-hidden="true" />
+            </button>
+            <div className="wiz__progress" role="progressbar" aria-label="Progresso" aria-valuemin={1} aria-valuemax={2} aria-valuenow={Math.min(step + 1, 2)}>
+              <span className="is-done" />
+              <span className={step >= 1 ? 'is-done' : undefined} />
+            </div>
+            {step < 2 ? (
+              <button type="button" className="wiz__skip" onClick={closeWizard}>
+                Pular
+              </button>
+            ) : (
+              <span className="wiz__skip" aria-hidden="true" />
+            )}
+          </div>
+
           {step === 0 && (
             <>
-              <p className="gg__eyebrow">Criar seu site · passo 1 de 2</p>
-              <h2 className="gg__title">Escolha o visual</h2>
-              <p className="gg__sub">São só duas escolhas, com cores já combinadas. Você muda quando quiser.</p>
-              {fieldsLook}
+              <p className="wiz__eyebrow">Seu site</p>
+              <h1 className="auth__title">Escolha o visual</h1>
+              <p className="card__sub">Cores já combinadas. Você muda quando quiser.</p>
+              <p className="wiz__group-title">Paleta de cores</p>
+              <div className="wiz__options">
+                {(Object.keys(PALETTES) as PaletteId[]).map((id) => (
+                  <button key={id} type="button" className="wiz__opt" aria-pressed={site.palette === id} onClick={() => setSite('palette', id)}>
+                    <span
+                      className="wiz__dot"
+                      aria-hidden="true"
+                      style={{ background: `linear-gradient(135deg, ${PALETTES[id].bg} 50%, ${PALETTES[id].accent} 50%)` }}
+                    />
+                    {PALETTES[id].label}
+                  </button>
+                ))}
+              </div>
+              <p className="wiz__group-title">Fonte dos títulos</p>
+              <div className="wiz__options">
+                {(Object.keys(FONTS) as FontId[]).map((id) => (
+                  <button
+                    key={id}
+                    type="button"
+                    className="wiz__opt"
+                    aria-pressed={site.font === id}
+                    onClick={() => setSite('font', id)}
+                    style={{ fontFamily: FONTS[id].family, fontWeight: FONTS[id].weight, textTransform: FONTS[id].upper ? 'uppercase' : 'none' }}
+                  >
+                    {FONTS[id].label}
+                  </button>
+                ))}
+              </div>
             </>
           )}
+
           {step === 1 && (
             <>
-              <p className="gg__eyebrow">Criar seu site · passo 2 de 2</p>
-              <h2 className="gg__title">{isLive ? 'Confirme o endereço do seu site' : 'Escolha o endereço do seu site'}</h2>
-              <p className="gg__sub">É o link que você divulga no Instagram e no WhatsApp.</p>
+              <p className="wiz__eyebrow">Seu site</p>
+              <h1 className="auth__title">{isLive ? 'Confirme o endereço' : 'Escolha o endereço'}</h1>
+              <p className="card__sub">É o link que você divulga no Instagram e no WhatsApp.</p>
               <Field label="Nome do seu salão">
                 {(id) => (
                   <span className="input">
@@ -559,7 +605,7 @@ export default function MeuSite() {
                   </span>
                 )}
               </Field>
-              <Field label="Endereço do site" hint={slugReserved ? 'Esse endereço é reservado. Escolha outro.' : 'Você pode mudar depois.'}>
+              <Field label="Endereço do site" hint={slugReserved ? 'Esse endereço é reservado. Escolha outro.' : siteHost(site.slug)}>
                 {(id) => (
                   <span className="input input--suffix">
                     <input
@@ -575,13 +621,14 @@ export default function MeuSite() {
               </Field>
             </>
           )}
+
           {step === 2 && (
             <>
-              <p className="gg__eyebrow">Tudo certo</p>
-              <h2 className="gg__title">
-                Pronto! Seu site <Em>está no ar</Em>.
-              </h2>
-              <p className="gg__sub">Agora é só completar: logo, foto de capa, textos, contato e serviços. Leva poucos minutos.</p>
+              <p className="wiz__eyebrow">Tudo certo</p>
+              <h1 className="auth__title">
+                Seu site <Em>está no ar</Em>.
+              </h1>
+              <p className="card__sub">Agora complete com logo, foto de capa, textos, contato e serviços. Leva poucos minutos.</p>
               <div className="gg__done">
                 <a className="gg__btn gg__btn--light" href={`https://${siteHost(publishedSlug)}`} target="_blank" rel="noreferrer">
                   Ver meu site
@@ -599,10 +646,35 @@ export default function MeuSite() {
               </div>
             </>
           )}
+
           {publishError && (
             <p className="field__hint" role="alert">
               {publishError}
             </p>
+          )}
+
+          {step < 2 && (
+            <div className="auth__foot">
+              <button type="button" className="textlink" onClick={closeWizard}>
+                Fazer depois
+              </button>
+              {step === 0 ? (
+                <button type="button" className="auth__go" onClick={() => setStep(1)} aria-label="Continuar" title="Continuar">
+                  <ArrowRight size={22} aria-hidden="true" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="auth__go"
+                  disabled={!addressOk || publishing}
+                  onClick={() => void claim()}
+                  aria-label={publishing ? 'Publicando…' : isLive ? 'Salvar alterações' : 'Publicar meu site'}
+                  title={isLive ? 'Salvar alterações' : 'Publicar meu site'}
+                >
+                  <Check size={22} aria-hidden="true" />
+                </button>
+              )}
+            </div>
           )}
         </section>
 
@@ -613,33 +685,6 @@ export default function MeuSite() {
           </div>
         </section>
       </div>
-
-      <footer className="gg__foot">
-        <ol className="gg__bars" aria-label="Progresso">
-          {[0, 1, 2].map((i) => (
-            <li key={i} className={i < step ? 'is-done' : i === step ? 'is-now' : ''} />
-          ))}
-        </ol>
-        {step < 2 && (
-          <div className="gg__nav">
-            {step > 0 && (
-              <button type="button" className="gg__back" aria-label="Voltar" disabled={publishing} onClick={() => setStep(step - 1)}>
-                <ArrowLeft size={20} aria-hidden="true" />
-              </button>
-            )}
-            {step === 0 ? (
-              <button type="button" className="gg__btn" onClick={() => setStep(1)}>
-                Continuar <ArrowRight size={18} aria-hidden="true" />
-              </button>
-            ) : (
-              <button type="button" className="gg__btn" disabled={!addressOk || publishing} onClick={() => void claim()}>
-                <Rocket size={18} aria-hidden="true" />
-                {publishing ? 'Salvando…' : isLive ? 'Salvar alterações' : 'Publicar site'}
-              </button>
-            )}
-          </div>
-        )}
-      </footer>
     </div>
   )
 
