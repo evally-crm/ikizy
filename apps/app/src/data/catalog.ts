@@ -34,6 +34,14 @@ export interface SiteConfig {
   instagram: string
   hours: string
   accent: AccentId
+  /** cor própria (#rrggbb); vazia = usa a cor da lista */
+  accentColor: string
+  /** logo reduzido, como data URL; vazio = sem logo */
+  logo: string
+  /** foto de capa do topo do site, como data URL; vazio = sem foto */
+  cover: string
+  /** endereço do salão, com link para o mapa */
+  address: string
   showPrices: boolean
   showTeam: boolean
   depositPercent: number
@@ -56,6 +64,10 @@ export const DEFAULT_STUDIO: Studio = {
     instagram: '@studiomariabeauty',
     hours: 'Seg a Sáb · 09h às 19h',
     accent: 'bordo',
+    accentColor: '',
+    logo: '',
+    cover: '',
+    address: '',
     showPrices: true,
     showTeam: true,
     depositPercent: 20,
@@ -116,7 +128,7 @@ const isUuid = (v: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-
 
 /** site novo: sem textos de exemplo, só o nome e o endereço do negócio */
 const blankStudio = (name: string, slug: string): Studio => ({
-  site: { ...DEFAULT_STUDIO.site, slug, salonName: name, tagline: '', about: '', whatsapp: '', instagram: '', hours: '' },
+  site: { ...DEFAULT_STUDIO.site, slug, salonName: name, tagline: '', about: '', whatsapp: '', instagram: '', hours: '', logo: '', cover: '', address: '' },
   services: [],
   products: [],
 })
@@ -128,6 +140,10 @@ interface SettingsRow {
   instagram: string
   hours: string
   accent: AccentId
+  accent_color?: string | null
+  logo?: string | null
+  cover?: string | null
+  address?: string
   show_prices: boolean
   show_team: boolean
   deposit_percent: number
@@ -187,6 +203,10 @@ export function useStudio() {
               instagram: row.instagram,
               hours: row.hours,
               accent: row.accent,
+              accentColor: row.accent_color ?? '',
+              logo: row.logo ?? '',
+              cover: row.cover ?? '',
+              address: row.address ?? '',
               showPrices: row.show_prices,
               showTeam: row.show_team,
               depositPercent: row.deposit_percent,
@@ -302,6 +322,10 @@ export function useStudio() {
           instagram: site.instagram,
           hours: site.hours,
           accent: site.accent,
+          accent_color: site.accentColor || null,
+          logo: site.logo || null,
+          cover: site.cover || null,
+          address: site.address.trim(),
           show_prices: site.showPrices,
           show_team: site.showTeam,
           deposit_percent: site.depositPercent,

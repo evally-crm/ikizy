@@ -1,0 +1,174 @@
+/* campos dentro de cartões cinza: brancos, com borda, para não sumirem no fundo */
+.sect .input,
+.wiz .input,
+.wiz .row .input {
+  background: var(--white);
+  border-color: var(--line-strong, var(--line));
+}
+.sect .input:hover,
+.wiz .input:hover {
+  background: var(--white);
+  border-color: var(--ink-500);
+}
+.sect .input:focus-within,
+.wiz .input:focus-within {
+  border-color: var(--brand-900);
+}
+.sect .swatch {
+  background: var(--white);
+}
+.sect .swatch:has(input:checked) {
+  box-shadow: inset 0 0 0 2px var(--brand-900);
+}
+
+/* passo a passo de criação do site */
+.wiz {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.wiz__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.wiz__count {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-500);
+}
+.wiz__top .textlink {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 13px;
+  color: var(--brand-700, var(--brand-900));
+  text-decoration: underline;
+  cursor: pointer;
+}
+.wiz__bars {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  margin: 4px 0 14px;
+  padding: 0;
+  list-style: none;
+}
+.wiz__bars li {
+  height: 5px;
+  border-radius: 5px;
+  background: var(--gray-200);
+}
+.wiz__bars li.is-done {
+  background: var(--brand-900);
+}
+.wiz__bars li.is-now {
+  background: var(--brand-500);
+}
+.wiz__title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  color: var(--ink-900);
+}
+.wiz__sub {
+  margin: 0 0 12px;
+  color: var(--ink-500);
+}
+.wiz__body {
+  padding: 16px;
+  border-radius: 20px;
+  background: var(--bg);
+}
+
+/* botões do guia: voltar redondo e continuar grande, no fim do cartão */
+.wiz__nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+}
+.wiz__back {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border: 1px solid var(--line-strong, var(--line));
+  border-radius: 50%;
+  background: var(--white);
+  color: var(--ink-900);
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+.wiz__back:hover:not(:disabled) {
+  border-color: var(--ink-900);
+}
+.wiz__next {
+  display: inline-flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 56px;
+  padding: 0 24px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--brand-900);
+  color: var(--white);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s, transform 0.15s;
+}
+.wiz__next:hover:not(:disabled) {
+  background: var(--brand-700, var(--brand-900));
+}
+.wiz__next:active:not(:disabled) {
+  transform: scale(0.99);
+}
+.wiz__next:disabled,
+.wiz__back:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.bar__publish.is-off {
+  display: none !important;
+}
+
+/* capa na prévia do app */
+.logofield .btn {
+  flex: 1 1 140px;
+}
+.logofield .chevbtn {
+  margin-left: auto;
+}
+.sp__hero {
+  position: relative;
+}
+.sp__cover {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  object-fit: cover;
+}
+.sp__hero--cover > :not(.sp__cover) {
+  position: relative;
+  z-index: 1;
+  color: #fff;
+}
+.sp__hero--cover::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.65));
+}

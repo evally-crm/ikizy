@@ -133,6 +133,34 @@ describe('renderSitePage', () => {
     assert.match(page(base({}, { accent: 'rubi' })), /--accent:#bf0c22/)
   })
 
+  it('cor própria vale no lugar da lista; cor clara demais é escurecida para o texto branco', () => {
+    assert.match(page(base({}, { accent: 'rubi', accent_color: '#1a7f5a' })), /--accent:#1a7f5a/)
+    const light = page(base({}, { accent_color: '#ffff00' })).match(/--accent:(#[0-9a-f]{6})/)?.[1]
+    assert.ok(light && light !== '#ffff00')
+    assert.match(page(base({}, { accent: 'rubi', accent_color: 'vermelho' })), /--accent:#bf0c22/)
+  })
+
+  it('logo só entra se for data URL de imagem válida', () => {
+    const ok = 'data:image/webp;base64,AAAA'
+    assert.match(page(base({}, { logo: ok })), /<img src="data:image\/webp;base64,AAAA"/)
+    assert.doesNotMatch(page(base({}, { logo: 'javascript:alert(1)' })), /<img/)
+    assert.doesNotMatch(page(base({}, { logo: 'data:image/svg+xml;base64,AAAA' })), /<img/)
+    assert.doesNotMatch(page(base({}, { logo: 'data:image/png;base64,AA"onerror="x' })), /<img/)
+  })
+
+  it('cada serviço tem botão de agendar com o nome do serviço na mensagem', () => {
+    const html = page(base())
+    assert.match(html, /href="https:\/\/wa\.me\/5511987650000\?text=Ol%C3%A1!%20Gostaria%20de%20agendar%20%22Alongamento%20em%20gel%22/)
+  })
+
+  it('endereço vira link para o mapa e capa só entra se for imagem válida', () => {
+    const html = page(base({}, { address: 'Rua das Flores, 100 - Centro', cover: 'data:image/jpeg;base64,BBBB' }))
+    assert.match(html, /google\.com\/maps\/search\/\?api=1&amp;query=/)
+    assert.match(html, /Rua das Flores, 100 - Centro/)
+    assert.match(html, /class="hero__img" src="data:image\/jpeg;base64,BBBB"/)
+    assert.doesNotMatch(page(base({}, { cover: 'http://evil.example/x.png' })), /<img class="hero__img"/)
+  })
+
   it('página 404 não é indexada', () => {
     assert.match(renderNotFound(), /name="robots" content="noindex"/)
   })
