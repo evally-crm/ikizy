@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState, type ChangeEvent, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import { ArrowLeft, ArrowRight, ChevronDown, ExternalLink, ImagePlus, Plus, Rocket, Trash2, Undo2, X } from 'lucide-react'
+import { ArrowLeft, ArrowRight, ChevronDown, ExternalLink, ImagePlus, Maximize2, Plus, Rocket, Trash2, Undo2, X } from 'lucide-react'
 import {
   PALETTES,
   CATEGORIES,
@@ -105,6 +105,13 @@ export default function MeuSite() {
   const [publishError, setPublishError] = useState<string | null>(null)
   const [step, setStep] = useState(0)
   const [wizardOn, setWizardOn] = useState<boolean | null>(null)
+  const [fullPref, setFullPref] = useState(() => {
+    try {
+      return localStorage.getItem('ikizy:site:full') !== '0'
+    } catch {
+      return true
+    }
+  })
   const [device, setDevice] = useState<Device>(isWide ? 'desktop' : 'mobile')
   const [logoError, setLogoError] = useState<string | null>(null)
   const logoInput = useRef<HTMLInputElement>(null)
@@ -469,6 +476,27 @@ export default function MeuSite() {
   // guia de criação: abre sozinho para quem ainda não publicou; ?guia=1 abre de novo
   const forced = new URLSearchParams(window.location.search).has('guia')
   const wizard = !loading && !loadError && (wizardOn ?? (!isLive || forced))
+  // tela cheia: só em telas largas; a escolha fica guardada
+  const full = fullPref && isWide
+  const setFull = (on: boolean) => {
+    setFullPref(on)
+    try {
+      localStorage.setItem('ikizy:site:full', on ? '1' : '0')
+    } catch {
+      /* sem storage: vale só nesta visita */
+    }
+  }
+  useEffect(() => {
+    if (!full) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && !wizard && setFull(false)
+    window.addEventListener('keydown', onKey)
+    return () => {
+      document.body.style.overflow = prev
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [full, wizard])
   // trava a rolagem da página enquanto o guia está aberto
   useEffect(() => {
     if (!wizard) return
@@ -610,8 +638,8 @@ export default function MeuSite() {
     </div>
   )
 
-  return (
-    <div className="page page--fit">
+  const root = (
+    <div className={`page page--fit ${full ? 'sfull' : ''}`}>
       <header className="bar">
         <h1 className="bar__title">
           Meu <Em>site</Em>
@@ -638,6 +666,17 @@ export default function MeuSite() {
               {publishing ? 'Publicando…' : justPublished ? 'Publicado!' : !isLive ? 'Publicar site' : dirty ? 'Publicar alterações' : 'Tudo publicado'}
             </Button>
           </div>
+          {isWide &&
+            (full ? (
+              <button type="button" className="sfull__x" aria-label="Minimizar" title="Minimizar (Esc)" onClick={() => setFull(false)}>
+                <X size={20} aria-hidden="true" />
+              </button>
+            ) : (
+              <button type="button" className="mini mini--link" onClick={() => setFull(true)}>
+                <Maximize2 size={14} aria-hidden="true" />
+                <span className="mini__val">Tela cheia</span>
+              </button>
+            ))}
         </div>
       </header>
 
@@ -818,4 +857,6 @@ export default function MeuSite() {
       {wizard && createPortal(wizardOverlay, document.body)}
     </div>
   )
+
+  return full ? createPortal(root, document.body) : root
 }

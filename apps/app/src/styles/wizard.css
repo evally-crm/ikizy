@@ -139,7 +139,8 @@
 .gg__logo b {
   color: var(--brand-500);
 }
-.gg__x {
+.gg__x,
+.sfull__x {
   display: grid;
   place-items: center;
   width: 44px;
@@ -365,4 +366,30 @@
   margin: 0;
   font-size: 13px;
   color: var(--ink-500);
+}
+
+/* Meu site em tela cheia: sem o menu do app, a página inteira vira editor + prévia */
+.sfull {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: auto;
+  max-width: none;
+  padding: 12px 20px 16px;
+  overflow: hidden;
+  background: var(--page-bg);
+}
+.sfull .bar__title {
+  font-size: 22px;
+}
+.sfull > .studio {
+  flex: 1;
+  min-height: 0;
+}
+.sfull .studio__body {
+  overflow-y: auto;
+  padding-right: 6px;
 }
