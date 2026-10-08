@@ -510,3 +510,200 @@
 .wiz__opt[aria-pressed='true'] .wiz__dot {
   border-color: rgba(255, 255, 255, 0.6);
 }
+
+/* guia no computador: a coluna da esquerda cabe inteira, sem rolagem */
+@media (min-width: 900px) {
+  .gg__form {
+    justify-content: safe center;
+    scrollbar-width: none;
+  }
+  .gg__form::-webkit-scrollbar {
+    display: none;
+  }
+  .gg .wiz {
+    gap: 10px;
+  }
+  .gg .auth__title {
+    font-size: 34px;
+  }
+  .gg .wiz__eyebrow {
+    margin-top: 12px;
+  }
+  .gg .wiz__group-title {
+    margin-top: 6px;
+  }
+  .gg .wiz__options {
+    gap: 8px;
+    margin-top: 2px;
+  }
+  .gg .wiz__opt {
+    min-height: 42px;
+    padding: 0 16px;
+    font-size: 15px;
+  }
+  .gg .auth__foot {
+    margin-top: 12px;
+  }
+  .gg .auth__go {
+    width: 58px;
+    height: 58px;
+  }
+}
+/* telas baixas (notebook): aperta mais um pouco */
+@media (min-width: 900px) and (max-height: 760px) {
+  .gg__head {
+    padding-top: 12px;
+    padding-bottom: 8px;
+  }
+  .gg .wiz {
+    gap: 8px;
+  }
+  .gg .auth__title {
+    font-size: 30px;
+  }
+  .gg .wiz__opt {
+    min-height: 38px;
+    font-size: 14px;
+  }
+}
+
+/* setas das etapas do editor (como no cadastro: voltar e seguir ao lado dos tracinhos) */
+.stepbar__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.stepbar__row .stepbar__bars {
+  flex: 1;
+}
+.stepbar__arrow {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--ink-900);
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+.stepbar__arrow:hover:not(:disabled) {
+  background: var(--ink-900);
+  color: var(--white);
+}
+.stepbar__arrow:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+.stepbar__label span {
+  color: var(--ink-500);
+}
+.stepbar__label {
+  color: var(--ink-900);
+  font-weight: 500;
+}
+.stepnav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.stepnav__prev,
+.stepnav__next {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 0 20px;
+  border-radius: var(--radius-pill);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.stepnav__prev {
+  border: 1px solid var(--line-strong, var(--line));
+  background: var(--white);
+  color: var(--ink-900);
+}
+.stepnav__next {
+  border: 0;
+  background: var(--ink-900);
+  color: var(--white);
+}
+.stepnav__next:hover {
+  background: var(--black, #000);
+}
+
+/* grupos da etapa de serviços (categorias e planos) */
+.grp {
+  border-radius: 20px;
+  background: var(--bg);
+}
+.grp + .grp,
+.catalog > .grp {
+  margin-top: 10px;
+}
+.grp__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 62px;
+  padding: 12px 18px;
+  border: 0;
+  border-radius: 20px;
+  background: none;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+.grp__head > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.grp__head strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--ink-900);
+}
+.grp__head small {
+  font-size: 13px;
+  color: var(--ink-500);
+}
+.grp__head svg {
+  flex: none;
+  color: var(--ink-500);
+  transition: transform 0.2s;
+}
+.grp.is-open .grp__head svg {
+  transform: rotate(180deg);
+}
+.grp__badge {
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--brand-900);
+  color: var(--white);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.grp__body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 12px 14px;
+}
+.grp__body .row {
+  background: var(--white);
+}

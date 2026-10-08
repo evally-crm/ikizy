@@ -14,6 +14,7 @@ import {
   type SiteConfig,
   photoUrl,
   type ShowcaseItem,
+  type ClientPlan,
 } from '../data/catalog'
 import { formatBRL } from '../lib/format'
 import { resizeToDataUrl } from '../lib/imageResize'
@@ -29,7 +30,7 @@ type Tab = 'pagina' | 'servicos' | 'vitrine' | 'produtos' | 'previa'
 
 const TABS: { id: Tab; label: string; narrowOnly?: boolean }[] = [
   { id: 'pagina', label: 'Página' },
-  { id: 'servicos', label: 'Serviços e preços' },
+  { id: 'servicos', label: 'Serviços e planos' },
   { id: 'vitrine', label: 'Produtos à venda' },
   { id: 'produtos', label: 'Produtos e custos' },
   { id: 'previa', label: 'Prévia', narrowOnly: true },
@@ -64,6 +65,39 @@ function Section({ title, hint, open, children }: { title: string; hint?: string
       </summary>
       <div className="form">{children}</div>
     </details>
+  )
+}
+
+/** grupo da etapa de serviços: cabeçalho com contagem (e selo opcional) que abre e fecha */
+function Group({
+  title,
+  meta,
+  badge,
+  open,
+  onToggle,
+  children,
+}: {
+  title: string
+  meta: string
+  badge?: string
+  open: boolean
+  onToggle: () => void
+  children: ReactNode
+}) {
+  return (
+    <div className={`grp ${open ? 'is-open' : ''}`}>
+      <button type="button" className="grp__head" aria-expanded={open} onClick={onToggle}>
+        <span>
+          <strong>
+            {title}
+            {badge && <span className="grp__badge">{badge}</span>}
+          </strong>
+          <small>{meta}</small>
+        </span>
+        <ChevronDown size={18} aria-hidden="true" />
+      </button>
+      {open && <div className="grp__body">{children}</div>}
+    </div>
   )
 }
 
@@ -116,7 +150,18 @@ export default function MeuSite() {
   const coverInput = useRef<HTMLInputElement>(null)
 
   const active: Tab = isWide && tab === 'previa' ? 'pagina' : tab
-  const { site, services, products, showcase } = draft
+  const stepTabs = TABS.filter((t) => !t.narrowOnly || !isWide)
+  const stepAt = Math.max(0, stepTabs.findIndex((t) => t.id === active))
+  const bodyRef = useRef<HTMLDivElement>(null)
+  /** troca de etapa e volta ao começo dela */
+  const goTab = (i: number) => {
+    const next = stepTabs[Math.max(0, Math.min(stepTabs.length - 1, i))]
+    if (!next) return
+    setTab(next.id)
+    bodyRef.current?.scrollTo({ top: 0 })
+    window.scrollTo({ top: 0 })
+  }
+  const { site, services, products, showcase, plans } = draft
   const slugReserved = isReservedSlug(site.slug)
 
   const setSite = <K extends keyof SiteConfig>(key: K, value: SiteConfig[K]) =>
@@ -125,7 +170,8 @@ export default function MeuSite() {
     setDraft((d) => ({ ...d, services: d.services.map((s) => (s.id === id ? { ...s, ...patch } : s)) }))
   const patchProduct = (id: string, patch: Partial<Product>) =>
     setDraft((d) => ({ ...d, products: d.products.map((p) => (p.id === id ? { ...p, ...patch } : p)) }))
-  const addService = () =>
+  const addService = () => {
+    openGroup('Unhas')
     setDraft((d) => ({
       ...d,
       services: [
@@ -133,7 +179,27 @@ export default function MeuSite() {
         { id: newId('s'), name: '', category: 'Unhas', price: 0, duration: 60, monthlyVolume: 10, productId: null, visible: true, photo: '', photoId: null },
       ],
     }))
+  }
   const removeService = (id: string) => setDraft((d) => ({ ...d, services: d.services.filter((s) => s.id !== id) }))
+  const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set())
+  const toggleGroup = (key: string) =>
+    setOpenGroups((g) => {
+      const next = new Set(g)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  const openGroup = (key: string) => setOpenGroups((g) => new Set(g).add(key))
+  const patchPlan = (id: string, patch: Partial<ClientPlan>) =>
+    setDraft((d) => ({ ...d, plans: d.plans.map((x) => (x.id === id ? { ...x, ...patch } : x)) }))
+  const addPlan = () => {
+    openGroup('planos')
+    setDraft((d) => ({
+      ...d,
+      plans: [...d.plans, { id: newId('pl'), name: '', description: '', price: 0, includes: [], isNew: true, visible: true }],
+    }))
+  }
+  const removePlan = (id: string) => setDraft((d) => ({ ...d, plans: d.plans.filter((x) => x.id !== id) }))
   const patchShowcase = (id: string, patch: Partial<ShowcaseItem>) =>
     setDraft((d) => ({ ...d, showcase: d.showcase.map((x) => (x.id === id ? { ...x, ...patch } : x)) }))
   const addShowcase = () =>
@@ -366,8 +432,18 @@ export default function MeuSite() {
         Defina o valor, o produto usado e quantos atendimentos faz por mês. O custo de produto e a sobra de cada serviço são
         calculados sozinhos (sem contar comissão).
       </p>
+      {CATEGORIES.filter((cat) => services.some((x) => x.category === cat)).map((cat) => {
+        const list = services.filter((x) => x.category === cat)
+        return (
+          <Group
+            key={cat}
+            title={cat}
+            meta={`${list.length} ${list.length === 1 ? 'serviço' : 'serviços'}`}
+            open={openGroups.has(cat)}
+            onToggle={() => toggleGroup(cat)}
+          >
       <ul className="rows">
-        {services.map((s) => {
+        {list.map((s) => {
           const m = computeMath(s, services, products)
           return (
             <li key={s.id} className={`row ${s.visible ? '' : 'is-hidden'}`}>
@@ -438,9 +514,67 @@ export default function MeuSite() {
           )
         })}
       </ul>
+          </Group>
+        )
+      })}
+      {services.length === 0 && <p className="catalog__empty">Nenhum serviço ainda.</p>}
       <Button variant="ghost" onClick={addService} className="catalog__add">
         <Plus size={16} aria-hidden="true" /> Novo serviço
       </Button>
+
+      <Group
+        title="Planos por assinatura"
+        badge="Novidade"
+        meta={plans.length ? `${plans.length} ${plans.length === 1 ? 'plano' : 'planos'}` : 'Pacotes que a cliente paga por mês'}
+        open={openGroups.has('planos')}
+        onToggle={() => toggleGroup('planos')}
+      >
+        <p className="catalog__intro">
+          Ex.: “Unhas o mês todo”. Aparece na sua página com o botão “Quero este plano”, que abre o WhatsApp. A cobrança você combina com a cliente.
+        </p>
+        <ul className="rows">
+          {plans.map((pl) => (
+            <li key={pl.id} className={`row ${pl.visible ? '' : 'is-hidden'}`}>
+              <div className="row__top">
+                <span className="input row__name">
+                  <input aria-label="Nome do plano" placeholder="Nome do plano" value={pl.name} maxLength={60} onChange={(e) => patchPlan(pl.id, { name: e.target.value })} />
+                </span>
+                <Switch checked={pl.visible} onChange={(v) => patchPlan(pl.id, { visible: v })} label="No site" />
+                <button type="button" className="chevbtn" aria-label={`Remover ${pl.name || 'plano'}`} onClick={() => removePlan(pl.id)}>
+                  <Trash2 size={15} />
+                </button>
+              </div>
+              <div className="row__grid">
+                <label className="mini-field">
+                  <span>Preço por mês</span>
+                  <Money label="Preço por mês" value={pl.price} onChange={(v) => patchPlan(pl.id, { price: v })} />
+                </label>
+                <label className="mini-field mini-field--wide">
+                  <span>Descrição curta</span>
+                  <span className="input">
+                    <input value={pl.description} maxLength={200} placeholder="Ex.: manutenção sem pagar a cada visita" onChange={(e) => patchPlan(pl.id, { description: e.target.value })} />
+                  </span>
+                </label>
+                <label className="mini-field mini-field--wide">
+                  <span>O que inclui (um por linha, até 8)</span>
+                  <span className="input input--area">
+                    <textarea
+                      rows={3}
+                      value={pl.includes.join('\n')}
+                      placeholder={'2 manutenções por mês\nPrioridade na agenda'}
+                      onChange={(e) => patchPlan(pl.id, { includes: e.target.value.split('\n').slice(0, 8) })}
+                    />
+                  </span>
+                </label>
+              </div>
+              <Switch checked={pl.isNew} onChange={(v) => patchPlan(pl.id, { isNew: v })} label="Etiqueta “Novidade” no site" />
+            </li>
+          ))}
+        </ul>
+        <Button variant="ghost" onClick={addPlan} disabled={plans.length >= 6} className="catalog__add">
+          <Plus size={16} aria-hidden="true" /> Novo plano
+        </Button>
+      </Group>
     </div>
   )
 
@@ -752,35 +886,48 @@ export default function MeuSite() {
 
       <div className="studio">
         <Card className="studio__editor">
-          {(() => {
-            const tabs = TABS.filter((t) => !t.narrowOnly || !isWide)
-            const at = Math.max(0, tabs.findIndex((t) => t.id === active))
-            return (
-              <div className="stepbar">
-                <div className="stepbar__bars" role="tablist" aria-label="Seções do editor">
-                  {tabs.map((t, i) => (
-                    <button
-                      key={t.id}
-                      type="button"
-                      role="tab"
-                      id={`tab-${t.id}`}
-                      aria-selected={active === t.id}
-                      aria-controls="studio-panel"
-                      aria-label={t.label}
-                      title={t.label}
-                      className={i <= at ? 'is-done' : undefined}
-                      onClick={() => setTab(t.id)}
-                    >
-                      <i />
-                    </button>
-                  ))}
-                </div>
-                <p className="stepbar__label">{tabs[at].label}</p>
+          <div className="stepbar">
+            <div className="stepbar__row">
+              <button type="button" className="stepbar__arrow" aria-label="Etapa anterior" disabled={stepAt === 0} onClick={() => goTab(stepAt - 1)}>
+                <ArrowLeft size={18} aria-hidden="true" />
+              </button>
+              <div className="stepbar__bars" role="tablist" aria-label="Etapas do editor">
+                {stepTabs.map((t, i) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    role="tab"
+                    id={`tab-${t.id}`}
+                    aria-selected={active === t.id}
+                    aria-controls="studio-panel"
+                    aria-label={t.label}
+                    title={t.label}
+                    className={i <= stepAt ? 'is-done' : undefined}
+                    onClick={() => setTab(t.id)}
+                  >
+                    <i />
+                  </button>
+                ))}
               </div>
-            )
-          })()}
+              <button
+                type="button"
+                className="stepbar__arrow"
+                aria-label="Próxima etapa"
+                disabled={stepAt === stepTabs.length - 1}
+                onClick={() => goTab(stepAt + 1)}
+              >
+                <ArrowRight size={18} aria-hidden="true" />
+              </button>
+            </div>
+            <p className="stepbar__label">
+              {stepTabs[stepAt].label}{' '}
+              <span>
+                · {stepAt + 1} de {stepTabs.length}
+              </span>
+            </p>
+          </div>
 
-          <div className="studio__body" id="studio-panel" role="tabpanel" aria-labelledby={`tab-${active}`}>
+          <div className="studio__body" id="studio-panel" role="tabpanel" aria-labelledby={`tab-${active}`} ref={bodyRef}>
             {active === 'pagina' && (
               <div className="sects">
                 <div className="guidecard">
@@ -937,6 +1084,20 @@ export default function MeuSite() {
             {active === 'previa' && (
               <SiteFrame studio={draft} device="mobile" height={600} />
             )}
+            <div className="stepnav">
+              {stepAt > 0 ? (
+                <button type="button" className="stepnav__prev" onClick={() => goTab(stepAt - 1)}>
+                  <ArrowLeft size={16} aria-hidden="true" /> {stepTabs[stepAt - 1].label}
+                </button>
+              ) : (
+                <span />
+              )}
+              {stepAt < stepTabs.length - 1 && (
+                <button type="button" className="stepnav__next" onClick={() => goTab(stepAt + 1)}>
+                  Próximo: {stepTabs[stepAt + 1].label} <ArrowRight size={16} aria-hidden="true" />
+                </button>
+              )}
+            </div>
           </div>
         </Card>
 
