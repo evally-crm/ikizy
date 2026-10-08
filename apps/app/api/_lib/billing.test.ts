@@ -4,9 +4,11 @@ import type Stripe from 'stripe'
 import {
   HttpError,
   createCheckout,
+  createExtraCampaignCheckout,
   createPortal,
   handleStripeEvent,
   parseCheckoutInput,
+  parseExtraCampaignInput,
   subscriptionPeriodEnd,
   type BillingDb,
   type Membership,
@@ -21,7 +23,12 @@ const NOW = new Date('2026-10-10T12:00:00Z')
 // ---------------------------------------------------------------- fakes
 
 function fakeDb(opts: { member?: Membership | null; sub?: Partial<SubscriptionRow> | null } = {}) {
-  const calls = { setCustomerId: [] as string[], pix: [] as Parameters<BillingDb['applyPixPayment']>[0][], subs: [] as Parameters<BillingDb['applySubscription']>[0][] }
+  const calls = {
+    setCustomerId: [] as string[],
+    pix: [] as Parameters<BillingDb['applyPixPayment']>[0][],
+    subs: [] as Parameters<BillingDb['applySubscription']>[0][],
+    credits: [] as Parameters<BillingDb['addCampaignCredits']>[0][],
+  }
   const seen = new Set<string>()
   const member = opts.member === undefined ? { salonId: 'salon-1', salonName: 'Studio Teste', role: 'owner' } : opts.member
   const sub: SubscriptionRow | null =
@@ -51,6 +58,12 @@ function fakeDb(opts: { member?: Membership | null; sub?: Partial<SubscriptionRo
       return true
     },
     applySubscription: async (p) => void calls.subs.push(p),
+    addCampaignCredits: async (p) => {
+      if (seen.has(p.key)) return false
+      seen.add(p.key)
+      calls.credits.push(p)
+      return true
+    },
   }
   return { db, calls }
 }
@@ -236,6 +249,47 @@ describe('handleStripeEvent · Pix', () => {
     const { db, calls } = fakeDb()
     await handleStripeEvent(ev('checkout.session.completed', { id: 'cs_2', mode: 'subscription', customer: 'cus_7', metadata: { salon_id: 'salon-1' } }), db)
     assert.deepEqual(calls.setCustomerId, ['cus_7'])
+    assert.equal(calls.pix.length, 0)
+  })
+})
+
+// ---------------------------------------------------------------- campanha extra no WhatsApp
+
+describe('campanha extra', () => {
+  it('quantidade: 1 ou 3', () => {
+    assert.deepEqual(parseExtraCampaignInput({ kind: 'campaign_credit' }), { quantity: 1 })
+    assert.deepEqual(parseExtraCampaignInput({ quantity: 3 }), { quantity: 3 })
+    assert.throws(() => parseExtraCampaignInput({ quantity: 50 }), HttpError)
+  })
+
+  it('checkout avulso em cartão ou Pix com o preço da campanha e metadados', async () => {
+    const { db } = fakeDb({ sub: { stripeCustomerId: 'cus_9' } })
+    const { stripe, created } = fakeStripe()
+    await createExtraCampaignCheckout(deps(db, stripe), user, { quantity: 3 })
+    const s = created[0] as Record<string, any>
+    assert.equal(s.mode, 'payment')
+    assert.equal(s.customer, 'cus_9')
+    assert.deepEqual(s.allowed_payment_method_types, ['card', 'pix'])
+    assert.equal(s.line_items[0].quantity, 3)
+    assert.equal(s.line_items[0].price_data.unit_amount, 990)
+    assert.deepEqual(s.metadata, { kind: 'campaign_credit', salon_id: 'salon-1', credits: '3' })
+    assert.match(s.success_url, /\/dashboard\/campanhas\?retorno=ok$/)
+  })
+
+  it('só a dona compra', async () => {
+    const { stripe } = fakeStripe()
+    await rejects(createExtraCampaignCheckout(deps(fakeDb({ member: { salonId: 'salon-1', salonName: 'X', role: 'manager' } }).db, stripe), user, { quantity: 1 }), 403)
+  })
+
+  it('pago: soma as campanhas uma vez; não pago ou inválido: nada', async () => {
+    const { db, calls } = fakeDb()
+    const session = (over: Record<string, unknown> = {}) =>
+      pixSession({ id: 'cs_c', metadata: { kind: 'campaign_credit', salon_id: 'salon-1', credits: '3' }, ...over })
+    await handleStripeEvent(ev('checkout.session.completed', session({ payment_status: 'unpaid' })), db)
+    await handleStripeEvent(ev('checkout.session.async_payment_succeeded', session()), db)
+    await handleStripeEvent(ev('checkout.session.async_payment_succeeded', session()), db)
+    await handleStripeEvent(ev('checkout.session.completed', session({ id: 'cs_x', metadata: { kind: 'campaign_credit', salon_id: 'salon-1', credits: '99' } })), db)
+    assert.deepEqual(calls.credits, [{ key: 'campaign:cs_c', type: 'checkout.session.async_payment_succeeded', salonId: 'salon-1', credits: 3 }])
     assert.equal(calls.pix.length, 0)
   })
 })

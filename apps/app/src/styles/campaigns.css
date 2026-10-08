@@ -1,0 +1,375 @@
+/* ---------- campanhas de oferta no WhatsApp ---------- */
+.camp-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+@media (min-width: 768px) {
+  .camp-top {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.camp-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+.camp-card .btn {
+  margin-top: 6px;
+}
+.camp-card__label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--ink-500);
+}
+.camp-card__big {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: clamp(22px, 3.4vw, 28px);
+  letter-spacing: -0.02em;
+  color: var(--brand-900);
+}
+.camp-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 0 4px var(--success-soft);
+}
+
+.camp-list {
+  display: flex;
+  flex-direction: column;
+  margin-top: 8px;
+}
+.camp-item {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 0;
+  border-top: 1px solid var(--line);
+}
+.camp-item:first-child {
+  border-top: 0;
+}
+.camp-item__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.camp-item__title {
+  font-weight: 500;
+  color: var(--ink-900);
+}
+.camp-item__preview {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: 13px;
+  white-space: pre-line;
+  color: var(--ink-500);
+}
+.camp-item__bar {
+  height: 6px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--gray-200);
+}
+.camp-item__bar i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--brand-500);
+  transition: width 0.4s;
+}
+.camp-item__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+  font-size: 13px;
+  color: var(--ink-700);
+}
+.camp-item__warn {
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: var(--warning-soft);
+  font-size: 13px;
+  color: var(--warning);
+}
+.camp-rules {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+  padding-left: 18px;
+  font-size: 14px;
+  color: var(--ink-700);
+  list-style: disc;
+}
+
+/* QR code */
+.camp-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+  padding-left: 20px;
+  font-size: 14px;
+  color: var(--ink-700);
+  list-style: decimal;
+}
+.camp-qr {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  width: min(280px, 100%);
+  margin: 0 auto 14px;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  background: var(--bg);
+  font-size: 14px;
+  text-align: center;
+  color: var(--ink-500);
+}
+.camp-qr img {
+  width: 100%;
+  height: 100%;
+  border-radius: 10px;
+  background: var(--white);
+  object-fit: contain;
+}
+
+/* ---------- nova campanha (tela cheia, no UX da criação de conta) ---------- */
+.campwiz {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--page-bg);
+}
+.campwiz__inner {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: min(720px, 100%);
+  min-height: 100%;
+  margin: 0 auto;
+  padding: 18px var(--gutter) 0;
+}
+.campwiz .wiz__back {
+  background: var(--white);
+}
+.campwiz__x:disabled {
+  visibility: visible;
+  opacity: 0.5;
+}
+.campwiz .wiz__opt {
+  border-color: var(--line);
+  background: var(--white);
+}
+.campwiz .wiz__opt:hover {
+  background: var(--gray-200);
+}
+.campwiz .wiz__opt[aria-pressed='true'] {
+  border-color: var(--ink-900);
+  background: var(--ink-900);
+}
+.campwiz .input {
+  background: var(--white);
+  border-color: var(--line);
+}
+.campwiz .chip {
+  background: var(--white);
+}
+.campwiz .chip[aria-pressed='true'] {
+  background: var(--brand-900);
+}
+.campwiz__search {
+  background: var(--white);
+}
+.campwiz__selbar {
+  display: flex;
+  gap: 18px;
+  font-size: 14px;
+}
+.campwiz__list {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  background: var(--white);
+}
+.campwiz__row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 52px;
+  padding: 8px 16px;
+  border: 0;
+  border-top: 1px solid var(--line);
+  background: transparent;
+  text-align: left;
+  color: var(--ink-900);
+}
+.campwiz__list li:first-child .campwiz__row {
+  border-top: 0;
+}
+.campwiz__row:hover:not(:disabled) {
+  background: var(--page-bg);
+}
+.campwiz__row:disabled {
+  cursor: not-allowed;
+  color: var(--ink-500);
+}
+.campwiz__check {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1.5px solid var(--gray-300);
+  border-radius: 7px;
+  color: var(--white);
+}
+.campwiz__row[aria-pressed='true'] .campwiz__check {
+  border-color: var(--ink-900);
+  background: var(--ink-900);
+}
+.campwiz__row:disabled .campwiz__check {
+  background: var(--bg);
+}
+.campwiz__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.campwiz__phone,
+.campwiz__why {
+  flex: none;
+  font-size: 12px;
+  color: var(--ink-500);
+}
+.campwiz__why {
+  padding: 3px 9px;
+  border-radius: var(--radius-pill);
+  background: var(--bg);
+}
+
+.campwiz__offer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
+}
+@media (min-width: 720px) {
+  .campwiz__offer {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+.campwiz__preview {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+}
+.campwiz__preview figcaption {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-900);
+}
+/* balão no estilo do WhatsApp, nas cores do IKIZY */
+.campwiz__bubble {
+  align-self: flex-start;
+  max-width: 100%;
+  padding: 12px 14px;
+  border-radius: 4px 18px 18px 18px;
+  background: var(--white);
+  box-shadow: var(--shadow-sm), 0 0 0 1px var(--line);
+  font-size: 14px;
+  line-height: 1.45;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+  color: var(--ink-900);
+}
+
+.campwiz__review {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.campwiz__summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+.campwiz__summary > div {
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--white);
+}
+.campwiz__summary dt {
+  font-size: 12px;
+  color: var(--ink-500);
+}
+.campwiz__summary dd {
+  margin: 2px 0 0;
+  font-weight: 500;
+}
+.campwiz__note {
+  display: flex;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--white);
+  font-size: 13px;
+  color: var(--ink-700);
+}
+.campwiz__note svg {
+  flex: none;
+  margin-top: 1px;
+}
+.campwiz__note--warn {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+/* rodapé preso embaixo: contagem à esquerda, disco escuro à direita */
+.campwiz__foot {
+  position: sticky;
+  bottom: 0;
+  margin-top: auto;
+  margin-inline: calc(-1 * var(--gutter));
+  padding: 12px var(--gutter) calc(14px + env(safe-area-inset-bottom));
+  background: var(--page-bg);
+  border-top: 1px solid var(--line);
+}
+.campwiz__count {
+  font-size: 15px;
+  color: var(--ink-700);
+}
+.campwiz__count strong {
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--ink-900);
+}
+.campwiz__count small {
+  font-size: 13px;
+  color: var(--ink-500);
+}
+.campwiz .auth__go {
+  width: 60px;
+  height: 60px;
+}

@@ -3,6 +3,9 @@ import { createRemoteJWKSet, jwtVerify } from 'jose'
 import Stripe from 'stripe'
 import { HttpError, type BillingDb, type Membership, type SubscriptionRow } from './billing.js'
 import type { BookingDb, BookingResult, Slot } from './booking.js'
+import type { CampaignDb, CampaignSummary, ClaimedMessage, CreateResult } from './campaigns.js'
+import { createEvolutionGateway, type InstanceState, type WhatsappGateway } from './evolution.js'
+import { GAP_SECONDS, FREE_CAMPAIGNS_PER_MONTH, MAX_RECIPIENTS, MIN_RECIPIENTS, type TemplateId } from '../../src/lib/campaigns.js'
 import type { PublicSite } from './siteHtml.js'
 
 /** lê uma variável de ambiente obrigatória (configurada na Vercel, nunca no código) */
@@ -106,6 +109,11 @@ export function createDb(): BillingDb {
       return rows.length > 0
     },
 
+    async addCampaignCredits({ key, type, salonId, credits }) {
+      const rows = (await sql`select public.add_campaign_credits(${key}, ${type}, ${salonId}::uuid, ${credits}) as ok`) as Row[]
+      return rows[0]?.ok === true
+    },
+
     // eventos fora de ordem: só aplica se for mais novo que o último já aplicado
     async applySubscription(p) {
       await sql`
@@ -155,6 +163,149 @@ export function createBookingDb(): BookingDb {
         r: BookingResult
       }[]
       return rows[0].r
+    },
+  }
+}
+
+// ---------------------------------------------------------------- campanhas no WhatsApp (Evolution API)
+
+/** null quando a Evolution não está configurada (a tela mostra "ainda não disponível") */
+export function whatsappGateway(): WhatsappGateway | null {
+  const url = process.env.EVOLUTION_API_URL
+  const apiKey = process.env.EVOLUTION_API_KEY
+  return url && apiKey ? createEvolutionGateway({ url, apiKey }) : null
+}
+
+/** a Evolution avisa aqui quando o WhatsApp conecta/cai e quando uma cliente responde SAIR */
+export const whatsappWebhookUrl = () => `${appUrl()}/api/whatsapp/webhook?token=${encodeURIComponent(process.env.EVOLUTION_WEBHOOK_SECRET ?? '')}`
+
+export function createCampaignDb(): CampaignDb {
+  const sql = neon(env('DATABASE_URL'))
+  const billing = createDb()
+  const asState = (v: unknown): InstanceState => (v === 'open' || v === 'connecting' ? v : 'close')
+
+  return {
+    getMembership: billing.getMembership,
+
+    async getInstance(salonId) {
+      const rows = (await sql`select instance_name, state, phone from public.whatsapp_instances where salon_id = ${salonId}`) as Row[]
+      const r = rows[0]
+      return r ? { name: r.instance_name as string, state: asState(r.state), phone: (r.phone as string | null) ?? null } : null
+    },
+
+    async saveInstance(salonId, name, state, phone) {
+      await sql`
+        insert into public.whatsapp_instances (salon_id, instance_name, state, phone) values (${salonId}, ${name}, ${state}, ${phone})
+        on conflict (salon_id) do update set state = excluded.state, phone = coalesce(excluded.phone, public.whatsapp_instances.phone), updated_at = now()`
+    },
+
+    async findSalonByInstance(name) {
+      const rows = (await sql`select salon_id from public.whatsapp_instances where instance_name = ${name}`) as Row[]
+      return (rows[0]?.salon_id as string | undefined) ?? null
+    },
+
+    async setInstanceState(name, state, phone) {
+      const rows = (await sql`
+        update public.whatsapp_instances set state = ${state}, phone = coalesce(${phone ?? null}, phone), updated_at = now()
+        where instance_name = ${name} returning salon_id`) as Row[]
+      return (rows[0]?.salon_id as string | undefined) ?? null
+    },
+
+    async getSalon(salonId) {
+      const rows = (await sql`
+        select s.name, s.slug, coalesce(ss.published, false) as published
+        from public.salons s left join public.site_settings ss on ss.salon_id = s.id where s.id = ${salonId}`) as Row[]
+      const r = rows[0]
+      return { name: (r?.name as string) ?? '', siteUrl: r?.published ? `https://${r.slug as string}.ikizy.com` : undefined }
+    },
+
+    async getQuota(salonId) {
+      const rows = (await sql`select public.campaign_quota(${salonId}::uuid) as q`) as { q: { used_free: number; credits: number } }[]
+      return { usedFree: Number(rows[0]?.q.used_free ?? 0), credits: Number(rows[0]?.q.credits ?? 0) }
+    },
+
+    async listCampaigns(salonId) {
+      const rows = (await sql`
+        select c.id, c.template, c.preview, c.status, c.used_credit, c.total, c.created_at,
+               count(m.id) filter (where m.status = 'sent') as sent,
+               count(m.id) filter (where m.status = 'failed') as failed
+        from public.campaigns c left join public.campaign_messages m on m.campaign_id = c.id
+        where c.salon_id = ${salonId}
+        group by c.id order by c.created_at desc limit 20`) as Row[]
+      return rows.map(
+        (r): CampaignSummary => ({
+          id: r.id as string,
+          template: r.template as TemplateId,
+          preview: r.preview as string,
+          status: r.status as CampaignSummary['status'],
+          usedCredit: r.used_credit === true,
+          total: Number(r.total),
+          sent: Number(r.sent),
+          failed: Number(r.failed),
+          createdAt: new Date(r.created_at as string).toISOString(),
+        }),
+      )
+    },
+
+    async exclusions(salonId) {
+      const rows = (await sql`
+        select id, offers_opt_out_at is not null as saiu,
+               exists (select 1 from public.campaign_messages m where m.client_id = c.id and m.month = public.campaign_month()
+                       and m.status in ('queued', 'sending', 'sent')) as recebeu
+        from public.clients c where c.salon_id = ${salonId}`) as Row[]
+      return {
+        optedOut: rows.filter((r) => r.saiu === true).map((r) => r.id as string),
+        receivedThisMonth: rows.filter((r) => r.recebeu === true).map((r) => r.id as string),
+      }
+    },
+
+    async getClients(salonId, ids) {
+      const rows = (await sql`
+        select id, name, phone from public.clients
+        where salon_id = ${salonId} and id = any(${ids}::uuid[]) and offers_opt_out_at is null`) as Row[]
+      return rows.map((r) => ({ id: r.id as string, name: r.name as string, phone: r.phone as string }))
+    },
+
+    async createCampaign(p) {
+      const rows = (await sql`
+        select public.create_offer_campaign(
+          ${p.salonId}::uuid, ${p.userId}::uuid, ${p.template}, ${JSON.stringify(p.fields)}::jsonb, ${p.preview},
+          ${JSON.stringify(p.messages)}::jsonb, ${FREE_CAMPAIGNS_PER_MONTH}, ${MIN_RECIPIENTS}, ${MAX_RECIPIENTS},
+          ${GAP_SECONDS.min}, ${GAP_SECONDS.max}) as r`) as { r: CreateResult }[]
+      return rows[0].r
+    },
+
+    async cancelCampaign(salonId, id) {
+      const rows = (await sql`select public.cancel_offer_campaign(${salonId}::uuid, ${id}::uuid) as r`) as { r: { ok: boolean; error?: string; refunded?: boolean } }[]
+      return rows[0].r
+    },
+
+    async claim(limit) {
+      const rows = (await sql`select * from public.claim_campaign_messages(${limit})`) as Row[]
+      return rows.map(
+        (r): ClaimedMessage => ({ id: r.id as string, salonId: r.salon_id as string, instance: r.instance_name as string, phone: r.phone as string, body: r.body as string }),
+      )
+    },
+
+    async finish(id, ok, error) {
+      await sql`select public.finish_campaign_message(${id}::uuid, ${ok}, ${error ?? null})`
+    },
+
+    async requeue(id) {
+      await sql`select public.requeue_campaign_message(${id}::uuid)`
+    },
+
+    async pause(salonId, messageId) {
+      await sql`select public.pause_salon_campaigns(${salonId}::uuid, ${messageId ?? null}::uuid)`
+    },
+
+    async resume(salonId) {
+      await sql`select public.resume_salon_campaigns(${salonId}::uuid)`
+    },
+
+    async optOut(salonId, phones) {
+      const rows = (await sql`select public.opt_out_offers(${salonId}::uuid, ${phones}::text[]) as n`) as Row[]
+      return Number(rows[0]?.n ?? 0)
     },
   }
 }

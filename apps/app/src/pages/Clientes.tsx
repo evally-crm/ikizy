@@ -12,6 +12,7 @@ import {
   CalendarPlus,
   FileSignature,
   Heart,
+  Megaphone,
   Pencil,
   MessageCircle,
   Phone,
@@ -601,6 +602,9 @@ export default function Clientes() {
             <dd>{missing}</dd>
           </div>
         </dl>
+        <Link to={dash('/campanhas?nova=1')} className="btn btn--light btn--sm">
+          <Megaphone size={16} aria-hidden="true" /> Campanha
+        </Link>
         <Button size="sm" onClick={() => setDialog('new')}>
           <Plus size={16} aria-hidden="true" /> Nova cliente
         </Button>

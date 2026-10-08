@@ -21,6 +21,7 @@ Módulos do sistema (`app.ikizy.com/dashboard`):
 | Clientes | carteira, VIP, novas, sumidas, histórico |
 | Financeiro | fechamento mensal (recibo), saídas, comissões, formas de pagamento |
 | Meu site | editor do site público do negócio (detalhado na seção 5) |
+| Campanhas | ofertas pelo WhatsApp do próprio salão (Evolution API), 10 a 150 clientes, 1 grátis/mês + extras pagas |
 | Assinatura | plano do IKIZY (Stripe: cartão e Pix) |
 
 Planos do IKIZY: Solo R$ 9,90, Studio R$ 29,90, Salão R$ 59,90 (fonte única: `apps/app/src/lib/plans.ts`). Todo salão novo ganha 30 dias de teste do Solo.
@@ -46,6 +47,7 @@ Variáveis (só nomes):
 - `apps/app/.env.local`: `VITE_NEON_AUTH_URL`, `VITE_NEON_DATA_API_URL` (vão para o navegador).
 - `.env.local` da raiz (do `neon env pull`): `DATABASE_URL`, `DATABASE_URL_UNPOOLED`, `NEON_AUTH_BASE_URL`, `NEON_DATA_API_URL` e outras.
 - Vercel `ikizy-app` (Production): `DATABASE_URL`, `NEON_AUTH_BASE_URL`, `APP_URL`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PORTAL_CONFIGURATION`, `VITE_NEON_AUTH_URL`, `VITE_NEON_DATA_API_URL`.
+- Campanhas no WhatsApp (ainda não configuradas): `EVOLUTION_API_URL`, `EVOLUTION_API_KEY`, `EVOLUTION_WEBHOOK_SECRET`, `CRON_SECRET`. Sem elas a tela de Campanhas mostra "ainda não ativado". Passo a passo da VPS em [`infra/evolution/README.md`](infra/evolution/README.md).
 
 **Atenção:** o app local (`localhost:5173`) usa o **mesmo banco de produção**. Tudo que é salvo localmente vale no site real.
 
@@ -73,7 +75,7 @@ que termina em `rollback`, com um salão fictício.
 ```bash
 cd apps/app
 npx tsc -b              # checagem de tipos REAL do app (o "tsc -p ." não checa nada: a raiz só referencia outros configs)
-npm run test:api        # testes das funções do servidor (node:test via tsx), hoje 81 testes
+npm run test:api        # testes das funções do servidor (node:test via tsx), hoje 113 testes
 npm run typecheck:api   # tipos das funções da Vercel
 npm run build
 ```
@@ -100,6 +102,7 @@ npm run build
 | `20261019000000_palette_dark` | paleta escura `preto-branco` aceita no banco |
 | `20261020000000_client_file` | ficha completa da cliente (e-mail, Instagram, endereço, profissão, como conheceu, anamnese em jsonb, assinatura do termo), `loyalty_settings`, `loyalty_entries` (selos extras e resgates) e `client_notes` |
 | `20261021000000_client_photos` | fotos de antes e depois na ficha (`client_photos`: miniatura + foto, só membros do salão leem; não passam pela página pública) |
+| `20261022000000_offer_campaigns` | **(ainda não aplicada)** campanhas de oferta no WhatsApp: `whatsapp_instances` (um WhatsApp por salão), `campaigns`, `campaign_messages` (fila de envio, 1 oferta por cliente/mês por índice único), `campaign_credits` (extras pagas), `clients.offers_opt_out_at` (respondeu SAIR) e funções só do servidor (`create_offer_campaign`, `claim_campaign_messages`...) |
 
 Regras importantes:
 - Toda tabela tem `salon_id` + RLS. Escrita de catálogo/site só `owner`/`manager`; sem assinatura ativa, escrita bloqueada (políticas restritivas).
@@ -227,7 +230,8 @@ Hoje: a cliente escolhe serviço, profissional, dia e horário livre, informa no
 | Prioridade | Melhoria | Por quê / como |
 |---|---|---|
 | P1 | **Planos por assinatura com cobrança de verdade** | Hoje os planos aparecem no site e a cobrança é por WhatsApp. Próximo passo: assinatura da cliente (cartão recorrente ou Pix mensal), controle de uso ("2 de 2 manutenções no mês") e aviso de vencimento. |
-| ~~P2~~ | **Mensagens prontas no WhatsApp** (feito) | Sem disparo automático, por decisão da usuária: o texto abre no WhatsApp da própria pessoa (wa.me). Tipos em `lib/messages.ts`; card "Mensagens de hoje" no Início (lembretes, pós, faltas, aniversário, prêmio, sumidas), botão Mensagem na agenda e na ficha. O "já enviei" fica só no navegador. Disparo automático (Meta oficial, Z-API ou Evolution) ficou para depois. |
+| ~~P2~~ | **Mensagens prontas no WhatsApp** (feito) | Mensagens individuais continuam sem disparo automático: o texto abre no WhatsApp da própria pessoa (wa.me). Tipos em `lib/messages.ts`; card "Mensagens de hoje" no Início (lembretes, pós, faltas, aniversário, prêmio, sumidas), botão Mensagem na agenda e na ficha. O "já enviei" fica só no navegador. |
+| ~~P2~~ | **Campanhas de oferta no WhatsApp** (feito, falta ativar) | Só ofertas de marketing, a partir de 10 clientes (máx. 150), pelo WhatsApp do próprio salão conectado por QR code na Evolution API (VPS). Modelos fixos em `lib/campaigns.ts` (preço especial, desconto, novidade, horários livres); o servidor monta o texto. Limites: 1 campanha grátis/mês por salão + extras a R$ 9,90 (Stripe, cartão ou Pix, sem validade); cada cliente recebe no máx. 1 oferta/mês; SAIR tira da lista. Envio aos poucos (1 por salão por minuto, 8h–20h). Tela `/dashboard/campanhas` (menu "Mais" e atalho em Clientes). Falta: VPS + variáveis + migration (`infra/evolution/README.md`). |
 | P2 | **Aniversariantes** | Lista do mês com mensagem pronta e cupom. |
 | ~~P2~~ | **Fidelidade** (feito) | Cartão de selos configurável por salão (selos por prêmio e prêmio), selo extra, resgate e desfazer. Próximo: cashback. |
 | P3 | **Venda de produtos com estoque** | A vitrine existe; somar estoque, baixa na venda e alerta de reposição. |
@@ -251,7 +255,7 @@ Hoje: a cliente escolhe serviço, profissional, dia e horário livre, informa no
 | P1 | **Checklist de primeiros passos no Início** | "Defina seu horário → cadastre serviços → publique o site → ligue o agendamento". Guia o salão até ter valor no primeiro dia (a GlossGenius faz isso). |
 | P1 | **App instalável (PWA) + notificações push** | Base para avisar novos pedidos e lembretes. |
 | P2 | **Indique e ganhe** | Como o "Give $30, get $30" da GlossGenius: link de indicação, crédito na assinatura das duas. Crescimento barato. |
-| P2 | **Testes de ponta a ponta** | Playwright para o fluxo cadastro → site → agendamento; hoje há só testes das funções do servidor (81). |
+| P2 | **Testes de ponta a ponta** | Playwright para o fluxo cadastro → site → agendamento; hoje há só testes das funções do servidor (113). |
 | P2 | **Monitoramento de erros** | Sentry (ou similar) no app e nas funções da Vercel. |
 | P3 | **Branch de banco para desenvolvimento** | Hoje o `localhost` usa o banco de produção. Usar uma branch do Neon para dev/preview e aplicar migrations primeiro nela. |
 | P3 | **LGPD** | Termo de consentimento no agendamento, exportar/apagar dados da cliente. |

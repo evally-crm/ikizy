@@ -19,6 +19,7 @@
   "include": [
     "api",
     "scripts",
-    "src/lib/plans.ts"
+    "src/lib/plans.ts",
+    "src/lib/campaigns.ts"
   ]
 }

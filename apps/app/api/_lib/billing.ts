@@ -13,6 +13,7 @@ import {
   type PixMonths,
   type PlanId,
 } from '../../src/lib/plans.js'
+import { EXTRA_CAMPAIGN_CENTS, isExtraPack, type ExtraPack } from '../../src/lib/campaigns.js'
 
 /** erro com código HTTP e mensagem segura para mostrar à pessoa */
 export class HttpError extends Error {
@@ -51,6 +52,8 @@ export interface BillingDb {
   findSalonByCustomer(customerId: string): Promise<string | null>
   /** soma meses ao acesso, uma única vez por `key` (o Stripe reenvia eventos) */
   applyPixPayment(p: { key: string; type: string; salonId: string; plan: PlanId; months: PixMonths; customerId: string | null }): Promise<boolean>
+  /** soma campanhas extras pagas, uma única vez por `key` */
+  addCampaignCredits(p: { key: string; type: string; salonId: string; credits: ExtraPack }): Promise<boolean>
   applySubscription(p: {
     salonId: string
     plan: PlanId
@@ -184,6 +187,49 @@ export async function createCheckout(deps: CheckoutDeps, user: { id: string; ema
   return { url: session.url }
 }
 
+/** campanha extra de oferta no WhatsApp: pagamento avulso (cartão ou Pix), só a dona compra */
+export function parseExtraCampaignInput(body: unknown): { quantity: ExtraPack } {
+  const q = ((body ?? {}) as Record<string, unknown>).quantity ?? 1
+  if (!isExtraPack(q)) throw new HttpError(400, 'invalid_quantity', 'Quantidade inválida.')
+  return { quantity: q }
+}
+
+export async function createExtraCampaignCheckout(deps: CheckoutDeps, user: { id: string; email?: string }, input: { quantity: ExtraPack }) {
+  const { db, stripe, appUrl } = deps
+  const member = await db.getMembership(user.id)
+  if (!member) throw new HttpError(404, 'no_salon', 'Você ainda não tem um negócio cadastrado.')
+  if (member.role !== 'owner') throw new HttpError(403, 'not_owner', 'Só a dona do negócio pode comprar campanhas extras.')
+  const sub = await db.getSubscription(member.salonId)
+  if (!sub) throw new HttpError(404, 'no_subscription', 'Assinatura não encontrada.')
+
+  let customerId = sub.stripeCustomerId
+  if (!customerId) {
+    const customer = await stripe.customers.create({ email: user.email, name: member.salonName, metadata: { salon_id: member.salonId } })
+    customerId = customer.id
+    await db.setCustomerId(member.salonId, customerId)
+  }
+
+  const session = await stripe.checkout.sessions.create({
+    customer: customerId,
+    client_reference_id: member.salonId,
+    locale: 'pt-BR',
+    mode: 'payment',
+    allowed_payment_method_types: ['card', 'pix'],
+    line_items: [
+      {
+        quantity: input.quantity,
+        price_data: { currency: 'brl', unit_amount: EXTRA_CAMPAIGN_CENTS, product_data: { name: 'IKIZY · Campanha extra no WhatsApp' } },
+      },
+    ],
+    payment_method_options: { pix: { expires_after_seconds: 24 * 60 * 60 } },
+    metadata: { kind: 'campaign_credit', salon_id: member.salonId, credits: String(input.quantity) },
+    success_url: `${appUrl}/dashboard/campanhas?retorno=ok`,
+    cancel_url: `${appUrl}/dashboard/campanhas?retorno=cancelado`,
+  })
+  if (!session.url) throw new HttpError(502, 'stripe_no_url', 'Não foi possível abrir o pagamento agora.')
+  return { url: session.url }
+}
+
 export async function createPortal(deps: CheckoutDeps, user: { id: string }) {
   const { db, stripe, appUrl, portalConfiguration } = deps
   const member = await db.getMembership(user.id)
@@ -251,6 +297,12 @@ export async function handleStripeEvent(event: Stripe.Event, db: BillingDb): Pro
         const months = Number(s.metadata.months)
         if (!isPlanId(plan) || !isPixMonths(months)) return
         await db.applyPixPayment({ key: `pix:${s.id}`, type: event.type, salonId, plan, months, customerId })
+      } else if (s.mode === 'payment' && s.metadata?.kind === 'campaign_credit') {
+        // Pix confirma depois (async_payment_succeeded); cartão já chega pago
+        if (s.payment_status !== 'paid') return
+        const credits = Number(s.metadata.credits)
+        if (!isExtraPack(credits)) return
+        await db.addCampaignCredits({ key: `campaign:${s.id}`, type: event.type, salonId, credits })
       } else if (s.mode === 'subscription' && customerId) {
         await db.setCustomerId(salonId, customerId)
       }
