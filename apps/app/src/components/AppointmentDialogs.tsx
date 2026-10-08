@@ -266,6 +266,8 @@ export function AppointmentDialog({
     else {
       notify(done)
       onClose()
+      // pedido do site confirmado: já abre a mensagem para avisar a cliente que está garantido
+      if (appointment.status === 'pendente' && patch.status === 'confirmado' && appointment.phone.replace(/\D/g, '')) onMessage(appointment)
     }
   }
 

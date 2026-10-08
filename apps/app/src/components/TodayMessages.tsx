@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { addDays, format } from 'date-fns'
+import { addDays, format, parseISO } from 'date-fns'
 import { Check, Send } from 'lucide-react'
 import { useAgenda } from '../data/AgendaProvider'
 import { useClientBook } from '../data/useClientBook'
@@ -53,7 +53,10 @@ export function TodayMessages() {
       const ctx = { clientName: a.client, service: a.service, date: a.date, start: a.start }
       const base = { kinds: APPOINTMENT_KINDS, name: a.client, phone: a.phone, context: ctx }
       const open = a.status === 'pendente' || a.status === 'confirmado'
-      if (a.date === today && open && a.start >= nowMinutes) push('hoje', a.id, { ...base, detail: `Hoje às ${formatTime(a.start)} · ${a.service}` })
+      const future = a.date > today || (a.date === today && a.start >= nowMinutes)
+      // pedido do site sem resposta: a cliente ainda não sabe se o horário está garantido
+      if (a.status === 'pendente' && future) push('confirmacao', a.id, { ...base, detail: `Aguardando você · ${a.date === today ? 'hoje' : a.date === tomorrow ? 'amanhã' : format(parseISO(a.date), 'dd/MM')} às ${formatTime(a.start)}` })
+      else if (a.date === today && open && a.start >= nowMinutes) push('hoje', a.id, { ...base, detail: `Hoje às ${formatTime(a.start)} · ${a.service}` })
       else if (a.date === tomorrow && open) push('lembrete', a.id, { ...base, detail: `Amanhã às ${formatTime(a.start)} · ${a.service}` })
       else if (a.date === today && a.status === 'concluido') push('pos', a.id, { ...base, detail: `Atendida hoje · ${a.service}` })
       else if (a.date === today && a.status === 'faltou') push('falta', a.id, { ...base, detail: `Faltou hoje às ${formatTime(a.start)}` })
