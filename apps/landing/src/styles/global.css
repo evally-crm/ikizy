@@ -501,6 +501,12 @@ em {
   font-size: 15px;
   color: var(--ink-500);
 }
+.hero2__hint {
+  margin-top: 12px;
+  max-width: 44ch;
+  font-size: 13px;
+  color: var(--ink-500);
+}
 
 /* esfera de pontos (a mesma arte da tela de acesso), cortada em faixas */
 .art {

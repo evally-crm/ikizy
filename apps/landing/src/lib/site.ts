@@ -6,6 +6,13 @@ export const LINKS = {
   signup: `${APP_URL}/cadastro`,
 } as const
 
+/** textos dos botões de cadastro: deixam claro que é gestão de negócio de beleza, simples e grátis para testar */
+export const CTA = {
+  main: 'Organizar meu salão grátis',
+  short: 'Teste grátis',
+  hint: '1 mês grátis, sem cartão. Agenda, clientes e caixa do seu negócio de beleza prontos em minutos.',
+} as const
+
 export const CONTACT_EMAIL = 'contato@ikizy.com'
 
 /** dados da empresa nos documentos legais (/privacidade e /termos); razão social conforme o cadastro do CNPJ */
