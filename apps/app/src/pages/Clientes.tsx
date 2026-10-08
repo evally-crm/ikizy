@@ -250,7 +250,7 @@ function ClientDetail({
       )}
 
       {/* perfil — card escuro */}
-      <Card variant="dark" className="profile">
+      <Card className="profile">
         <div className="profile__top">
           <div className="profile__who">
             <span className="profile__avatar" aria-hidden="true">
@@ -312,33 +312,36 @@ function ClientDetail({
           </ul>
         )}
 
-        <div className="profile__stats">
-          <div>
-            <p className="card__sub">Total gasto</p>
-            <Money value={client.totalSpent} size="lg" />
+        {/* cliente nova: sem números zerados, só o essencial */}
+        {hasVisits && (
+          <div className="profile__stats">
+            <div>
+              <p className="card__sub">Total gasto</p>
+              <Money value={client.totalSpent} size="lg" />
+            </div>
+            <div>
+              <p className="card__sub">Visitas</p>
+              <p className="profile__num">{client.visits}</p>
+            </div>
+            <div>
+              <p className="card__sub">Ticket médio</p>
+              <p className="profile__num">{formatBRL(ticket).replace(',00', '')}</p>
+            </div>
+            <div>
+              <p className="card__sub">Volta a cada</p>
+              <p className="profile__num">
+                {client.visits > 1 ? (
+                  <>
+                    ~{client.interval}
+                    <small> dias</small>
+                  </>
+                ) : (
+                  '—'
+                )}
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="card__sub">Visitas</p>
-            <p className="profile__num">{client.visits}</p>
-          </div>
-          <div>
-            <p className="card__sub">Ticket médio</p>
-            <p className="profile__num">{formatBRL(ticket).replace(',00', '')}</p>
-          </div>
-          <div>
-            <p className="card__sub">Volta a cada</p>
-            <p className="profile__num">
-              {client.visits > 1 ? (
-                <>
-                  ~{client.interval}
-                  <small> dias</small>
-                </>
-              ) : (
-                '—'
-              )}
-            </p>
-          </div>
-        </div>
+        )}
 
         <div className={`profile__return ${overdue > 0 && !upcoming ? 'is-late' : ''}`}>
           {upcoming ? (
