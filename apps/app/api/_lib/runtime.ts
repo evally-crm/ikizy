@@ -98,6 +98,7 @@ export function createDb(): BillingDb {
           status = 'active',
           billing_method = 'pix',
           cancel_at_period_end = false,
+          courtesy = false,
           access_until = greatest(access_until, now()) + (${months}::int * interval '1 month'),
           stripe_customer_id = coalesce(stripe_customer_id, ${customerId}),
           updated_at = now()
@@ -113,6 +114,7 @@ export function createDb(): BillingDb {
           plan = ${p.plan}::public.billing_plan,
           status = ${p.status}::public.billing_status,
           billing_method = 'card',
+          courtesy = false,
           stripe_customer_id = coalesce(${p.customerId}, stripe_customer_id),
           stripe_subscription_id = ${p.subscriptionId},
           cancel_at_period_end = ${p.cancelAtPeriodEnd},

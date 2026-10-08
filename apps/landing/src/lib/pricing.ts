@@ -26,23 +26,23 @@ export const PLANS: LandingPlan[] = [
     cents: 990,
     hot: false,
     cta: 'Começar com 1 mês grátis',
-    items: ['1 mês grátis, sem cartão', 'Para quem atende sozinha', 'Agenda e clientes', 'Financeiro básico', 'Site do negócio'],
+    items: ['1 mês grátis, sem cartão', 'Para quem atende sozinha', '1 profissional (você)', 'Agenda e clientes', 'Financeiro básico', 'Site do negócio'],
   },
   {
     id: 'studio',
     name: 'Studio',
     cents: 2990,
     hot: true,
-    cta: 'Assinar o Studio',
-    items: ['Equipe pequena', 'Tudo do Solo', 'Comissões por profissional', 'Fechamento mensal em recibo', 'Relatórios'],
+    cta: 'Testar 1 mês grátis',
+    items: ['1 mês grátis, sem cartão', 'Equipe pequena', 'Até 4 profissionais', 'Tudo do Solo', 'Comissões por profissional', 'Fechamento mensal em recibo'],
   },
   {
     id: 'salao',
     name: 'Salão',
     cents: 5990,
     hot: false,
-    cta: 'Assinar o Salão',
-    items: ['Equipe maior', 'Tudo do Studio', 'Mais profissionais e permissões', 'Atendimento prioritário'],
+    cta: 'Testar 1 mês grátis',
+    items: ['1 mês grátis, sem cartão', 'Equipe maior', 'Profissionais sem limite', 'Tudo do Studio', 'Atendimento prioritário'],
   },
 ]
 

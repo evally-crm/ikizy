@@ -5,7 +5,7 @@ import { useAuth } from '../auth/AuthProvider'
 import { useSubscription } from '../billing/SubscriptionProvider'
 import type { ReactNode } from 'react'
 import { Button, Card, Em, Money } from '../components/ui'
-import { BillingError, openPortal, startCheckout } from '../lib/billingApi'
+import { BillingError, openPortal, startCheckout, switchTrialPlan } from '../lib/billingApi'
 import { formatBRL } from '../lib/format'
 import {
   PIX_DISCOUNT_PCT,
@@ -74,6 +74,15 @@ export default function Assinatura() {
 
   const pay = (plan: PlanId, method: BillingMethod) => run(`${plan}-${method}`, () => startCheckout(plan, method, months))
 
+  // teste grátis sem forma de pagamento: dá para experimentar outro plano sem pagar
+  const canSwitchTrial = state === 'trial' && !!sub && !sub.method
+  const tryPlan = (plan: PlanId) =>
+    run(`${plan}-trial`, async () => {
+      await switchTrialPlan(plan)
+      await refresh()
+      setBusy(null)
+    })
+
   return (
     <div className="page">
       <header className="page__head">
@@ -122,13 +131,15 @@ export default function Assinatura() {
                   Teste grátis · restam <Em>{daysLeft(sub.accessUntil)} dias</Em>
                 </>
               )}
+              {state === 'courtesy' && <>Acesso <Em>liberado</Em></>}
               {state === 'active' && <>Assinatura ativa</>}
               {state === 'ending' && <>Seu acesso termina em breve</>}
               {state === 'past_due' && <>Pagamento pendente</>}
               {state === 'expired' && <>Acesso encerrado</>}
             </p>
             <p className="billing-status__text">
-              {state === 'trial' && `Sem cartão. O teste vai até ${longDate.format(sub.accessUntil)}.`}
+              {state === 'trial' && `Sem cartão. O teste vai até ${longDate.format(sub.accessUntil)}. Durante o teste, você pode experimentar qualquer plano.`}
+              {state === 'courtesy' && `Cortesia da IKIZY: você usa o sistema de graça até ${longDate.format(sub.accessUntil)}. Nada será cobrado.`}
               {isCardTrial(sub) && `Teste grátis até ${longDate.format(periodEnd(sub))}. Depois, cobramos ${formatBRL(PLANS[sub.plan].cents / 100)}/mês no cartão, e você pode cancelar antes pelo portal.`}
               {state === 'active' && sub.method === 'card' && !isCardTrial(sub) && `Renova automaticamente no cartão em ${longDate.format(periodEnd(sub))}.`}
               {state === 'active' && sub.method === 'pix' && `Pago por Pix. Acesso até ${longDate.format(sub.accessUntil)}. Para renovar, pague de novo antes dessa data.`}
@@ -148,7 +159,7 @@ export default function Assinatura() {
 
       {!isOwner && sub && <p className="billing-note">Só a dona do negócio pode assinar ou mudar o plano.</p>}
 
-      {sub && (
+      {sub && state !== 'courtesy' && (
       <section aria-labelledby="pix-months" className="billing-pix">
         <p id="pix-months" className="billing-pix__label">
           Se pagar com Pix, quantos meses adiantado?
@@ -172,12 +183,12 @@ export default function Assinatura() {
       </section>
       )}
 
-      {sub && (
+      {sub && state !== 'courtesy' && (
       <div className="billing-plans">
         {PLAN_IDS.map((id) => {
           const plan = PLANS[id]
           const current = sub?.plan === id && state !== 'expired'
-          const inTrialOffer = id === 'solo' && state === 'trial'
+          const inTrialOffer = state === 'trial'
           const total = pixAmountCents(id, months)
           const full = pixFullCents(id, months)
           const discount = PIX_DISCOUNT_PCT[months]
@@ -186,7 +197,7 @@ export default function Assinatura() {
               <div className="billing-plan__head">
                 <h2>{plan.name}</h2>
                 {current && <Badge>Seu plano</Badge>}
-                {plan.trialDays > 0 && !current && <Badge>{plan.trialDays} dias grátis</Badge>}
+                {canSwitchTrial && !current && <Badge>Grátis no teste</Badge>}
               </div>
               <p className="billing-plan__audience">{plan.audience}</p>
               <p className="billing-plan__price">
@@ -211,6 +222,11 @@ export default function Assinatura() {
                 ))}
               </ul>
 
+              {canSwitchTrial && !current && (
+                <Button variant="light" disabled={!isOwner || busy !== null} onClick={() => tryPlan(id)}>
+                  {busy === `${id}-trial` ? 'Trocando…' : 'Testar este plano grátis'}
+                </Button>
+              )}
               {hasLiveCard ? (
                 <Button variant="light" disabled={!isOwner || busy === 'portal'} onClick={() => run('portal', openPortal)}>
                   {current ? 'Gerenciar assinatura' : 'Trocar de plano'}

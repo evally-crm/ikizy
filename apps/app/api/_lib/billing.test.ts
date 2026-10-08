@@ -13,7 +13,7 @@ import {
   type SubscriptionRow,
 } from './billing.js'
 import { PLANS as LANDING_PLANS, PIX_DISCOUNT_PCT as LANDING_DISCOUNT, PIX_MONTHS as LANDING_MONTHS, pixTotalCents } from '../../../landing/src/lib/pricing.js'
-import { isCardTrial, PIX_DISCOUNT_PCT, PIX_MONTHS, PLANS, accessState, daysLeft, describeSubscription, parseSubscription, periodEnd, pixAmountCents, pixFullCents, type SubscriptionInfo } from '../../src/lib/plans.js'
+import { canAddProfessional, isCardTrial, PIX_DISCOUNT_PCT, PIX_MONTHS, PLAN_IDS, PLANS, accessState, daysLeft, describeSubscription, parseSubscription, periodEnd, pixAmountCents, pixFullCents, planForProfessionals, type SubscriptionInfo } from '../../src/lib/plans.js'
 
 const DAY = 24 * 60 * 60 * 1000
 const NOW = new Date('2026-10-10T12:00:00Z')
@@ -132,15 +132,26 @@ describe('createCheckout', () => {
     assert.equal(s.subscription_data.metadata.salon_id, 'salon-1')
   })
 
-  it('cartão: sem trial_end quando faltam menos de 49 h ou em outro plano', async () => {
+  it('cartão: sem trial_end quando faltam menos de 49 h', async () => {
     const soon = fakeDb({ sub: { trialEndsAt: new Date(NOW.getTime() + 30 * 60 * 60 * 1000) } })
     const a = fakeStripe()
     await createCheckout(deps(soon.db, a.stripe), user, { plan: 'solo', method: 'card', months: 1 })
     assert.equal((a.created[0] as any).subscription_data.trial_end, undefined)
+  })
 
-    const b = fakeStripe()
-    await createCheckout(deps(fakeDb().db, b.stripe), user, { plan: 'studio', method: 'card', months: 1 })
-    assert.equal((b.created[0] as any).subscription_data.trial_end, undefined)
+  it('cartão: todo plano preserva os dias de teste que sobraram', async () => {
+    for (const plan of ['studio', 'salao'] as const) {
+      const b = fakeStripe()
+      await createCheckout(deps(fakeDb().db, b.stripe), user, { plan, method: 'card', months: 1 })
+      assert.equal((b.created[0] as any).subscription_data.trial_end, Math.floor((NOW.getTime() + 20 * DAY) / 1000), plan)
+    }
+  })
+
+  it('cartão: sem trial_end para quem não está em teste', async () => {
+    const paid = fakeDb({ sub: { status: 'canceled' } })
+    const c = fakeStripe()
+    await createCheckout(deps(paid.db, c.stripe), user, { plan: 'studio', method: 'card', months: 1 })
+    assert.equal((c.created[0] as any).subscription_data.trial_end, undefined)
   })
 
   it('reaproveita o cliente do Stripe já salvo', async () => {
@@ -313,6 +324,7 @@ const info = (over: Partial<SubscriptionInfo> = {}): SubscriptionInfo => ({
   method: null,
   cancelAtPeriodEnd: false,
   hasCustomer: false,
+  courtesy: false,
   ...over,
 })
 
@@ -359,6 +371,25 @@ describe('accessState', () => {
     assert.equal(describeSubscription(info({ plan: 'salao', status: 'active', method: 'pix', accessUntil: new Date(NOW.getTime() + 60 * DAY) }), NOW).startsWith('Salão · Pix, acesso até '), true)
     assert.equal(describeSubscription(info({ status: 'past_due', method: 'card' }), NOW), 'Solo · pagamento pendente')
     assert.equal(describeSubscription(info({ accessUntil: new Date(NOW.getTime() - 1000) }), NOW), 'Solo · acesso encerrado')
+    assert.equal(describeSubscription(info({ plan: 'salao', courtesy: true }), NOW).startsWith('Salão · cortesia até '), true)
+  })
+  it('cortesia: não cobra nem avisa enquanto durar; vencida, vira só leitura', () => {
+    assert.equal(accessState(info({ courtesy: true, accessUntil: new Date(NOW.getTime() + 2 * DAY) }), NOW), 'courtesy')
+    assert.equal(accessState(info({ courtesy: true, accessUntil: new Date(NOW.getTime() - 1000) }), NOW), 'expired')
+    assert.equal(parseSubscription({ plan: 'salao', status: 'trialing', access_until: '2027-01-01T00:00:00Z', courtesy: true })?.courtesy, true)
+  })
+  it('limite de profissionais por plano: Solo 1, Studio até 4, Salão sem limite', () => {
+    assert.equal(canAddProfessional('solo', 0), true)
+    assert.equal(canAddProfessional('solo', 1), false)
+    assert.equal(canAddProfessional('studio', 3), true)
+    assert.equal(canAddProfessional('studio', 4), false)
+    assert.equal(canAddProfessional('salao', 50), true)
+    assert.equal(planForProfessionals(1), 'solo')
+    assert.equal(planForProfessionals(4), 'studio')
+    assert.equal(planForProfessionals(5), 'salao')
+  })
+  it('todos os planos têm teste grátis', () => {
+    for (const id of PLAN_IDS) assert.equal(PLANS[id].trialDays, 30, id)
   })
   it('preços em centavos', () => {
     assert.equal(pixAmountCents('salao', 1), 5990)

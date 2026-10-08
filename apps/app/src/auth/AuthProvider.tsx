@@ -173,7 +173,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
       async createSalon(name, slug, setup) {
         if (!neon || !userId) return 'Você precisa estar logada.'
-        const { data: salonId, error } = await neon.rpc('create_salon', { p_name: name, p_slug: slug })
+        const { data: salonId, error } = await neon.rpc('create_salon', {
+          p_name: name,
+          p_slug: slug,
+          ...(setup?.plan ? { p_plan: setup.plan } : {}),
+        })
         if (error) {
           if (error.message.includes('salons_slug_key') || error.code === '23505') {
             return error.message.includes('já pertence') ? 'Esta conta já tem um salão.' : 'Este endereço já está em uso. Escolha outro.'

@@ -23,7 +23,12 @@ Módulos do sistema (`app.ikizy.com/dashboard`):
 | Meu site | editor do site público do negócio (detalhado na seção 5) |
 | Assinatura | plano do IKIZY (Stripe: cartão e Pix) |
 
-Planos do IKIZY: Solo R$ 9,90, Studio R$ 29,90, Salão R$ 59,90 (fonte única: `apps/app/src/lib/plans.ts`). Todo salão novo ganha 30 dias de teste do Solo.
+Planos do IKIZY: Solo R$ 9,90 (1 profissional), Studio R$ 29,90 (até 4), Salão R$ 59,90 (sem limite) (fonte única: `apps/app/src/lib/plans.ts`; o limite também está em `plan_professional_limit()` no banco).
+Todo plano tem 30 dias grátis: o cadastro ("Só eu" / "2 a 4" / "5 ou mais") define o plano do teste, e dá para trocar de plano sem pagar durante o teste.
+
+**Cortesia (beta):** para liberar o sistema de graça a quem testa a convite, rode no console do banco
+`select public.grant_courtesy('slug-do-salao', 'salao', 6, 'Beta: nome');` (plano, meses, anotação). Para encerrar:
+`select public.end_courtesy('slug-do-salao');` (acesso continua por mais 7 dias). Se a pessoa pagar, a cortesia sai sozinha.
 
 ---
 
@@ -99,6 +104,7 @@ npm run build
 | `20261018000000_palette_combos` | paletas reduzidas às 7 combinações de então |
 | `20261019000000_palette_dark` | paleta escura `preto-branco` aceita no banco |
 | `20261020000000_client_file` | ficha completa da cliente (e-mail, Instagram, endereço, profissão, como conheceu, anamnese em jsonb, assinatura do termo), `loyalty_settings`, `loyalty_entries` (selos extras e resgates) e `client_notes` |
+| `20261022000000_plan_limits` | **ainda não aplicada.** Limite de profissionais ativas por plano (Solo 1, Studio 4, Salão sem limite; gatilho no banco), teste grátis de 30 dias em todos os planos (`create_salon` recebe o plano escolhido no cadastro; `set_trial_plan()` troca durante o teste), cortesia para beta (`grant_courtesy()` / `end_courtesy()`, só pelo console do banco) |
 | `20261021000000_client_photos` | fotos de antes e depois na ficha (`client_photos`: miniatura + foto, só membros do salão leem; não passam pela página pública) |
 
 Regras importantes:

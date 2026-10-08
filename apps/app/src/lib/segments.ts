@@ -1,4 +1,5 @@
 import type { Category } from '../data/catalog'
+import type { PlanId } from './plans'
 
 export interface SuggestedService {
   id: string
@@ -96,13 +97,18 @@ export type TeamSize = 'solo' | 'small' | 'large'
 
 export const TEAM_SIZES: { id: TeamSize; label: string }[] = [
   { id: 'solo', label: 'Só eu' },
-  { id: 'small', label: 'De 2 a 5 pessoas' },
-  { id: 'large', label: '6 pessoas ou mais' },
+  { id: 'small', label: 'De 2 a 4 pessoas' },
+  { id: 'large', label: '5 pessoas ou mais' },
 ]
+
+/** o teste grátis começa no plano que comporta a equipe (os mesmos limites de PLANS.maxProfessionals) */
+export const PLAN_FOR_TEAM: Record<TeamSize, PlanId> = { solo: 'solo', small: 'studio', large: 'salao' }
 
 /** o que o questionário monta no negócio logo depois de criá-lo */
 export interface SalonSetup {
   services: { name: string; category: Category; price: number; duration: number }[]
   /** quando trabalha sozinha(o), já cria o cadastro da própria profissional */
   professionalName?: string
+  /** plano em que o teste grátis começa */
+  plan?: PlanId
 }

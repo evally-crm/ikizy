@@ -4,7 +4,7 @@ import { ArrowLeft, ArrowRight, Check, User } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
 import { ROUTES } from '../../lib/routes'
 import { isReservedSlug, SITE_DOMAIN, SLUG_PATTERN, siteHost, slugify } from '../../lib/slug'
-import { SEGMENTS, TEAM_SIZES, type SalonSetup, type TeamSize } from '../../lib/segments'
+import { PLAN_FOR_TEAM, SEGMENTS, TEAM_SIZES, type SalonSetup, type TeamSize } from '../../lib/segments'
 import { Em } from '../../components/ui'
 import { AuthField, AuthLayout, FormMessages } from './AuthLayout'
 
@@ -25,6 +25,7 @@ const COPY: Record<StepId, { title: React.ReactNode; subtitle?: string }> = {
         Como é a sua <Em>equipe</Em>?
       </>
     ),
+    subtitle: 'Seus 30 dias grátis começam no plano certo para o seu tamanho. Dá para trocar depois.',
   },
   profissional: {
     title: (
@@ -145,6 +146,7 @@ export default function Onboarding() {
         }),
     ),
     professionalName: team === 'solo' && proName.trim().length >= 2 ? proName.trim() : undefined,
+    plan: team ? PLAN_FOR_TEAM[team] : undefined,
   })
 
   const onSubmit = async (e: FormEvent) => {

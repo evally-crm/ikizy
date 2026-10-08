@@ -47,3 +47,16 @@ export async function openPortal(): Promise<void> {
   const { url } = await post<{ url: string }>('/api/billing/portal', {})
   window.location.assign(url)
 }
+
+/** troca o plano durante o teste grátis, sem pagar (só a dona e só antes de assinar; o banco confere tudo) */
+export async function switchTrialPlan(plan: PlanId): Promise<void> {
+  if (!neon) throw new BillingError('unavailable', 'A troca de plano não está disponível neste ambiente.')
+  const { error } = await neon.rpc('set_trial_plan', { p_plan: plan })
+  if (!error) return
+  const hint = (error as { hint?: string }).hint
+  if (hint === 'plan_professional_limit') {
+    throw new BillingError('limit', 'Você tem mais profissionais ativas do que esse plano permite. Desative algumas antes de trocar.')
+  }
+  if (hint === 'not_in_trial') throw new BillingError('not_in_trial', 'A troca grátis só vale durante o teste. Escolha uma forma de pagamento.')
+  throw new BillingError('error', 'Não foi possível trocar o plano agora. Tente novamente.')
+}

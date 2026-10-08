@@ -14,9 +14,14 @@ export interface PlanInfo {
   cents: number
   audience: string
   features: string[]
-  /** só o Solo tem teste grátis */
+  /** dias de teste grátis (todos os planos têm) */
   trialDays: number
+  /** profissionais ativas permitidas; null = sem limite. Mesmos números de plan_professional_limit() no banco */
+  maxProfessionals: number | null
 }
+
+/** todo plano começa com 30 dias grátis */
+export const TRIAL_DAYS = 30
 
 export const PLANS: Record<PlanId, PlanInfo> = {
   solo: {
@@ -24,28 +29,44 @@ export const PLANS: Record<PlanId, PlanInfo> = {
     name: 'Solo',
     cents: 990,
     audience: 'Para quem atende sozinha',
-    features: ['Agenda e clientes', 'Financeiro básico', 'Site do negócio'],
-    trialDays: 30,
+    features: ['1 profissional (você)', 'Agenda e clientes', 'Financeiro básico', 'Site do negócio'],
+    trialDays: TRIAL_DAYS,
+    maxProfessionals: 1,
   },
   studio: {
     id: 'studio',
     name: 'Studio',
     cents: 2990,
     audience: 'Equipe pequena',
-    features: ['Tudo do Solo', 'Comissões por profissional', 'Fechamento mensal em recibo', 'Relatórios'],
-    trialDays: 0,
+    features: ['Até 4 profissionais', 'Tudo do Solo', 'Comissões por profissional', 'Fechamento mensal em recibo'],
+    trialDays: TRIAL_DAYS,
+    maxProfessionals: 4,
   },
   salao: {
     id: 'salao',
     name: 'Salão',
     cents: 5990,
     audience: 'Equipe maior',
-    features: ['Tudo do Studio', 'Mais profissionais e permissões', 'Atendimento prioritário'],
-    trialDays: 0,
+    features: ['Profissionais sem limite', 'Tudo do Studio', 'Atendimento prioritário'],
+    trialDays: TRIAL_DAYS,
+    maxProfessionals: null,
   },
 }
 
 export const PLAN_IDS = Object.keys(PLANS) as PlanId[]
+
+/** o plano permite mais uma profissional ativa? */
+export const canAddProfessional = (plan: PlanId, activeCount: number) => {
+  const max = PLANS[plan].maxProfessionals
+  return max === null || activeCount < max
+}
+
+/** menor plano que comporta essa quantidade de profissionais ativas */
+export const planForProfessionals = (count: number): PlanId =>
+  PLAN_IDS.find((id) => {
+    const max = PLANS[id].maxProfessionals
+    return max === null || count <= max
+  }) ?? 'salao'
 export const isPlanId = (v: unknown): v is PlanId => typeof v === 'string' && v in PLANS
 
 /** quantos meses a pessoa pode pagar adiantado no Pix (o Pix não renova sozinho nas contas Stripe do Brasil) */
@@ -84,17 +105,20 @@ export interface SubscriptionInfo {
   method: BillingMethod | null
   cancelAtPeriodEnd: boolean
   hasCustomer: boolean
+  /** acesso liberado de graça pela IKIZY (beta/teste a convite) */
+  courtesy: boolean
 }
 
 /**
- * trial     teste do Solo em andamento
+ * trial     teste grátis em andamento (qualquer plano)
+ * courtesy  acesso liberado de graça pela IKIZY (beta): não cobra nem avisa
  * active    pagando e com acesso
  * ending    acesso acaba em breve sem renovação automática (Pix ou cancelamento agendado)
  * past_due  a cobrança do cartão falhou; ainda dentro da tolerância
  * expired   sem acesso: o sistema abre só para leitura
  * unknown   a assinatura não pôde ser lida (cobrança ainda não ativada neste banco): não avisa nem oferece pagamento
  */
-export type AccessState = 'trial' | 'active' | 'ending' | 'past_due' | 'expired' | 'unknown'
+export type AccessState = 'trial' | 'courtesy' | 'active' | 'ending' | 'past_due' | 'expired' | 'unknown'
 
 const DAY = 24 * 60 * 60 * 1000
 
@@ -105,11 +129,12 @@ export function daysLeft(until: Date, now = new Date()): number {
 /** avisamos quando faltam até 7 dias */
 export const WARN_DAYS = 7
 
-/** assinou no cartão durante o teste do Solo: já é assinante, a primeira cobrança só vem no fim do teste */
+/** assinou no cartão durante o teste grátis: já é assinante, a primeira cobrança só vem no fim do teste */
 export const isCardTrial = (sub: SubscriptionInfo) => sub.status === 'trialing' && sub.method === 'card'
 
 export function accessState(sub: SubscriptionInfo, now = new Date()): AccessState {
   if (sub.accessUntil.getTime() <= now.getTime()) return 'expired'
+  if (sub.courtesy) return 'courtesy'
   if (isCardTrial(sub)) return 'active'
   if (sub.status === 'trialing') return 'trial'
   if (sub.status === 'past_due') return 'past_due'
@@ -136,6 +161,7 @@ export function parseSubscription(row: Record<string, unknown>): SubscriptionInf
     method: row.billing_method === 'card' || row.billing_method === 'pix' ? row.billing_method : null,
     cancelAtPeriodEnd: row.cancel_at_period_end === true,
     hasCustomer: typeof row.stripe_customer_id === 'string' && row.stripe_customer_id.length > 0,
+    courtesy: row.courtesy === true,
   }
 }
 
@@ -150,6 +176,8 @@ export function describeSubscription(sub: SubscriptionInfo, now = new Date()): s
       const d = daysLeft(sub.accessUntil, now)
       return name + ' · teste grátis, ' + (d === 1 ? 'resta 1 dia' : 'restam ' + d + ' dias')
     }
+    case 'courtesy':
+      return name + ' · cortesia até ' + shortDate.format(sub.accessUntil)
     case 'active':
       return name + ' · ' + (sub.method === 'pix' ? 'Pix, acesso até ' : 'renova em ') + shortDate.format(periodEnd(sub))
     case 'ending':

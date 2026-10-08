@@ -126,7 +126,10 @@ function fromRow(r: Row): Appointment {
   }
 }
 
-function friendly(error: { code?: string; message: string }) {
+function friendly(error: { code?: string; message: string; hint?: string }) {
+  if (error.hint === 'plan_professional_limit' || error.message.includes('limite de profissionais')) {
+    return 'Seu plano chegou ao limite de profissionais. Mude de plano em Assinatura para cadastrar mais.'
+  }
   if (error.code === '23514' || error.message.includes('já está fechado')) return 'O mês desse atendimento já está fechado.'
   return 'Não foi possível salvar agora. Tente novamente.'
 }

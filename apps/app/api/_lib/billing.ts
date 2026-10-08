@@ -158,10 +158,9 @@ export async function createCheckout(deps: CheckoutDeps, user: { id: string; ema
   const price = prices.data[0]
   if (!price) throw new HttpError(500, 'price_missing', 'Preço do plano não configurado no Stripe.')
 
-  // quem assina o Solo ainda no teste não perde os dias que sobraram (o Stripe exige >= 48 h)
+  // quem assina ainda no teste (qualquer plano) não perde os dias que sobraram (o Stripe exige >= 48 h)
   let trialEnd: number | undefined
   if (
-    input.plan === 'solo' &&
     sub.status === 'trialing' &&
     sub.trialEndsAt &&
     sub.trialEndsAt.getTime() - now.getTime() > MIN_TRIAL_END_HOURS * 60 * 60 * 1000
