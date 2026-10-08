@@ -1,11 +1,13 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { ArrowDownRight, ArrowUpRight, Download, Lock, Plus, Send, Trash2, X } from 'lucide-react'
+import { ArrowDownRight, ArrowUpRight, CalendarDays, Download, Lock, Plus, Send, Trash2, X } from 'lucide-react'
 import { useAuth } from '../auth/AuthProvider'
 import { type MonthClosing } from '../data/finance'
 import { CARD_FEE_PCT, useFinance, type Expense } from '../data/useFinance'
 import { formatBRL } from '../lib/format'
+import { dash } from '../lib/routes'
+import { Link } from 'react-router-dom'
 import { Avatar, Button, Em, Money } from '../components/ui'
 
 const cap = (s: string) => s[0].toUpperCase() + s.slice(1)
@@ -55,9 +57,7 @@ function Receipt({ month, closedAt, salonName }: { month: MonthClosing; closedAt
           </p>
           <p className="receipt__title">Recibo do mês</p>
           <p>Nº {month.id.replace('-', '')}</p>
-          <p>
-            {format(month.date, 'MMMM yyyy', { locale: ptBR }).toUpperCase()}
-          </p>
+          <p>{format(month.date, 'MMMM yyyy', { locale: ptBR }).toUpperCase()}</p>
           <p>{salonName}</p>
           {!closedAt && <p className="receipt__preview">Prévia · mês em aberto</p>}
         </header>
@@ -90,10 +90,12 @@ function Receipt({ month, closedAt, salonName }: { month: MonthClosing; closedAt
             <dt>Faturamento bruto</dt>
             <dd>{formatBRL(month.gross)}</dd>
           </div>
-          <div>
-            <dt>(-) Comissões</dt>
-            <dd>{formatBRL(month.commissionsTotal)}</dd>
-          </div>
+          {month.commissionsTotal > 0 && (
+            <div>
+              <dt>(-) Comissões</dt>
+              <dd>{formatBRL(month.commissionsTotal)}</dd>
+            </div>
+          )}
           <div>
             <dt>(-) Produtos</dt>
             <dd>{formatBRL(month.products)}</dd>
@@ -148,17 +150,13 @@ function Receipt({ month, closedAt, salonName }: { month: MonthClosing; closedAt
         <DailyLine daily={month.daily} />
         {bestDay.v > 0 && (
           <p className="receipt__best">
-            Melhor dia: {format(bestDate, "EEE dd", { locale: ptBR }).replace('.', '')} · {formatBRL(bestDay.v)}
+            Melhor dia: {format(bestDate, 'EEE dd', { locale: ptBR }).replace('.', '')} · {formatBRL(bestDay.v)}
           </p>
         )}
 
         <hr />
         <footer className="receipt__foot">
-          {closedAt ? (
-            <p>Fechado em {format(closedAt, "dd/MM/yyyy 'às' HH:mm")}</p>
-          ) : (
-            <p>Valores parciais até {format(new Date(), 'dd/MM')}</p>
-          )}
+          {closedAt ? <p>Fechado em {format(closedAt, "dd/MM/yyyy 'às' HH:mm")}</p> : <p>Valores parciais até {format(new Date(), 'dd/MM')}</p>}
           <p>Obrigada por cuidar de quem cuida ♥</p>
           <div className="receipt__barcode" aria-hidden="true" />
         </footer>
@@ -176,13 +174,7 @@ function CloseDialog({ month, onCancel, onConfirm }: { month: MonthClosing; onCa
 
   return (
     <div className="overlay" onClick={onCancel}>
-      <div
-        className="dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-label={`Fechar ${month.label}`}
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="dialog" role="dialog" aria-modal="true" aria-label={`Fechar ${month.label}`} onClick={(e) => e.stopPropagation()}>
         <div className="dialog__head">
           <div>
             <p className="eyebrow">Fechamento</p>
@@ -203,10 +195,12 @@ function CloseDialog({ month, onCancel, onConfirm }: { month: MonthClosing; onCa
             <dt>Lucro líquido</dt>
             <dd>{formatBRL(month.net)}</dd>
           </div>
-          <div>
-            <dt>Comissões a pagar</dt>
-            <dd>{formatBRL(month.commissionsTotal)}</dd>
-          </div>
+          {month.commissionsTotal > 0 && (
+            <div>
+              <dt>Comissões a pagar</dt>
+              <dd>{formatBRL(month.commissionsTotal)}</dd>
+            </div>
+          )}
           <div>
             <dt>Atendimentos</dt>
             <dd>{month.appointments}</dd>
@@ -261,7 +255,11 @@ function ExpenseDialog({
     if (!Number.isFinite(value) || value <= 0) return setError('Informe um valor maior que zero.')
     if (!date.startsWith(monthStart.slice(0, 7))) return setError(`A data precisa estar em ${month.label}.`)
     setBusy(true)
-    const message = await onSave({ date, description: description.trim(), amount: value })
+    const message = await onSave({
+      date,
+      description: description.trim(),
+      amount: value,
+    })
     setBusy(false)
     if (message) setError(message)
     else onClose()
@@ -282,7 +280,13 @@ function ExpenseDialog({
           <label className="field">
             <span className="field__label">Descrição</span>
             <span className="input">
-              <input value={description} onChange={(e) => setDescription(e.target.value)} maxLength={80} placeholder="Aluguel, esmaltes, luz…" autoFocus />
+              <input
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                maxLength={80}
+                placeholder="Aluguel, esmaltes, luz…"
+                autoFocus
+              />
             </span>
           </label>
           <label className="field">
@@ -317,7 +321,7 @@ function ExpenseDialog({
   )
 }
 
-/** barras do faturamento diário (uma por dia do mês) */
+/** barras do faturamento diário (uma por dia do mês, com trilho listrado) */
 function DailyBars({ month }: { month: MonthClosing }) {
   const values = month.daily.map((v) => v ?? 0)
   const max = Math.max(...values, 1)
@@ -325,13 +329,14 @@ function DailyBars({ month }: { month: MonthClosing }) {
   const today = month.isCurrent ? month.elapsedDays - 1 : -1
   return (
     <div className="fbars" role="img" aria-label={`Faturamento por dia em ${month.label}`}>
-      {month.daily.map((v, i) => (
-        <span
-          key={i}
-          className={`fbars__bar${v === null ? ' is-future' : ''}${i === best && v ? ' is-best' : ''}${i === today ? ' is-today' : ''}`}
-          style={{ height: `${v ? Math.max((v / max) * 100, 6) : 6}%` }}
-        />
-      ))}
+      {month.daily.map((v, i) => {
+        const cls = ['fbars__col', v === null && 'is-future', i === best && v ? 'is-best' : '', i === today && 'is-today'].filter(Boolean).join(' ')
+        return (
+          <span key={i} className={cls} title={v === null ? undefined : `Dia ${i + 1}: ${formatBRL(v)}`}>
+            {v ? <span className="fbars__fill" style={{ height: `${Math.max((v / max) * 100, 8)}%` }} /> : null}
+          </span>
+        )
+      })}
     </div>
   )
 }
@@ -346,12 +351,7 @@ function Gauge({ value }: { value: number }) {
       <svg viewBox="0 0 200 110" aria-hidden="true">
         <path d="M20 100 A80 80 0 0 1 180 100" className="gauge__track" pathLength={len} />
         {pctValue > 0 && (
-          <path
-            d="M20 100 A80 80 0 0 1 180 100"
-            className="gauge__fill"
-            pathLength={len}
-            strokeDasharray={`${(len * pctValue) / 100} ${len}`}
-          />
+          <path d="M20 100 A80 80 0 0 1 180 100" className="gauge__fill" pathLength={len} strokeDasharray={`${(len * pctValue) / 100} ${len}`} />
         )}
       </svg>
       <span className="gauge__value">
@@ -435,7 +435,14 @@ export default function Financeiro() {
     { label: 'Produtos', value: month.products, cls: 'is-prod' },
     { label: 'Despesas', value: month.expenses, cls: 'is-exp' },
     { label: 'Taxas', value: month.cardFees, cls: 'is-fee' },
-  ]
+  ].filter((c) => c.value > 0 || c.cls === 'is-net')
+  // card de comissões só faz sentido com equipe (ou se já houve comissão)
+  const showTeam = professionals.length > 1 || month.commissionsTotal > 0
+  const worked = month.daily.filter((v): v is number => v !== null && v > 0)
+  const todayValue = month.isCurrent ? (month.daily[month.elapsedDays - 1] ?? 0) : null
+  const perDay = worked.length ? month.gross / worked.length : 0
+  const bestIdx = month.daily.reduce<number>((best, v, i) => ((v ?? 0) > (month.daily[best] ?? 0) ? i : best), 0)
+  const bestValue = month.daily[bestIdx] ?? 0
   const paymentsTotal = month.payments.reduce((a, p) => a + p.total, 0)
   const maxPayment = Math.max(...month.payments.map((p) => p.total), 1)
   const summary = `Fechamento de ${month.label} - ${salonName}\nFaturamento: ${formatBRL(month.gross)}\nLucro líquido: ${formatBRL(month.net)}\nAtendimentos: ${month.appointments}`
@@ -506,29 +513,63 @@ export default function Financeiro() {
         </p>
       )}
 
-      <div className="fgrid">
+      <div className={`fgrid${showTeam ? '' : ' fgrid--solo'}`}>
         {/* faturamento: destaque escuro */}
         <section className="ftile ftile--dark ftile--hero" aria-label={`Faturamento de ${month.label}`}>
           <div className="ftile__head">
             <div>
               <p className="ftile__label">Faturamento bruto</p>
-              <p className="ftile__hint">{cap(month.label)} {format(month.date, 'yyyy')}</p>
+              <p className="ftile__hint">
+                {cap(month.label)} {format(month.date, 'yyyy')} · {closedAt ? 'fechado' : month.isCurrent ? 'mês em aberto' : 'aguardando fechamento'}
+              </p>
             </div>
-            {growth !== null && !month.isCurrent && (
+            {growth !== null && !month.isCurrent ? (
               <span className={`trend ${growth >= 0 ? 'trend--up' : 'trend--down'}`}>
                 {growth >= 0 ? <ArrowUpRight size={14} aria-hidden="true" /> : <ArrowDownRight size={14} aria-hidden="true" />}
                 {growth >= 0 ? '+' : ''}
                 {growth}% vs {prev?.label}
               </span>
+            ) : (
+              <Link to={dash('/agenda')} className="fhero__go" aria-label="Abrir agenda">
+                <ArrowUpRight size={18} aria-hidden="true" />
+              </Link>
             )}
           </div>
-          <Money value={month.gross} size="xl" />
-          {month.gross === 0 && (
-            <p className="fhero__empty">O faturamento entra aqui sozinho, dia a dia, quando você conclui atendimentos na agenda.</p>
-          )}
-          <DailyBars month={month} />
-          <div className="fhero__foot">
+
+          <div className="fhero__main">
+            <Money value={month.gross} size="xl" />
+            <dl className="fhero__chips">
+              {todayValue !== null && (
+                <div>
+                  <dt>Hoje</dt>
+                  <dd>{formatBRL(todayValue).replace(',00', '')}</dd>
+                </div>
+              )}
+              <div>
+                <dt>Média por dia</dt>
+                <dd>{perDay ? formatBRL(Math.round(perDay)).replace(',00', '') : '—'}</dd>
+              </div>
+              <div>
+                <dt>Melhor dia</dt>
+                <dd>{bestValue ? `${String(bestIdx + 1).padStart(2, '0')} · ${formatBRL(bestValue).replace(',00', '')}` : '—'}</dd>
+              </div>
+            </dl>
+          </div>
+
+          <div className={`fhero__chart${month.gross === 0 ? ' is-empty' : ''}`}>
+            <DailyBars month={month} />
+            {month.gross === 0 && (
+              <div className="fhero__empty">
+                <p>Seu faturamento aparece aqui, dia a dia, conforme você conclui atendimentos.</p>
+                <Link to={dash('/agenda')} className="btn btn--light btn--sm">
+                  <CalendarDays size={15} aria-hidden="true" /> Abrir agenda
+                </Link>
+              </div>
+            )}
+          </div>
+          <div className="fhero__foot" aria-hidden="true">
             <span>dia 1</span>
+            <span>dia {Math.ceil(month.daysInMonth / 2)}</span>
             <span>dia {month.daysInMonth}</span>
           </div>
         </section>
@@ -546,9 +587,7 @@ export default function Financeiro() {
           </section>
         ) : (
           <section className="ftile ftile--brand ftile--cta">
-            <p className="ftile__hint">
-              {month.isCurrent ? `${month.daysInMonth - month.elapsedDays} dias para o fim do mês` : 'Mês já terminou'}
-            </p>
+            <p className="ftile__hint">{month.isCurrent ? `${month.daysInMonth - month.elapsedDays} dias para o fim do mês` : 'Mês já terminou'}</p>
             <h2 className="fcta__title">
               Pronta para fechar <Em>{month.label}</Em>?
             </h2>
@@ -657,7 +696,9 @@ export default function Financeiro() {
                   <div className="paycols__track">
                     <div
                       className={`paycols__bar ${p.total === maxPayment ? 'is-top' : ''}`}
-                      style={{ height: `${Math.max((p.total / maxPayment) * 100, 8)}%` }}
+                      style={{
+                        height: `${Math.max((p.total / maxPayment) * 100, 8)}%`,
+                      }}
                     >
                       <span className="paycols__pct">{pct(p.total, paymentsTotal)}%</span>
                     </div>
@@ -669,35 +710,37 @@ export default function Financeiro() {
           )}
         </section>
 
-        {/* comissões */}
-        <section className="ftile ftile--team">
-          <div className="ftile__head">
-            <div>
-              <p className="ftile__label">Equipe</p>
-              <h2 className="ftile__title">Comissões</h2>
+        {/* comissões: só com equipe */}
+        {showTeam && (
+          <section className="ftile ftile--team">
+            <div className="ftile__head">
+              <div>
+                <p className="ftile__label">Equipe</p>
+                <h2 className="ftile__title">Comissões</h2>
+              </div>
+              {month.commissionsTotal > 0 && <strong className="ftile__total">{formatBRL(month.commissionsTotal)}</strong>}
             </div>
-            {month.commissionsTotal > 0 && <strong className="ftile__total">{formatBRL(month.commissionsTotal)}</strong>}
-          </div>
-          {month.commissions.length === 0 ? (
-            <p className="ftile__hint">Sem comissões neste mês. Defina o percentual de cada profissional para calcular.</p>
-          ) : (
-            <ul className="list">
-              {month.commissions.map((c) => {
-                const name = professionals.find((p) => p.id === c.professionalId)?.name ?? 'Profissional'
-                return (
-                  <li key={c.professionalId} className="list__item">
-                    <Avatar name={name} size="sm" soft />
-                    <span className="list__text">
-                      {name}
-                      <small className="list__small">{c.qty} atendimentos</small>
-                    </span>
-                    <strong className="list__value">{formatBRL(c.total)}</strong>
-                  </li>
-                )
-              })}
-            </ul>
-          )}
-        </section>
+            {month.commissions.length === 0 ? (
+              <p className="ftile__hint">Nenhuma profissional com comissão definida. Defina o percentual de cada uma para calcular.</p>
+            ) : (
+              <ul className="list">
+                {month.commissions.map((c) => {
+                  const name = professionals.find((p) => p.id === c.professionalId)?.name ?? 'Profissional'
+                  return (
+                    <li key={c.professionalId} className="list__item">
+                      <Avatar name={name} size="sm" soft />
+                      <span className="list__text">
+                        {name}
+                        <small className="list__small">{c.qty} atendimentos</small>
+                      </span>
+                      <strong className="list__value">{formatBRL(c.total)}</strong>
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+          </section>
+        )}
 
         {/* saídas */}
         <section className="ftile ftile--exp">

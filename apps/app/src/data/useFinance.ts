@@ -96,7 +96,9 @@ function buildMonth(date: Date, today: Date, current: boolean, d: Inputs): Month
     row.total += money(a)
     byPro.set(a.professional_id, row)
   }
+  // só entra comissão de quem tem percentual definido; sem equipe (ou sem %), não há o que descontar
   const commissions = d.pros
+    .filter((p) => Number(p.commission_pct) > 0)
     .map((p) => {
       const sold = byPro.get(p.id) ?? { qty: 0, total: 0 }
       return { professionalId: p.id, qty: sold.qty, total: Math.round(sold.total * (Number(p.commission_pct) / 100) * 100) / 100 }
