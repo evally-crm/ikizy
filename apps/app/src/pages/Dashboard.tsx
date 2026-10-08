@@ -2,12 +2,12 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { format, getDay } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { ArrowRight, ArrowUpRight, CalendarDays, ChevronRight, Clock, Send, TrendingDown, TrendingUp, Wallet } from 'lucide-react'
+import { ArrowRight, ArrowUpRight, CalendarDays, ChevronRight, Clock, TrendingDown, TrendingUp, Wallet } from 'lucide-react'
 import { weekRevenue } from '../data/mock'
 import { useAgenda } from '../data/AgendaProvider'
 import { ACTIVE_STATUSES } from '../types'
 import { MONTHLY_GOAL, getMonths } from '../data/finance'
-import { clientTags, daysSince, getClients, TAG_LABEL } from '../data/clients'
+import { TodayMessages } from '../components/TodayMessages'
 import { formatBRL, formatTime } from '../lib/format'
 import { useAuth } from '../auth/AuthProvider'
 import { dash } from '../lib/routes'
@@ -87,12 +87,6 @@ export default function Dashboard() {
 
   const ranking = [...month.categories].sort((a, b) => b.total - a.total)
   const topTotal = ranking[0]?.total || 1
-
-  const clients = useMemo(() => getClients(now), [now])
-  const toContact = clients
-    .map((c) => ({ c, tags: clientTags(c, now).filter((t) => t === 'aniversario' || t === 'sumida') }))
-    .filter((x) => x.tags.length)
-    .sort((a, b) => (a.tags[0] === 'aniversario' ? -1 : 0) - (b.tags[0] === 'aniversario' ? -1 : 0))
 
   return (
     <div className="page">
@@ -226,35 +220,8 @@ export default function Dashboard() {
           )}
         </Card>
 
-        {/* relacionamento */}
-        <Card className="dash__people">
-          <div className="card__head">
-            <h2 className="card__title">Vale um contato</h2>
-            <Link to={dash('/clientes')} className="textlink">
-              Ver clientes
-            </Link>
-          </div>
-          <ul className="people">
-            {toContact.map(({ c, tags }) => (
-              <li key={c.id} className="people__item">
-                <Avatar name={c.name} size="sm" soft />
-                <div className="people__body">
-                  <p className="upnext__name">
-                    {c.name} <span className={`tag tag--${tags[0]}`}>{TAG_LABEL[tags[0]]}</span>
-                  </p>
-                  <p className="card__sub">
-                    {tags[0] === 'aniversario'
-                      ? `Aniversário em ${c.birthday.split('-').reverse().join('/')}`
-                      : `Sem vir há ${daysSince(c.lastVisit, now)} dias`}
-                  </p>
-                </div>
-                <button type="button" className="chevbtn" aria-label={`Mandar mensagem para ${c.name}`}>
-                  <Send size={14} />
-                </button>
-              </li>
-            ))}
-          </ul>
-        </Card>
+        {/* relacionamento: mensagens prontas para o WhatsApp */}
+        <TodayMessages />
 
         {/* fechamento do mês */}
         <Card className="dash__close closecard">

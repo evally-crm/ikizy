@@ -59,7 +59,7 @@ export function appointmentEntries(
     { kind: 'item', label: 'Duplicar', hint: 'D', icon: Copy, onSelect: actions.duplicate },
     {
       kind: 'item',
-      label: 'Chamar no WhatsApp',
+      label: 'Mensagem no WhatsApp',
       hint: 'W',
       icon: MessageCircle,
       disabled: !hasPhone,

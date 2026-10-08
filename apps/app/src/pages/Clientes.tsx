@@ -24,6 +24,7 @@ import {
   TAG_LABEL,
   clientTags,
   daysSince,
+  loyaltyState,
   type Client,
   type ClientTag,
 } from '../data/clients'
@@ -42,6 +43,9 @@ import {
   PersonalCard,
 } from '../components/ClientFile'
 import { answeredCount } from '../lib/anamnesis'
+import { CLIENT_KINDS, type MessageKind } from '../lib/messages'
+import { MessageDialog } from '../components/MessageDialog'
+import { useSalonInfo } from '../hooks/useSalonInfo'
 import { formatBRL } from '../lib/format'
 import { dash } from '../lib/routes'
 import { useMediaQuery } from '../hooks/useMediaQuery'
@@ -62,13 +66,6 @@ const normalize = (s: string) =>
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
     .toLowerCase()
-
-const whatsappUrl = (phone: string, text?: string) => {
-  const digits = phone.replace(/\D/g, '')
-  if (!digits) return null
-  const number = digits.startsWith('55') ? digits : `55${digits}`
-  return `https://wa.me/${number}${text ? `?text=${encodeURIComponent(text)}` : ''}`
-}
 
 function lastVisitLabel(days: number) {
   if (days === 0) return 'Veio hoje'
@@ -202,6 +199,8 @@ function ClientDetail({
   const navigate = useNavigate()
   const [tab, setTab] = useState<Tab>('resumo')
   const [fileOpen, setFileOpen] = useState(false)
+  const [message, setMessage] = useState<MessageKind | null>(null)
+  const salonInfo = useSalonInfo()
   const [addingPhotos, setAddingPhotos] = useState(false)
   const [viewing, setViewing] = useState<string | null>(null)
   const photos = useClientPhotos(client.id)
@@ -215,7 +214,18 @@ function ClientDetail({
   const overdue = hasVisits ? daysSince(nextExpected, today) : 0
   const ticket = hasVisits ? Math.round(client.totalSpent / client.visits) : 0
   const firstName = client.name.split(' ')[0]
-  const wa = whatsappUrl(client.phone)
+  const reward = loyaltyState(client, book.loyaltySettings)
+  // mensagem que faz mais sentido agora para esta cliente
+  const suggested: MessageKind =
+    book.loyaltySettings.enabled && reward.ready > 0
+      ? 'premio'
+      : tags.includes('aniversario')
+        ? 'aniversario'
+        : days > MISSING_AFTER && hasVisits
+          ? 'sumida'
+          : overdue > 0
+            ? 'manutencao'
+            : 'livre'
   const upcoming = client.appointments
     .filter((a) => (a.status === 'pendente' || a.status === 'confirmado') && isAfter(a.date, today))
     .sort((a, b) => a.date.getTime() - b.date.getTime())[0]
@@ -227,6 +237,7 @@ function ClientDetail({
     setShownId(client.id)
     setTab('resumo')
     setFileOpen(false)
+    setMessage(null)
     setAddingPhotos(false)
     setViewing(null)
   }
@@ -271,11 +282,9 @@ function ClientDetail({
             </div>
           </div>
           <div className="profile__actions">
-            {wa && (
-              <a className="roundbtn" href={wa} target="_blank" rel="noreferrer" aria-label={`Mensagem no WhatsApp para ${firstName}`}>
-                <MessageCircle size={18} />
-              </a>
-            )}
+            <button type="button" className="roundbtn" aria-label={`Mensagem no WhatsApp para ${firstName}`} onClick={() => setMessage(suggested)}>
+              <MessageCircle size={18} />
+            </button>
             {client.phone.replace(/\D/g, '') && (
               <a className="roundbtn" href={`tel:${client.phone.replace(/\D/g, '')}`} aria-label={`Ligar para ${firstName}`}>
                 <Phone size={18} />
@@ -359,16 +368,9 @@ function ClientDetail({
                 {days > MISSING_AFTER ? `${firstName} sumiu há ${days} dias.` : `Retorno atrasado ${overdue} ${overdue === 1 ? 'dia' : 'dias'}.`}{' '}
                 <strong>Mande um convite com cupom de retorno.</strong>
               </p>
-              {wa && (
-                <a
-                  className="btn btn--light btn--sm"
-                  href={whatsappUrl(client.phone, `Oi, ${firstName}! Sentimos sua falta por aqui. Vamos marcar um horário?`) ?? undefined}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Enviar convite
-                </a>
-              )}
+              <button type="button" className="btn btn--light btn--sm" onClick={() => setMessage(days > MISSING_AFTER ? 'sumida' : 'manutencao')}>
+                Enviar convite
+              </button>
             </>
           ) : hasVisits ? (
             <>
@@ -472,6 +474,15 @@ function ClientDetail({
           />
         )}
 
+        {message && (
+          <MessageDialog
+            phone={client.phone}
+            kinds={CLIENT_KINDS}
+            initial={message}
+            context={{ clientName: client.name, ...salonInfo, reward: book.loyaltySettings.reward }}
+            onClose={() => setMessage(null)}
+          />
+        )}
         {addingPhotos && <AddPhotosDialog onSave={photos.add} onClose={() => setAddingPhotos(false)} />}
         {viewing && (
           <PhotoViewer
