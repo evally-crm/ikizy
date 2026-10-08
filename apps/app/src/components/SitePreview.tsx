@@ -1,5 +1,6 @@
 import { CalendarCheck, AtSign, Clock, MessageCircle } from 'lucide-react'
-import { ACCENTS, CATEGORIES, type Studio } from '../data/catalog'
+import { CATEGORIES, type Studio } from '../data/catalog'
+import { resolveAccent } from '../lib/siteTheme'
 import { professionals } from '../data/mock'
 import { formatBRL } from '../lib/format'
 import { siteHost } from '../lib/slug'
@@ -7,7 +8,7 @@ import { siteHost } from '../lib/slug'
 /** prévia ao vivo da página pública do salão */
 export default function SitePreview({ studio }: { studio: Studio }) {
   const { site, services } = studio
-  const accent = ACCENTS[site.accent]
+  const accent = resolveAccent(site.accent, site.accentColor)
   const visible = services.filter((s) => s.visible && s.name.trim())
   const groups = CATEGORIES.map((c) => ({ category: c, items: visible.filter((s) => s.category === c) })).filter(
     (g) => g.items.length,
@@ -23,7 +24,10 @@ export default function SitePreview({ studio }: { studio: Studio }) {
       style={{ ['--sp-accent' as string]: accent.color, ['--sp-soft' as string]: accent.soft }}
     >
       <header className="sp__nav">
-        <span className="sp__logo">{site.salonName || 'Seu salão'}</span>
+        <span className="sp__logo">
+          {site.logo && <img className="sp__logoimg" src={site.logo} alt="" />}
+          {site.salonName || 'Seu salão'}
+        </span>
         <span className="sp__navlinks">
           <span>Serviços</span>
           <span>Sobre</span>

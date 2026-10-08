@@ -34,6 +34,10 @@ export interface SiteConfig {
   instagram: string
   hours: string
   accent: AccentId
+  /** cor própria (#rrggbb); vazia = usa a cor da lista */
+  accentColor: string
+  /** logo reduzido, como data URL; vazio = sem logo */
+  logo: string
   showPrices: boolean
   showTeam: boolean
   depositPercent: number
@@ -56,6 +60,8 @@ export const DEFAULT_STUDIO: Studio = {
     instagram: '@studiomariabeauty',
     hours: 'Seg a Sáb · 09h às 19h',
     accent: 'bordo',
+    accentColor: '',
+    logo: '',
     showPrices: true,
     showTeam: true,
     depositPercent: 20,
@@ -128,6 +134,8 @@ interface SettingsRow {
   instagram: string
   hours: string
   accent: AccentId
+  accent_color?: string | null
+  logo?: string | null
   show_prices: boolean
   show_team: boolean
   deposit_percent: number
@@ -187,6 +195,8 @@ export function useStudio() {
               instagram: row.instagram,
               hours: row.hours,
               accent: row.accent,
+              accentColor: row.accent_color ?? '',
+              logo: row.logo ?? '',
               showPrices: row.show_prices,
               showTeam: row.show_team,
               depositPercent: row.deposit_percent,
@@ -302,6 +312,8 @@ export function useStudio() {
           instagram: site.instagram,
           hours: site.hours,
           accent: site.accent,
+          accent_color: site.accentColor || null,
+          logo: site.logo || null,
           show_prices: site.showPrices,
           show_team: site.showTeam,
           deposit_percent: site.depositPercent,

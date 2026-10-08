@@ -1,4 +1,4 @@
-import { ACCENTS, CATEGORIES, isAccentId } from '../../src/lib/siteTheme.js'
+import { CATEGORIES, resolveAccent } from '../../src/lib/siteTheme.js'
 
 /** formato devolvido por public.get_public_site(): só o que pode ser exibido ao público */
 export interface PublicSite {
@@ -11,6 +11,8 @@ export interface PublicSite {
     instagram?: string
     hours?: string
     accent?: string
+    accent_color?: string | null
+    logo?: string | null
     show_prices?: boolean
     show_team?: boolean
   }
@@ -51,6 +53,11 @@ export function instagramHandle(raw: string | undefined): string | null {
   return /^[A-Za-z0-9._]{1,30}$/.test(cleaned) ? cleaned : null
 }
 
+/** logo vem do banco como data URL; só entra no HTML se tiver exatamente o formato esperado */
+export function safeLogo(raw: string | null | undefined): string | null {
+  return typeof raw === 'string' && /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(raw) ? raw : null
+}
+
 const CSS = `
 *{box-sizing:border-box}html{scroll-behavior:smooth}
 body{margin:0;background:#fff;color:#242424;font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
@@ -58,7 +65,8 @@ a{color:inherit}
 .wrap{max-width:880px;margin:0 auto;padding:0 20px}
 .top{position:sticky;top:0;z-index:5;background:rgba(255,255,255,.94);border-bottom:1px solid #eee}
 .top .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;height:60px}
-.logo{font-weight:600;letter-spacing:-.02em;font-size:18px;color:#0e0d0d}
+.logo{display:inline-flex;align-items:center;gap:10px;font-weight:600;letter-spacing:-.02em;font-size:18px;color:#0e0d0d}
+.logo img{width:36px;height:36px;border-radius:10px;object-fit:cover}
 .top nav{display:flex;gap:18px;font-size:14px;color:#6b6668}
 .top nav a{text-decoration:none}
 .top nav a:hover{color:var(--accent)}
@@ -103,7 +111,8 @@ footer small{margin-top:14px;color:rgba(255,255,255,.5)}
 /** monta a página pública completa (HTML) do negócio */
 export function renderSitePage(site: PublicSite, opts: { canonical: string }): string {
   const s = site.settings ?? {}
-  const accent = ACCENTS[isAccentId(s.accent) ? s.accent : 'bordo']
+  const accent = resolveAccent(s.accent, s.accent_color)
+  const logo = safeLogo(s.logo)
   const name = site.name
   const showPrices = s.show_prices !== false
   const services = (site.services ?? []).filter((x) => x.name?.trim())
@@ -186,7 +195,7 @@ export function renderSitePage(site: PublicSite, opts: { canonical: string }): s
 <style>:root{--accent:${accent.color};--soft:${accent.soft}}${CSS}</style>
 </head>
 <body>
-<header class="top"><div class="wrap"><span class="logo">${esc(name)}</span><nav aria-label="Seções">${
+<header class="top"><div class="wrap"><span class="logo">${logo ? `<img src="${logo}" alt="">` : ''}${esc(name)}</span><nav aria-label="Seções">${
     groups.length ? '<a href="#servicos">Serviços</a>' : ''
   }${plans.length ? '<a href="#planos">Planos</a>' : ''}${team.length ? '<a href="#equipe">Equipe</a>' : ''}</nav></div></header>
 <main>

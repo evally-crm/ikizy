@@ -133,6 +133,21 @@ describe('renderSitePage', () => {
     assert.match(page(base({}, { accent: 'rubi' })), /--accent:#bf0c22/)
   })
 
+  it('cor própria vale no lugar da lista; cor clara demais é escurecida para o texto branco', () => {
+    assert.match(page(base({}, { accent: 'rubi', accent_color: '#1a7f5a' })), /--accent:#1a7f5a/)
+    const light = page(base({}, { accent_color: '#ffff00' })).match(/--accent:(#[0-9a-f]{6})/)?.[1]
+    assert.ok(light && light !== '#ffff00')
+    assert.match(page(base({}, { accent: 'rubi', accent_color: 'vermelho' })), /--accent:#bf0c22/)
+  })
+
+  it('logo só entra se for data URL de imagem válida', () => {
+    const ok = 'data:image/webp;base64,AAAA'
+    assert.match(page(base({}, { logo: ok })), /<img src="data:image\/webp;base64,AAAA"/)
+    assert.doesNotMatch(page(base({}, { logo: 'javascript:alert(1)' })), /<img/)
+    assert.doesNotMatch(page(base({}, { logo: 'data:image/svg+xml;base64,AAAA' })), /<img/)
+    assert.doesNotMatch(page(base({}, { logo: 'data:image/png;base64,AA"onerror="x' })), /<img/)
+  })
+
   it('página 404 não é indexada', () => {
     assert.match(renderNotFound(), /name="robots" content="noindex"/)
   })

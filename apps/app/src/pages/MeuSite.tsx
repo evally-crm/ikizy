@@ -1,5 +1,5 @@
-import { useId, useState, type ReactNode } from 'react'
-import { ExternalLink, Plus, Rocket, Trash2, Undo2 } from 'lucide-react'
+import { useId, useRef, useState, type ChangeEvent, type ReactNode } from 'react'
+import { ChevronDown, ExternalLink, ImagePlus, Plus, Rocket, Trash2, Undo2 } from 'lucide-react'
 import {
   ACCENTS,
   CATEGORIES,
@@ -13,6 +13,8 @@ import {
   type SiteConfig,
 } from '../data/catalog'
 import { formatBRL } from '../lib/format'
+import { resizeToDataUrl } from '../lib/imageResize'
+import { isHexColor, resolveAccent } from '../lib/siteTheme'
 import { isReservedSlug, SITE_DOMAIN, siteHost } from '../lib/slug'
 import { useMediaQuery } from '../hooks/useMediaQuery'
 import SitePreview from '../components/SitePreview'
@@ -41,6 +43,22 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
       {children(id)}
       {hint && <p className="field__hint">{hint}</p>}
     </div>
+  )
+}
+
+/** bloco do editor: título e uma frase curta; abre e fecha para a tela não ficar longa no celular */
+function Section({ title, hint, open, children }: { title: string; hint?: string; open?: boolean; children: ReactNode }) {
+  return (
+    <details className="sect" open={open}>
+      <summary className="sect__head">
+        <span>
+          <strong>{title}</strong>
+          {hint && <small>{hint}</small>}
+        </span>
+        <ChevronDown size={18} aria-hidden="true" />
+      </summary>
+      <div className="form">{children}</div>
+    </details>
   )
 }
 
@@ -83,10 +101,13 @@ export default function MeuSite() {
   const [justPublished, setJustPublished] = useState(false)
   const [publishing, setPublishing] = useState(false)
   const [publishError, setPublishError] = useState<string | null>(null)
+  const [logoError, setLogoError] = useState<string | null>(null)
+  const logoInput = useRef<HTMLInputElement>(null)
 
   const active: Tab = isWide && tab === 'previa' ? 'pagina' : tab
   const { site, services, products } = draft
   const slugReserved = isReservedSlug(site.slug)
+  const accent = resolveAccent(site.accent, site.accentColor)
 
   const setSite = <K extends keyof SiteConfig>(key: K, value: SiteConfig[K]) =>
     setDraft((d) => ({ ...d, site: { ...d.site, [key]: value } }))
@@ -111,6 +132,18 @@ export default function MeuSite() {
       products: d.products.filter((p) => p.id !== id),
       services: d.services.map((s) => (s.productId === id ? { ...s, productId: null } : s)),
     }))
+
+  const onLogo = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    setLogoError(null)
+    try {
+      setSite('logo', await resizeToDataUrl(file))
+    } catch (err) {
+      setLogoError(err instanceof Error ? err.message : 'Não foi possível usar essa imagem.')
+    }
+  }
 
   const onPublish = async () => {
     setPublishing(true)
@@ -202,103 +235,161 @@ export default function MeuSite() {
 
           <div className="studio__body" id="studio-panel" role="tabpanel" aria-labelledby={`tab-${active}`}>
             {active === 'pagina' && (
-              <div className="form">
-                <OnlineBookingChecklist whatsapp={site.whatsapp} />
-                <Field
-                  label="Endereço da página"
-                  hint={slugReserved ? 'Esse endereço é reservado. Escolha outro.' : 'É o link que você coloca no Instagram e no WhatsApp.'}
-                >
-                  {(id) => (
-                    <span className="input input--suffix">
-                      <input
-                        id={id}
-                        value={site.slug}
-                        maxLength={40}
-                        aria-invalid={slugReserved}
-                        onChange={(e) => setSite('slug', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                      />
-                      <span aria-hidden="true">.{SITE_DOMAIN}</span>
-                    </span>
-                  )}
-                </Field>
-                <Field label="Nome do salão">
-                  {(id) => (
-                    <span className="input">
-                      <input id={id} value={site.salonName} maxLength={40} onChange={(e) => setSite('salonName', e.target.value)} />
-                    </span>
-                  )}
-                </Field>
-                <Field label="Frase de destaque" hint="A última palavra vira o destaque em itálico.">
-                  {(id) => (
-                    <span className="input">
-                      <input id={id} value={site.tagline} maxLength={70} onChange={(e) => setSite('tagline', e.target.value)} />
-                    </span>
-                  )}
-                </Field>
-                <Field label="Sobre o salão">
-                  {(id) => (
-                    <span className="input input--area">
-                      <textarea id={id} rows={3} value={site.about} maxLength={220} onChange={(e) => setSite('about', e.target.value)} />
-                    </span>
-                  )}
-                </Field>
-                <div className="form__pair">
-                  <Field label="WhatsApp">
-                    {(id) => (
-                      <span className="input">
-                        <input id={id} inputMode="tel" value={site.whatsapp} onChange={(e) => setSite('whatsapp', e.target.value)} />
-                      </span>
-                    )}
-                  </Field>
-                  <Field label="Instagram">
-                    {(id) => (
-                      <span className="input">
-                        <input id={id} value={site.instagram} onChange={(e) => setSite('instagram', e.target.value)} />
-                      </span>
-                    )}
-                  </Field>
-                </div>
-                <Field label="Horário de atendimento">
-                  {(id) => (
-                    <span className="input">
-                      <input id={id} value={site.hours} maxLength={50} onChange={(e) => setSite('hours', e.target.value)} />
-                    </span>
-                  )}
-                </Field>
+              <div className="sects">
+                <details className="fold">
+                  <summary>Agendamento pelo site</summary>
+                  <OnlineBookingChecklist whatsapp={site.whatsapp} />
+                </details>
 
-                <fieldset className="field">
-                  <legend className="field__label">Cor de destaque</legend>
-                  <div className="swatches">
-                    {(Object.keys(ACCENTS) as AccentId[]).map((id) => (
-                      <label key={id} className="swatch">
-                        <input type="radio" name="accent" checked={site.accent === id} onChange={() => setSite('accent', id)} />
-                        <span className="swatch__dot" style={{ background: ACCENTS[id].color }} />
-                        {ACCENTS[id].label}
-                      </label>
-                    ))}
+                <Section title="Identidade" hint="Logo e cor do seu site." open>
+                  <div className="logofield">
+                    <span className="logofield__thumb" aria-hidden="true">
+                      {site.logo ? <img src={site.logo} alt="" /> : <ImagePlus size={22} />}
+                    </span>
+                    <div className="logofield__text">
+                      <p>{site.logo ? 'Seu logo' : 'Adicione seu logo'}</p>
+                      <small>PNG, JPG ou WebP</small>
+                    </div>
+                    <input ref={logoInput} type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={(e) => void onLogo(e)} />
+                    <Button variant="light" size="sm" onClick={() => logoInput.current?.click()}>
+                      {site.logo ? 'Trocar' : 'Escolher'}
+                    </Button>
+                    {site.logo && (
+                      <button type="button" className="chevbtn" aria-label="Remover logo" onClick={() => setSite('logo', '')}>
+                        <Trash2 size={15} />
+                      </button>
+                    )}
                   </div>
-                </fieldset>
-
-                <div className="form__toggles">
-                  <Switch checked={site.showPrices} onChange={(v) => setSite('showPrices', v)} label="Mostrar preços na página" hint="Desligado, a cliente pede o valor no WhatsApp." />
-                  <Switch checked={site.showTeam} onChange={(v) => setSite('showTeam', v)} label="Mostrar a equipe" />
-                </div>
-                <Field label="Sinal para confirmar o horário" hint="Cobrado via Pix no agendamento online. Use 0 para não cobrar.">
-                  {(id) => (
-                    <span className="input input--suffix">
-                      <input
-                        id={id}
-                        type="number"
-                        inputMode="numeric"
-                        min={0}
-                        max={100}
-                        value={site.depositPercent}
-                        onChange={(e) => setSite('depositPercent', Math.min(100, Math.round(num(e.target.value))))}
-                      />
-                      <span aria-hidden="true">%</span>
-                    </span>
+                  {logoError && (
+                    <p className="field__hint" role="alert">
+                      {logoError}
+                    </p>
                   )}
-                </Field>
+
+                  <fieldset className="field">
+                    <legend className="field__label">Cor de destaque</legend>
+                    <div className="swatches">
+                      {(Object.keys(ACCENTS) as AccentId[]).map((id) => (
+                        <label key={id} className="swatch">
+                          <input
+                            type="radio"
+                            name="accent"
+                            checked={!site.accentColor && site.accent === id}
+                            onChange={() => setDraft((d) => ({ ...d, site: { ...d.site, accent: id, accentColor: '' } }))}
+                          />
+                          <span className="swatch__dot" style={{ background: ACCENTS[id].color }} />
+                          {ACCENTS[id].label}
+                        </label>
+                      ))}
+                      <label className="swatch swatch--custom">
+                        <input
+                          type="color"
+                          aria-label="Escolher outra cor"
+                          value={isHexColor(site.accentColor) ? site.accentColor : accent.color}
+                          onChange={(e) => setSite('accentColor', e.target.value)}
+                        />
+                        <span
+                          className="swatch__dot"
+                          style={{ background: site.accentColor ? accent.color : 'conic-gradient(#e44, #ea4, #6c6, #4ae, #a6e, #e44)' }}
+                        />
+                        {site.accentColor ? site.accentColor.toUpperCase() : 'Outra cor'}
+                      </label>
+                    </div>
+                    {site.accentColor && accent.color !== site.accentColor.toLowerCase() && (
+                      <p className="field__hint">Escurecemos um pouco essa cor para o texto branco continuar legível.</p>
+                    )}
+                  </fieldset>
+                </Section>
+
+                <Section title="Textos" hint="O que a cliente lê primeiro." open>
+                  <Field label="Nome do salão">
+                    {(id) => (
+                      <span className="input">
+                        <input id={id} value={site.salonName} maxLength={40} onChange={(e) => setSite('salonName', e.target.value)} />
+                      </span>
+                    )}
+                  </Field>
+                  <Field label="Frase de destaque" hint="A última palavra vira o destaque em itálico.">
+                    {(id) => (
+                      <span className="input">
+                        <input id={id} value={site.tagline} maxLength={70} onChange={(e) => setSite('tagline', e.target.value)} />
+                      </span>
+                    )}
+                  </Field>
+                  <Field label="Sobre o salão">
+                    {(id) => (
+                      <span className="input input--area">
+                        <textarea id={id} rows={3} value={site.about} maxLength={220} onChange={(e) => setSite('about', e.target.value)} />
+                      </span>
+                    )}
+                  </Field>
+                </Section>
+
+                <Section title="Contato e endereço" hint="Como a cliente fala com você e encontra a página.">
+                  <Field
+                    label="Endereço da página"
+                    hint={slugReserved ? 'Esse endereço é reservado. Escolha outro.' : 'É o link que você coloca no Instagram e no WhatsApp.'}
+                  >
+                    {(id) => (
+                      <span className="input input--suffix">
+                        <input
+                          id={id}
+                          value={site.slug}
+                          maxLength={40}
+                          aria-invalid={slugReserved}
+                          onChange={(e) => setSite('slug', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                        />
+                        <span aria-hidden="true">.{SITE_DOMAIN}</span>
+                      </span>
+                    )}
+                  </Field>
+                  <div className="form__pair">
+                    <Field label="WhatsApp">
+                      {(id) => (
+                        <span className="input">
+                          <input id={id} inputMode="tel" value={site.whatsapp} onChange={(e) => setSite('whatsapp', e.target.value)} />
+                        </span>
+                      )}
+                    </Field>
+                    <Field label="Instagram">
+                      {(id) => (
+                        <span className="input">
+                          <input id={id} value={site.instagram} onChange={(e) => setSite('instagram', e.target.value)} />
+                        </span>
+                      )}
+                    </Field>
+                  </div>
+                  <Field label="Horário de atendimento">
+                    {(id) => (
+                      <span className="input">
+                        <input id={id} value={site.hours} maxLength={50} onChange={(e) => setSite('hours', e.target.value)} />
+                      </span>
+                    )}
+                  </Field>
+                </Section>
+
+                <Section title="O que mostrar" hint="Preços, equipe e sinal.">
+                  <div className="form__toggles">
+                    <Switch checked={site.showPrices} onChange={(v) => setSite('showPrices', v)} label="Mostrar preços na página" hint="Desligado, a cliente pede o valor no WhatsApp." />
+                    <Switch checked={site.showTeam} onChange={(v) => setSite('showTeam', v)} label="Mostrar a equipe" />
+                  </div>
+                  <Field label="Sinal para confirmar o horário" hint="Cobrado via Pix no agendamento online. Use 0 para não cobrar.">
+                    {(id) => (
+                      <span className="input input--suffix">
+                        <input
+                          id={id}
+                          type="number"
+                          inputMode="numeric"
+                          min={0}
+                          max={100}
+                          value={site.depositPercent}
+                          onChange={(e) => setSite('depositPercent', Math.min(100, Math.round(num(e.target.value))))}
+                        />
+                        <span aria-hidden="true">%</span>
+                      </span>
+                    )}
+                  </Field>
+                </Section>
               </div>
             )}
 
