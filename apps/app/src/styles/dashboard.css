@@ -837,8 +837,8 @@
 .profile {
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  padding: 22px;
+  gap: 14px;
+  padding: 18px 20px;
 }
 .profile__top {
   display: flex;
@@ -863,8 +863,8 @@
   display: grid;
   place-items: center;
   flex: none;
-  width: 60px;
-  height: 60px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--brand-500), var(--brand-900));
   color: var(--white);
@@ -895,14 +895,14 @@
   min-width: 0;
 }
 .profile__stats .money {
-  color: var(--white);
+  color: var(--ink-900);
 }
 .profile__num {
-  font-size: clamp(26px, 4vw, 34px);
+  font-size: clamp(22px, 3vw, 28px);
   font-weight: 300;
   line-height: 1;
   letter-spacing: -0.04em;
-  color: var(--white);
+  color: var(--ink-900);
   white-space: nowrap;
 }
 .profile__num small {
@@ -916,8 +916,13 @@
   gap: 10px 12px;
   padding: 12px 14px;
   border-radius: 16px;
-  background: var(--ink-700);
+  background: var(--page-bg);
   font-size: 13px;
+  color: var(--ink-700);
+}
+.profile__return > svg {
+  flex: none;
+  color: var(--brand-500);
 }
 .profile__return p {
   flex: 1 1 200px;
@@ -925,13 +930,14 @@
 }
 .profile__return strong {
   font-weight: 500;
-  color: var(--white);
+  color: var(--ink-900);
 }
 .profile__return.is-late {
-  background: rgba(191, 12, 34, 0.25);
+  background: var(--pink-100);
+  color: var(--brand-700);
 }
-.profile__return.is-late svg {
-  color: #ff8a98;
+.profile__return.is-late strong {
+  color: var(--brand-700);
 }
 
 @media (min-width: 640px) {
@@ -940,7 +946,7 @@
   }
   .profile__stats > div + div {
     padding-left: 14px;
-    border-left: 1px solid rgba(255, 255, 255, 0.12);
+    border-left: 1px solid var(--line);
   }
 }
 
@@ -1159,13 +1165,13 @@ button.textlink:disabled {
   min-height: 30px;
   padding: 0 12px;
   border-radius: var(--radius-pill);
-  background: var(--ink-700);
+  background: var(--page-bg);
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--ink-700);
 }
 .profile__info li svg {
   flex: none;
-  color: #ff8a98;
+  color: var(--brand-500);
 }
 .profile__info a {
   overflow: hidden;
@@ -2011,4 +2017,15 @@ button.textlink:disabled {
 .viewer__actions {
   display: flex;
   gap: 8px;
+}
+
+/* botões redondos do perfil sobre o card branco */
+.profile .roundbtn {
+  width: 42px;
+  height: 42px;
+  background: var(--page-bg);
+  color: var(--ink-900);
+}
+.profile .roundbtn:hover {
+  background: var(--gray-200);
 }
