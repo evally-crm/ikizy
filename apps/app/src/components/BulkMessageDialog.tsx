@@ -4,6 +4,7 @@ import { ArrowLeft, Check, Copy, MessageCircle, X } from 'lucide-react'
 import { CLIENT_KINDS, MESSAGE_LABEL, markSent, renderMessage, sentKey, whatsappHref, type MessageKind } from '../lib/messages'
 import { useSalonInfo } from '../hooks/useSalonInfo'
 import type { Client } from '../data/clients'
+import { formatPhone } from '../lib/format'
 import { Avatar, Button } from './ui'
 import { Modal } from './Modal'
 
@@ -121,7 +122,7 @@ export function BulkMessageDialog({
                     <Avatar name={c.name} soft />
                     <span className="clist__body">
                       <span className="clist__name">{c.name}</span>
-                      <span className="clist__meta">{c.phone}</span>
+                      <span className="clist__meta">{formatPhone(c.phone)}</span>
                     </span>
                     <a
                       className={`btn btn--sm ${ok ? 'btn--light' : 'btn--primary'}`}

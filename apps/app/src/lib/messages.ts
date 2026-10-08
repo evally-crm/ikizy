@@ -94,8 +94,10 @@ export function whatsappHref(phone: string, text: string) {
   return `https://wa.me/${number}?text=${encodeURIComponent(text)}`
 }
 
-/** sugestão para um horário: véspera → lembrete, hoje → tudo certo?, concluído → pós, falta → falta */
+/** sugestão para um horário: pedido do site → confirmar, véspera → lembrete, hoje → tudo certo?, concluído → pós, falta → falta */
 export function suggestForAppointment(status: string, date: string, today: string, tomorrow: string): MessageKind {
+  // pedido que ainda não foi confirmado: a cliente precisa saber que o horário está garantido
+  if (status === 'pendente') return 'confirmacao'
   if (status === 'concluido') return 'pos'
   if (status === 'faltou') return 'falta'
   if (date === today) return 'hoje'

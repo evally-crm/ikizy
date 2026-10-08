@@ -48,7 +48,7 @@ import { CLIENT_KINDS, type MessageKind } from '../lib/messages'
 import { MessageDialog } from '../components/MessageDialog'
 import { BulkMessageDialog } from '../components/BulkMessageDialog'
 import { useSalonInfo } from '../hooks/useSalonInfo'
-import { formatBRL } from '../lib/format'
+import { formatBRL, formatPhone } from '../lib/format'
 import { dash } from '../lib/routes'
 import { useMediaQuery } from '../hooks/useMediaQuery'
 import { Avatar, Button, Card, Em, Money } from '../components/ui'
@@ -75,10 +75,11 @@ function lastVisitLabel(days: number) {
   return `Última visita há ${days} dias`
 }
 
-function Tags({ tags }: { tags: ClientTag[] }) {
-  if (!tags.length) return null
+function Tags({ tags, waiting }: { tags: ClientTag[]; waiting?: boolean }) {
+  if (!tags.length && !waiting) return null
   return (
     <span className="tags">
+      {waiting && <span className="tag tag--aconfirmar">A confirmar</span>}
       {tags.map((t) => (
         <span key={t} className={`tag tag--${t}`}>
           {TAG_LABEL[t]}
@@ -87,6 +88,9 @@ function Tags({ tags }: { tags: ClientTag[] }) {
     </span>
   )
 }
+
+/** tem pedido (do site) esperando o salão confirmar */
+const awaitsConfirmation = (c: Client, today: Date) => c.appointments.some((a) => a.status === 'pendente' && isAfter(a.date, today))
 
 function ClientList({
   clients,
@@ -189,7 +193,7 @@ function ClientList({
               <li key={c.id} className="clist__row">
                 <button
                   type="button"
-                  className={`pick ${on ? 'is-on' : ''}`}
+                  className={`selbtn ${on ? 'is-on' : ''}`}
                   role="checkbox"
                   aria-checked={on}
                   aria-label={`Selecionar ${c.name}`}
@@ -212,11 +216,11 @@ function ClientList({
                   <Avatar name={c.name} soft={c.id !== selectedId} />
                   <span className="clist__body">
                     <span className="clist__name">{c.name}</span>
-                    <span className="clist__phone">{c.phone || 'Sem WhatsApp'}</span>
+                    <span className="clist__phone">{c.phone ? formatPhone(c.phone) : 'Sem WhatsApp'}</span>
                     <span className="clist__meta">
                       {c.visits === 0 ? 'Ainda sem visitas' : `${lastVisitLabel(days)} · ${c.visits} ${c.visits === 1 ? 'visita' : 'visitas'}`}
                     </span>
-                    <Tags tags={clientTags(c, today)} />
+                    <Tags tags={clientTags(c, today)} waiting={awaitsConfirmation(c, today)} />
                   </span>
                   <span className="clist__spent">{formatBRL(c.totalSpent).replace(',00', '')}</span>
                 </Link>
@@ -344,7 +348,7 @@ function ClientDetail({
                 Cliente desde {format(client.since, "MMM 'de' yyyy", { locale: ptBR })}
                 {proName(client.professionalId) && ` · com ${proName(client.professionalId)}`}
               </p>
-              <Tags tags={tags} />
+              <Tags tags={tags} waiting={awaitsConfirmation(client, today)} />
             </div>
           </div>
           <div className="profile__actions">

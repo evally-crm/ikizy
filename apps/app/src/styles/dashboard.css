@@ -2089,7 +2089,7 @@ button.textlink:disabled {
   flex: 1;
   min-width: 0;
 }
-.pick {
+.selbtn {
   display: grid;
   place-items: center;
   flex: none;
@@ -2104,10 +2104,10 @@ button.textlink:disabled {
   cursor: pointer;
   transition: background-color 0.15s, border-color 0.15s;
 }
-.pick:hover {
+.selbtn:hover {
   border-color: var(--brand-500);
 }
-.pick.is-on {
+.selbtn.is-on {
   border-color: var(--brand-500);
   background: var(--brand-500);
 }
@@ -2131,4 +2131,8 @@ button.textlink:disabled {
 }
 .bulk__item.is-sent {
   opacity: 0.6;
+}
+.tag--aconfirmar {
+  background: var(--warning-soft);
+  color: var(--warning);
 }
