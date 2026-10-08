@@ -161,6 +161,47 @@ describe('renderSitePage', () => {
     assert.doesNotMatch(page(base({}, { cover: 'http://evil.example/x.png' })), /<img class="hero__img"/)
   })
 
+  const SVC = '11111111-1111-4111-8111-111111111111'
+  const PRO = '22222222-2222-4222-8222-222222222222'
+  const online = (settings: PublicSite['settings'] = {}) => {
+    const site = base({ professionals: [{ id: PRO, name: 'Ana' }] }, { online_booking: true, booking_window_days: 21, ...settings })
+    site.services[0].id = SVC
+    return site
+  }
+
+  it('agendamento online ligado: botão abre a janela, serviço tem botão próprio e há dados para o script', () => {
+    const html = page(online())
+    assert.match(html, /<dialog id="book"/)
+    assert.match(html, /data-book=""[^>]*>Agendar horário</)
+    assert.match(html, new RegExp(`data-book="${SVC}"`))
+    const data = JSON.parse(html.match(/<script type="application\/json" id="book-data">([\s\S]*?)<\/script>/)?.[1] ?? 'null')
+    assert.equal(data.slug, 'studio-maria-beauty')
+    assert.equal(data.windowDays, 21)
+    assert.equal(data.wa, '5511987650000')
+    assert.deepEqual(data.pros, [{ id: PRO, name: 'Ana' }])
+    assert.equal(data.services.length, 1)
+  })
+
+  it('agendamento online desligado, ou sem profissionais: nada da janela aparece', () => {
+    assert.doesNotMatch(page(base()), /<dialog|id="book-data"|data-book/)
+    assert.doesNotMatch(page(online({ online_booking: false })), /<dialog|data-book/)
+    const noPros = online()
+    noPros.professionals = []
+    assert.doesNotMatch(page(noPros), /<dialog|data-book/)
+  })
+
+  it('nomes digitados nunca fecham o script de dados nem viram HTML', () => {
+    const evil = '</script><img src=x onerror=alert(1)>'
+    const site = online()
+    site.professionals = [{ id: PRO, name: evil }]
+    site.services[0].name = evil
+    const html = page(site)
+    const data = html.match(/<script type="application\/json" id="book-data">([\s\S]*?)<\/script>/)?.[1] ?? ''
+    assert.doesNotMatch(data, /<\/script/i)
+    assert.equal(JSON.parse(data).pros[0].name, evil)
+    assert.doesNotMatch(html, /<img src=x/)
+  })
+
   it('página 404 não é indexada', () => {
     assert.match(renderNotFound(), /name="robots" content="noindex"/)
   })

@@ -45,6 +45,12 @@ export interface SiteConfig {
   showPrices: boolean
   showTeam: boolean
   depositPercent: number
+  /** a cliente pode pedir horário pela página do salão */
+  onlineBooking: boolean
+  /** antecedência mínima para pedir um horário, em horas */
+  bookingNoticeHours: number
+  /** até quantos dias à frente a cliente pode agendar */
+  bookingWindowDays: number
 }
 
 export interface Studio {
@@ -71,6 +77,9 @@ export const DEFAULT_STUDIO: Studio = {
     showPrices: true,
     showTeam: true,
     depositPercent: 20,
+    onlineBooking: false,
+    bookingNoticeHours: 2,
+    bookingWindowDays: 30,
   },
   products: [
     { id: 'p-gel', name: 'Gel construtor e esmaltes', monthlySpend: 840 },
@@ -147,6 +156,9 @@ interface SettingsRow {
   show_prices: boolean
   show_team: boolean
   deposit_percent: number
+  online_booking?: boolean
+  booking_notice_hours?: number
+  booking_window_days?: number
   published?: boolean
 }
 
@@ -210,6 +222,9 @@ export function useStudio() {
               showPrices: row.show_prices,
               showTeam: row.show_team,
               depositPercent: row.deposit_percent,
+              onlineBooking: row.online_booking ?? false,
+              bookingNoticeHours: row.booking_notice_hours ?? 2,
+              bookingWindowDays: row.booking_window_days ?? 30,
             }
           : base.site,
         products: (prods.data ?? []).map((p) => ({ id: p.id as string, name: p.name as string, monthlySpend: Number(p.monthly_spend) })),
@@ -329,6 +344,9 @@ export function useStudio() {
           show_prices: site.showPrices,
           show_team: site.showTeam,
           deposit_percent: site.depositPercent,
+          online_booking: site.onlineBooking,
+          booking_notice_hours: Math.min(168, Math.max(0, Math.round(site.bookingNoticeHours))),
+          booking_window_days: Math.min(90, Math.max(1, Math.round(site.bookingWindowDays))),
           published: true,
           published_at: new Date().toISOString(),
         })

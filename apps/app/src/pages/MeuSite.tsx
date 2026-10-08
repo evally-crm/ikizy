@@ -330,6 +330,35 @@ export default function MeuSite() {
         <Switch checked={site.showPrices} onChange={(v) => setSite('showPrices', v)} label="Mostrar preços na página" hint="Desligado, a cliente pede o valor no WhatsApp." />
         <Switch checked={site.showTeam} onChange={(v) => setSite('showTeam', v)} label="Mostrar a equipe" />
       </div>
+      <Switch
+        checked={site.onlineBooking}
+        onChange={(v) => setSite('onlineBooking', v)}
+        label="Aceitar agendamentos online"
+        hint="A cliente escolhe serviço, dia e horário livre na sua página. O pedido cai na agenda como pendente."
+      />
+      {site.onlineBooking && (
+        <>
+          <div className="form__pair">
+            <Field label="Antecedência mínima" hint="Horas antes do atendimento.">
+              {(id) => (
+                <span className="input input--suffix">
+                  <input id={id} type="number" inputMode="numeric" min={0} max={168} value={site.bookingNoticeHours} onChange={(e) => setSite('bookingNoticeHours', Math.min(168, Math.round(num(e.target.value))))} />
+                  <span aria-hidden="true">h</span>
+                </span>
+              )}
+            </Field>
+            <Field label="Agendar até" hint="Dias à frente.">
+              {(id) => (
+                <span className="input input--suffix">
+                  <input id={id} type="number" inputMode="numeric" min={1} max={90} value={site.bookingWindowDays} onChange={(e) => setSite('bookingWindowDays', Math.min(90, Math.max(1, Math.round(num(e.target.value)))))} />
+                  <span aria-hidden="true">dias</span>
+                </span>
+              )}
+            </Field>
+          </div>
+          <p className="field__hint">Só aparecem horários dentro do expediente de cada profissional. Defina o expediente na Agenda, em Horário de atendimento.</p>
+        </>
+      )}
       <Field label="Sinal para confirmar o horário" hint="Cobrado via Pix no agendamento online. Use 0 para não cobrar.">
         {(id) => (
           <span className="input input--suffix">
@@ -588,7 +617,7 @@ export default function MeuSite() {
               <div className="sects">
                 <details className="fold">
                   <summary>Agendamento pelo site</summary>
-                  <OnlineBookingChecklist whatsapp={site.whatsapp} />
+                  <OnlineBookingChecklist whatsapp={site.whatsapp} online={site.onlineBooking} />
                 </details>
 
                 <Section title="Identidade" hint="Logo e cor do seu site." open>

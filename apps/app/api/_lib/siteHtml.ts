@@ -1,4 +1,5 @@
 import { CATEGORIES, resolveAccent } from '../../src/lib/siteTheme.js'
+import { BOOKING_CSS, BOOKING_SCRIPT } from './bookingClient.js'
 
 /** formato devolvido por public.get_public_site(): só o que pode ser exibido ao público */
 export interface PublicSite {
@@ -15,12 +16,16 @@ export interface PublicSite {
     logo?: string | null
     cover?: string | null
     address?: string
+    online_booking?: boolean
+    booking_window_days?: number
     show_prices?: boolean
     show_team?: boolean
   }
-  services: { name: string; category: string; duration: number; price: number | null }[]
+  services: { id?: string; name: string; category: string; duration: number; price: number | null }[]
   plans: { name: string; description: string; includes: string[]; is_new: boolean; price: number | null }[]
   team: { name: string; title: string }[]
+  /** só vem preenchido com o agendamento online ligado */
+  professionals?: { id: string; name: string }[]
 }
 
 const ESCAPES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }
@@ -177,6 +182,8 @@ export function renderSitePage(site: PublicSite, opts: { canonical: string }): s
   const hours = (s.hours ?? '').trim()
 
   const bookLink = whatsappLink(s.whatsapp, `Olá! Gostaria de agendar um horário no ${name}.`)
+  const pros = site.professionals ?? []
+  const online = s.online_booking === true && pros.length > 0 && services.some((x) => x.id)
   const insta = instagramHandle(s.instagram)
   const mapLink = address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${name} ${address}`)}` : null
 
@@ -189,9 +196,15 @@ export function renderSitePage(site: PublicSite, opts: { canonical: string }): s
       const rows = g.items
         .map((x) => {
           const link = whatsappLink(s.whatsapp, `Olá! Gostaria de agendar "${x.name}" no ${name}.`)
+          const go =
+            online && x.id
+              ? `<button type="button" class="go" data-book="${esc(x.id)}" aria-label="Agendar ${esc(x.name)}">&rarr;</button>`
+              : link
+                ? `<a class="go" href="${esc(link)}" rel="noopener" aria-label="Agendar ${esc(x.name)} pelo WhatsApp">&rarr;</a>`
+                : ''
           return `<li><span>${esc(x.name)}<small>${esc(x.duration)} min</small></span>${
             showPrices && x.price != null ? `<span class="price">${esc(formatPrice(x.price))}</span>` : ''
-          }${link ? `<a class="go" href="${esc(link)}" rel="noopener" aria-label="Agendar ${esc(x.name)} pelo WhatsApp">&rarr;</a>` : ''}</li>`
+          }${go}</li>`
         })
         .join('')
       return `<div class="cat"><h3>${esc(g.category)}</h3><ul>${rows}</ul></div>`
@@ -233,6 +246,19 @@ export function renderSitePage(site: PublicSite, opts: { canonical: string }): s
     ...(insta ? { sameAs: [`https://instagram.com/${insta}`] } : {}),
   }).replace(/</g, '\\u003c')
 
+  const bookingData = JSON.stringify({
+    slug: site.slug,
+    wa: (bookLink ?? '').match(/wa\.me\/(\d+)/)?.[1] ?? '',
+    showPrices,
+    windowDays: Math.min(90, Math.max(1, Number(s.booking_window_days) || 30)),
+    services: services.filter((x) => x.id).map((x) => ({ id: x.id, name: x.name, category: x.category, duration: x.duration, price: x.price })),
+    pros: pros.map((p) => ({ id: p.id, name: p.name })),
+  })
+    .replace(/</g, '\\u003c')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029')
+  const bookingWidget = `<dialog id="book" class="sheet" aria-labelledby="book-title"><div class="sheet__head"><h2 id="book-title">Agendar <em>horário</em></h2><button type="button" class="sheet__x" id="book-x" aria-label="Fechar">&times;</button></div><div class="sheet__body" id="book-body"></div><div class="sheet__foot" id="book-foot" hidden></div></dialog><script type="application/json" id="book-data">${bookingData}</script><script>${BOOKING_SCRIPT}</script>`
+
   const contactCards = [
     s.whatsapp && bookLink ? `<div class="info"><small>WhatsApp</small><a href="${esc(bookLink)}" rel="noopener">${esc(s.whatsapp)}</a></div>` : '',
     insta ? `<div class="info"><small>Instagram</small><a href="https://instagram.com/${esc(insta)}" rel="noopener">@${esc(insta)}</a></div>` : '',
@@ -259,22 +285,38 @@ export function renderSitePage(site: PublicSite, opts: { canonical: string }): s
 <meta property="og:url" content="${esc(opts.canonical)}">
 <meta name="twitter:card" content="summary">
 <script type="application/ld+json">${jsonLd}</script>
-<style>:root{--accent:${accent.color};--soft:${accent.soft}}${CSS}</style>
+<style>:root{--accent:${accent.color};--soft:${accent.soft}}${CSS}${online ? BOOKING_CSS : ''}</style>
 </head>
 <body>
 <header class="top"><div class="wrap"><div class="bar"><span class="logo">${logo ? `<img src="${logo}" alt="">` : ''}<span>${esc(name)}</span></span><nav aria-label="Seções">${
     groups.length ? '<a href="#servicos">Serviços</a>' : ''
   }${plans.length ? '<a href="#planos">Planos</a>' : ''}${team.length ? '<a href="#equipe">Equipe</a>' : ''}${
     contactCards ? '<a href="#contato">Contato</a>' : ''
-  }</nav>${bookLink ? `<a class="btn btn--sm" href="${esc(bookLink)}" rel="noopener">Agendar</a>` : ''}</div></div></header>
+  }</nav>${
+    online
+      ? '<button type="button" class="btn btn--sm" data-book="">Agendar</button>'
+      : bookLink
+        ? `<a class="btn btn--sm" href="${esc(bookLink)}" rel="noopener">Agendar</a>`
+        : ''
+  }</div></div></header>
 <main class="wrap">
 <section class="panel hero${cover ? ' hero--cover' : ''}">${cover ? `<img class="hero__img" src="${cover}" alt="">` : ''}<div class="hero__in"><h1>${head ? `${esc(head)} ` : ''}<em>${esc(tail)}</em></h1>${
     about && !cover ? `<p class="hero__lead">${esc(about.slice(0, 140))}</p>` : ''
-  }<div class="hero__cta">${bookLink ? `<a class="btn" href="${esc(bookLink)}" rel="noopener">Agendar pelo WhatsApp</a>` : ''}${
+  }<div class="hero__cta">${
+    online
+      ? '<button type="button" class="btn" data-book="">Agendar horário</button>'
+      : bookLink
+        ? `<a class="btn" href="${esc(bookLink)}" rel="noopener">Agendar pelo WhatsApp</a>`
+        : ''
+  }${
     groups.length ? '<a class="btn btn--ghost" href="#servicos">Ver serviços</a>' : ''
   }</div>${chips ? `<div class="chips">${chips}</div>` : ''}</div></section>${
-    bookLink
-      ? `<section class="panel"><p class="eyebrow">Agendar é simples</p><ol class="steps"><li><span><strong>Escolha o serviço</strong><small>Veja os valores e a duração abaixo.</small></span></li><li><span><strong>Chame no WhatsApp</strong><small>A mensagem já vai pronta, é só enviar.</small></span></li><li><span><strong>Receba a confirmação</strong><small>Combinamos o melhor dia e horário.</small></span></li></ol></section>`
+    bookLink || online
+      ? `<section class="panel"><p class="eyebrow">Agendar é simples</p><ol class="steps"><li><span><strong>Escolha o serviço</strong><small>Veja os valores e a duração abaixo.</small></span></li>${
+        online
+          ? '<li><span><strong>Escolha dia e horário</strong><small>Veja os horários livres na hora.</small></span></li><li><span><strong>Receba a confirmação</strong><small>O salão confirma com você pelo WhatsApp.</small></span></li>'
+          : '<li><span><strong>Chame no WhatsApp</strong><small>A mensagem já vai pronta, é só enviar.</small></span></li><li><span><strong>Receba a confirmação</strong><small>Combinamos o melhor dia e horário.</small></span></li>'
+      }</ol></section>`
       : ''
   }${
     about ? `<section class="panel about"><p class="eyebrow">Sobre nós</p><p>${esc(about)}</p></section>` : ''
@@ -285,16 +327,24 @@ export function renderSitePage(site: PublicSite, opts: { canonical: string }): s
   }${
     team.length ? `<section id="equipe" class="panel"><h2>Quem cuida de você</h2><ul class="team">${teamHtml}</ul></section>` : ''
   }${
-    contactCards || bookLink
+    contactCards || bookLink || online
       ? `<section id="contato" class="panel contact"><h2>Vamos <em>agendar?</em></h2><div class="contact__grid">${contactCards}</div>${
-          bookLink ? `<div class="hero__cta"><a class="btn btn--light" href="${esc(bookLink)}" rel="noopener">Chamar no WhatsApp</a></div>` : ''
+          online || bookLink
+            ? `<div class="hero__cta">${online ? '<button type="button" class="btn btn--light" data-book="">Agendar horário</button>' : ''}${
+                bookLink ? `<a class="btn ${online ? 'btn--ghost' : 'btn--light'}" href="${esc(bookLink)}" rel="noopener">Chamar no WhatsApp</a>` : ''
+              }</div>`
+            : ''
         }</section>`
       : ''
   }
 </main>
 <footer>Página criada com <a href="https://ikizy.com">IKIZY</a></footer>${
-    bookLink ? `<a class="btn float" href="${esc(bookLink)}" rel="noopener">Agendar pelo WhatsApp</a>` : ''
-  }
+    online
+      ? '<button type="button" class="btn float" data-book="">Agendar horário</button>'
+      : bookLink
+        ? `<a class="btn float" href="${esc(bookLink)}" rel="noopener">Agendar pelo WhatsApp</a>`
+        : ''
+  }${online ? bookingWidget : ''}
 </body>
 </html>`
 }

@@ -19,7 +19,7 @@ interface Item {
  * O que o salão precisa ter pronto antes de abrir o agendamento online.
  * Enquanto algum item estiver pendente, a página pública não mostra o botão de agendar.
  */
-export default function OnlineBookingChecklist({ whatsapp }: { whatsapp: string }) {
+export default function OnlineBookingChecklist({ whatsapp, online }: { whatsapp: string; online: boolean }) {
   const { professionals, services, workingHours, hoursAvailable } = useAgenda()
 
   const priced = services.filter((s) => s.price > 0 && s.duration > 0)
@@ -65,9 +65,11 @@ export default function OnlineBookingChecklist({ whatsapp }: { whatsapp: string 
     },
     {
       id: 'rules',
-      title: 'Regras do agendamento',
-      detail: 'Antecedência mínima, até quando marcar e prazo para você responder. Chega na próxima etapa.',
-      state: 'soon',
+      title: 'Aceitar agendamentos online',
+      detail: online
+        ? 'Ligado: a cliente já pode pedir horário pela sua página.'
+        : 'Ligue em "O que mostrar", mais abaixo, para a cliente poder pedir horário.',
+      state: online ? 'ok' : 'todo',
     },
   ]
 
@@ -81,7 +83,7 @@ export default function OnlineBookingChecklist({ whatsapp }: { whatsapp: string 
           <h3 className="checklist__title">Agendamento pelo site</h3>
           <p className="card__sub">
             {missing === 0
-              ? 'Tudo pronto. O botão de agendar aparece na sua página quando essa etapa for ativada.'
+              ? 'Tudo pronto: seus clientes já agendam pela página.'
               : `Faltam ${missing} ${missing === 1 ? 'item' : 'itens'} para o cliente poder pedir horário.`}
           </p>
         </div>
