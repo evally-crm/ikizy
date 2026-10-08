@@ -552,3 +552,65 @@
 .checklist__item.is-soon .checklist__text p {
   color: var(--ink-500);
 }
+
+/* publicar o site: no celular a ação fica à mão, acima da barra de baixo */
+.publishbar {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--bottomnav-h, 0px) + 28px + env(safe-area-inset-bottom));
+  z-index: 45;
+  display: flex;
+  gap: 8px;
+  width: min(420px, calc(100% - 2 * var(--gutter)));
+  padding: 8px;
+  transform: translateX(-50%);
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 12px 34px -12px rgba(14, 13, 13, 0.3), 0 0 0 1px var(--line);
+}
+.publishbar .btn {
+  flex: 1;
+  min-height: 44px;
+}
+.bar__publish {
+  display: none;
+  align-items: center;
+  gap: 10px;
+}
+@media (min-width: 768px) {
+  .publishbar {
+    display: none;
+  }
+  .bar__publish {
+    display: flex;
+  }
+}
+
+/* mobile primeiro: áreas de toque de pelo menos 40px, sem mudar o desenho */
+@media (max-width: 767px) {
+  .textlink {
+    position: relative;
+  }
+  .textlink::after {
+    content: '';
+    position: absolute;
+    inset: -12px -8px;
+  }
+  .chevbtn {
+    min-width: 40px;
+    min-height: 40px;
+  }
+  .seg__item {
+    min-height: 40px;
+  }
+}
+
+/* 16px nos campos: abaixo disso o Safari do iPhone dá zoom ao focar e desloca a tela */
+@media (max-width: 767px) {
+  body input:not([type='checkbox']):not([type='radio']),
+  body textarea,
+  body select {
+    font-size: 16px;
+  }
+}
