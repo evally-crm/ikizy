@@ -98,7 +98,7 @@ const DEMO_STUDIO: StudioInput = {
     whatsapp: '(11) 98765-0000',
     instagram: '@studiomariabeauty',
     hours: 'Seg a Sáb · 09h às 19h',
-    palette: 'bordo',
+    palette: 'vinho-preto',
     font: 'moderna',
     logo: '',
     cover: '',

@@ -128,16 +128,16 @@ describe('renderSitePage', () => {
     assert.doesNotThrow(() => JSON.parse(ld))
   })
 
-  it('cor de destaque desconhecida cai no bordô', () => {
-    assert.match(page(base({}, { accent: 'neon' })), /--accent:#460106/)
-    assert.match(page(base({}, { accent: 'rubi' })), /--accent:#bf0c22/)
+  it('cor antiga ou desconhecida cai em vinho e preto', () => {
+    assert.match(page(base({}, { accent: 'neon' })), /--accent:#6e1423/)
+    assert.match(page(base({}, { accent: 'rubi' })), /--accent:#6e1423/)
   })
 
   it('paleta escolhida define as cores da página; sem paleta, vale a cor antiga', () => {
-    assert.match(page(base({}, { palette: 'floresta' })), /--accent:#1f4d3a/)
-    assert.match(page(base({}, { palette: 'marinho', accent: 'rubi' })), /--accent:#1b2f55/)
-    assert.match(page(base({}, { palette: 'noir' })), /--bg:#0e0d0d/)
-    assert.match(page(base({}, { palette: 'neon' })), /--accent:#bf0c22/)
+    assert.match(page(base({}, { palette: 'creme-pinho' })), /--accent:#00371c/)
+    assert.match(page(base({}, { palette: 'marinho-branco', accent: 'rubi' })), /--accent:#1b2a55/)
+    assert.match(page(base({}, { palette: 'creme-pinho' })), /--bg:#fffbda/)
+    assert.match(page(base({}, { palette: 'neon' })), /--accent:#6e1423/)
   })
 
   it('logo só entra se for data URL de imagem válida', () => {
@@ -202,18 +202,18 @@ describe('renderSitePage', () => {
     assert.doesNotMatch(html, /<img src=x/)
   })
 
-  it('paleta escura e fonte forte entram como variáveis da página', () => {
-    const html = page(base({}, { palette: 'noir', font: 'forte' }))
-    assert.match(html, /--bg:#0e0d0d/)
-    assert.match(html, /color-scheme:dark/)
+  it('paleta e fonte forte entram como variáveis da página', () => {
+    const html = page(base({}, { palette: 'bege-preto', font: 'forte' }))
+    assert.match(html, /--bg:#e8dccb/)
+    assert.match(html, /--accent:#111111/)
     assert.match(html, /--du:uppercase/)
     assert.match(html, /--dw:800/)
-    assert.match(html, /<meta name="theme-color" content="#0e0d0d">/)
+    assert.match(html, /<meta name="theme-color" content="#e8dccb">/)
   })
 
-  it('paleta e fonte desconhecidas voltam ao bordô claro e à fonte moderna', () => {
+  it('paleta e fonte desconhecidas voltam a vinho e preto e à fonte moderna', () => {
     const html = page(base({}, { palette: 'neon', accent: 'x', font: 'comic' }))
-    assert.match(html, /--bg:#efebe5/)
+    assert.match(html, /--bg:#f2eded/)
     assert.match(html, /color-scheme:light/)
     assert.match(html, /--du:none/)
   })
