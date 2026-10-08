@@ -99,6 +99,7 @@ npm run build
 | `20261018000000_palette_combos` | paletas reduzidas às 7 combinações de então |
 | `20261019000000_palette_dark` | paleta escura `preto-branco` aceita no banco |
 | `20261020000000_client_file` | ficha completa da cliente (e-mail, Instagram, endereço, profissão, como conheceu, anamnese em jsonb, assinatura do termo), `loyalty_settings`, `loyalty_entries` (selos extras e resgates) e `client_notes` |
+| `20261021000000_client_photos` | **ainda não aplicada**: fotos de antes e depois na ficha (`client_photos`: miniatura + foto, só membros do salão leem; não passam pela página pública) |
 
 Regras importantes:
 - Toda tabela tem `salon_id` + RLS. Escrita de catálogo/site só `owner`/`manager`; sem assinatura ativa, escrita bloqueada (políticas restritivas).
@@ -230,7 +231,7 @@ Hoje: a cliente escolhe serviço, profissional, dia e horário livre, informa no
 | P2 | **Aniversariantes** | Lista do mês com mensagem pronta e cupom. |
 | ~~P2~~ | **Fidelidade** (feito) | Cartão de selos configurável por salão (selos por prêmio e prêmio), selo extra, resgate e desfazer. Próximo: cashback. |
 | P3 | **Venda de produtos com estoque** | A vitrine existe; somar estoque, baixa na venda e alerta de reposição. |
-| ~~P3~~ | **Ficha da cliente** (feito) | Abas Resumo/Ficha/Histórico/Anotações; anamnese com 20 perguntas, termo assinado com o dedo, pontos de atenção no resumo. Falta: fotos antes/depois (precisa de armazenamento). |
+| ~~P3~~ | **Ficha da cliente** (feito) | Abas Resumo/Ficha/Histórico/Anotações; anamnese com 20 perguntas, termo assinado com o dedo, pontos de atenção no resumo. Fotos de antes e depois (miniatura na lista, foto inteira ao abrir, comparação lado a lado). |
 
 ### 9.4 Agenda, equipe e financeiro
 

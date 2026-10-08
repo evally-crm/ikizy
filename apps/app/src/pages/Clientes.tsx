@@ -10,7 +10,6 @@ import {
   Cake,
   CalendarCheck,
   CalendarPlus,
-  Camera,
   FileSignature,
   Heart,
   Pencil,
@@ -28,7 +27,8 @@ import {
   type Client,
   type ClientTag,
 } from '../data/clients'
-import { useClientBook, useClientNotes } from '../data/useClientBook'
+import { useClientBook, useClientNotes, useClientPhotos } from '../data/useClientBook'
+import { AddPhotosDialog, PhotoViewer, PhotosCard } from '../components/ClientPhotos'
 import { useAuth } from '../auth/AuthProvider'
 import { ClientDialog } from '../components/ClientDialog'
 import {
@@ -186,7 +186,6 @@ function ClientDetail({
   client,
   today,
   showBack,
-  live,
   book,
   salonName,
   onEdit,
@@ -195,7 +194,6 @@ function ClientDetail({
   client: Client
   today: Date
   showBack: boolean
-  live: boolean
   book: ReturnType<typeof useClientBook>
   salonName: string
   onEdit: () => void
@@ -204,6 +202,9 @@ function ClientDetail({
   const navigate = useNavigate()
   const [tab, setTab] = useState<Tab>('resumo')
   const [fileOpen, setFileOpen] = useState(false)
+  const [addingPhotos, setAddingPhotos] = useState(false)
+  const [viewing, setViewing] = useState<string | null>(null)
+  const photos = useClientPhotos(client.id)
   const notes = useClientNotes(client.id)
   const { professionals } = book
   const proName = (id: string) => professionals.find((p) => p.id === id)?.name ?? ''
@@ -226,6 +227,8 @@ function ClientDetail({
     setShownId(client.id)
     setTab('resumo')
     setFileOpen(false)
+    setAddingPhotos(false)
+    setViewing(null)
   }
 
   const info = [
@@ -430,30 +433,15 @@ function ClientDetail({
               </Card>
             )}
             <HistoryCard appointments={client.appointments} proName={proName} limit={3} onSeeAll={() => setTab('historico')} />
-            {/* galeria (ainda sem armazenamento de fotos: só na demonstração) */}
-            {!live && (
-              <Card>
-                <div className="card__head">
-                  <div>
-                    <p className="eyebrow">Galeria</p>
-                    <h3 className="card__title">Antes e depois</h3>
-                  </div>
-                </div>
-                <div className="gallery">
-                  {client.history.slice(0, 2).map((v, i) => (
-                    <figure key={i} className={`gallery__item gallery__item--${i}`}>
-                      <figcaption>
-                        {i === 0 ? 'Depois' : 'Antes'} · {format(v.date, 'dd/MM')}
-                      </figcaption>
-                    </figure>
-                  ))}
-                  <button type="button" className="gallery__add">
-                    <Camera size={20} aria-hidden="true" />
-                    Adicionar
-                  </button>
-                </div>
-              </Card>
-            )}
+            <PhotosCard
+              photos={photos.photos}
+              loading={photos.loading}
+              error={photos.error}
+              limit={4}
+              onAdd={() => setAddingPhotos(true)}
+              onOpen={setViewing}
+              onSeeAll={() => setTab('ficha')}
+            />
           </>
         )}
 
@@ -461,6 +449,13 @@ function ClientDetail({
           <>
             <PersonalCard client={client} professionals={professionals} onEdit={onEdit} />
             <AnamnesisSummary client={client} onOpen={() => setFileOpen(true)} />
+            <PhotosCard
+              photos={photos.photos}
+              loading={photos.loading}
+              error={photos.error}
+              onAdd={() => setAddingPhotos(true)}
+              onOpen={setViewing}
+            />
           </>
         )}
 
@@ -471,6 +466,17 @@ function ClientDetail({
             onSave={(a) => book.saveAnamnesis(client.id, a)}
             onSign={(sig) => book.signAnamnesis(client.id, sig)}
             onClose={() => setFileOpen(false)}
+          />
+        )}
+
+        {addingPhotos && <AddPhotosDialog onSave={photos.add} onClose={() => setAddingPhotos(false)} />}
+        {viewing && (
+          <PhotoViewer
+            photos={photos.photos}
+            startId={viewing}
+            loadFull={photos.loadFull}
+            onRemove={photos.remove}
+            onClose={() => setViewing(null)}
           />
         )}
 
@@ -494,7 +500,7 @@ function ClientDetail({
 export default function Clientes() {
   const today = useMemo(() => new Date(), [])
   const book = useClientBook()
-  const { clients, professionals, live } = book
+  const { clients, professionals } = book
   const { salon } = useAuth()
   const { id } = useParams()
   const navigate = useNavigate()
@@ -539,7 +545,6 @@ export default function Clientes() {
         client={selected}
         today={today}
         showBack={showBack}
-        live={live}
         book={book}
         salonName={salon?.name ?? ''}
         onEdit={() => setDialog('edit')}
