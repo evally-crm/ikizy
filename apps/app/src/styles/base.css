@@ -8,6 +8,12 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
+/* texto selecionado em vermelho (no lugar do azul padrão do navegador) */
+::selection {
+  background: var(--brand-500);
+  color: var(--white);
+}
+
 body {
   margin: 0;
   min-width: 320px;
