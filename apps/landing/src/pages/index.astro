@@ -419,7 +419,7 @@ const faqSchema = {
       (Math.sin(x * 0.012 + Math.sin(y * 0.009 + t * 0.6) * 2.4 + t) + Math.sin(y * 0.014 - x * 0.007 + 1.7 - t * 0.8) * 0.8 + 1.8) / 3.6
 
     // contornos arredondados em u ∈ [-1, 1]: oval com um leve arco do cupido, e a abertura no meio onde fica a marca
-    const top = (u) => -0.56 * Math.pow(1 - u * u, 0.6) + 0.16 * bell(u, 0.13)
+    const top = (u) => -0.56 * Math.pow(1 - u * u, 0.6) + 0.11 * bell(u, 0.14)
     const bottom = (u) => 0.58 * Math.pow(1 - u * u, 0.55)
     const OPEN_W = 0.52
     const opening = (u, t) => Math.sqrt(Math.max(0, 1 - (u / OPEN_W) ** 2)) * (1 + Math.sin(t * 0.7) * 0.06)
@@ -438,7 +438,7 @@ const faqSchema = {
       const out = Math.min(v - tp, bt - v)
       const inner = v <= ui ? ui - v : v - li
       const lipLine = Math.abs(v) < 0.03 && o === 0 ? 0.35 : 0 // fenda entre os lábios perto dos cantos
-      return Math.max(0, smooth(-0.03, 0.22, out) * smooth(-0.01, 0.14, inner) - lipLine)
+      return Math.max(0, smooth(-0.08, 0.26, out) * smooth(-0.01, 0.14, inner) - lipLine)
     }
 
     /** símbolo conforme a densidade, como no login: nada · ponto · + · x · quadradinho · quadrado */
@@ -498,7 +498,7 @@ const faqSchema = {
             // pontinhos e + soltos em volta, como pó
             const e = Math.hypot(u / 1.12, v / 0.78)
             const inMouth = Math.abs(u) < OPEN_W + 0.06 && Math.abs(v) < 0.2
-            if (!inMouth && e < 1.2 && n < smooth(1.2, 0.85, e) * 0.22 * wave) d = 0.15 + n * 0.4
+            if (!inMouth && e < 1.2 && n < smooth(1.2, 0.85, e) * 0.45 * wave) d = 0.15 + n * 0.4
             else continue
           } else {
             // volume dos lábios: mais escuro junto à abertura, brilho no lábio de baixo, e ondas que fazem os símbolos irem e voltarem
