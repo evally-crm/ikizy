@@ -7,29 +7,29 @@ const crafts = [
   { name: 'Cabeleireira', hint: 'Agenda por profissional' },
   { name: 'Nail Designer', hint: 'Serviços e custo por produto' },
   { name: 'Lash Design', hint: 'Retorno e manutenção' },
-  { name: 'Sobrancelha', hint: 'Fidelidade e lembretes' },
+  { name: 'Sobrancelha', hint: 'Retorno e lembretes' },
 ]
 
 const ticker = ['Agenda online', 'Clientes que voltam', 'Financeiro descomplicado', 'Site do seu negócio', 'Comissões da equipe', 'Lembretes por WhatsApp', 'Relatórios']
 
 const pains = [
-  { was: 'Cliente esqueceu o horário', title: 'Lembrete automático', text: 'Confirmação e lembrete por WhatsApp antes do horário, para reduzir faltas.' },
-  { was: 'Caixa no caderno', title: 'Financeiro em um lugar', text: 'Entradas, saídas e formas de pagamento. O fechamento do mês sai como um recibo.' },
-  { was: 'Cliente que sumiu', title: 'Aviso de retorno', text: 'O sistema mostra quem está atrasada para voltar, para você chamar de volta.' },
-  { was: 'Comissão na calculadora', title: 'Comissão por profissional', text: 'Percentuais por profissional e valores calculados sem planilha.' },
+  { was: 'Cliente esqueceu o horário', title: 'Lembrete automático', text: 'Confirmação por WhatsApp antes do horário.' },
+  { was: 'Caixa no caderno', title: 'Financeiro em um lugar', text: 'Entradas, saídas e fechamento do mês.' },
+  { was: 'Cliente que sumiu', title: 'Aviso de retorno', text: 'Veja quem está atrasada para voltar.' },
+  { was: 'Comissão na calculadora', title: 'Comissão por profissional', text: 'Calculada sozinha, sem planilha.' },
 ]
 
 const reasons = [
-  { n: '01', title: 'Simples de verdade', text: 'Sem curso e sem manual. Você abre, cadastra seus serviços e já começa a agendar.' },
-  { n: '02', title: 'Feito para beleza', text: 'Retorno de clientes, comissão por profissional e custo por serviço, do jeito que o seu dia funciona.' },
-  { n: '03', title: 'Funciona no celular', text: 'No navegador, sem instalar nada. Sua agenda e seu caixa no bolso, dentro e fora do salão.' },
-  { n: '04', title: 'Seus dados protegidos', text: 'Cada negócio enxerga só o que é seu, e a equipe acessa conforme o papel de cada pessoa.' },
+  { tag: 'Simples', title: 'Pronto em minutos', text: 'Sem curso e sem manual.', ui: 'setup' },
+  { tag: 'Feito para beleza', title: 'Pensado para beleza', text: 'Aviso de quem está atrasada para o retorno.', ui: 'client' },
+  { tag: 'No celular', title: 'Sua agenda no bolso', text: 'No navegador, sem instalar nada.', ui: 'agenda' },
+  { tag: 'Segurança', title: 'Cada um vê o que deve', text: 'Acesso por papel para toda a equipe.', ui: 'roles' },
 ]
 
 const steps = [
-  { title: 'Crie sua conta', text: 'Informe o nome do seu negócio e o tipo de atendimento. Leva poucos minutos.' },
-  { title: 'Cadastre serviços e equipe', text: 'Valores, duração e profissionais. O sistema já sugere o básico do seu segmento.' },
-  { title: 'Agende e acompanhe', text: 'Divulgue o endereço do seu site e acompanhe agenda, clientes e caixa em um só lugar.' },
+  { title: 'Crie sua conta', text: 'Leva poucos minutos.' },
+  { title: 'Cadastre serviços e equipe', text: 'O sistema sugere o básico do seu segmento.' },
+  { title: 'Agende e acompanhe', text: 'Divulgue seu site e acompanhe tudo.' },
 ]
 
 const faq = [
@@ -42,12 +42,12 @@ const faq = [
   { q: 'Meus dados ficam separados dos de outros negócios?', a: 'Sim. Cada negócio enxerga apenas os próprios dados, e o acesso da equipe é controlado por papéis: dona, gerente, recepção e profissional.' },
 ]
 
-const extras = ['Equipe e comissões', 'Serviços e custos', 'Relatórios', 'Lembretes por WhatsApp', 'Acesso por papel: dona, gerente, recepção e profissional']
+const extras = ['Equipe e comissões', 'Serviços e custos', 'Relatórios', 'Lembretes por WhatsApp', 'Acesso por papel']
 
 const values = [
-  { title: 'Estética', text: 'Um sistema bonito de usar importa. Quem trabalha com beleza merece ferramentas à altura.' },
-  { title: 'Elegância', text: 'Telas limpas, sem excesso. Cada informação aparece quando você precisa dela.' },
-  { title: 'Autenticidade', text: 'Seu negócio tem identidade própria. A IKIZY ajuda a mostrar isso, em vez de padronizar.' },
+  { title: 'Estética', text: 'Ferramentas à altura de quem trabalha com beleza.' },
+  { title: 'Elegância', text: 'Telas limpas, sem excesso.' },
+  { title: 'Autenticidade', text: 'Seu negócio com identidade própria.' },
 ]
 
 const faqSchema = {
@@ -74,7 +74,7 @@ const faqSchema = {
           <span class="display__sub">para negócios de beleza</span>
         </h1>
         <p class="hero2__note">
-          Agenda, clientes, financeiro e um site com o endereço do seu negócio, tudo em um sistema simples de usar.
+          Agenda, clientes e caixa em um só lugar.
         </p>
         <div class="btn-row">
           <a class="btn btn--primary" href={LINKS.signup}>{CTA.main}</a>
@@ -139,7 +139,7 @@ const faqSchema = {
     </div>
 
     <div class="forwho__foot">
-      <p class="lead">De quem atende sozinha ao salão com equipe: agenda, clientes e caixa no mesmo lugar.</p>
+      <p class="lead">Sozinha ou com equipe.</p>
       <a class="btn btn--primary" href={LINKS.signup}>{CTA.main}</a>
     </div>
   </section>
@@ -149,7 +149,6 @@ const faqSchema = {
     <header class="pains__head">
       <p class="eyebrow">Antes e depois</p>
       <h2 id="pains-title" class="pains__title">Do caderno ao <em>sistema</em></h2>
-      <p class="lead">O que hoje toma o seu tempo no salão passa a acontecer sozinho.</p>
     </header>
     <ol class="pains__list">
       {
@@ -172,15 +171,47 @@ const faqSchema = {
 
   <!-- POR QUE NÓS -->
   <section class="section screen container why" aria-labelledby="why-title">
-    <div class="why__grid">
-      <div class="why__rings" aria-hidden="true"><span></span><span></span><span></span></div>
-      <h2 id="why-title" class="why__title">Por que<br />a <em>IKIZY</em>?</h2>
+    <h2 id="why-title" class="why__title">Por que trocar para a <em>IKIZY</em></h2>
+    <div class="why__list">
       {
-        reasons.map((r, i) => (
-          <article class={`why__card why__card--${i + 1}`}>
-            <h3>{r.title}</h3>
-            <span class="why__n">{r.n}</span>
-            <p>{r.text}</p>
+        reasons.map((r) => (
+          <article class="why__card">
+            <div class="why__text">
+              <p class="why__tag">{r.tag}</p>
+              <h3>{r.title}</h3>
+              <p>{r.text}</p>
+            </div>
+            <div class="why__visual" aria-hidden="true">
+              {r.ui === 'setup' && (
+                <ul class="ui ui--list">
+                  <li><span>Serviços</span><i class="ui__ok" /></li>
+                  <li><span>Equipe</span><i class="ui__ok" /></li>
+                  <li><span>Horários</span><i class="ui__ok" /></li>
+                </ul>
+              )}
+              {r.ui === 'client' && (
+                <div class="ui ui--client">
+                  <span class="ui__avatar">AM</span>
+                  <div><b>Ana Martins</b><small>Lash · manutenção</small></div>
+                  <span class="ui__late">12 dias atrasada</span>
+                </div>
+              )}
+              {r.ui === 'agenda' && (
+                <div class="ui ui--phone">
+                  <small>Hoje</small>
+                  <span>09:00 · Escova</span>
+                  <span class="is-busy">10:30 · Gel</span>
+                  <span>14:30 · Cílios</span>
+                </div>
+              )}
+              {r.ui === 'roles' && (
+                <ul class="ui ui--list">
+                  <li><span>Dona</span><i class="ui__sw is-on" /></li>
+                  <li><span>Gerente</span><i class="ui__sw is-on" /></li>
+                  <li><span>Recepção</span><i class="ui__sw" /></li>
+                </ul>
+              )}
+            </div>
           </article>
         ))
       }
@@ -204,7 +235,7 @@ const faqSchema = {
         </div>
         <div>
           <h3>Agenda online</h3>
-          <p>Visão por dia e por profissional, com confirmação e lembrete para a cliente.</p>
+          <p>Por dia e por profissional, com lembrete.</p>
         </div>
       </article>
 
@@ -215,7 +246,7 @@ const faqSchema = {
         </div>
         <div>
           <h3>Clientes que voltam</h3>
-          <p>Ficha com histórico, preferências, alergias, cartão fidelidade e aviso de retorno atrasado.</p>
+          <p>Histórico, preferências e aviso de retorno.</p>
         </div>
       </article>
 
@@ -226,7 +257,7 @@ const faqSchema = {
         </div>
         <div>
           <h3>Financeiro</h3>
-          <p>Entradas, saídas e comissões num lugar só. O fechamento do mês sai como um recibo.</p>
+          <p>Entradas, saídas e comissões num lugar só.</p>
         </div>
       </article>
 
@@ -237,7 +268,7 @@ const faqSchema = {
         </div>
         <div>
           <h3>Seu site</h3>
-          <p>Uma página própria com serviços, preços e equipe que você escolhe mostrar, para receber agendamentos.</p>
+          <p>Sua página para receber agendamentos.</p>
         </div>
       </article>
     </div>
@@ -284,7 +315,7 @@ const faqSchema = {
           ))
         }
       </div>
-      <p class="period__hint">O cartão renova todo mês. O Pix vale pelo período escolhido e não renova sozinho.</p>
+      <p class="period__hint">Cartão renova todo mês. Pix não renova sozinho.</p>
     </div>
 
     <div class="plans" data-plans data-discount={JSON.stringify(PIX_DISCOUNT_PCT)}>
@@ -303,7 +334,6 @@ const faqSchema = {
         ))
       }
     </div>
-    <p class="note">Pague no cartão, com renovação automática, ou no Pix, de 1, 3 ou 12 meses adiantado (12 meses com 5% de desconto).</p>
   </section>
 
   <!-- SOBRE -->
@@ -312,14 +342,7 @@ const faqSchema = {
       <div class="about__text">
         <p class="eyebrow">Sobre a IKIZY</p>
         <h2 id="about-title" class="h2">Gestão simples, para quem cuida da <em>beleza</em></h2>
-        <p class="lead">
-          A IKIZY nasceu para tirar o peso administrativo de quem vive de beleza: cabeleireiras, manicures, lash designers,
-          designers de sobrancelha e donas de salão.
-        </p>
-        <p class="lead">
-          Em vez de cadernos, planilhas e mensagens soltas, você tem um só lugar para a agenda, as clientes, o caixa e o site do
-          seu negócio. Menos tempo organizando, mais tempo na sua arte.
-        </p>
+        <p class="lead">Menos caderno e planilha, mais tempo na sua arte.</p>
       </div>
       <ol class="steps about__values">
         {
@@ -341,7 +364,7 @@ const faqSchema = {
       <div class="faqs__side">
         <p class="eyebrow">Dúvidas</p>
         <h2 id="faq-title" class="h2">Perguntas <em>frequentes</em></h2>
-        <p class="lead">Não encontrou o que procurava? Escreva para a gente, respondemos por e-mail.</p>
+        <p class="lead">Não achou? Fale com a gente.</p>
         <a class="btn btn--ghost" href="#contato">Falar com a IKIZY</a>
       </div>
       <div class="faqs__list">
@@ -362,7 +385,7 @@ const faqSchema = {
     <div class="statement">
       <p class="eyebrow">Contato</p>
       <h2 id="contact-title">Vamos <em>conversar</em>?</h2>
-      <p>Dúvidas sobre o sistema, os planos ou como migrar do caderno e da planilha? Escreva para a gente.</p>
+      <p>Dúvidas sobre o sistema ou os planos? Escreva para a gente.</p>
       <a class="statement__mail" href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
       <div class="btn-row" style="justify-content: center; margin-top: 8px;">
         <a class="btn btn--light" href={LINKS.signup}>{CTA.main}</a>

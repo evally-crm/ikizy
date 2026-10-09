@@ -10,7 +10,7 @@ export const LINKS = {
 export const CTA = {
   main: 'Organizar meu salão grátis',
   short: 'Teste grátis',
-  hint: '1 mês grátis, sem cartão. Agenda, clientes e caixa do seu negócio de beleza prontos em minutos.',
+  hint: '1 mês grátis, sem cartão.',
 } as const
 
 export const CONTACT_EMAIL = 'contato@ikizy.com'

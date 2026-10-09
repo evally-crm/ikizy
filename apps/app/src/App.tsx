@@ -6,6 +6,7 @@ import { ROUTES } from './lib/routes'
 import Agenda from './pages/Agenda'
 import Assinatura from './pages/Assinatura'
 import Cadastro from './pages/auth/Cadastro'
+import EscolherPlano from './pages/auth/EscolherPlano'
 import Login from './pages/auth/Login'
 import Onboarding from './pages/auth/Onboarding'
 import RecuperarSenha from './pages/auth/RecuperarSenha'
@@ -16,7 +17,10 @@ import Financeiro from './pages/Financeiro'
 import MeuSite from './pages/MeuSite'
 import Placeholder from './pages/Placeholder'
 
-/** app.ikizy.com: acesso (/login, /cadastro, /recuperar-senha) e sistema (/dashboard/*) */
+/**
+ * app.ikizy.com: acesso (/login, /cadastro, /recuperar-senha) e sistema (/dashboard/*).
+ * Cadastro: /cadastro (e-mail e senha ou Google) > /cadastro/salao (questionário) > /cadastro/plano > /dashboard
+ */
 export default function App() {
   return (
     <AuthProvider>
@@ -24,6 +28,7 @@ export default function App() {
         <Route path="login" element={<Login />} />
         <Route path="cadastro" element={<Cadastro />} />
         <Route path="cadastro/salao" element={<Onboarding />} />
+        <Route path="cadastro/plano" element={<EscolherPlano />} />
         <Route path="recuperar-senha" element={<RecuperarSenha />} />
         <Route path="redefinir-senha" element={<RedefinirSenha />} />
 

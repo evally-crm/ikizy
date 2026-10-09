@@ -92,6 +92,9 @@ export const SEGMENTS: Segment[] = [
   },
 ]
 
+/** "Outro": área fora da lista; a pessoa digita o nome e os serviços, que entram na categoria "Outros" */
+export const OTHER_SEGMENT: Segment = { id: 'outro', label: 'Outro', category: 'Outros', services: [] }
+
 export type TeamSize = 'solo' | 'small' | 'large'
 
 export const TEAM_SIZES: { id: TeamSize; label: string }[] = [

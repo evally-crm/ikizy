@@ -3,6 +3,7 @@ export const ROUTES = {
   login: '/login',
   signup: '/cadastro',
   createSalon: '/cadastro/salao',
+  choosePlan: '/cadastro/plano',
   recover: '/recuperar-senha',
   reset: '/redefinir-senha',
   dashboard: '/dashboard',

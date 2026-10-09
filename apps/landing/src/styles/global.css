@@ -17,20 +17,20 @@
 */
 
 :root {
-  /* fundo claro, bege quente e preto; o vermelho aparece só em pontos específicos */
-  --red: #e11d2a;
+  /* as cores do IKIZY, iguais às do sistema: cinza, preto, branco e vinho (só em pontos específicos) */
+  --wine: #800513;
   --white: #ffffff;
-  --gray-100: #f0eeea;
-  --gray-200: #e6e3dd;
-  --gray-300: #d2cec6;
-  --gray-400: #a9a49b;
-  --ink-500: #67645e;
-  --ink-700: #2a2824;
-  --ink-900: #0e0d0c;
-  --line: rgba(14, 13, 12, 0.12);
+  --gray-100: #f5f5f7;
+  --gray-200: #e8e8ea;
+  --gray-300: #c9c9cd;
+  --gray-400: #a3a3a8;
+  --ink-500: #6b6668;
+  --ink-700: #242424;
+  --ink-900: #0e0d0d;
+  --line: rgba(14, 13, 13, 0.12);
 
   /* apelidos usados pelas páginas internas */
-  --brand-500: var(--red);
+  --brand-500: var(--wine);
   --brand-700: #2a2a2a;
   --brand-900: var(--ink-900);
   --blush: var(--gray-100);
@@ -113,7 +113,7 @@ svg {
   max-width: 100%;
 }
 :focus-visible {
-  outline: 2px solid var(--red);
+  outline: 2px solid var(--wine);
   outline-offset: 3px;
 }
 .sr-only {
@@ -138,17 +138,17 @@ svg {
   top: 12px;
 }
 
-/* destaque: sem itálico; só as marcadas com .hl ficam vermelhas */
+/* destaque dos títulos: serifa em itálico, na cor vinho do IKIZY */
 em {
   font-family: var(--font-serif);
   font-style: italic;
   font-weight: 400;
   letter-spacing: -0.02em;
   text-transform: none;
-  color: var(--ink-500);
+  color: var(--wine);
 }
 .hl {
-  color: var(--red);
+  color: var(--wine);
 }
 .eyebrow {
   font-size: 15px;
@@ -251,7 +251,7 @@ em {
   color: var(--ink-500);
 }
 .announce a:hover {
-  color: var(--red);
+  color: var(--wine);
 }
 
 /* ---------- header ---------- */
@@ -298,7 +298,7 @@ em {
   background: none;
 }
 .is-home .header .nav a:hover {
-  background: rgba(14, 13, 12, 0.07);
+  background: rgba(14, 13, 13, 0.07);
 }
 .is-home .header__inner {
   padding: 0 clamp(20px, 3vw, 44px);
@@ -311,7 +311,7 @@ em {
   color: var(--ink-900);
 }
 .logo span {
-  color: var(--red);
+  color: var(--wine);
 }
 .nav {
   display: none;
@@ -426,7 +426,7 @@ em {
   background: var(--ink-500);
 }
 .dot--live {
-  background: var(--red);
+  background: var(--wine);
 }
 
 /* ---------- hero (cartão claro com esfera de pontos) ---------- */
@@ -538,7 +538,7 @@ em {
   max-width: 96px;
   padding: 3px 8px;
   border-radius: 8px;
-  background: rgba(240, 238, 234, 0.92);
+  background: rgba(245, 245, 247, 0.92);
   font-size: 11px;
   line-height: 1.25;
   color: var(--ink-700);
@@ -582,7 +582,7 @@ em {
   background: var(--gray-300);
 }
 .marquee__track i:nth-of-type(3n) {
-  background: var(--red);
+  background: var(--wine);
 }
 @keyframes marquee {
   to {
@@ -778,108 +778,186 @@ em {
   }
 }
 
-/* ---------- por que a IKIZY (círculo central) ---------- */
-.why__grid {
-  position: relative;
-  display: grid;
-  gap: 12px;
-}
+/* ---------- por que a IKIZY (cards empilhados: texto curto + tela do sistema) ---------- */
 .why__title {
-  align-self: center;
-  padding: 36px 0 20px;
+  margin-bottom: clamp(20px, 4vh, 40px);
   text-align: center;
-  font-size: clamp(34px, 5vw, 60px);
+  font-size: clamp(28px, 5vw, 64px);
+  line-height: 1.05;
 }
-.why__title em {
-  color: var(--red);
-}
-.why__rings {
-  display: none;
+.why__list {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  max-width: 980px;
+  margin: 0 auto;
 }
 .why__card {
   display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 10px 16px;
-  padding: 24px;
-  border-radius: var(--radius-md);
+  gap: 10px;
+  padding: 10px;
+  border-radius: 20px;
   background: var(--gray-100);
 }
-.why__card h3 {
-  font-size: 19px;
-  font-weight: 400;
-  letter-spacing: -0.03em;
-  line-height: 1.25;
+.why__text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 12px 4px;
 }
-.why__card p {
-  grid-column: 1 / -1;
+.why__tag {
+  font-size: 12px;
+  color: var(--ink-500);
+}
+.why__card h3 {
+  font-size: clamp(24px, 3vw, 34px);
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+}
+.why__text p:last-child {
   font-size: 14px;
   color: var(--ink-500);
 }
-.why__n {
+.why__visual {
+  display: grid;
+  place-items: center;
+  min-height: 180px;
+  padding: 20px;
+  border-radius: 14px;
+  background: var(--gray-200);
+}
+@media (min-width: 760px) {
+  .why__card {
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr);
+    align-items: stretch;
+  }
+  .why__text {
+    justify-content: space-between;
+    padding: 18px;
+  }
+  .why__visual {
+    min-height: 240px;
+  }
+}
+
+/* telinhas do sistema desenhadas em HTML, chapadas */
+.ui {
+  width: 100%;
+  max-width: 280px;
+  margin: 0;
+  padding: 14px;
+  border-radius: 14px;
+  background: var(--white);
+  list-style: none;
   font-size: 13px;
+  color: var(--ink-900);
+}
+.ui--list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 4px;
+}
+.ui--list li + li {
+  border-top: 1px solid var(--line);
+}
+.ui__ok {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--ink-900);
+  position: relative;
+}
+.ui__ok::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 3px;
+  width: 4px;
+  height: 8px;
+  border: solid var(--white);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+.ui__sw {
+  position: relative;
+  width: 32px;
+  height: 18px;
+  border-radius: var(--radius-pill);
+  background: var(--gray-300);
+}
+.ui__sw::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--white);
+}
+.ui__sw.is-on {
+  background: var(--ink-900);
+}
+.ui__sw.is-on::after {
+  left: 16px;
+}
+.ui--client {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px 12px;
+  align-items: center;
+}
+.ui__avatar {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--gray-200);
+  font-size: 12px;
+  font-weight: 500;
+}
+.ui--client b {
+  display: block;
+  font-weight: 500;
+}
+.ui--client small {
+  font-size: 12px;
   color: var(--ink-500);
 }
-@media (min-width: 860px) {
-  .why__grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    grid-template-rows: auto auto;
-    gap: 16px;
-    align-items: center;
-  }
-  .why__title {
-    grid-column: 2;
-    grid-row: 1 / span 2;
-    z-index: 1;
-    padding: 0;
-  }
-  .why__card--1 {
-    grid-column: 1;
-    grid-row: 1;
-  }
-  .why__card--2 {
-    grid-column: 3;
-    grid-row: 1;
-  }
-  .why__card--3 {
-    grid-column: 1;
-    grid-row: 2;
-  }
-  .why__card--4 {
-    grid-column: 3;
-    grid-row: 2;
-  }
-  .why__card {
-    min-height: 190px;
-    align-content: space-between;
-  }
-  .why__rings {
-    display: block;
-    position: absolute;
-    inset: 0;
-    grid-column: 2;
-    grid-row: 1 / span 2;
-    pointer-events: none;
-  }
-  .why__rings span {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    border: 1px solid var(--gray-300);
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-  }
-  .why__rings span:nth-child(1) {
-    width: 420px;
-    height: 420px;
-  }
-  .why__rings span:nth-child(2) {
-    width: 340px;
-    height: 340px;
-  }
-  .why__rings span:nth-child(3) {
-    width: 260px;
-    height: 260px;
-  }
+.ui__late {
+  grid-column: 1 / -1;
+  justify-self: start;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background: rgba(128, 5, 19, 0.08);
+  font-size: 12px;
+  color: var(--wine);
+}
+.ui--phone {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 200px;
+  padding: 16px 12px;
+  border: 6px solid var(--ink-900);
+  border-radius: 26px;
+}
+.ui--phone small {
+  padding: 0 4px 4px;
+  font-size: 12px;
+  color: var(--ink-500);
+}
+.ui--phone span {
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--gray-100);
+  font-size: 12px;
+}
+.ui--phone .is-busy {
+  background: var(--ink-900);
+  color: var(--white);
 }
 
 /* ---------- recursos (colunas que expandem) ---------- */
@@ -954,13 +1032,13 @@ em {
   border-color: transparent;
 }
 .col:hover .slots .is-busy {
-  background: var(--red);
+  background: var(--wine);
 }
 .col:hover .bars i {
   background: rgba(255, 255, 255, 0.25);
 }
 .col:hover .bars i:last-child {
-  background: var(--red);
+  background: var(--wine);
 }
 .slots {
   display: grid;
@@ -996,7 +1074,7 @@ em {
   transition: background-color 0.3s;
 }
 .bars i:last-child {
-  background: var(--red);
+  background: var(--wine);
 }
 .avatars {
   display: flex;
@@ -1036,7 +1114,7 @@ em {
   font-weight: 500;
 }
 .col__more:hover {
-  color: var(--red);
+  color: var(--wine);
 }
 
 /* ---------- passos ---------- */
@@ -1058,7 +1136,7 @@ em {
   color: var(--gray-400);
 }
 .steps li:hover .steps__n {
-  color: var(--red);
+  color: var(--wine);
 }
 .steps h3 {
   font-size: clamp(22px, 3vw, 38px);
@@ -1095,7 +1173,7 @@ em {
   font-size: clamp(34px, 5.8vw, 76px);
 }
 .statement em {
-  color: var(--red);
+  color: var(--wine);
 }
 .statement p {
   max-width: 56ch;
@@ -1116,8 +1194,8 @@ em {
   border-bottom: 1px solid rgba(255, 255, 255, 0.4);
 }
 .statement__mail:hover {
-  color: var(--red);
-  border-color: var(--red);
+  color: var(--wine);
+  border-color: var(--wine);
 }
 
 /* ---------- planos ---------- */
@@ -1151,7 +1229,7 @@ em {
   align-self: flex-start;
   padding: 3px 12px;
   border-radius: var(--radius-pill);
-  background: var(--red);
+  background: var(--wine);
   color: var(--white);
   font-size: 12px;
 }
@@ -1198,11 +1276,6 @@ em {
 }
 .plan .btn {
   width: 100%;
-}
-.note {
-  margin-top: 20px;
-  font-size: 14px;
-  color: var(--ink-500);
 }
 
 /* ---------- páginas internas ---------- */
@@ -1313,7 +1386,7 @@ em {
   color: var(--ink-700);
 }
 .pain__was s {
-  text-decoration-color: var(--red);
+  text-decoration-color: var(--wine);
 }
 .pain h3 {
   font-size: clamp(20px, 2vw, 24px);
@@ -1372,7 +1445,7 @@ em {
 .seg__off {
   padding: 1px 8px;
   border-radius: var(--radius-pill);
-  background: var(--red);
+  background: var(--wine);
   color: #fff;
   font-size: 11px;
   font-weight: 500;
@@ -1497,7 +1570,7 @@ em {
   color: var(--white);
 }
 .faqs details[open] summary {
-  color: var(--red);
+  color: var(--wine);
 }
 .faqs details p {
   max-width: 62ch;
@@ -1552,7 +1625,7 @@ em {
   color: var(--ink-900);
 }
 .footer a:hover {
-  color: var(--red);
+  color: var(--wine);
 }
 .footer__bottom {
   margin-top: 40px;
@@ -1564,7 +1637,7 @@ em {
   font-weight: 500;
   line-height: 0.8;
   letter-spacing: -0.07em;
-  color: var(--red);
+  color: var(--wine);
   text-align: center;
   user-select: none;
 }

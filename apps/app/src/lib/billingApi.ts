@@ -36,9 +36,14 @@ async function post<T>(path: string, body: unknown): Promise<T> {
   return payload as T
 }
 
-/** abre o Checkout do Stripe (cartão = assinatura mensal; Pix = pagamento adiantado de N meses) */
-export async function startCheckout(plan: PlanId, method: BillingMethod, months: PixMonths): Promise<void> {
-  const { url } = await post<{ url: string }>('/api/billing/checkout', { plan, method, months })
+/** abre o Checkout do Stripe (cartão = assinatura mensal; Pix = pagamento adiantado de N meses); `from` decide para onde o Stripe devolve */
+export async function startCheckout(
+  plan: PlanId,
+  method: BillingMethod,
+  months: PixMonths,
+  from: 'onboarding' | 'assinatura' = 'assinatura',
+): Promise<void> {
+  const { url } = await post<{ url: string }>('/api/billing/checkout', { plan, method, months, from })
   window.location.assign(url)
 }
 
@@ -46,4 +51,11 @@ export async function startCheckout(plan: PlanId, method: BillingMethod, months:
 export async function openPortal(): Promise<void> {
   const { url } = await post<{ url: string }>('/api/billing/portal', {})
   window.location.assign(url)
+}
+
+/** teste sem cartão: grava o plano escolhido no cadastro; o pagamento vem por Pix quando o teste acabar */
+export async function chooseTrialPlan(plan: PlanId): Promise<void> {
+  if (!neon) return
+  const { error } = await neon.rpc('choose_trial_plan', { p_plan: plan })
+  if (error) throw new BillingError('choose_failed', 'Não foi possível salvar o plano agora. Tente novamente.')
 }

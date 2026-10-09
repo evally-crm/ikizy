@@ -48,7 +48,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [salon, setSalon] = useState<Salon | null>(null)
   const [sessionReady, setSessionReady] = useState(!isNeonConfigured)
-  const [salonReady, setSalonReady] = useState(!isNeonConfigured)
+  // id da pessoa cujo salão já foi buscado: sessão nova com busca pendente conta como 'loading', não como 'no-salon'
+  const [salonFor, setSalonFor] = useState<string | null>(null)
   // sobrescreve o que veio da sessão/salão logo após editar (e serve de armazenamento no modo demo)
   const [profile, setProfile] = useState<{ userName?: string; salonName?: string }>({})
 
@@ -59,7 +60,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(data.session)
       setSessionReady(true)
     })
-    // o callback só atualiza estado: chamar o cliente aqui dentro pode travar
+    // o callback só atualiza estado: chamar o cliente aqui dentro pode travar.
+    // ele só dispara por mudanças vindas de OUTRAS abas (evento storage); nesta aba, entrar/sair atualiza a sessão direto
     const { data } = neon.auth.onAuthStateChange((_event, next) => setSession(next))
     return () => data.subscription.unsubscribe()
   }, [])
@@ -76,7 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .maybeSingle()
     const joined = data?.salons as unknown as { id: string; name: string; slug: string } | null
     setSalon(!error && data && joined ? { ...joined, role: data.role as MemberRole } : null)
-    setSalonReady(true)
+    setSalonFor(uid)
   }, [])
 
   // salão do usuário logado
@@ -84,16 +86,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!isNeonConfigured || !sessionReady) return
     if (!userId) {
       setSalon(null)
-      setSalonReady(true)
+      setSalonFor(null)
       return
     }
-    setSalonReady(false)
     void loadSalon(userId)
   }, [userId, sessionReady, loadSalon])
 
   const status: AuthStatus = !isNeonConfigured
     ? 'demo'
-    : !sessionReady || (userId && !salonReady)
+    : !sessionReady || (userId && salonFor !== userId)
       ? 'loading'
       : !session
         ? 'signed-out'
@@ -133,9 +134,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
       async signIn(email, password) {
         if (!neon) return 'Neon não configurado.'
-        const { error } = await neon.auth.signInWithPassword({ email: email.trim(), password })
+        const { data, error } = await neon.auth.signInWithPassword({ email: email.trim(), password })
         // mensagem genérica: não revela se o e-mail existe
-        return error ? 'E-mail ou senha incorretos.' : null
+        if (error) return 'E-mail ou senha incorretos.'
+        setSession(data.session)
+        return null
       },
       async signUp(email, password) {
         if (!neon) return { error: 'Neon não configurado.', needsConfirmation: false }
@@ -144,7 +147,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           password,
           options: { emailRedirectTo: `${window.location.origin}${dash()}` },
         })
-        if (error) return { error: 'Não foi possível criar a conta. Confira os dados e tente novamente.', needsConfirmation: false }
+        if (error) {
+          // e-mail já cadastrado (ex.: conta criada antes de terminar o questionário): com a senha certa, só entra e segue
+          const exists = error.code === 'user_already_exists' || error.code === 'email_exists' || /already exists/i.test(error.message)
+          if (exists) {
+            const { data: signedIn, error: signInError } = await neon.auth.signInWithPassword({ email: email.trim(), password })
+            if (!signInError) {
+              setSession(signedIn.session)
+              return { error: null, needsConfirmation: false }
+            }
+            return { error: 'Este e-mail já tem conta. Entre com a sua senha ou use "Esqueci a senha".', needsConfirmation: false }
+          }
+          return { error: 'Não foi possível criar a conta. Confira os dados e tente novamente.', needsConfirmation: false }
+        }
+        if (data.session) setSession(data.session)
         return { error: null, needsConfirmation: !data.session }
       },
       async sendPasswordReset(email) {
@@ -167,7 +183,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return error ? 'Não foi possível entrar com o Google agora. Tente novamente.' : null
       },
       async signOut() {
-        await neon?.auth.signOut()
+        // o evento SIGNED_OUT não chega nesta aba (só nas outras); sem limpar a sessão aqui, ela continua em memória
+        // e o status vira 'no-salon' (sessão sem salão), mandando para o /cadastro/salao em vez do login
+        try {
+          await neon?.auth.signOut()
+        } catch {
+          // falha de rede: sai localmente mesmo assim
+        }
+        setSession(null)
         setSalon(null)
         setProfile({})
       },
