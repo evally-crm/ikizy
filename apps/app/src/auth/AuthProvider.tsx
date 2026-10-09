@@ -19,8 +19,14 @@ interface AuthState {
   status: AuthStatus
   session: Session | null
   salon: Salon | null
-  signIn: (email: string, password: string) => Promise<string | null>
+  /** `unverified`: senha certa, mas o e-mail ainda não foi confirmado (o Neon Auth já mandou um código) */
+  signIn: (email: string, password: string) => Promise<{ error: string | null; unverified: boolean }>
+  /** `needsConfirmation`: conta criada, falta confirmar o e-mail com o código que chegou */
   signUp: (email: string, password: string) => Promise<{ error: string | null; needsConfirmation: boolean }>
+  /** confere o código de 6 dígitos do e-mail; com o código certo a sessão já abre */
+  verifyEmailCode: (email: string, code: string) => Promise<{ error: string | null; signedIn: boolean }>
+  /** manda um novo código de confirmação para o e-mail */
+  resendVerificationCode: (email: string) => Promise<string | null>
   /** envia o e-mail de recuperação; a resposta é sempre a mesma para não revelar se o e-mail existe */
   sendPasswordReset: (email: string) => Promise<string | null>
   /** token vem do link do e-mail (?token=...); o Neon Auth não abre sessão no link de recuperação */
@@ -37,6 +43,21 @@ interface AuthState {
 }
 
 const AuthContext = createContext<AuthState | null>(null)
+
+type AuthCallError = { message?: string; status?: number; code?: string }
+
+/**
+ * chamadas diretas ao Better Auth (getBetterAuthInstance): o cliente do Neon LANÇA o erro quando o servidor
+ * responde com falha, em vez de devolver { error }. Aqui as duas formas viram um erro só (ou null).
+ */
+async function authCall(run: () => Promise<{ error?: AuthCallError | null } | unknown>): Promise<AuthCallError | null> {
+  try {
+    const result = (await run()) as { error?: AuthCallError | null } | null
+    return result?.error ?? null
+  } catch (e) {
+    return (e as AuthCallError) ?? { message: 'erro' }
+  }
+}
 
 export function useAuth() {
   const ctx = useContext(AuthContext)
@@ -122,7 +143,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (neon && salon) {
           if (person !== displayName) {
             // direto no Better Auth: o updateUser do adaptador Supabase lê o { status: true } de sucesso como falha
-            const { error } = await neon.auth.getBetterAuthInstance().updateUser({ name: person })
+            const error = await authCall(() => neon!.auth.getBetterAuthInstance().updateUser({ name: person }))
             if (error) return 'Não foi possível salvar seu nome agora. Tente novamente.'          }
           if (business !== salon.name) {
             const { data, error } = await neon.from('salons').update({ name: business }).eq('id', salon.id).select('id')
@@ -133,12 +154,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return null
       },
       async signIn(email, password) {
-        if (!neon) return 'Neon não configurado.'
+        if (!neon) return { error: 'Neon não configurado.', unverified: false }
         const { data, error } = await neon.auth.signInWithPassword({ email: email.trim(), password })
+        // só chega aqui com a senha certa: o Neon Auth confere a senha antes de recusar o e-mail não confirmado
+        if (error?.code === 'email_not_confirmed') return { error: null, unverified: true }
         // mensagem genérica: não revela se o e-mail existe
-        if (error) return 'E-mail ou senha incorretos.'
+        if (error) return { error: 'E-mail ou senha incorretos.', unverified: false }
         setSession(data.session)
-        return null
+        return { error: null, unverified: false }
       },
       async signUp(email, password) {
         if (!neon) return { error: 'Neon não configurado.', needsConfirmation: false }
@@ -148,6 +171,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           options: { emailRedirectTo: `${window.location.origin}${dash()}` },
         })
         if (error) {
+          // com a confirmação de e-mail ligada, o Neon Auth cria a conta sem abrir sessão e o adaptador
+          // devolve 'session_not_found': a conta existe, falta só o código que já foi enviado
+          if (error.code === 'session_not_found') return { error: null, needsConfirmation: true }
           // e-mail já cadastrado (ex.: conta criada antes de terminar o questionário): com a senha certa, só entra e segue
           const exists = error.code === 'user_already_exists' || error.code === 'email_exists' || /already exists/i.test(error.message)
           if (exists) {
@@ -156,12 +182,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               setSession(signedIn.session)
               return { error: null, needsConfirmation: false }
             }
+            // senha certa, mas o e-mail ainda não foi confirmado: segue para a tela do código
+            if (signInError.code === 'email_not_confirmed') return { error: null, needsConfirmation: true }
             return { error: 'Este e-mail já tem conta. Entre com a sua senha ou use "Esqueci a senha".', needsConfirmation: false }
           }
           return { error: 'Não foi possível criar a conta. Confira os dados e tente novamente.', needsConfirmation: false }
         }
         if (data.session) setSession(data.session)
         return { error: null, needsConfirmation: !data.session }
+      },
+      async verifyEmailCode(email, code) {
+        if (!neon) return { error: 'Neon não configurado.', signedIn: false }
+        const auth = neon.auth.getBetterAuthInstance()
+        const error = await authCall(() => auth.emailOtp.verifyEmail({ email: email.trim(), otp: code.trim() }))
+        if (error) {
+          const expired = /expired/i.test(error.message ?? '')
+          return { error: expired ? 'Esse código expirou. Peça um novo.' : 'Código incorreto. Confira o e-mail e tente de novo.', signedIn: false }
+        }
+        // com "entrar depois de confirmar" ligado no Neon Auth, a sessão já está aberta
+        const { data } = await neon.auth.getSession()
+        if (data.session) setSession(data.session)
+        return { error: null, signedIn: Boolean(data.session) }
+      },
+      async resendVerificationCode(email) {
+        if (!neon) return 'Neon não configurado.'
+        const auth = neon.auth.getBetterAuthInstance()
+        const error = await authCall(() => auth.emailOtp.sendVerificationOtp({ email: email.trim(), type: 'email-verification' }))
+        if (!error) return null
+        return error.status === 429 ? 'Muitos pedidos seguidos. Espere um pouco e tente de novo.' : 'Não foi possível enviar o código agora. Tente novamente.'
       },
       async sendPasswordReset(email) {
         if (!neon) return 'Neon não configurado.'
@@ -171,7 +219,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
       async updatePassword(password, token) {
         if (!neon) return 'Neon não configurado.'
-        const { error } = await neon.auth.getBetterAuthInstance().resetPassword({ newPassword: password, token })
+        const error = await authCall(() => neon!.auth.getBetterAuthInstance().resetPassword({ newPassword: password, token }))
         return error ? 'Não foi possível atualizar a senha. Peça um novo link e tente de novo.' : null
       },
       async signInWithGoogle() {

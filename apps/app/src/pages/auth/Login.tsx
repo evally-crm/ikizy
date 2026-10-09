@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Link, Navigate } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { Lock, Mail } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
 import { ROUTES } from '../../lib/routes'
@@ -8,7 +8,11 @@ import { AuthCard, AuthField, AuthLayout, AuthSubmit, FormMessages, GoogleButton
 
 export default function Login() {
   const { status, signIn, signInWithGoogle } = useAuth()
-  const [email, setEmail] = useState('')
+  const navigate = useNavigate()
+  // vindo da confirmação do e-mail sem sessão aberta: já preenche o e-mail e avisa
+  const location = useLocation()
+  const verified = location.state?.verified === true
+  const [email, setEmail] = useState<string>(location.state?.email ?? '')
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -20,8 +24,14 @@ export default function Login() {
     e.preventDefault()
     setError(null)
     setBusy(true)
-    setError(await signIn(email, password))
+    const res = await signIn(email, password)
     setBusy(false)
+    // senha certa e e-mail ainda não confirmado: o Neon Auth acabou de mandar um código
+    if (res.unverified) {
+      navigate(`${ROUTES.verifyEmail}?email=${encodeURIComponent(email.trim())}`, { state: { fromLogin: true } })
+      return
+    }
+    setError(res.error)
   }
 
   const onGoogle = async () => {
@@ -76,7 +86,7 @@ export default function Login() {
               </Link>
             }
           />
-          <FormMessages error={error} />
+          <FormMessages error={error} notice={verified && !error ? 'E-mail confirmado. Agora entre com a sua senha.' : null} />
           <AuthSubmit label="Entrar" disabled={busy} />
         </form>
       </AuthCard>

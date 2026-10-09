@@ -11,6 +11,7 @@ import Login from './pages/auth/Login'
 import Onboarding from './pages/auth/Onboarding'
 import RecuperarSenha from './pages/auth/RecuperarSenha'
 import RedefinirSenha from './pages/auth/RedefinirSenha'
+import VerificarEmail from './pages/auth/VerificarEmail'
 import Clientes from './pages/Clientes'
 import Dashboard from './pages/Dashboard'
 import Financeiro from './pages/Financeiro'
@@ -19,7 +20,7 @@ import Placeholder from './pages/Placeholder'
 
 /**
  * app.ikizy.com: acesso (/login, /cadastro, /recuperar-senha) e sistema (/dashboard/*).
- * Cadastro: /cadastro (e-mail e senha ou Google) > /cadastro/salao (questionário) > /cadastro/plano > /dashboard
+ * Cadastro: /cadastro (e-mail e senha ou Google) > /verificar-email (código, só e-mail e senha) > /cadastro/salao (questionário) > /cadastro/plano > /dashboard
  */
 export default function App() {
   return (
@@ -27,6 +28,7 @@ export default function App() {
       <Routes>
         <Route path="login" element={<Login />} />
         <Route path="cadastro" element={<Cadastro />} />
+        <Route path="verificar-email" element={<VerificarEmail />} />
         <Route path="cadastro/salao" element={<Onboarding />} />
         <Route path="cadastro/plano" element={<EscolherPlano />} />
         <Route path="recuperar-senha" element={<RecuperarSenha />} />
