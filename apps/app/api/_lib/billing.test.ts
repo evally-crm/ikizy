@@ -12,8 +12,8 @@ import {
   type Membership,
   type SubscriptionRow,
 } from './billing.js'
-import { PLANS as LANDING_PLANS, PIX_DISCOUNT_PCT as LANDING_DISCOUNT, PIX_MONTHS as LANDING_MONTHS, pixTotalCents } from '../../../landing/src/lib/pricing.js'
-import { isCardTrial, PIX_DISCOUNT_PCT, PIX_MONTHS, PLANS, accessState, daysLeft, describeSubscription, parseSubscription, periodEnd, pixAmountCents, pixFullCents, type SubscriptionInfo } from '../../src/lib/plans.js'
+import { PLANS as LANDING_PLANS, PIX_DISCOUNT_PCT as LANDING_DISCOUNT, PIX_MONTHS as LANDING_MONTHS, TRIAL_DAYS as LANDING_TRIAL_DAYS, pixTotalCents } from '../../../landing/src/lib/pricing.js'
+import { isCardTrial, PIX_DISCOUNT_PCT, PIX_MONTHS, PLANS, TRIAL_DAYS, accessState, daysLeft, describeSubscription, parseSubscription, periodEnd, pixAmountCents, pixFullCents, type SubscriptionInfo } from '../../src/lib/plans.js'
 
 const DAY = 24 * 60 * 60 * 1000
 const NOW = new Date('2026-10-10T12:00:00Z')
@@ -112,7 +112,7 @@ describe('createCheckout', () => {
     assert.equal(s.mode, 'payment')
     assert.deepEqual(s.allowed_payment_method_types, ['pix'])
     assert.equal(s.line_items[0].price_data.currency, 'brl')
-    assert.equal(s.line_items[0].price_data.unit_amount, 2990 * 3)
+    assert.equal(s.line_items[0].price_data.unit_amount, 7625) // 3 meses com 15% de desconto
     // 12 meses: o servidor cobra o valor com desconto
     await createCheckout(deps(fakeDb().db, stripe), user, { plan: 'studio', method: 'pix', months: 12, from: 'assinatura' })
     assert.equal((created[1] as Record<string, any>).line_items[0].price_data.unit_amount, 34086)
@@ -384,7 +384,12 @@ describe('accessState', () => {
   })
   it('preços em centavos', () => {
     assert.equal(pixAmountCents('salao', 1), 5990)
-    assert.equal(pixAmountCents('studio', 3), 2990 * 3) // 3 meses sem desconto
+  })
+  it('Pix de 3 meses tem 15% de desconto, sempre em centavos inteiros', () => {
+    assert.equal(pixFullCents('studio', 3), 8970)
+    assert.equal(pixAmountCents('solo', 3), 2525)
+    assert.equal(pixAmountCents('studio', 3), 7625)
+    assert.equal(pixAmountCents('salao', 3), 15275)
   })
   it('Pix de 12 meses tem 5% de desconto, sempre em centavos inteiros', () => {
     assert.equal(pixFullCents('solo', 12), 11880)
@@ -401,6 +406,7 @@ describe('preços da landing', () => {
   it('batem com os preços cobrados no app, em todos os planos e períodos', () => {
     assert.deepEqual([...LANDING_MONTHS], [...PIX_MONTHS])
     assert.deepEqual(LANDING_DISCOUNT, PIX_DISCOUNT_PCT)
+    assert.equal(LANDING_TRIAL_DAYS, TRIAL_DAYS)
     for (const lp of LANDING_PLANS) {
       assert.equal(lp.cents, PLANS[lp.id].cents, lp.id)
       for (const m of PIX_MONTHS) assert.equal(pixTotalCents(lp.cents, m), pixAmountCents(lp.id, m), lp.id + ' ' + m)

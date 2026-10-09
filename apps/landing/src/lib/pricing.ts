@@ -6,8 +6,8 @@ export type PixMonths = 1 | 3 | 12
 
 export const PIX_MONTHS: PixMonths[] = [1, 3, 12]
 
-/** desconto (em %) de quem paga mais meses adiantado no Pix */
-export const PIX_DISCOUNT_PCT: Record<PixMonths, number> = { 1: 0, 3: 0, 12: 5 }
+/** desconto (em %) de quem paga mais meses adiantado no Pix (igual ao de apps/app/src/lib/plans.ts) */
+export const PIX_DISCOUNT_PCT: Record<PixMonths, number> = { 1: 0, 3: 15, 12: 5 }
 
 export interface LandingPlan {
   id: 'solo' | 'studio' | 'salao'
@@ -25,15 +25,15 @@ export const PLANS: LandingPlan[] = [
     name: 'Solo',
     cents: 990,
     hot: false,
-    cta: 'Começar com 1 mês grátis',
-    items: ['1 mês grátis, sem cartão', 'Para quem atende sozinha', 'Agenda e clientes', 'Financeiro básico', 'Site do negócio'],
+    cta: 'Começar com o Solo',
+    items: ['Para quem atende sozinha', 'Agenda e clientes', 'Financeiro básico', 'Site do negócio'],
   },
   {
     id: 'studio',
     name: 'Studio',
     cents: 2990,
     hot: true,
-    cta: 'Assinar o Studio',
+    cta: 'Começar com o Studio',
     items: ['Equipe pequena', 'Tudo do Solo', 'Comissões por profissional', 'Fechamento mensal em recibo', 'Relatórios'],
   },
   {
@@ -41,7 +41,7 @@ export const PLANS: LandingPlan[] = [
     name: 'Salão',
     cents: 5990,
     hot: false,
-    cta: 'Assinar o Salão',
+    cta: 'Começar com o Salão',
     items: ['Equipe maior', 'Tudo do Studio', 'Mais profissionais e permissões', 'Atendimento prioritário'],
   },
 ]
@@ -49,6 +49,9 @@ export const PLANS: LandingPlan[] = [
 /** total do Pix para o período, já com desconto, em centavos */
 export const pixTotalCents = (cents: number, months: PixMonths) =>
   Math.round((cents * months * (100 - PIX_DISCOUNT_PCT[months])) / 100)
+
+/** teste grátis de todo negócio novo, em qualquer plano (igual a TRIAL_DAYS do app) */
+export const TRIAL_DAYS = 30
 
 export const brl = (cents: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cents / 100)

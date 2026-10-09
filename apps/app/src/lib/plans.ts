@@ -66,7 +66,7 @@ export const MIN_TRIAL_END_HOURS = 49
 export const priceLookupKey = (plan: PlanId) => `ikizy_${plan}_monthly`
 
 /** desconto (em %) de quem paga mais meses adiantado no Pix */
-export const PIX_DISCOUNT_PCT: Record<PixMonths, number> = { 1: 0, 3: 0, 12: 5 }
+export const PIX_DISCOUNT_PCT: Record<PixMonths, number> = { 1: 0, 3: 15, 12: 5 }
 
 /** valor cheio do período, sem desconto */
 export const pixFullCents = (plan: PlanId, months: PixMonths) => PLANS[plan].cents * months

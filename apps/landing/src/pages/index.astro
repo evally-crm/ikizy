@@ -1,53 +1,37 @@
 ---
 import Base from '../layouts/Base.astro'
 import { CONTACT_EMAIL, CTA, LINKS } from '../lib/site'
-import { PIX_DISCOUNT_PCT, PIX_MONTHS, PLANS, brlNumber } from '../lib/pricing'
+import { PIX_DISCOUNT_PCT, PLANS, TRIAL_DAYS, brlNumber } from '../lib/pricing'
+import { HAND_B64, HAND_H, HAND_W } from '../lib/handTone'
 
-const crafts = [
-  { name: 'Cabeleireira', hint: 'Agenda por profissional' },
-  { name: 'Nail Designer', hint: 'Serviços e custo por produto' },
-  { name: 'Lash Design', hint: 'Retorno e manutenção' },
-  { name: 'Sobrancelha', hint: 'Retorno e lembretes' },
+const ticker = ['Agenda online', 'Clientes que voltam', 'Financeiro descomplicado', 'Site do seu negócio', 'Comissões da equipe', 'Mensagens prontas no WhatsApp', 'Fechamento do mês']
+
+/** especialidades que passam abaixo do título do "Para quem é", uma por vez, até chegar em "você." com a mão */
+const crafts = ['lash designers', 'brow designers', 'cabeleireiros(as)', 'nail designers', 'esteticistas', 'maquiadoras']
+
+/** recursos reais do sistema, contados pelo que mudam na rotina (o "antes" vem da antiga seção "Do caderno ao sistema") */
+const features = [
+  { was: 'Agenda no caderno', title: 'Agenda online', text: 'O dia de cada profissional na tela, no celular ou no computador, sem instalar nada.', ui: 'agenda' },
+  { was: 'Cliente que sumiu', title: 'Clientes que voltam', text: 'Ficha com histórico, preferências e alergias, e aviso de quem passou da hora de voltar.', ui: 'client' },
+  { was: 'Mensagem digitada uma a uma', title: 'Mensagens prontas', text: 'Confirmação, lembrete e pós-atendimento abrem prontos no seu WhatsApp. É só conferir e enviar.', ui: 'message' },
+  { was: 'Caixa e comissão na calculadora', title: 'Financeiro e comissões', text: 'Entradas, saídas e a comissão de cada profissional, com o fechamento do mês em recibo.', ui: 'money' },
+  { was: 'Horário marcado por direct', title: 'Site do seu negócio', text: 'Uma página sua para a cliente ver os serviços e pedir um horário.', ui: 'site' },
 ]
 
-const ticker = ['Agenda online', 'Clientes que voltam', 'Financeiro descomplicado', 'Site do seu negócio', 'Comissões da equipe', 'Lembretes por WhatsApp', 'Relatórios']
-
-const pains = [
-  { was: 'Cliente esqueceu o horário', title: 'Lembrete automático', text: 'Confirmação por WhatsApp antes do horário.' },
-  { was: 'Caixa no caderno', title: 'Financeiro em um lugar', text: 'Entradas, saídas e fechamento do mês.' },
-  { was: 'Cliente que sumiu', title: 'Aviso de retorno', text: 'Veja quem está atrasada para voltar.' },
-  { was: 'Comissão na calculadora', title: 'Comissão por profissional', text: 'Calculada sozinha, sem planilha.' },
-]
-
-const reasons = [
-  { tag: 'Simples', title: 'Pronto em minutos', text: 'Sem curso e sem manual.', ui: 'setup' },
-  { tag: 'Feito para beleza', title: 'Pensado para beleza', text: 'Aviso de quem está atrasada para o retorno.', ui: 'client' },
-  { tag: 'No celular', title: 'Sua agenda no bolso', text: 'No navegador, sem instalar nada.', ui: 'agenda' },
-  { tag: 'Segurança', title: 'Cada um vê o que deve', text: 'Acesso por papel para toda a equipe.', ui: 'roles' },
-]
-
-const steps = [
-  { title: 'Crie sua conta', text: 'Leva poucos minutos.' },
-  { title: 'Cadastre serviços e equipe', text: 'O sistema sugere o básico do seu segmento.' },
-  { title: 'Agende e acompanhe', text: 'Divulgue seu site e acompanhe tudo.' },
+/** passo a passo com telas reais do sistema (modo demonstração, com dados de exemplo) */
+const tour = [
+  { img: '/telas/inicio.webp', title: 'Seu dia num relance', text: 'Ao entrar, você vê o faturamento, os próximos atendimentos e as mensagens do dia.' },
+  { img: '/telas/agenda.webp', title: 'Marque e acompanhe horários', text: 'A agenda do dia por profissional, com o status de cada atendimento.' },
+  { img: '/telas/clientes.webp', title: 'Conheça cada cliente', text: 'Histórico, preferências, alergias e quando ela deve voltar, tudo na ficha.' },
+  { img: '/telas/financeiro.webp', title: 'Feche o mês sem planilha', text: 'Faturamento, comissões e lucro do mês, com o recibo pronto para conferir.' },
+  { img: '/telas/site.webp', title: 'Receba pedidos pelo seu site', text: 'Personalize sua página e divulgue o link para as clientes pedirem horário.' },
 ]
 
 const faq = [
-  { q: 'O que é a IKIZY?', a: 'A IKIZY é um sistema de gestão online para salões e negócios de beleza. Reúne agenda, cadastro de clientes, financeiro, equipe e um site próprio para receber agendamentos.' },
-  { q: 'Para quem a IKIZY é indicada?', a: 'Para cabeleireiras, nail designers, profissionais de cílios e sobrancelhas, studios e salões, de quem atende sozinha a quem tem equipe.' },
-  { q: 'Preciso instalar alguma coisa?', a: 'Não. A IKIZY funciona direto no navegador, no computador ou no celular.' },
-  { q: 'Posso testar antes de assinar?', a: 'Sim. O plano Solo tem 1 mês grátis, sem pedir cartão. Crie sua conta e use o sistema durante o teste antes de decidir.' },
-  { q: 'Como posso pagar?', a: 'No cartão de crédito, com renovação automática todo mês, ou no Pix, pagando 1, 3 ou 12 meses adiantado, sendo que 12 meses têm 5% de desconto. O Pix não renova sozinho: avisamos antes de o período acabar.' },
-  { q: 'O que acontece quando o teste ou o período pago termina?', a: 'O sistema fica só para leitura: seus dados continuam salvos e você pode consultá-los. Ao escolher um plano, tudo volta a funcionar.' },
-  { q: 'Meus dados ficam separados dos de outros negócios?', a: 'Sim. Cada negócio enxerga apenas os próprios dados, e o acesso da equipe é controlado por papéis: dona, gerente, recepção e profissional.' },
-]
-
-const extras = ['Equipe e comissões', 'Serviços e custos', 'Relatórios', 'Lembretes por WhatsApp', 'Acesso por papel']
-
-const values = [
-  { title: 'Estética', text: 'Ferramentas à altura de quem trabalha com beleza.' },
-  { title: 'Elegância', text: 'Telas limpas, sem excesso.' },
-  { title: 'Autenticidade', text: 'Seu negócio com identidade própria.' },
+  { q: 'Posso testar a IKIZY antes de assinar?', a: `Sim. Todo negócio novo tem ${TRIAL_DAYS} dias grátis, em qualquer plano, e dá para testar sem cadastrar cartão.` },
+  { q: 'Posso cancelar minha assinatura quando quiser?', a: 'Sim. No cartão, você cancela quando quiser e o acesso continua até o fim do período já pago. No Pix não há renovação automática: o acesso vale pelo período que você pagou.' },
+  { q: 'Meus dados ficam seguros na IKIZY?', a: 'Cada negócio enxerga apenas os próprios dados, e a equipe acessa por papéis: dona, gerente, recepção e profissional. Os pagamentos são feitos pela Stripe, e a IKIZY não guarda os dados do seu cartão.' },
+  { q: 'Consigo incluir quantas pessoas na minha equipe?', a: 'O Solo é para quem atende sozinha. Para trabalhar com equipe, escolha o Studio, pensado para equipes pequenas, ou o Salão, para equipes maiores, com mais profissionais e permissões.' },
 ]
 
 const faqSchema = {
@@ -62,7 +46,7 @@ const faqSchema = {
 
 <Base
   title="IKIZY"
-  description="Agenda online, clientes, financeiro e site próprio em um só sistema. Gestão simples para salões, nail designers, lash e sobrancelha. Teste grátis por 1 mês."
+  description="Agenda online, clientes, financeiro e site próprio em um só sistema. Gestão simples para salões, nail designers, lash, sobrancelha e estética. 30 dias grátis."
   schema={[faqSchema]}
 >
   <!-- HERO -->
@@ -74,11 +58,11 @@ const faqSchema = {
           <span class="display__sub">para negócios de beleza</span>
         </h1>
         <p class="hero2__note">
-          Agenda, clientes e caixa em um só lugar.
+          Agenda, clientes, financeiro e o site do seu negócio em um só lugar. Menos tempo organizando, mais tempo atendendo.
         </p>
         <div class="btn-row">
           <a class="btn btn--primary" href={LINKS.signup}>{CTA.main}</a>
-          <a class="btn btn--ghost" href="#recursos">Ver recursos</a>
+          <a class="btn btn--ghost" href="#como-funciona">Ver como funciona</a>
         </div>
         <p class="hero2__hint">{CTA.hint}</p>
       </div>
@@ -109,94 +93,37 @@ const faqSchema = {
     </div>
   </section>
 
-  <!-- PARA QUEM -->
-  <section class="section screen container forwho" aria-labelledby="forwho-title">
-    <header class="forwho__head">
-      <p class="eyebrow">Para quem é</p>
-      <h2 id="forwho-title" class="forwho__title">A IKIZY é feita <em>para você</em></h2>
-    </header>
-
-    <div class="forwho__stage">
-      <div class="forwho__circle" aria-hidden="true">
-        <span class="forwho__time">Hoje, 14:30</span>
-        <div class="ticker">
-          {crafts.map((c, i) => <span style={`--i:${i}`}>{c.name}</span>)}
-        </div>
-      </div>
-      <ol class="forwho__list">
-        {
-          crafts.map((c, i) => (
-            <li class={`craft craft--${i + 1}`}>
-              <div class="craft__top">
-                <strong>{c.name}</strong>
-                <span class="craft__n">{String(i + 1).padStart(2, '0')}</span>
-              </div>
-              <p>{c.hint}</p>
-            </li>
-          ))
-        }
-      </ol>
-    </div>
-
-    <div class="forwho__foot">
-      <p class="lead">Sozinha ou com equipe.</p>
-      <a class="btn btn--primary" href={LINKS.signup}>{CTA.main}</a>
-    </div>
+  <!-- PARA QUEM É -->
+  <section id="para-quem" class="section container you" aria-labelledby="you-title" data-you>
+    <p class="eyebrow">Para quem é</p>
+    <h2 id="you-title" class="you__title">
+      A IKIZY é feita para
+      <span class="you__rot" aria-hidden="true" data-you-rot>
+        {crafts.map((c) => <span>{c}</span>)}
+        <span class="is-in">você.</span>
+      </span>
+      <span class="sr-only">você: {crafts.join(', ')}.</span>
+    </h2>
+    <canvas class="you__hand" aria-hidden="true" data-hand></canvas>
+    <p class="lead you__lead">
+      Não importa se você trabalha com cabelos, unhas, cílios ou sobrancelhas. Se você atende clientes por conta própria ou gerencia uma
+      equipe, a IKIZY ajuda a organizar sua rotina para que você possa cuidar de quem confia no seu trabalho.
+    </p>
   </section>
 
-  <!-- DORES -->
-  <section class="section screen container pains" aria-labelledby="pains-title">
-    <header class="pains__head">
-      <p class="eyebrow">Antes e depois</p>
-      <h2 id="pains-title" class="pains__title">Do caderno ao <em>sistema</em></h2>
-    </header>
-    <ol class="pains__list">
+  <!-- POR QUE TROCAR (recursos) -->
+  <section id="recursos" class="section container feats" aria-labelledby="feats-title">
+    <div class="section__head">
+      <p class="eyebrow">Recursos</p>
+      <h2 id="feats-title" class="h2">Por que trocar para a <em>IKIZY</em></h2>
+      <p class="lead">Tudo o que você fazia no caderno, na calculadora e de cabeça, agora num lugar só.</p>
+    </div>
+    <ul class="feats__grid">
       {
-        pains.map((x, i) => (
-          <li class="pain">
-            <span class="pain__n" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
-            <div class="pain__body">
-              <p class="pain__was">
-                <span>Antes</span>
-                <s>{x.was}</s>
-              </p>
-              <h3>{x.title}</h3>
-              <p class="pain__text">{x.text}</p>
-            </div>
-          </li>
-        ))
-      }
-    </ol>
-  </section>
-
-  <!-- POR QUE NÓS -->
-  <section class="section screen container why" aria-labelledby="why-title">
-    <h2 id="why-title" class="why__title">Por que trocar para a <em>IKIZY</em></h2>
-    <div class="why__list">
-      {
-        reasons.map((r) => (
-          <article class="why__card">
-            <div class="why__text">
-              <p class="why__tag">{r.tag}</p>
-              <h3>{r.title}</h3>
-              <p>{r.text}</p>
-            </div>
-            <div class="why__visual" aria-hidden="true">
-              {r.ui === 'setup' && (
-                <ul class="ui ui--list">
-                  <li><span>Serviços</span><i class="ui__ok" /></li>
-                  <li><span>Equipe</span><i class="ui__ok" /></li>
-                  <li><span>Horários</span><i class="ui__ok" /></li>
-                </ul>
-              )}
-              {r.ui === 'client' && (
-                <div class="ui ui--client">
-                  <span class="ui__avatar">AM</span>
-                  <div><b>Ana Martins</b><small>Lash · manutenção</small></div>
-                  <span class="ui__late">12 dias atrasada</span>
-                </div>
-              )}
-              {r.ui === 'agenda' && (
+        features.map((f) => (
+          <li class="feat">
+            <div class="feat__visual" aria-hidden="true">
+              {f.ui === 'agenda' && (
                 <div class="ui ui--phone">
                   <small>Hoje</small>
                   <span>09:00 · Escova</span>
@@ -204,167 +131,145 @@ const faqSchema = {
                   <span>14:30 · Cílios</span>
                 </div>
               )}
-              {r.ui === 'roles' && (
-                <ul class="ui ui--list">
-                  <li><span>Dona</span><i class="ui__sw is-on" /></li>
-                  <li><span>Gerente</span><i class="ui__sw is-on" /></li>
-                  <li><span>Recepção</span><i class="ui__sw" /></li>
-                </ul>
+              {f.ui === 'client' && (
+                <div class="ui ui--client">
+                  <span class="ui__avatar">AM</span>
+                  <div><b>Ana Martins</b><small>Lash · manutenção</small></div>
+                  <span class="ui__late">12 dias atrasada</span>
+                </div>
               )}
+              {f.ui === 'message' && (
+                <div class="ui ui--bubble">
+                  <p>Oi, Ana! Passando para lembrar do seu horário amanhã às 10:30.</p>
+                  <small>Abrir no WhatsApp</small>
+                </div>
+              )}
+              {f.ui === 'money' && (
+                <div class="ui ui--money">
+                  <span>Comissão · Bia</span>
+                  <b>R$ 1.240,00</b>
+                  <div class="ui__bars"><i style="--h: 40%" /><i style="--h: 62%" /><i style="--h: 48%" /><i style="--h: 80%" /><i style="--h: 66%" /></div>
+                </div>
+              )}
+              {f.ui === 'site' && <span class="ui ui--url">seu-negocio.ikizy.com</span>}
             </div>
-          </article>
+            <p class="feat__was"><span>Antes</span><s>{f.was}</s></p>
+            <h3>{f.title}</h3>
+            <p class="feat__text">{f.text}</p>
+          </li>
         ))
       }
-    </div>
-  </section>
-
-  <!-- RECURSOS -->
-  <section id="recursos" class="section screen container" aria-labelledby="res-title">
-    <div class="section__head">
-      <p class="eyebrow">Recursos</p>
-      <h2 id="res-title" class="h2">Tudo o que o seu dia <em>precisa</em></h2>
-    </div>
-
-    <div class="cols">
-      <article class="col" tabindex="0">
-        <span class="col__n">01</span>
-        <div class="col__visual" aria-hidden="true">
-          <div class="slots">
-            <span>09:00</span><span class="is-busy">10:00</span><span class="is-busy">11:30</span><span>13:00</span><span class="is-busy">14:30</span><span>16:00</span>
-          </div>
-        </div>
-        <div>
-          <h3>Agenda online</h3>
-          <p>Por dia e por profissional, com lembrete.</p>
-        </div>
-      </article>
-
-      <article class="col" tabindex="0">
-        <span class="col__n">02</span>
-        <div class="col__visual" aria-hidden="true">
-          <div class="avatars"><span>JP</span><span>MC</span><span>PL</span><span>+48</span></div>
-        </div>
-        <div>
-          <h3>Clientes que voltam</h3>
-          <p>Histórico, preferências e aviso de retorno.</p>
-        </div>
-      </article>
-
-      <article class="col" tabindex="0">
-        <span class="col__n">03</span>
-        <div class="col__visual" aria-hidden="true">
-          <div class="bars"><i style="--h: 38%"></i><i style="--h: 55%"></i><i style="--h: 46%"></i><i style="--h: 72%"></i><i style="--h: 64%"></i><i style="--h: 90%"></i></div>
-        </div>
-        <div>
-          <h3>Financeiro</h3>
-          <p>Entradas, saídas e comissões num lugar só.</p>
-        </div>
-      </article>
-
-      <article class="col" tabindex="0">
-        <span class="col__n">04</span>
-        <div class="col__visual" aria-hidden="true">
-          <span class="urlpill">seu-negocio.ikizy.com</span>
-        </div>
-        <div>
-          <h3>Seu site</h3>
-          <p>Sua página para receber agendamentos.</p>
-        </div>
-      </article>
-    </div>
-
-    <ul class="chips" aria-label="Outros recursos">
-      {extras.map((x) => <li>{x}</li>)}
+      <li class="feat feat--more">
+        <a class="feat__plus" href="#como-funciona">
+          <span class="feat__circle" aria-hidden="true">+</span>
+          <span>Veja a IKIZY por dentro</span>
+        </a>
+      </li>
     </ul>
   </section>
 
-  <!-- COMO COMEÇAR -->
-  <section class="section screen container" aria-labelledby="steps-title">
-    <div class="section__head">
-      <p class="eyebrow">Como começar</p>
-      <h2 id="steps-title" class="h2">Do cadastro ao primeiro <em>agendamento</em></h2>
+  <!-- COMO FUNCIONA (carrossel com telas reais) -->
+  <section id="como-funciona" class="section container tour" aria-labelledby="tour-title">
+    <div class="tour__head">
+      <div class="section__head">
+        <p class="eyebrow">Como começar</p>
+        <h2 id="tour-title" class="h2">Veja a IKIZY <em>por dentro</em></h2>
+      </div>
+      <div class="tour__nav">
+        <span class="tour__count" aria-live="polite" data-tour-count>1 / {tour.length}</span>
+        <button type="button" class="tour__arrow" aria-label="Etapa anterior" data-tour-prev disabled>
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="1.6" /></svg>
+        </button>
+        <button type="button" class="tour__arrow" aria-label="Próxima etapa" data-tour-next>
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.6" /></svg>
+        </button>
+      </div>
     </div>
-    <ol class="steps">
+    <ol class="tour__track" aria-label="Etapas" data-tour-track tabindex="0">
       {
-        steps.map((s, i) => (
-          <li>
-            <span class="steps__n">{String(i + 1).padStart(2, '0')}</span>
-            <h3>{s.title}</h3>
-            <p>{s.text}</p>
+        tour.map((t, i) => (
+          <li class="tour__slide" aria-label={`${i + 1} de ${tour.length}`}>
+            <figure>
+              <img src={t.img} alt={`Tela do sistema IKIZY: ${t.title.toLowerCase()}`} width="1600" height="1000" loading={i === 0 ? 'eager' : 'lazy'} decoding="async" />
+              <figcaption>
+                <span class="tour__n">{String(i + 1).padStart(2, '0')}</span>
+                <h3>{t.title}</h3>
+                <p>{t.text}</p>
+              </figcaption>
+            </figure>
           </li>
         ))
       }
     </ol>
   </section>
 
-  <!-- PREÇOS -->
-  <section id="precos" class="section screen container" aria-labelledby="price-title">
-    <div class="section__head">
-      <p class="eyebrow">Planos</p>
-      <h2 id="price-title" class="h2">Um plano para o <em>tamanho</em> do seu negócio</h2>
-    </div>
-    <div class="period">
-      <p id="period-label" class="period__label">Se pagar com Pix, quantos meses adiantado?</p>
-      <div class="seg" role="radiogroup" aria-labelledby="period-label" data-seg>
+  <!-- PLANOS -->
+  <section id="precos" class="section container" aria-labelledby="price-title">
+    <div class="pricing">
+      <div class="pricing__head">
+        <p class="eyebrow">Planos</p>
+        <h2 id="price-title" class="h2">Um plano para o <em>tamanho</em> do seu negócio</h2>
+        <p class="lead">Todos os planos começam com {TRIAL_DAYS} dias grátis.</p>
+        <div class="toggle" data-toggle>
+          <button type="button" class="toggle__label is-active" tabindex="-1" data-period="1">Mensal</button>
+          <button type="button" role="switch" aria-checked="false" aria-label="Ver preços do plano trimestral" class="toggle__switch" data-switch>
+            <span aria-hidden="true"></span>
+          </button>
+          <button type="button" class="toggle__label" tabindex="-1" data-period="3">Trimestral</button>
+          <span class="toggle__off">Economize {PIX_DISCOUNT_PCT[3]}%</span>
+        </div>
+      </div>
+
+      <div class="plans" data-plans data-discount={PIX_DISCOUNT_PCT[3]}>
         {
-          PIX_MONTHS.map((m) => (
-            <button type="button" role="radio" aria-checked={m === 1 ? 'true' : 'false'} class={`seg__item ${m === 1 ? 'is-active' : ''}`} data-months={m}>
-              {m === 1 ? '1 mês' : `${m} meses`}
-              {PIX_DISCOUNT_PCT[m] > 0 && <small class="seg__off">{PIX_DISCOUNT_PCT[m]}% off</small>}
-            </button>
-          ))
+          PLANS.map((p, i) => {
+            // o 1º item é o público do plano; "Tudo do X" vira o título da lista
+            const [audience, ...rest] = p.items
+            const base = rest.find((it) => it.startsWith('Tudo do'))
+            const list = rest.filter((it) => it !== base)
+            const [int, dec] = brlNumber(p.cents).split(',')
+            return (
+              <article class={`plan ${p.hot ? 'plan--hot' : ''}`} data-cents={p.cents}>
+                <div class="plan__top">
+                  <span class="plan__icon" aria-hidden="true">
+                    {Array.from({ length: i + 1 }, () => <i />)}
+                  </span>
+                  {p.hot && <span class="plan__tag">Mais escolhido</span>}
+                </div>
+                <div>
+                  <h3>{p.name}</h3>
+                  <p class="plan__aud">{audience}</p>
+                </div>
+                <div class="plan__swap">
+                  <p class="plan__price">
+                    <small>R$</small>
+                    <span><span data-int>{int}</span><span class="plan__dec" data-dec>,{dec}</span></span>
+                    <small data-unit>/mês</small>
+                  </p>
+                  <p class="plan__equiv" data-equiv>Cobrança mensal: no cartão, renova sozinha todo mês, ou no Pix, mês a mês.</p>
+                  <span class="plan__save" data-save hidden />
+                </div>
+                <div class="plan__inc">
+                  <p class="plan__inc-title">{base ? `${base}, mais:` : 'O que está incluído:'}</p>
+                  <ul class="plan__list">
+                    {list.map((it) => <li>{it}</li>)}
+                  </ul>
+                </div>
+                <a class="btn btn--primary" href={LINKS.signup}>{p.cta}</a>
+              </article>
+            )
+          })
         }
       </div>
-      <p class="period__hint">Cartão renova todo mês. Pix não renova sozinho.</p>
-    </div>
-
-    <div class="plans" data-plans data-discount={JSON.stringify(PIX_DISCOUNT_PCT)}>
-      {
-        PLANS.map((p) => (
-          <article class={`plan ${p.hot ? 'plan--hot' : ''}`} data-cents={p.cents}>
-            {p.hot && <span class="plan__tag">Mais escolhido</span>}
-            <h3>{p.name}</h3>
-            <p class="plan__price"><small>R$</small><span data-total>{brlNumber(p.cents)}</span><small data-unit>/mês</small></p>
-            <p class="plan__equiv" data-equiv>No Pix por 1 mês, ou cartão com renovação mensal</p>
-            <ul class="plan__list">
-              {p.items.map((it) => <li>{it}</li>)}
-            </ul>
-            <a class={`btn ${p.hot ? 'btn--light' : 'btn--primary'}`} href={LINKS.signup}>{p.cta}</a>
-          </article>
-        ))
-      }
-    </div>
-  </section>
-
-  <!-- SOBRE -->
-  <section id="sobre" class="section screen container" aria-labelledby="about-title">
-    <div class="about">
-      <div class="about__text">
-        <p class="eyebrow">Sobre a IKIZY</p>
-        <h2 id="about-title" class="h2">Gestão simples, para quem cuida da <em>beleza</em></h2>
-        <p class="lead">Menos caderno e planilha, mais tempo na sua arte.</p>
-      </div>
-      <ol class="steps about__values">
-        {
-          values.map((v, i) => (
-            <li>
-              <span class="steps__n">{String(i + 1).padStart(2, '0')}</span>
-              <h3>{v.title}</h3>
-              <p>{v.text}</p>
-            </li>
-          ))
-        }
-      </ol>
     </div>
   </section>
 
   <!-- FAQ -->
-  <section class="section screen container" aria-labelledby="faq-title">
+  <section class="section container" aria-labelledby="faq-title">
     <div class="faqs">
       <div class="faqs__side">
         <p class="eyebrow">Dúvidas</p>
         <h2 id="faq-title" class="h2">Perguntas <em>frequentes</em></h2>
-        <p class="lead">Não achou? Fale com a gente.</p>
         <a class="btn btn--ghost" href="#contato">Falar com a IKIZY</a>
       </div>
       <div class="faqs__list">
@@ -381,35 +286,105 @@ const faqSchema = {
   </section>
 
   <!-- CONTATO -->
-  <section id="contato" class="screen container" aria-labelledby="contact-title">
-    <div class="statement">
+  <section id="contato" class="section container contact" aria-labelledby="contact-title">
+    <form class="contact__form" action={`mailto:${CONTACT_EMAIL}`} method="post" enctype="text/plain" data-contact>
+      <label class="field">
+        <span>Nome</span>
+        <input name="nome" type="text" autocomplete="name" required />
+      </label>
+      <label class="field">
+        <span>E-mail</span>
+        <input name="email" type="email" autocomplete="email" required />
+      </label>
+      <label class="field">
+        <span>Mensagem</span>
+        <textarea name="mensagem" rows="5" required></textarea>
+      </label>
+      <button type="submit" class="btn btn--primary">Enviar mensagem</button>
+      <p class="contact__note" role="status" data-contact-note hidden>
+        Abrimos seu e-mail com a mensagem pronta. Se nada abriu, escreva para <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
+      </p>
+    </form>
+    <div class="contact__text">
       <p class="eyebrow">Contato</p>
-      <h2 id="contact-title">Vamos <em>conversar</em>?</h2>
-      <p>Dúvidas sobre o sistema ou os planos? Escreva para a gente.</p>
-      <a class="statement__mail" href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
-      <div class="btn-row" style="justify-content: center; margin-top: 8px;">
-        <a class="btn btn--light" href={LINKS.signup}>{CTA.main}</a>
-        <a class="btn btn--outline-light" href={LINKS.login}>Já tenho conta</a>
-      </div>
+      <h2 id="contact-title" class="h2">Vamos construir uma <em>rotina melhor?</em></h2>
+      <p class="lead">Quer conhecer a IKIZY, tirar dúvidas ou conversar sobre o seu negócio? Escreva para a gente.</p>
+      <a class="contact__mail" href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
+      <p class="contact__login">Já tem conta? <a href={LINKS.login}>Entrar</a></p>
     </div>
   </section>
 </Base>
 
 <script is:inline id="halftone-script">
+  // boca preta em símbolos (ponto, +, x, quadrado), aberta e com bordas esfumadas, se mexendo
   (() => {
     const canvas = document.getElementById('halftone')
     if (!canvas) return
     const ctx = canvas.getContext('2d')
-    const STEP = 9
-    const INK = '14, 13, 12'
-    const CUTS = [0.12, 0.3, 0.48, 0.66, 0.84]
+    const INK = 'rgb(14, 13, 12)'
     const still = matchMedia('(prefers-reduced-motion: reduce)').matches
     let visible = true
     let last = 0
 
     const smooth = (a, b, x) => {
-      const t = Math.min(1, Math.max(0, (x - a) / (b - a)))
-      return t * t * (3 - 2 * t)
+      const k = Math.min(1, Math.max(0, (x - a) / (b - a)))
+      return k * k * (3 - 2 * k)
+    }
+    const bell = (x, w) => Math.exp(-((x / w) ** 2))
+    const hash = (c, r) => {
+      const s = Math.sin(c * 12.9898 + r * 78.233) * 43758.5453
+      return s - Math.floor(s)
+    }
+    const waveAt = (x, y, t) =>
+      (Math.sin(x * 0.012 + Math.sin(y * 0.009 + t * 0.6) * 2.4 + t) + Math.sin(y * 0.014 - x * 0.007 + 1.7 - t * 0.8) * 0.8 + 1.8) / 3.6
+
+    // contornos arredondados em u ∈ [-1, 1]: oval com um leve arco do cupido, e a abertura no meio onde fica a marca
+    const top = (u) => -0.56 * Math.pow(1 - u * u, 0.6) + 0.11 * bell(u, 0.14)
+    const bottom = (u) => 0.58 * Math.pow(1 - u * u, 0.55)
+    const OPEN_W = 0.52
+    const opening = (u, t) => Math.sqrt(Math.max(0, 1 - (u / OPEN_W) ** 2)) * (1 + Math.sin(t * 0.7) * 0.06)
+
+    /** densidade (0..1) da boca: cheia no meio dos lábios, esfumando perto da borda e da abertura */
+    function density(u, v, t) {
+      if (Math.abs(u) >= 1) return 0
+      const o = opening(u, t)
+      const ui = -0.12 * o
+      const li = 0.14 * o
+      const tp = top(u)
+      const bt = bottom(u)
+      if (v < tp - 0.14 || v > bt + 0.14) return 0
+      if (v > ui && v < li) return 0
+      // distância (em u) até a borda mais próxima: de fora ou da abertura
+      const out = Math.min(v - tp, bt - v)
+      const inner = v <= ui ? ui - v : v - li
+      const lipLine = Math.abs(v) < 0.03 && o === 0 ? 0.35 : 0 // fenda entre os lábios perto dos cantos
+      return Math.max(0, smooth(-0.08, 0.26, out) * smooth(-0.01, 0.14, inner) - lipLine)
+    }
+
+    /** símbolo conforme a densidade, como no login: nada · ponto · + · x · quadradinho · quadrado */
+    function glyph(x, y, cell, d, mix) {
+      const m = cell / 2
+      const a = cell * 0.3
+      if (d < 0.1) return
+      if (d >= 0.56 && mix < 0.3) d = 0.5
+      if (d < 0.24) return ctx.fillRect(x + m - 0.9, y + m - 0.9, 1.8, 1.8)
+      ctx.beginPath()
+      if (d < 0.4) {
+        ctx.moveTo(x + m, y + m - a)
+        ctx.lineTo(x + m, y + m + a)
+        ctx.moveTo(x + m - a, y + m)
+        ctx.lineTo(x + m + a, y + m)
+        return ctx.stroke()
+      }
+      if (d < 0.56) {
+        ctx.moveTo(x + m - a * 0.9, y + m - a * 0.9)
+        ctx.lineTo(x + m + a * 0.9, y + m + a * 0.9)
+        ctx.moveTo(x + m + a * 0.9, y + m - a * 0.9)
+        ctx.lineTo(x + m - a * 0.9, y + m + a * 0.9)
+        return ctx.stroke()
+      }
+      if (d < 0.72) return ctx.fillRect(x + m - a, y + m - a, a * 2, a * 2)
+      ctx.fillRect(x + 1, y + 1, cell - 2, cell - 2)
     }
 
     function draw(t) {
@@ -424,38 +399,34 @@ const faqSchema = {
       }
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
       ctx.clearRect(0, 0, width, height)
+
+      const S = Math.min(width * 0.46, height * 0.66)
+      const STEP = 7
       const cx = width / 2
       const cy = height / 2
-      const R = Math.min(width * 0.46, height * 0.5)
-      const cuts = CUTS.map((f) => f * width)
-      ctx.fillStyle = 'rgb(' + INK + ')'
-      for (let y = STEP / 2; y < height; y += STEP) {
-        for (let x = STEP / 2; x < width; x += STEP) {
-          const d = Math.hypot(x - cx, y - cy) / R
-          if (d > 1) continue
-          const ex = (x - cx) / (R * 0.5)
-          const ey = (y - cy) / (R * 0.16)
-          if (ex * ex + ey * ey < 1) continue
-          let k = 0
-          let gap = false
-          for (const b of cuts) {
-            if (x > b) k++
-            if (Math.abs(x - b) < STEP * 0.45) gap = true
+
+      ctx.lineWidth = 1.3
+      ctx.fillStyle = ctx.strokeStyle = INK
+      for (let row = 0, y = STEP / 2; y < height; row++, y += STEP) {
+        for (let col = 0, x = STEP / 2; x < width; col++, x += STEP) {
+          const u = (x - cx) / S + Math.sin(y * 0.02 + t * 0.8) * 0.01
+          const v = (y - cy) / S + Math.sin(x * 0.017 - t * 0.6) * 0.01
+          const n = hash(row, col)
+          const wave = waveAt(x, y, t)
+          let d = density(u, v, t)
+          if (d <= 0.02) {
+            // pontinhos e + soltos em volta, como pó
+            const e = Math.hypot(u / 1.12, v / 0.78)
+            const inMouth = Math.abs(u) < OPEN_W + 0.06 && Math.abs(v) < 0.2
+            if (!inMouth && e < 1.2 && n < smooth(1.2, 0.85, e) * 0.45 * wave) d = 0.15 + n * 0.4
+            else continue
+          } else {
+            // volume dos lábios: mais escuro junto à abertura, brilho no lábio de baixo, e ondas que fazem os símbolos irem e voltarem
+            const gloss = bell(u - 0.12, 0.25) * bell(v - 0.36, 0.08) * 0.45
+            const rim = bell(Math.abs(v) - 0.16, 0.06) * 0.2
+            d = d * (0.84 + 0.16 * wave) + rim - gloss
           }
-          if (gap) continue
-          const xs = x + k * 70
-          const ys = y + k * 40
-          const wave =
-            Math.sin(xs * 0.012 + Math.sin(ys * 0.009 + t * 0.6) * 2.4 + t) +
-            Math.sin(ys * 0.014 - xs * 0.007 + 1.7 - t * 0.8) * 0.8 +
-            Math.sin((xs + ys) * 0.006 + Math.sin(xs * 0.01 - t * 0.5) * 1.6) * 0.6
-          const v = (wave + 2.4) / 4.8
-          const body = smooth(0, 0.35, 1 - d)
-          const size = STEP * 0.6 * body * (0.3 + 0.7 * Math.pow(v, 1.3))
-          if (size < 0.45) continue
-          ctx.beginPath()
-          ctx.arc(x, y, size, 0, Math.PI * 2)
-          ctx.fill()
+          glyph(x - STEP / 2, y - STEP / 2, STEP, d + (n - 0.5) * 0.14, hash(col, row))
         }
       }
     }
@@ -469,7 +440,7 @@ const faqSchema = {
     const tick = (now) => {
       if (visible && now - last >= 1000 / 30) {
         last = now
-        draw(now / 4000)
+        draw(now / 1000)
       }
       requestAnimationFrame(tick)
     }
@@ -478,46 +449,242 @@ const faqSchema = {
 </script>
 
 <script is:inline id="pricing-script">
+  // interruptor Mensal/Trimestral: troca preço, textos e o destaque de economia de cada plano, com um fade curto
   (() => {
-    const seg = document.querySelector("[data-seg]")
-    const plans = document.querySelector("[data-plans]")
-    if (!seg || !plans) return
-    const discount = JSON.parse(plans.dataset.discount)
-    const num = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-    const brl = (c) => "R$ " + num.format(c / 100)
+    const toggle = document.querySelector('[data-toggle]')
+    const plans = document.querySelector('[data-plans]')
+    if (!toggle || !plans) return
+    const pct = Number(plans.dataset.discount)
+    const num = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    const brl = (c) => 'R$ ' + num.format(c / 100)
+    // preço grande: inteiro em preto e os centavos em cinza
+    const setPrice = (plan, c) => {
+      const [int, dec] = num.format(c / 100).split(',')
+      plan.querySelector('[data-int]').textContent = int
+      plan.querySelector('[data-dec]').textContent = ',' + dec
+    }
 
-    function update(months) {
-      const pct = discount[months] || 0
-      plans.querySelectorAll("[data-cents]").forEach((plan) => {
+    function render(months) {
+      plans.querySelectorAll('[data-cents]').forEach((plan) => {
         const cents = Number(plan.dataset.cents)
-        const full = cents * months
+        const full = cents * 3
+        // mesmo cálculo da cobrança (pixAmountCents): arredonda o total do período para o centavo
         const total = Math.round((full * (100 - pct)) / 100)
-        plan.querySelector("[data-total]").textContent = num.format(total / 100)
-        plan.querySelector("[data-unit]").textContent = months === 1 ? "/mês" : "/" + months + " meses"
-        const eq = plan.querySelector("[data-equiv]")
-        eq.textContent = ""
+        const save = plan.querySelector('[data-save]')
+        const eq = plan.querySelector('[data-equiv]')
         if (months === 1) {
-          eq.textContent = "No Pix por 1 mês, ou cartão com renovação mensal"
+          setPrice(plan, cents)
+          plan.querySelector('[data-unit]').textContent = '/mês'
+          eq.textContent = 'Cobrança mensal: no cartão, renova sozinha todo mês, ou no Pix, mês a mês.'
+          save.hidden = true
           return
         }
-        if (pct > 0) {
-          const old = document.createElement("s")
-          old.textContent = brl(full)
-          eq.append(old, " ")
-        }
-        eq.append((pct > 0 ? "no" : "No") + " Pix, equivale a " + brl(total / months) + "/mês" + (pct > 0 ? " (" + pct + "% de desconto)" : ""))
+        setPrice(plan, total)
+        plan.querySelector('[data-unit]').textContent = '/3 meses'
+        eq.textContent = ''
+        const old = document.createElement('s')
+        old.textContent = brl(full)
+        eq.append(old, ' Equivale a ' + brl(Math.round(total / 3)) + '/mês. Pago no Pix, de uma vez, pelos 3 meses; não renova sozinho.')
+        save.textContent = 'Economize ' + brl(full - total)
+        save.hidden = false
       })
     }
 
-    seg.addEventListener("click", (e) => {
-      const btn = e.target.closest("[data-months]")
-      if (!btn) return
-      seg.querySelectorAll("[data-months]").forEach((b) => {
-        const on = b === btn
-        b.classList.toggle("is-active", on)
-        b.setAttribute("aria-checked", on ? "true" : "false")
-      })
-      update(Number(btn.dataset.months))
+    const sw = toggle.querySelector('[data-switch]')
+    let period = 1
+    function setPeriod(months) {
+      if (months === period) return
+      period = months
+      sw.setAttribute('aria-checked', months === 3 ? 'true' : 'false')
+      toggle.querySelectorAll('[data-period]').forEach((b) => b.classList.toggle('is-active', Number(b.dataset.period) === months))
+      plans.classList.toggle('is-quarterly', months === 3)
+      plans.classList.add('is-swapping')
+      setTimeout(() => {
+        render(months)
+        plans.classList.remove('is-swapping')
+      }, 160)
+    }
+    // o interruptor alterna; as palavras "Mensal" e "Trimestral" escolhem direto
+    sw.addEventListener('click', () => setPeriod(period === 1 ? 3 : 1))
+    toggle.querySelectorAll('[data-period]').forEach((b) => b.addEventListener('click', () => setPeriod(Number(b.dataset.period))))
+  })()
+</script>
+
+<script is:inline id="you-script">
+  // "Para quem é": as profissões passam uma por vez abaixo do título (uma única vez) e terminam em "você." com a mão
+  (() => {
+    const section = document.querySelector('[data-you]')
+    const rot = document.querySelector('[data-you-rot]')
+    if (!section || !rot) return
+    const words = [...rot.children]
+    const last = words.length - 1
+    const done = () => section.classList.add('is-done')
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return done()
+    let i = 0
+    words.forEach((w, k) => w.classList.toggle('is-in', k === 0))
+    const step = () => {
+      words[i].classList.replace('is-in', 'is-out')
+      i += 1
+      words[i].classList.add('is-in')
+      if (i === last) return setTimeout(done, 450)
+      setTimeout(step, 1000)
+    }
+    new IntersectionObserver((entries, obs) => {
+      if (!entries[0].isIntersecting) return
+      obs.disconnect()
+      setTimeout(step, 900)
+    }, { threshold: 0.6 }).observe(rot)
+  })()
+</script>
+
+<script id="hand-script" define:vars={{ HAND_B64, HAND_W, HAND_H }}>
+  // a mão do "Para quem é" desenhada com os mesmos símbolos da boca (ponto, +, x, quadrado):
+  // os símbolos surgem quando o título chega em "você." e depois ondulam devagar
+  (() => {
+    const canvas = document.querySelector('[data-hand]')
+    const section = document.querySelector('[data-you]')
+    if (!canvas || !section) return
+    const ctx = canvas.getContext('2d')
+    const TONE = Float32Array.from(atob(HAND_B64), (c) => c.charCodeAt(0) / 255)
+    const CELL = 4
+    const INK = 'rgb(14, 13, 12)'
+    const still = matchMedia('(prefers-reduced-motion: reduce)').matches
+    let shownAt = 0
+    let visible = false
+
+    const hash = (c, r) => {
+      const s = Math.sin(c * 12.9898 + r * 78.233) * 43758.5453
+      return s - Math.floor(s)
+    }
+    function sample(px, py) {
+      if (px < 0 || py < 0 || px >= HAND_W - 1 || py >= HAND_H - 1) return 0
+      const x0 = Math.floor(px)
+      const y0 = Math.floor(py)
+      const fx = px - x0
+      const fy = py - y0
+      const i = y0 * HAND_W + x0
+      return (TONE[i] * (1 - fx) + TONE[i + 1] * fx) * (1 - fy) + (TONE[i + HAND_W] * (1 - fx) + TONE[i + HAND_W + 1] * fx) * fy
+    }
+    function glyph(x, y, d, mix) {
+      const m = CELL / 2
+      const a = CELL * 0.32
+      if (d < 0.1) return
+      if (d >= 0.56 && mix < 0.3) d = 0.5
+      if (d < 0.24) return ctx.fillRect(x + m - 0.6, y + m - 0.6, 1.2, 1.2)
+      ctx.beginPath()
+      if (d < 0.4) {
+        ctx.moveTo(x + m, y + m - a)
+        ctx.lineTo(x + m, y + m + a)
+        ctx.moveTo(x + m - a, y + m)
+        ctx.lineTo(x + m + a, y + m)
+        return ctx.stroke()
+      }
+      if (d < 0.56) {
+        ctx.moveTo(x + m - a, y + m - a)
+        ctx.lineTo(x + m + a, y + m + a)
+        ctx.moveTo(x + m + a, y + m - a)
+        ctx.lineTo(x + m - a, y + m + a)
+        return ctx.stroke()
+      }
+      if (d < 0.72) return ctx.fillRect(x + m - a, y + m - a, a * 2, a * 2)
+      ctx.fillRect(x + 0.5, y + 0.5, CELL - 1, CELL - 1)
+    }
+    function draw(t) {
+      const dpr = Math.min(devicePixelRatio || 1, 2)
+      const { width, height } = canvas.getBoundingClientRect()
+      if (!width || !height) return
+      if (canvas.width !== Math.round(width * dpr)) {
+        canvas.width = Math.round(width * dpr)
+        canvas.height = Math.round(height * dpr)
+      }
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      ctx.clearRect(0, 0, width, height)
+      ctx.fillStyle = ctx.strokeStyle = INK
+      ctx.lineWidth = 1
+      // quanto da mão já apareceu (0..1): os símbolos surgem em ordem aleatória
+      const reveal = still ? 1 : Math.min(1, (t - shownAt) / 1.1)
+      const unit = width / HAND_W
+      for (let r = 0; r * CELL < height; r++) {
+        for (let c = 0; c * CELL < width; c++) {
+          const x = c * CELL + CELL / 2
+          const y = r * CELL + CELL / 2
+          if (hash(r, c) > reveal) continue
+          const wave = still ? 0.5 : Math.sin(x * 0.03 + Math.sin(y * 0.02 + t * 0.7) * 1.6 + t * 0.9) * 0.5 + 0.5
+          const px = x / unit + (still ? 0 : Math.sin(y * 0.05 + t * 0.8) * 0.35)
+          const py = y / unit
+          const d = sample(px, py) * (0.9 + wave * 0.2) + (hash(c, r) - 0.5) * 0.12
+          glyph(c * CELL, r * CELL, d, hash(c + 7, r))
+        }
+      }
+    }
+    const start = () => {
+      shownAt = performance.now() / 1000
+      if (still) return draw(0)
+      let last = 0
+      const tick = (now) => {
+        if (visible && now - last >= 1000 / 30) {
+          last = now
+          draw(now / 1000)
+        }
+        requestAnimationFrame(tick)
+      }
+      requestAnimationFrame(tick)
+    }
+    new IntersectionObserver((e) => (visible = e[0].isIntersecting)).observe(canvas)
+    // espera o título chegar em "você." (a seção ganha a classe is-done)
+    if (section.classList.contains('is-done')) start()
+    else new MutationObserver((_, obs) => section.classList.contains('is-done') && (obs.disconnect(), start())).observe(section, { attributes: true })
+  })()
+</script>
+
+<script is:inline id="tour-script">
+  // carrossel do "Como começar": setas avançam e voltam uma etapa; também rola no dedo ou no trackpad
+  (() => {
+    const track = document.querySelector('[data-tour-track]')
+    if (!track) return
+    const prev = document.querySelector('[data-tour-prev]')
+    const next = document.querySelector('[data-tour-next]')
+    const count = document.querySelector('[data-tour-count]')
+    const slides = [...track.children]
+    // etapa mais próxima da borda esquerda, pela posição real de cada card (conta o espaço entre eles)
+    const start = (el) => el.offsetLeft - slides[0].offsetLeft
+    const current = () =>
+      slides.reduce((best, el, k) => (Math.abs(start(el) - track.scrollLeft) < Math.abs(start(slides[best]) - track.scrollLeft) ? k : best), 0)
+    const go = (i) => {
+      const target = slides[Math.max(0, Math.min(slides.length - 1, i))]
+      track.scrollTo({ left: start(target), behavior: 'smooth' })
+    }
+    const sync = () => {
+      const atEnd = track.scrollLeft + track.clientWidth >= track.scrollWidth - 4
+      count.textContent = (atEnd ? slides.length : current() + 1) + ' / ' + slides.length
+      prev.disabled = track.scrollLeft < 4
+      next.disabled = atEnd
+    }
+    prev.addEventListener('click', () => go(current() - 1))
+    next.addEventListener('click', () => go(current() + 1))
+    track.addEventListener('scroll', () => requestAnimationFrame(sync), { passive: true })
+    track.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') (e.preventDefault(), go(current() - 1))
+      if (e.key === 'ArrowRight') (e.preventDefault(), go(current() + 1))
+    })
+    addEventListener('resize', sync)
+    sync()
+  })()
+</script>
+
+<script is:inline id="contact-script">
+  // o formulário abre o e-mail da pessoa já preenchido (não há envio pelo servidor)
+  (() => {
+    const form = document.querySelector('[data-contact]')
+    if (!form) return
+    form.addEventListener('submit', (e) => {
+      e.preventDefault()
+      const d = new FormData(form)
+      const to = form.getAttribute('action').replace('mailto:', '')
+      const subject = 'Contato pelo site · ' + d.get('nome')
+      const body = d.get('mensagem') + '\n\n' + d.get('nome') + '\n' + d.get('email')
+      location.href = 'mailto:' + to + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body)
+      form.querySelector('[data-contact-note]').hidden = false
     })
   })()
 </script>
