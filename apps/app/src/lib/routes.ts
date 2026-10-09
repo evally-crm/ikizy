@@ -2,6 +2,7 @@
 export const ROUTES = {
   login: '/login',
   signup: '/cadastro',
+  verifyEmail: '/verificar-email',
   createSalon: '/cadastro/salao',
   choosePlan: '/cadastro/plano',
   recover: '/recuperar-senha',

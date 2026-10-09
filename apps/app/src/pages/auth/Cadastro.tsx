@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Link, Navigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { Lock, Mail } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
 import { ROUTES } from '../../lib/routes'
@@ -8,11 +8,11 @@ import { AuthCard, AuthField, AuthLayout, AuthSubmit, FormMessages, GoogleButton
 
 export default function Cadastro() {
   const { status, signUp, signInWithGoogle } = useAuth()
+  const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [notice, setNotice] = useState<string | null>(null)
 
   if (status === 'ready' || status === 'demo') return <Navigate to={ROUTES.dashboard} replace />
   if (status === 'no-salon') return <Navigate to={ROUTES.createSalon} replace />
@@ -20,18 +20,19 @@ export default function Cadastro() {
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setError(null)
-    setNotice(null)
     if (password.length < 8) {
       setError('A senha precisa ter pelo menos 8 caracteres.')
       return
     }
     setBusy(true)
     const res = await signUp(email, password)
-    setError(res.error)
-    if (!res.error && res.needsConfirmation) {
-      setNotice('Enviamos um link de confirmação para o seu e-mail. Confirme e volte aqui para entrar.')
-    }
     setBusy(false)
+    // conta criada: o Neon Auth mandou um código de 6 números para confirmar o e-mail
+    if (!res.error && res.needsConfirmation) {
+      navigate(`${ROUTES.verifyEmail}?email=${encodeURIComponent(email.trim())}`)
+      return
+    }
+    setError(res.error)
   }
 
   const onGoogle = async () => {
@@ -83,7 +84,7 @@ export default function Cadastro() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-          <FormMessages error={error} notice={notice} />
+          <FormMessages error={error} />
           <AuthSubmit label="Criar conta" disabled={busy} />
         </form>
       </AuthCard>
