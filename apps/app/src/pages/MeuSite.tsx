@@ -1,3 +1,4 @@
+import { COVERS, coverId, coverUrl, coverValue } from '../lib/covers'
 import { useEffect, useId, useRef, useState, type ChangeEvent, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { ArrowLeft, ArrowRight, Check, ChevronDown, ExternalLink, ImagePlus, Maximize2, Plus, Rocket, Trash2, Undo2, X } from 'lucide-react'
@@ -273,21 +274,40 @@ export default function MeuSite() {
       </div>
       <div className="logofield">
         <span className="logofield__thumb logofield__thumb--wide" aria-hidden="true">
-          {site.cover ? <img src={site.cover} alt="" /> : <ImagePlus size={22} />}
+          {site.cover ? <img src={coverUrl(site.cover, '', true) ?? site.cover} alt="" /> : <ImagePlus size={22} />}
         </span>
         <div className="logofield__text">
-          <p>{site.cover ? 'Foto de capa' : 'Adicione uma foto de capa'}</p>
-          <small>Foto grande do topo do site</small>
+          <p>{coverId(site.cover) ? `Fundo pronto: ${COVERS.find((c) => c.id === coverId(site.cover))?.label}` : site.cover ? 'Foto de capa' : 'Adicione uma foto de capa'}</p>
+          <small>Sua foto ou um fundo pronto abaixo</small>
         </div>
         <input ref={coverInput} type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={(e) => void onImage(e, 'cover')} />
         <Button variant="light" size="sm" onClick={() => coverInput.current?.click()}>
-          {site.cover ? 'Trocar' : 'Escolher'}
+          {site.cover && !coverId(site.cover) ? 'Trocar' : 'Enviar foto'}
         </Button>
         {site.cover && (
           <button type="button" className="chevbtn" aria-label="Remover foto de capa" onClick={() => setSite('cover', '')}>
             <Trash2 size={15} />
           </button>
         )}
+      </div>
+      <div className="covers" role="radiogroup" aria-label="Fundos prontos para a capa">
+        {COVERS.map((c) => {
+          const on = coverId(site.cover) === c.id
+          return (
+            <button
+              key={c.id}
+              type="button"
+              role="radio"
+              aria-checked={on}
+              className={`covers__item ${on ? 'is-on' : ''}`}
+              title={c.label}
+              onClick={() => setSite('cover', on ? '' : coverValue(c.id))}
+            >
+              <img src={coverUrl(coverValue(c.id), '', true) ?? ''} alt="" loading="lazy" />
+              <span>{c.label}</span>
+            </button>
+          )
+        })}
       </div>
       {logoError && (
         <p className="field__hint" role="alert">
@@ -959,7 +979,7 @@ export default function MeuSite() {
                   {fieldsLook}
                 </Section>
 
-                <Section title="Identidade" hint="Logo e foto de capa.">
+                <Section title="Identidade" hint="Logo e capa: sua foto ou um fundo pronto.">
                   {fieldsIdentity}
                 </Section>
 

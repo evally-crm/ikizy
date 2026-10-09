@@ -76,7 +76,7 @@ export default function SiteFrame({
   height?: number | 'fill'
 }) {
   const { professionals } = useAgenda()
-  const html = useMemo(() => renderSitePage(toPublicSite(studio, professionals), { canonical: '#' }), [studio, professionals])
+  const html = useMemo(() => renderSitePage(toPublicSite(studio, professionals), { canonical: '#', assetBase: window.location.origin }), [studio, professionals])
 
   const box = useRef<HTMLDivElement>(null)
   const [avail, setAvail] = useState(0)

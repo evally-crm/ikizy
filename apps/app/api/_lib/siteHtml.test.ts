@@ -66,6 +66,16 @@ describe('whatsappLink / instagramHandle / formatPrice', () => {
 })
 
 describe('renderSitePage', () => {
+  it('capa: fundo pronto vira a imagem de /capas; valor desconhecido é ignorado', () => {
+    const withCover = (cover: string) => {
+      const site = base()
+      return renderSitePage({ ...site, settings: { ...site.settings, cover } }, { canonical: 'https://x', assetBase: 'https://app.ikizy.com' })
+    }
+    assert.match(withCover('capa:seda-rose'), /<img class="hero__img" src="https:\/\/app\.ikizy\.com\/capas\/seda-rose\.jpg"/)
+    assert.doesNotMatch(withCover('capa:../../etc'), /<img class="hero__img"/)
+    assert.doesNotMatch(withCover('capa:nao-existe'), /<img class="hero__img"/)
+    assert.match(page(base()), /class="panel hero"/)
+  })
   it('traz nome, destaque em itálico, serviços, plano com etiqueta Novidade e equipe', () => {
     const html = page(base())
     assert.match(html, /<title>Studio Maria Beauty · Cuidado de verdade, do esmalte ao olhar<\/title>/)

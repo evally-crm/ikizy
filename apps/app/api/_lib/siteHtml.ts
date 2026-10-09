@@ -1,3 +1,4 @@
+import { coverUrl } from '../../src/lib/covers.js'
 import { CATEGORIES, FONTS, fontHref, isFontId, paletteFor } from '../../src/lib/siteTheme.js'
 import { BOOKING_CSS, BOOKING_SCRIPT } from './bookingClient.js'
 
@@ -204,13 +205,14 @@ const DARK_CSS = `
 `
 
 /** monta a página pública completa (HTML) do negócio */
-export function renderSitePage(site: PublicSite, opts: { canonical: string }): string {
+export function renderSitePage(site: PublicSite, opts: { canonical: string; assetBase?: string }): string {
   const s = site.settings ?? {}
   const { p: pal } = paletteFor(s)
   const fontId = isFontId(s.font) ? s.font : 'moderna'
   const font = FONTS[fontId]
   const logo = safeLogo(s.logo)
-  const cover = safeLogo(s.cover)
+  // foto enviada (data URL) ou fundo pronto da galeria ("capa:<id>")
+  const cover = safeLogo(s.cover) ?? coverUrl(s.cover, opts.assetBase ?? '')
   const name = site.name
   const showPrices = s.show_prices !== false
   const services = (site.services ?? []).filter((x) => x.name?.trim())
