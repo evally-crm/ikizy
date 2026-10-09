@@ -396,15 +396,15 @@ const faqSchema = {
 </Base>
 
 <script is:inline id="halftone-script">
-  // boca em símbolos (ponto, +, x, quadrado): um batom passa de um canto ao outro pintando os lábios, segura e apaga, em loop
+  // boca em pontos redondos, aberta e com bordas esfumadas; o batom (vermelho) se espalha de um canto ao outro, segura e volta, em loop
   (() => {
     const canvas = document.getElementById('halftone')
     if (!canvas) return
     const ctx = canvas.getContext('2d')
-    const CELL = 7
-    const INK = 'rgb(14, 13, 12)'
-    const RED = getComputedStyle(document.documentElement).getPropertyValue('--wine').trim() || '#800513'
-    const LOOP = 9
+    const INK = [14, 13, 12]
+    const hex = getComputedStyle(document.documentElement).getPropertyValue('--wine').trim() || '#800513'
+    const RED = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16))
+    const LOOP = 10
     const still = matchMedia('(prefers-reduced-motion: reduce)').matches
     let visible = true
     let last = 0
@@ -419,61 +419,29 @@ const faqSchema = {
       return s - Math.floor(s)
     }
     const waveAt = (x, y, t) =>
-      (Math.sin(x * 0.012 + Math.sin(y * 0.009 + t * 0.6) * 2.4 + t) +
-        Math.sin(y * 0.014 - x * 0.007 + 1.7 - t * 0.8) * 0.8 +
-        2.4 * 0.75) /
-      3.6
+      (Math.sin(x * 0.012 + Math.sin(y * 0.009 + t * 0.6) * 2.4 + t) + Math.sin(y * 0.014 - x * 0.007 + 1.7 - t * 0.8) * 0.8 + 1.8) / 3.6
 
-    // contornos dos lábios em u ∈ [-1, 1]: arco do cupido em cima, lábio de baixo mais cheio
-    // e a boca aberta no meio, no mesmo oval onde fica a marca
-    const top = (u) => -0.44 * Math.pow(1 - u * u, 0.5) + 0.14 * bell(u, 0.1) - 0.05 * bell(Math.abs(u) - 0.26, 0.13)
-    const bottom = (u) => 0.5 * Math.pow(1 - u * u, 0.45)
-    const OPEN_W = 0.6
-    const open = (u, t) => Math.sqrt(Math.max(0, 1 - (u / OPEN_W) ** 2)) * (1 + Math.sin(t * 0.7) * 0.05)
-    const upperIn = (u, t) => -0.13 * open(u, t)
-    const lowerIn = (u, t) => 0.16 * open(u, t)
+    // contornos arredondados em u ∈ [-1, 1]: oval com um leve arco do cupido, e a abertura no meio onde fica a marca
+    const top = (u) => -0.56 * Math.pow(1 - u * u, 0.6) + 0.11 * bell(u, 0.14)
+    const bottom = (u) => 0.58 * Math.pow(1 - u * u, 0.55)
+    const OPEN_W = 0.52
+    const opening = (u, t) => Math.sqrt(Math.max(0, 1 - (u / OPEN_W) ** 2)) * (1 + Math.sin(t * 0.7) * 0.06)
 
-    /** [tom, é lábio, é a abertura da boca] para a boca centrada em (0, 0) */
-    function lips(u, v, t) {
-      if (Math.abs(u) >= 1) return [0, false, false]
-      const ui = upperIn(u, t)
-      const li = lowerIn(u, t)
-      if (v > ui && v < li) return [0, false, true]
-      if (v > top(u) && v <= ui) {
-        const k = (v - top(u)) / (ui - top(u))
-        // sombra junto à abertura e reflexo perto do arco
-        return [0.5 + smooth(0.6, 1, k) * 0.4 - bell(u + 0.28, 0.16) * bell(k - 0.35, 0.2) * 0.3, true, false]
-      }
-      if (v >= li && v < bottom(u)) {
-        const k = (v - li) / (bottom(u) - li)
-        const gloss = bell(u - 0.12, 0.24) * bell(k - 0.45, 0.17) * 0.5
-        return [0.45 + bell(k, 0.22) * 0.4 + smooth(0.8, 1, k) * 0.2 - gloss, true, false]
-      }
-      return [0, false, false]
-    }
-
-    function glyph(x, y, d, mix) {
-      const m = CELL / 2
-      if (d < 0.1) return
-      if (d >= 0.56 && mix < 0.3) d = 0.5
-      if (d < 0.24) return ctx.fillRect(x + m - 0.8, y + m - 0.8, 1.6, 1.6)
-      ctx.beginPath()
-      if (d < 0.4) {
-        ctx.moveTo(x + m, y + m - 2.2)
-        ctx.lineTo(x + m, y + m + 2.2)
-        ctx.moveTo(x + m - 2.2, y + m)
-        ctx.lineTo(x + m + 2.2, y + m)
-        return ctx.stroke()
-      }
-      if (d < 0.56) {
-        ctx.moveTo(x + m - 2, y + m - 2)
-        ctx.lineTo(x + m + 2, y + m + 2)
-        ctx.moveTo(x + m + 2, y + m - 2)
-        ctx.lineTo(x + m - 2, y + m + 2)
-        return ctx.stroke()
-      }
-      if (d < 0.72) return ctx.fillRect(x + m - 2, y + m - 2, 4, 4)
-      ctx.fillRect(x + 1, y + 1, CELL - 2, CELL - 2)
+    /** densidade (0..1) da boca: cheia no meio dos lábios, esfumando perto da borda e da abertura */
+    function density(u, v, t) {
+      if (Math.abs(u) >= 1) return 0
+      const o = opening(u, t)
+      const ui = -0.12 * o
+      const li = 0.14 * o
+      const tp = top(u)
+      const bt = bottom(u)
+      if (v < tp - 0.14 || v > bt + 0.14) return 0
+      if (v > ui && v < li) return 0
+      // distância (em u) até a borda mais próxima: de fora ou da abertura
+      const out = Math.min(v - tp, bt - v)
+      const inner = v <= ui ? ui - v : v - li
+      const lipLine = Math.abs(v) < 0.03 && o === 0 ? 0.35 : 0 // fenda entre os lábios perto dos cantos
+      return Math.max(0, smooth(-0.1, 0.12, out) * smooth(-0.02, 0.07, inner) - lipLine)
     }
 
     function draw(t) {
@@ -488,71 +456,47 @@ const faqSchema = {
       }
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
       ctx.clearRect(0, 0, width, height)
-      ctx.lineWidth = 1.4
 
+      const S = Math.min(width * 0.46, height * 0.66)
+      const STEP = Math.max(9, Math.round(S / 19))
       const cx = width / 2
       const cy = height / 2
-      const S = Math.min(width * 0.47, height * 0.48)
-      // ciclo do batom: espera, passa da esquerda para a direita, segura e apaga
-      const p = still ? 2 : t % LOOP
-      const sweep = still ? 2 : -1.15 + smooth(0.8, 4.6, p) * 2.3
-      const fade = still ? 1 : 1 - smooth(7.4, 8.8, p)
-      const applying = !still && p > 0.6 && p < 5
-      // o batom: ponta chanfrada vermelha + tubo escuro, inclinado, seguindo a varredura
-      const lx = sweep
-      const ly = 0.3 + Math.sin(sweep * 3) * 0.04
-      const la = -0.9
-      const lc = Math.cos(la)
-      const ls = Math.sin(la)
+      // ciclo do batom: espera, o vermelho se espalha da esquerda para a direita, segura e volta ao escuro
+      const p = still ? 5 : t % LOOP
+      const sweep = -1.3 + smooth(0.8, 4.8, p) * 2.6
+      const fade = 1 - smooth(7.6, 9.4, p)
 
-      const ink = []
-      const red = []
-      const cols = Math.ceil(width / CELL)
-      const rows = Math.ceil(height / CELL)
-      for (let c = 0; c < cols; c++) {
-        const x = c * CELL + CELL / 2
-        for (let r = 0; r < rows; r++) {
-          const y = r * CELL + CELL / 2
-          const u = (x - cx) / S + Math.sin(y * 0.03 + t * 0.8) * 0.006
-          const v = (y - cy) / S + Math.sin(x * 0.02 - t * 0.6) * 0.006
-          const wave = waveAt(x, y, t)
-          const [tone, onLip, inMouth] = lips(u, v, t)
-          let d = tone * (0.88 + wave * 0.2)
-          let isRed = onLip && u < sweep && fade > hash(r, c)
-          // linha escura entre os lábios, dos cantos até a abertura
-          if (Math.abs(v) < 0.022 && Math.abs(u) > OPEN_W - 0.02 && Math.abs(u) < 0.99) {
-            d = 0.95
-            isRed = false
+      for (let row = 0, y = STEP / 2; y < height; row++, y += STEP) {
+        for (let x = STEP / 2; x < width; x += STEP) {
+          const u = (x - cx) / S + Math.sin(y * 0.02 + t * 0.8) * 0.01
+          const v = (y - cy) / S + Math.sin(x * 0.017 - t * 0.6) * 0.01
+          let d = density(u, v, t)
+          const n = hash(row, Math.round(x))
+          if (d <= 0.02) {
+            // pontinhos soltos em volta, como pó
+            const e = Math.hypot(u / 1.12, v / 0.78)
+            const inMouth = Math.abs(u) < OPEN_W + 0.06 && Math.abs(v) < 0.2
+            if (!inMouth && e < 1.2 && n < smooth(1.2, 0.85, e) * 0.35 * waveAt(x, y, t)) d = 0.12
+            else continue
           }
-          if (inMouth) d = 0 // abertura limpa para a marca
-          else if (!onLip) {
-            // halo leve em volta da boca, onde antes ficava o círculo
-            const e = Math.hypot(u / 1.22, v / 0.85)
-            d = e < 1 ? smooth(1, 0.55, e) * (0.06 + 0.2 * wave) : 0
+          d *= 0.82 + 0.18 * waveAt(x, y, t)
+          const paint = smooth(u + 0.05, u + 0.3, sweep) * fade
+          const col = INK.map((c, i) => Math.round(c + (RED[i] - c) * paint))
+          const r = STEP * 0.47 * Math.pow(d, 0.65)
+          if (r < 0.8) continue
+          ctx.fillStyle = ctx.strokeStyle = 'rgb(' + col + ')'
+          ctx.beginPath()
+          // na borda esfumada parte dos pontos vira anel, como na impressão
+          if (d < 0.6 && n < 0.3) {
+            ctx.lineWidth = Math.max(1, r * 0.3)
+            ctx.arc(x, y, r * 0.85, 0, Math.PI * 2)
+            ctx.stroke()
+          } else {
+            ctx.arc(x, y, r, 0, Math.PI * 2)
+            ctx.fill()
           }
-          if (applying) {
-            // tubo e ponta do batom, em coordenadas ao longo do eixo inclinado
-            const du = u - lx
-            const dv = v - ly
-            const along = du * lc + dv * ls
-            const across = -du * ls + dv * lc
-            if (Math.abs(across) < 0.07 && along < -0.02 && along > -0.62) {
-              const tip = along > -0.2
-              const slant = tip && along > -0.2 + (across + 0.07) * 1.3
-              if (!slant) {
-                d = tip ? 0.8 : along > -0.26 ? 0.4 : 0.95 - bell(across + 0.035, 0.015) * 0.6
-                isRed = tip
-              }
-            }
-          }
-          const cell = [c * CELL, r * CELL, d + (hash(c, r) - 0.5) * 0.14, hash(r, c)]
-          ;(isRed ? red : ink).push(cell)
         }
       }
-      ctx.fillStyle = ctx.strokeStyle = INK
-      for (const g of ink) glyph(...g)
-      ctx.fillStyle = ctx.strokeStyle = RED
-      for (const g of red) glyph(g[0], g[1], Math.max(g[2], 0.42), g[3])
     }
 
     if (still) {
