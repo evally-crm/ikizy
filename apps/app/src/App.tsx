@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './auth/AuthProvider'
 import RequireSalon from './auth/RequireSalon'
+import { AppContextMenu } from './components/AppContextMenu'
 import AppShell from './components/layout/AppShell'
 import { ROUTES } from './lib/routes'
 import Agenda from './pages/Agenda'
@@ -49,6 +50,7 @@ export default function App() {
 
         <Route path="*" element={<Navigate to={ROUTES.dashboard} replace />} />
       </Routes>
+      <AppContextMenu />
     </AuthProvider>
   )
 }
