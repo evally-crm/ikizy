@@ -442,18 +442,6 @@
   background: var(--black);
 }
 
-.alert {
-  padding: 10px 14px;
-  border-radius: 14px;
-  background: var(--pink-100);
-  color: var(--brand-700);
-  font-size: 13px;
-}
-.alert--ok {
-  background: var(--success-soft);
-  color: var(--success);
-}
-
 /* tela de carregamento enquanto a sessão é verificada */
 .splash {
   display: grid;
@@ -582,6 +570,12 @@
   opacity: 0.6;
 }
 
+/* nas telas de acesso o aviso usa o mesmo fundo dos campos: o cinza translúcido deixaria
+   aparecer os pontos do rosto no celular */
+.auth .alert {
+  background: rgba(255, 255, 255, 0.9);
+}
+
 /* desktop: sobre o painel branco, campos e opções precisam de fundo e borda próprios.
    Fica no fim do arquivo de propósito: tem a mesma especificidade das regras acima e precisa vir depois delas. */
 @media (min-width: 1024px) {
@@ -622,5 +616,8 @@
   }
   .auth__ico {
     background: var(--white);
+  }
+  .auth .alert {
+    background: #f1f1f3;
   }
 }

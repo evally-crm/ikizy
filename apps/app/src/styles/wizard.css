@@ -389,11 +389,9 @@
   left: 0;
   z-index: 2;
   width: 200px;
-  padding: 6px 8px;
-  border-radius: 10px;
-  background: #fdeaea;
-  font-size: 12px;
-  color: #8a1c1c;
+  /* flutua sobre o conteúdo: fundo sólido em vez do cinza translúcido dos avisos */
+  background: var(--white);
+  box-shadow: var(--shadow-md);
 }
 .catalog__empty {
   margin: 0;

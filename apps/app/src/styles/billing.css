@@ -20,28 +20,14 @@
   color: var(--ink-900);
 }
 .billing-banner--warn {
-  background: var(--warning-soft);
-  color: var(--warning);
+  background: rgba(14, 13, 13, 0.05);
+  color: var(--ink-900);
 }
 .billing-banner--alert {
   background: var(--brand-500);
   color: var(--white);
 }
 
-.billing-note {
-  padding: 12px 18px;
-  border-radius: var(--radius-md);
-  background: var(--gray-200);
-  font-size: 14px;
-}
-.billing-note--ok {
-  background: var(--success-soft);
-  color: var(--success);
-}
-.billing-note--error {
-  background: var(--pink-100);
-  color: var(--brand-500);
-}
 
 .billing-status {
   display: flex;

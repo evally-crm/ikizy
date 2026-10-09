@@ -39,6 +39,8 @@
   /* tipografia */
   --font-sans: 'Outfit', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-serif: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+  /* fonte pixelada das palavras em destaque (as vermelhas), a mesma da landing */
+  --font-accent: 'Geist Pixel', ui-monospace, 'SFMono-Regular', monospace;
   --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
 
   /* raios */

@@ -1973,13 +1973,6 @@ button.textlink:disabled {
   padding-block: 12px;
   line-height: 1.55;
 }
-.msg__warn {
-  padding: 10px 12px;
-  border-radius: 14px;
-  background: var(--warning-soft);
-  font-size: 13px;
-  color: var(--warning);
-}
 .msgtag {
   display: inline-flex;
   margin-left: 4px;

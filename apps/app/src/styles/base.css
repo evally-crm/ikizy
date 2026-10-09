@@ -64,11 +64,12 @@ svg {
   outline-offset: 2px;
 }
 
-/* palavra em destaque: serifada, itálica, na cor de acento */
+/* palavra em destaque: fonte pixelada, na cor de acento (igual à landing) */
 .em {
-  font-family: var(--font-serif);
-  font-style: italic;
+  font-family: var(--font-accent);
+  font-style: normal;
   font-weight: 400;
+  letter-spacing: -0.03em;
   color: var(--brand-500);
 }
 
