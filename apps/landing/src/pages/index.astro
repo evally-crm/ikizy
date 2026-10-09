@@ -5,8 +5,8 @@ import { PIX_DISCOUNT_PCT, PLANS, TRIAL_DAYS, brlNumber } from '../lib/pricing'
 
 const ticker = ['Agenda online', 'Clientes que voltam', 'Financeiro descomplicado', 'Site do seu negócio', 'Comissões da equipe', 'Mensagens prontas no WhatsApp', 'Fechamento do mês']
 
-/** especialidades da seção "Para quem é"; a última ("Você") ganha a mão em pixel art */
-const crafts = ['Lash designer', 'Brow designer', 'Cabeleireiro(a)', 'Nail designer', 'Esteticista', 'Maquiadora']
+/** especialidades que passam no título do "Para quem é", uma por vez, até chegar em "você." com a mão */
+const crafts = ['lash designers', 'brow designers', 'cabeleireiros(as)', 'nail designers', 'esteticistas', 'maquiadoras']
 
 /** recursos reais do sistema, contados pelo que mudam na rotina (o "antes" vem da antiga seção "Do caderno ao sistema") */
 const features = [
@@ -94,70 +94,21 @@ const faqSchema = {
   </section>
 
   <!-- PARA QUEM É -->
-  <section id="para-quem" class="section container you" aria-labelledby="you-title">
+  <section id="para-quem" class="section container you" aria-labelledby="you-title" data-you>
     <p class="eyebrow">Para quem é</p>
-    <h2 id="you-title" class="you__title">A IKIZY é feita <em>para você.</em></h2>
+    <h2 id="you-title" class="you__title">
+      A IKIZY é feita para
+      <span class="you__rot" aria-hidden="true" data-you-rot>
+        {crafts.map((c) => <span>{c}</span>)}
+        <span class="is-in">você.</span>
+      </span>
+      <span class="sr-only">você: {crafts.join(', ')}.</span>
+    </h2>
+    <img class="you__hand" src="/mao.webp" alt="" width="446" height="386" loading="lazy" decoding="async" />
     <p class="lead you__lead">
       Não importa se você trabalha com cabelos, unhas, cílios ou sobrancelhas. Se você atende clientes por conta própria ou gerencia uma
       equipe, a IKIZY ajuda a organizar sua rotina para que você possa cuidar de quem confia no seu trabalho.
     </p>
-    <ul class="you__list" aria-label="Especialidades atendidas">
-      {crafts.map((c) => <li>{c}</li>)}
-      <li class="you__me">
-              <svg class="you__hand" viewBox="0 0 25 14" width="75" height="42" shape-rendering="crispEdges" aria-hidden="true">
-                <rect x="5" y="1" width="5" height="1" fill="var(--ink-900)" />
-                <rect x="4" y="2" width="1" height="1" fill="var(--ink-900)" />
-                <rect x="5" y="2" width="5" height="1" fill="var(--white)" />
-                <rect x="10" y="2" width="1" height="1" fill="var(--ink-900)" />
-                <rect x="4" y="3" width="1" height="1" fill="var(--ink-900)" />
-                <rect x="5" y="3" width="5" height="1" fill="var(--white)" />
-                <rect x="10" y="3" width="14" height="1" fill="var(--ink-900)" />
-                <rect x="0" y="4" width="5" height="1" fill="var(--ink-900)" />
-                <rect x="5" y="4" width="19" height="1" fill="var(--white)" />
-                <rect x="24" y="4" width="1" height="1" fill="var(--ink-900)" />
-                <rect x="0" y="5" width="1" height="1" fill="var(--ink-900)" />
-                <rect x="1" y="5" width="2" height="1" fill="var(--wine)" />
-                <rect x="3" y="5" width="1" height="1" fill="var(--ink-900)" />
-                <rect x="4" y="5" width="20" height="1" fill="var(--white)" />
-                <rect x="24" y="5" width="1" height="1" fill="var(--ink-900)" />
-                <rect x="0" y="6" width="1" height="1" fill="var(--ink-900)" />
-                <rect x="1" y="6" width="2" height="1" fill="var(--wine)" />
-                <rect x="3" y="6" width="1" height="1" fill="var(--ink-900)" />
-                <rect x="4" y="6" width="8" height="1" fill="var(--white)" />
-                <rect x="12" y="6" width="13" height="1" fill="var(--ink-900)" />
-                <rect x="0" y="7" width="1" height="1" fill="var(--ink-900)" />
-                <rect x="1" y="7" width="2" height="1" fill="var(--wine)" />
-                <rect x="3" y="7" width="1" height="1" fill="var(--ink-900)" />
-                <rect x="4" y="7" width="11" height="1" fill="var(--white)" />
-                <rect x="15" y="7" width="1" height="1" fill="var(--ink-900)" />
-                <rect x="0" y="8" width="1" height="1" fill="var(--ink-900)" />
-                <rect x="1" y="8" width="2" height="1" fill="var(--wine)" />
-                <rect x="3" y="8" width="1" height="1" fill="var(--ink-900)" />
-                <rect x="4" y="8" width="8" height="1" fill="var(--white)" />
-                <rect x="12" y="8" width="4" height="1" fill="var(--ink-900)" />
-                <rect x="0" y="9" width="1" height="1" fill="var(--ink-900)" />
-                <rect x="1" y="9" width="2" height="1" fill="var(--wine)" />
-                <rect x="3" y="9" width="1" height="1" fill="var(--ink-900)" />
-                <rect x="4" y="9" width="11" height="1" fill="var(--white)" />
-                <rect x="15" y="9" width="1" height="1" fill="var(--ink-900)" />
-                <rect x="0" y="10" width="1" height="1" fill="var(--ink-900)" />
-                <rect x="1" y="10" width="2" height="1" fill="var(--wine)" />
-                <rect x="3" y="10" width="1" height="1" fill="var(--ink-900)" />
-                <rect x="4" y="10" width="8" height="1" fill="var(--white)" />
-                <rect x="12" y="10" width="4" height="1" fill="var(--ink-900)" />
-                <rect x="0" y="11" width="1" height="1" fill="var(--ink-900)" />
-                <rect x="1" y="11" width="2" height="1" fill="var(--wine)" />
-                <rect x="3" y="11" width="1" height="1" fill="var(--ink-900)" />
-                <rect x="4" y="11" width="11" height="1" fill="var(--white)" />
-                <rect x="15" y="11" width="1" height="1" fill="var(--ink-900)" />
-                <rect x="0" y="12" width="5" height="1" fill="var(--ink-900)" />
-                <rect x="5" y="12" width="8" height="1" fill="var(--white)" />
-                <rect x="13" y="12" width="2" height="1" fill="var(--ink-900)" />
-                <rect x="4" y="13" width="10" height="1" fill="var(--ink-900)" />
-              </svg>
-        <span>Você</span>
-      </li>
-    </ul>
   </section>
 
   <!-- POR QUE TROCAR (recursos) -->
@@ -536,6 +487,37 @@ const faqSchema = {
   })()
 </script>
 
+<script is:inline id="you-script">
+  // "Para quem é": as profissões passam uma por vez no título (uma única vez) e terminam em "você." com a mão
+  (() => {
+    const section = document.querySelector('[data-you]')
+    const rot = document.querySelector('[data-you-rot]')
+    if (!section || !rot) return
+    const words = [...rot.children]
+    const last = words.length - 1
+    const fit = (el) => (rot.style.width = el.offsetWidth + 'px')
+    const done = () => section.classList.add('is-done')
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return done()
+    let i = 0
+    words.forEach((w, k) => w.classList.toggle('is-in', k === 0))
+    fit(words[0])
+    const step = () => {
+      words[i].classList.replace('is-in', 'is-out')
+      i += 1
+      words[i].classList.add('is-in')
+      fit(words[i])
+      if (i === last) return setTimeout(done, 450)
+      setTimeout(step, 1000)
+    }
+    new IntersectionObserver((entries, obs) => {
+      if (!entries[0].isIntersecting) return
+      obs.disconnect()
+      setTimeout(step, 900)
+    }, { threshold: 0.6 }).observe(rot)
+    addEventListener('resize', () => fit(words[i]))
+  })()
+</script>
+
 <script is:inline id="tour-script">
   // carrossel do "Como começar": setas avançam e voltam uma etapa; também rola no dedo ou no trackpad
   (() => {
@@ -545,16 +527,19 @@ const faqSchema = {
     const next = document.querySelector('[data-tour-next]')
     const count = document.querySelector('[data-tour-count]')
     const slides = [...track.children]
-    const current = () => Math.round(track.scrollLeft / slides[0].offsetWidth)
+    // etapa mais próxima da borda esquerda, pela posição real de cada card (conta o espaço entre eles)
+    const start = (el) => el.offsetLeft - slides[0].offsetLeft
+    const current = () =>
+      slides.reduce((best, el, k) => (Math.abs(start(el) - track.scrollLeft) < Math.abs(start(slides[best]) - track.scrollLeft) ? k : best), 0)
     const go = (i) => {
       const target = slides[Math.max(0, Math.min(slides.length - 1, i))]
-      track.scrollTo({ left: target.offsetLeft - slides[0].offsetLeft, behavior: 'smooth' })
+      track.scrollTo({ left: start(target), behavior: 'smooth' })
     }
     const sync = () => {
-      const i = Math.min(slides.length - 1, current())
-      count.textContent = i + 1 + ' / ' + slides.length
+      const atEnd = track.scrollLeft + track.clientWidth >= track.scrollWidth - 4
+      count.textContent = (atEnd ? slides.length : current() + 1) + ' / ' + slides.length
       prev.disabled = track.scrollLeft < 4
-      next.disabled = track.scrollLeft + track.clientWidth >= track.scrollWidth - 4
+      next.disabled = atEnd
     }
     prev.addEventListener('click', () => go(current() - 1))
     next.addEventListener('click', () => go(current() + 1))

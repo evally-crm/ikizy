@@ -709,54 +709,53 @@ em {
 .you__lead {
   max-width: 60ch;
 }
-.you__list {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: center;
-  gap: 10px 0;
-  max-width: 100%;
-  margin-top: clamp(20px, 4vw, 44px);
-  font-size: clamp(16px, 1.9vw, 22px);
-  letter-spacing: -0.02em;
-  color: var(--ink-700);
-}
-.you__list li {
-  display: inline-flex;
-  align-items: center;
-  white-space: nowrap;
-}
-/* separador discreto: um ponto vinho entre os itens */
-.you__list li + li::before {
-  content: '';
-  width: 4px;
-  height: 4px;
-  margin: 0 clamp(12px, 2vw, 22px);
-  border-radius: 50%;
-  background: var(--wine);
-  opacity: 0.6;
-}
-/* no celular a linha quebra: sem os pontos, para nenhum separador começar uma linha */
-@media (max-width: 720px) {
-  .you__list {
-    gap: 10px 18px;
-  }
-  .you__list li + li::before {
-    display: none;
-  }
-}
-.you__me {
-  gap: 10px;
-}
-.you__me span {
+/* palavra que troca no título: todas na mesma célula da grade; o JS ajusta a largura para a palavra da vez */
+.you__rot {
+  display: inline-grid;
+  justify-items: start;
+  margin-left: 0.22em;
+  overflow: visible;
   font-family: var(--font-serif);
   font-style: italic;
-  font-size: 1.3em;
+  font-weight: 400;
+  letter-spacing: -0.02em;
   color: var(--wine);
+  transition: width 0.45s ease;
 }
+.you__rot > span {
+  grid-area: 1 / 1;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(0.45em);
+  transition: opacity 0.35s ease, transform 0.45s ease;
+}
+.you__rot > span.is-in {
+  opacity: 1;
+  transform: none;
+}
+.you__rot > span.is-out {
+  opacity: 0;
+  transform: translateY(-0.45em);
+}
+/* a mão aparece quando chega em "você." */
 .you__hand {
-  width: auto;
-  height: 1.5em;
+  width: clamp(130px, 16vw, 210px);
+  height: auto;
+  margin: 4px auto -6px;
+  opacity: 0;
+  transform: translateY(18px) rotate(-6deg) scale(0.92);
+  transition: opacity 0.6s ease, transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.you.is-done .you__hand {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .you__rot,
+  .you__rot > span,
+  .you__hand {
+    transition: none;
+  }
 }
 
 /* ---------- por que trocar: grade de recursos com telinha, "antes" riscado e o ganho ---------- */
@@ -911,8 +910,8 @@ em {
 .tour__track {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: 100%;
-  gap: 16px;
+  grid-auto-columns: 78%;
+  gap: 14px;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
@@ -921,9 +920,14 @@ em {
 .tour__track::-webkit-scrollbar {
   display: none;
 }
-@media (min-width: 900px) {
+@media (min-width: 640px) {
   .tour__track {
-    grid-auto-columns: 74%;
+    grid-auto-columns: calc((100% - 14px) / 2);
+  }
+}
+@media (min-width: 1024px) {
+  .tour__track {
+    grid-auto-columns: calc((100% - 28px) / 3.2);
   }
 }
 .tour__slide {
@@ -932,13 +936,13 @@ em {
 .tour__slide figure {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 12px;
 }
 .tour__slide img {
   width: 100%;
   height: auto;
   border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   background: var(--gray-100);
 }
 .tour__slide figcaption {
@@ -953,12 +957,12 @@ em {
   color: var(--wine);
 }
 .tour__slide h3 {
-  font-size: 22px;
+  font-size: 17px;
   font-weight: 400;
   letter-spacing: -0.03em;
 }
 .tour__slide p {
-  font-size: 15px;
+  font-size: 14px;
   color: var(--ink-500);
 }
 
