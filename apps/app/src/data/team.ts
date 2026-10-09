@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useAuth, type MemberRole } from '../auth/AuthProvider'
 import { isNeonConfigured, neon } from '../lib/neon'
+import { post } from '../lib/billingApi'
 import { canManageMembers } from '../lib/permissions'
 import { useAgenda } from './AgendaProvider'
 
@@ -26,12 +27,30 @@ export interface TeamInvite {
   name: string
   professionalId: string | null
   expiresAt: Date
+  email: string | null
 }
 
 export interface InviteInput {
   role: Exclude<MemberRole, 'owner'>
   name: string
   professionalId: string | null
+  /** se informado, o convite também vai por e-mail */
+  email?: string
+}
+
+/** resultado de criar um convite: o token (para o link) e como foi o e-mail, se pedido */
+export type InviteResult = { token: string; emailSentTo?: string; emailError?: string } | { error: string }
+
+export const EMAIL_PATTERN = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
+
+/** pede ao servidor para mandar (ou reenviar) o convite por e-mail; devolve a mensagem de erro ou null */
+export async function sendInviteEmail(inviteId: string): Promise<string | null> {
+  try {
+    await post<{ sentTo: string }>('/api/team/invite-email', { inviteId })
+    return null
+  } catch (e) {
+    return e instanceof Error ? e.message : 'Não foi possível enviar o e-mail agora.'
+  }
 }
 
 function friendly(error: { message: string; hint?: string; code?: string }) {
@@ -67,7 +86,7 @@ export function useTeam() {
       neon.from('professionals').select('id, name, title, active, user_id').eq('salon_id', salonId).order('name'),
       neon.from('members').select('user_id, role, name, created_at').eq('salon_id', salonId).order('created_at'),
       isOwner
-        ? neon.from('invites').select('id, token, role, name, professional_id, expires_at').eq('salon_id', salonId).is('accepted_at', null).order('created_at')
+        ? neon.from('invites').select('id, token, role, name, professional_id, expires_at, email').eq('salon_id', salonId).is('accepted_at', null).order('created_at')
         : Promise.resolve({ data: [], error: null }),
     ])
     if (pros.error || mems.error || invs.error) {
@@ -93,6 +112,7 @@ export function useTeam() {
         name: r.name as string,
         professionalId: (r.professional_id as string | null) ?? null,
         expiresAt: new Date(r.expires_at as string),
+        email: (r.email as string | null) ?? null,
       })),
     )
     setError(null)
@@ -168,24 +188,33 @@ export function useTeam() {
 
   /** cria o convite e devolve o token (para montar o link) */
   const createInvite = useCallback(
-    async (input: InviteInput): Promise<{ token: string } | { error: string }> => {
+    async (input: InviteInput): Promise<InviteResult> => {
       const name = input.name.trim()
+      const email = input.email?.trim().toLowerCase() || null
       if (name.length < 2) return { error: 'Informe o nome de quem você está convidando.' }
+      if (email && !EMAIL_PATTERN.test(email)) return { error: 'Confira o e-mail: parece incompleto.' }
       if (!live || !neon || !salonId) {
         const token = demoToken()
-        setInvites((list) => [...list, { id: token, token, role: input.role, name, professionalId: input.professionalId, expiresAt: new Date(Date.now() + 7 * 864e5) }])
-        return { token }
+        setInvites((list) => [...list, { id: token, token, role: input.role, name, professionalId: input.professionalId, expiresAt: new Date(Date.now() + 7 * 864e5), email }])
+        return email ? { token, emailError: 'No modo demonstração nenhum e-mail é enviado.' } : { token }
       }
       const { data, error: err } = await neon
         .from('invites')
-        .insert({ salon_id: salonId, role: input.role, name, professional_id: input.professionalId })
-        .select('token')
+        .insert({ salon_id: salonId, role: input.role, name, professional_id: input.professionalId, ...(email ? { email } : {}) })
+        .select('id, token')
         .single()
       if (err || !data) return { error: friendly(err ?? { message: '' }) }
+      // o convite já existe; se o e-mail falhar, o link continua valendo pelo WhatsApp
+      const emailError = email ? await sendInviteEmail(data.id as string) : null
       await load()
-      return { token: data.token as string }
+      return { token: data.token as string, ...(email ? (emailError ? { emailError } : { emailSentTo: email }) : {}) }
     },
     [live, salonId, load],
+  )
+
+  const resendInvite = useCallback(
+    async (id: string): Promise<string | null> => (live ? sendInviteEmail(id) : 'No modo demonstração nenhum e-mail é enviado.'),
+    [live],
   )
 
   const cancelInvite = useCallback(
@@ -237,6 +266,7 @@ export function useTeam() {
     saveProfessional,
     setProfessionalActive,
     createInvite,
+    resendInvite,
     cancelInvite,
     changeRole,
     removeMember,

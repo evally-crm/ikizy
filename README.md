@@ -88,3 +88,20 @@ Testes: `npm run test:api -w @ikizy/app` (regras de checkout, webhook e acesso) 
 - `close_month()` grava o fechamento (imutável) e trava atendimentos do mês.
 
 Testes de RLS: `supabase/tests/rls_test.sql` (validado em Postgres 17 com `auth_stubs.sql` simulando o schema `auth`; ainda não adaptado ao Neon).
+
+## E-mails (Resend)
+
+O convite da equipe pode ir por e-mail (Equipe → Convidar pessoa → campo "E-mail"). Quem envia é a função
+`/api/team/invite-email` (só a dona; 1 reenvio por minuto, até 5 por convite). Sem a chave configurada, o app
+avisa e o convite continua valendo pelo link/WhatsApp.
+
+1. Crie a conta no [Resend](https://resend.com) e adicione o domínio `ikizy.com` (Domains → Add domain).
+2. Copie os registros DNS que o Resend mostrar (MX/TXT de `send.ikizy.com` e o DKIM) para o DNS do `ikizy.com` na Vercel
+   (Vercel → Domains → ikizy.com → DNS Records) e espere o Resend marcar como **Verified**.
+3. Crie uma API key (permissão "Sending access") e defina na Vercel (`ikizy-app`, Production e Preview):
+   `RESEND_API_KEY` e, se quiser outro remetente, `EMAIL_FROM` (padrão `IKIZY <convites@ikizy.com>`).
+4. Aplique a migration `neon/migrations/20261024000000_invite_email.sql` e faça um novo deploy.
+
+**Recomendado:** use o mesmo Resend como SMTP do Neon Auth, para os e-mails de confirmação de cadastro e de
+"esqueci a senha" saírem com o domínio do IKIZY: no console do Neon, Auth → configurações de e-mail → SMTP próprio,
+com host `smtp.resend.com`, porta `465`, usuário `resend`, senha = a API key e remetente `IKIZY <nao-responda@ikizy.com>`.

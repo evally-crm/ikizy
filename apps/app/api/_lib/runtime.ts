@@ -3,6 +3,7 @@ import { createRemoteJWKSet, jwtVerify } from 'jose'
 import Stripe from 'stripe'
 import { HttpError, type BillingDb, type Membership, type SubscriptionRow } from './billing.js'
 import type { BookingDb, BookingResult, Slot } from './booking.js'
+import { resendSender, type InviteEmailDb, type InviteForEmail, type SendEmail } from './inviteEmail.js'
 import type { PublicSite } from './siteHtml.js'
 
 /** lê uma variável de ambiente obrigatória (configurada na Vercel, nunca no código) */
@@ -25,7 +26,7 @@ export function stripe(): Stripe {
 let jwks: ReturnType<typeof createRemoteJWKSet> | undefined
 
 /** confere o JWT do Neon Auth enviado pelo navegador e devolve quem é a pessoa */
-export async function authenticate(request: Request): Promise<{ id: string; email?: string }> {
+export async function authenticate(request: Request): Promise<{ id: string; email?: string; name?: string }> {
   const header = request.headers.get('authorization') ?? ''
   const token = header.startsWith('Bearer ') ? header.slice(7).trim() : ''
   if (!token) throw new HttpError(401, 'unauthenticated', 'Entre na sua conta para continuar.')
@@ -35,7 +36,11 @@ export async function authenticate(request: Request): Promise<{ id: string; emai
   try {
     const { payload } = await jwtVerify(token, jwks, { issuer: new URL(base).origin })
     if (!payload.sub) throw new Error('sem sub')
-    return { id: payload.sub, email: typeof payload.email === 'string' ? payload.email : undefined }
+    return {
+      id: payload.sub,
+      email: typeof payload.email === 'string' ? payload.email : undefined,
+      name: typeof payload.name === 'string' && payload.name.trim() ? payload.name.trim() : undefined,
+    }
   } catch {
     throw new HttpError(401, 'invalid_token', 'Sua sessão expirou. Entre novamente.')
   }
@@ -171,4 +176,57 @@ export function fail(error: unknown): Response {
   if (error instanceof HttpError) return json({ error: error.code, message: error.message }, error.status)
   console.error(error)
   return json({ error: 'internal', message: 'Algo deu errado. Tente novamente em instantes.' }, 500)
+}
+
+// ---------------------------------------------------------------- convite da equipe por e-mail
+
+export function createInviteEmailDb(): InviteEmailDb {
+  const sql = neon(env('DATABASE_URL'))
+  return {
+    async getMembership(userId) {
+      const rows = (await sql`select salon_id, role from public.members where user_id = ${userId} limit 1`) as Row[]
+      const r = rows[0]
+      return r ? { salonId: r.salon_id as string, role: r.role as string } : null
+    },
+    async getInvite(inviteId): Promise<InviteForEmail | null> {
+      const rows = (await sql`
+        select i.id, i.salon_id, s.name as salon_name, i.token, i.role, i.name, i.email, i.expires_at,
+               i.accepted_at, i.email_sent_at, i.email_count
+        from public.invites i join public.salons s on s.id = i.salon_id
+        where i.id = ${inviteId}`) as Row[]
+      const r = rows[0]
+      if (!r) return null
+      return {
+        id: r.id as string,
+        salonId: r.salon_id as string,
+        salonName: r.salon_name as string,
+        token: r.token as string,
+        role: r.role as InviteForEmail['role'],
+        name: r.name as string,
+        email: (r.email as string | null) ?? null,
+        expiresAt: new Date(r.expires_at as string),
+        acceptedAt: r.accepted_at ? new Date(r.accepted_at as string) : null,
+        emailSentAt: r.email_sent_at ? new Date(r.email_sent_at as string) : null,
+        emailCount: Number(r.email_count ?? 0),
+      }
+    },
+    async claimSend(inviteId, maxSends, minSecondsBetween) {
+      const rows = (await sql`
+        update public.invites set email_sent_at = now(), email_count = email_count + 1
+        where id = ${inviteId} and accepted_at is null and expires_at > now() and email_count < ${maxSends}
+          and (email_sent_at is null or email_sent_at < now() - make_interval(secs => ${minSecondsBetween}))
+        returning id`) as Row[]
+      return rows.length > 0
+    },
+    async releaseSend(inviteId) {
+      await sql`update public.invites set email_sent_at = null, email_count = greatest(email_count - 1, 0) where id = ${inviteId}`
+    },
+  }
+}
+
+/** remetente dos e-mails do IKIZY (domínio verificado no Resend) */
+export function emailSender(): SendEmail {
+  const key = process.env.RESEND_API_KEY
+  if (!key) throw new HttpError(503, 'email_unavailable', 'O envio por e-mail ainda não está ativo. Mande o link pelo WhatsApp.')
+  return resendSender(key, process.env.EMAIL_FROM ?? 'IKIZY <convites@ikizy.com>')
 }

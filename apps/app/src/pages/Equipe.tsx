@@ -1,11 +1,11 @@
 import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { Copy, MessageCircle, Plus, UserPlus, X } from 'lucide-react'
+import { Copy, Mail, MessageCircle, Plus, UserPlus, X } from 'lucide-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useSubscription } from '../billing/SubscriptionProvider'
 import { ConfirmDialog, Modal } from '../components/Modal'
 import { Avatar, Button, Card, Em } from '../components/ui'
-import { useTeam, type InviteInput, type TeamInvite, type TeamMember, type TeamProfessional } from '../data/team'
+import { useTeam, type InviteInput, type InviteResult, type TeamInvite, type TeamMember, type TeamProfessional } from '../data/team'
 import { inviteUrl } from '../lib/invite'
 import { INVITE_ROLES, ROLE_LABEL } from '../lib/permissions'
 import { PLANS, canAddProfessional } from '../lib/plans'
@@ -124,13 +124,15 @@ function InviteDialog({
   initial: Partial<InviteInput>
   professionals: TeamProfessional[]
   canAddPro: boolean
-  onCreate: (input: InviteInput, newProfessional: boolean) => Promise<{ token: string } | { error: string }>
+  onCreate: (input: InviteInput, newProfessional: boolean) => Promise<InviteResult>
   onClose: () => void
 }) {
   // profissionais que ainda não têm acesso próprio
   const free = professionals.filter((p) => p.active && !p.userId)
   const [role, setRole] = useState<InviteRole>(initial.role ?? 'professional')
   const [name, setName] = useState(initial.name ?? '')
+  const [email, setEmail] = useState('')
+  const [emailNote, setEmailNote] = useState<{ ok: boolean; text: string } | null>(null)
   const [proId, setProId] = useState<string | 'new'>(initial.professionalId ?? (free[0]?.id ?? 'new'))
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -145,9 +147,11 @@ function InviteDialog({
     if (blocked) return
     setBusy(true)
     setError(null)
-    const res = await onCreate({ role, name, professionalId: linked }, needsNew)
+    const res = await onCreate({ role, name, professionalId: linked, email }, needsNew)
     setBusy(false)
     if ('error' in res) return setError(res.error)
+    if (res.emailSentTo) setEmailNote({ ok: true, text: `Enviamos o convite para ${res.emailSentTo}. Se não chegar, peça para olhar o spam ou mande o link abaixo.` })
+    else if (res.emailError) setEmailNote({ ok: false, text: `O convite foi criado, mas o e-mail não saiu: ${res.emailError}` })
     setToken(res.token)
   }
 
@@ -162,9 +166,14 @@ function InviteDialog({
 
       {token ? (
         <div className="form">
+          {emailNote && (
+            <p className={`billing-note ${emailNote.ok ? 'billing-note--ok' : 'billing-note--error'}`} role="status">
+              {emailNote.text}
+            </p>
+          )}
           <p className="card__sub">
-            Mande o link para <strong>{name.trim()}</strong>. Ela cria a conta (ou entra) e já cai na equipe como{' '}
-            {ROLE_LABEL[role].toLowerCase()}. O link vale 7 dias e uma única vez.
+            {emailNote?.ok ? 'Você também pode mandar o link' : 'Mande o link'} para <strong>{name.trim()}</strong>. Ela cria a conta (ou entra) e já cai na
+            equipe como {ROLE_LABEL[role].toLowerCase()}. O link vale 7 dias e uma única vez.
           </p>
           <p className="team__link">{inviteUrl(token)}</p>
           <ShareInvite token={token} salon={salon} />
@@ -180,6 +189,13 @@ function InviteDialog({
               <span className="input">
                 <input value={name} onChange={(e) => setName(e.target.value)} required minLength={2} maxLength={80} autoFocus autoComplete="off" />
               </span>
+            </label>
+            <label className="field">
+              <span className="field__label">E-mail (opcional)</span>
+              <span className="input">
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} maxLength={254} placeholder="nome@email.com" autoComplete="off" />
+              </span>
+              <span className="field__hint">Com e-mail, o convite chega na caixa dela. Sem e-mail, você manda o link pelo WhatsApp.</span>
             </label>
 
             <div className="field">
@@ -299,6 +315,18 @@ export default function Equipe() {
   const [roleOf, setRoleOf] = useState<TeamMember | null>(null)
   const [removing, setRemoving] = useState<TeamMember | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
+  const [resending, setResending] = useState<string | null>(null)
+
+  const resend = async (i: TeamInvite) => {
+    setResending(i.id)
+    setError(null)
+    setNotice(null)
+    const err = await team.resendInvite(i.id)
+    setResending(null)
+    if (err) setError(err)
+    else setNotice(`Convite reenviado para ${i.email}.`)
+  }
 
   const salonName = salon?.name ?? 'Studio Maria Beauty'
   const plan = PLANS[sub?.plan ?? 'solo']
@@ -353,6 +381,11 @@ export default function Equipe() {
       {error && (
         <p className="billing-note billing-note--error" role="alert">
           {error}
+        </p>
+      )}
+      {notice && (
+        <p className="billing-note billing-note--ok" role="status">
+          {notice}
         </p>
       )}
 
@@ -443,12 +476,17 @@ export default function Equipe() {
                     <div className="team__who">
                       <p className="team__name">{i.name}</p>
                       <p className="team__meta">
-                        {[ROLE_LABEL[i.role], proName(i.professionalId) && `agenda de ${proName(i.professionalId)}`, days > 0 ? `vence em ${days} ${days === 1 ? 'dia' : 'dias'}` : 'vencido']
+                        {[ROLE_LABEL[i.role], i.email, proName(i.professionalId) && `agenda de ${proName(i.professionalId)}`, days > 0 ? `vence em ${days} ${days === 1 ? 'dia' : 'dias'}` : 'vencido']
                           .filter(Boolean)
                           .join(' · ')}
                       </p>
                     </div>
                     <div className="team__actions">
+                      {days > 0 && i.email && (
+                        <Button variant="light" size="sm" disabled={resending === i.id} onClick={() => void resend(i)}>
+                          <Mail size={14} aria-hidden="true" /> {resending === i.id ? 'Enviando…' : 'Reenviar e-mail'}
+                        </Button>
+                      )}
                       {days > 0 && <ShareInvite token={i.token} salon={salonName} />}
                       <Button variant="ghost" size="sm" onClick={() => void run(() => team.cancelInvite(i.id))}>
                         Cancelar

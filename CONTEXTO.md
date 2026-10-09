@@ -57,6 +57,7 @@ Variáveis (só nomes):
 - `apps/app/.env.local`: `VITE_NEON_AUTH_URL`, `VITE_NEON_DATA_API_URL` (vão para o navegador).
 - `.env.local` da raiz (do `neon env pull`): `DATABASE_URL`, `DATABASE_URL_UNPOOLED`, `NEON_AUTH_BASE_URL`, `NEON_DATA_API_URL` e outras.
 - Vercel `ikizy-app` (Production): `DATABASE_URL`, `NEON_AUTH_BASE_URL`, `APP_URL`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PORTAL_CONFIGURATION`, `VITE_NEON_AUTH_URL`, `VITE_NEON_DATA_API_URL`.
+  Para o convite por e-mail: `RESEND_API_KEY` (e opcional `EMAIL_FROM`); passo a passo no README, seção "E-mails (Resend)".
 
 **Atenção:** o app local (`localhost:5173`) usa o **mesmo banco de produção**. Tudo que é salvo localmente vale no site real.
 
@@ -112,6 +113,7 @@ npm run build
 | `20261020000000_client_file` | ficha completa da cliente (e-mail, Instagram, endereço, profissão, como conheceu, anamnese em jsonb, assinatura do termo), `loyalty_settings`, `loyalty_entries` (selos extras e resgates) e `client_notes` |
 | `20261022000000_plan_limits` | **ainda não aplicada.** Limite de profissionais ativas por plano (Solo 1, Studio 4, Salão sem limite; gatilho no banco), teste grátis de 30 dias em todos os planos (`create_salon` recebe o plano escolhido no cadastro; `set_trial_plan()` troca durante o teste), cortesia para beta (`grant_courtesy()` / `end_courtesy()`, só pelo console do banco) |
 | `20261023000000_team` | **ainda não aplicada (depois da plan_limits).** Equipe: `invites` (convite por link, 7 dias, uso único), `get_invite()` / `accept_invite()`, `members.name`; quem sai da equipe perde o vínculo com a profissional; cadastro de profissionais só dona/gerente; saídas e fechamentos só dona/gerente leem |
+| `20261024000000_invite_email` | **ainda não aplicada (depois da team).** `invites.email`, `email_sent_at`, `email_count`: convite também por e-mail (Resend, função `/api/team/invite-email`) |
 | `20261021000000_client_photos` | fotos de antes e depois na ficha (`client_photos`: miniatura + foto, só membros do salão leem; não passam pela página pública) |
 
 Regras importantes:
