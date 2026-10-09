@@ -144,7 +144,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           password,
           options: { emailRedirectTo: `${window.location.origin}${dash()}` },
         })
-        if (error) return { error: 'Não foi possível criar a conta. Confira os dados e tente novamente.', needsConfirmation: false }
+        if (error) {
+          // e-mail já cadastrado (ex.: conta criada antes de terminar o questionário): com a senha certa, só entra e segue
+          const exists = error.code === 'user_already_exists' || error.code === 'email_exists' || /already exists/i.test(error.message)
+          if (exists) {
+            const { error: signInError } = await neon.auth.signInWithPassword({ email: email.trim(), password })
+            if (!signInError) return { error: null, needsConfirmation: false }
+            return { error: 'Este e-mail já tem conta. Entre com a sua senha ou use "Esqueci a senha".', needsConfirmation: false }
+          }
+          return { error: 'Não foi possível criar a conta. Confira os dados e tente novamente.', needsConfirmation: false }
+        }
         return { error: null, needsConfirmation: !data.session }
       },
       async sendPasswordReset(email) {
