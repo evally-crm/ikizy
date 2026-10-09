@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { addMonths, format, startOfMonth } from 'date-fns'
 import { useAuth } from '../auth/AuthProvider'
 import { isNeonConfigured, neon } from '../lib/neon'
@@ -56,6 +56,8 @@ interface AgendaState {
   reload: () => void
   create: (input: NewAppointment) => Promise<string | null>
   update: (id: string, patch: AppointmentPatch) => Promise<string | null>
+  /** pedidos ainda não confirmados (os do site entram assim), de hoje em diante; atualiza sozinho */
+  pending: Appointment[]
   /** userId liga a profissional à conta de quem atende (no Solo, a própria dona) */
   addProfessional: (name: string, title: string, userId?: string) => Promise<string | null>
 }
@@ -270,6 +272,48 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
 
   const reload = useCallback(() => setTick((t) => t + 1), [])
 
+  // pedidos pendentes: consulta própria (podem estar fora do período carregado) e repetida a cada minuto
+  // e quando a aba volta ao foco, para o pedido feito pelo site aparecer sem recarregar a página
+  const [pendingRows, setPendingRows] = useState<Appointment[]>([])
+  const pendingCount = useRef<number | null>(null)
+  useEffect(() => {
+    if (!live || !neon || !salonId) return
+    let cancelled = false
+    const load = async () => {
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      const { data, error: err } = await neon!
+        .from('appointments')
+        .select(SELECT)
+        .eq('salon_id', salonId)
+        .eq('status', 'pendente')
+        .gte('starts_at', today.toISOString())
+        .order('starts_at')
+        .limit(50)
+      if (cancelled || err) return
+      const list = (data as unknown as Row[]).map(fromRow)
+      // chegou pedido novo: a agenda também precisa mostrá-lo
+      if (pendingCount.current !== null && list.length > pendingCount.current) setTick((t) => t + 1)
+      pendingCount.current = list.length
+      setPendingRows(list)
+    }
+    void load()
+    const timer = window.setInterval(() => void load(), 60_000)
+    const onVisible = () => document.visibilityState === 'visible' && void load()
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      cancelled = true
+      window.clearInterval(timer)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
+  }, [live, salonId, tick])
+
+  const pending = useMemo(() => {
+    if (live) return pendingRows
+    const today = dayKey(new Date())
+    return appointments.filter((a) => a.status === 'pendente' && a.date >= today).sort((a, b) => a.date.localeCompare(b.date) || a.start - b.start)
+  }, [live, pendingRows, appointments])
+
   const create = useCallback(
     async (input: NewAppointment) => {
       let clientId = input.clientId
@@ -349,6 +393,10 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
         if (paymentMethod) await neon.from('appointments').update({ payment_method: paymentMethod }).eq('id', id)
       }
       setAppointments((list) => list.map((a) => (a.id === id ? { ...a, ...patch } : a)))
+      if (patch.status && patch.status !== 'pendente') {
+        setPendingRows((list) => list.filter((a) => a.id !== id))
+        if (pendingCount.current !== null) pendingCount.current = Math.max(pendingCount.current - 1, 0)
+      }
       return null
     },
     [live, appointments],
@@ -408,8 +456,9 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
       create,
       update,
       addProfessional,
+      pending,
     }),
-    [loading, error, professionals, clients, services, appointments, workingHours, hoursAvailable, saveHours, focus, reload, create, update, addProfessional],
+    [loading, error, professionals, clients, services, appointments, workingHours, hoursAvailable, saveHours, focus, reload, create, update, addProfessional, pending],
   )
 
   return <AgendaContext.Provider value={value}>{children}</AgendaContext.Provider>

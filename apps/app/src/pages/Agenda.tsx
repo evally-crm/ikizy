@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { addDays, addMonths, endOfMonth, format, getDay, isSameDay, startOfMonth } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { CalendarPlus, ChevronLeft, ChevronRight, Clock, Plus, RotateCcw } from 'lucide-react'
+import { PendingDialog } from '../components/PendingRequests'
 import { findConflict, useAgenda } from '../data/AgendaProvider'
 import { useAuth } from '../auth/AuthProvider'
 import { useSubscription } from '../billing/SubscriptionProvider'
@@ -331,7 +332,8 @@ function DayList({
 export default function Agenda() {
   const isMobile = useMediaQuery('(max-width: 767px)')
   const isDesktop = useMediaQuery('(min-width: 1100px)')
-  const { professionals, appointments, workingHours, loading, error, focus, reload, update } = useAgenda()
+  const { professionals, appointments, workingHours, loading, error, focus, reload, update, pending } = useAgenda()
+  const [showPending, setShowPending] = useState(false)
   const [params, setParams] = useSearchParams()
   const { sub, loading: subLoading } = useSubscription()
   const { salon, session } = useAuth()
@@ -527,6 +529,18 @@ export default function Agenda() {
             </button>
           </p>
         )}
+
+        {pending.length > 0 && (
+          <div className="billing-banner billing-banner--info agenda__pending" role="status">
+            <p>
+              {pending.length === 1 ? '1 pedido do site espera sua confirmação.' : `${pending.length} pedidos do site esperam sua confirmação.`}
+            </p>
+            <button type="button" className="textlink" onClick={() => setShowPending(true)}>
+              Ver pedidos
+            </button>
+          </div>
+        )}
+        {showPending && <PendingDialog onClose={() => setShowPending(false)} />}
 
         {!loading && professionals.length === 0 && !error ? (
           subLoading ? null : !managesTeam ? (

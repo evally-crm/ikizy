@@ -290,3 +290,19 @@
     display: block;
   }
 }
+.notif__count {
+  position: absolute;
+  top: 4px;
+  right: 2px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border: 2px solid var(--white);
+  border-radius: 999px;
+  background: var(--brand-500);
+  color: var(--white);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 14px;
+  text-align: center;
+}

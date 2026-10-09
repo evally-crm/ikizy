@@ -3,7 +3,8 @@ import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Bell, ChevronDown, Ellipsis, LogOut, Search, X } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
 import { SubscriptionProvider, useSubscription } from '../../billing/SubscriptionProvider'
-import { AgendaProvider } from '../../data/AgendaProvider'
+import { AgendaProvider, useAgenda } from '../../data/AgendaProvider'
+import { PendingDialog } from '../PendingRequests'
 import BillingBanner from '../BillingBanner'
 import { navFor } from './nav'
 import { describeSubscription } from '../../lib/plans'
@@ -157,6 +158,40 @@ function BottomNav() {
   )
 }
 
+/** sininho: quantos pedidos online esperam confirmação; abre a lista para confirmar ou recusar */
+function PendingBell() {
+  const { pending } = useAgenda()
+  const [open, setOpen] = useState(false)
+  const count = pending.length
+
+  // o número também aparece no título da aba, para quem deixa o sistema aberto no computador
+  useEffect(() => {
+    const base = document.title.replace(/^\(\d+\) /, '')
+    document.title = count > 0 ? `(${count}) ${base}` : base
+  }, [count])
+
+  return (
+    <>
+      <Button
+        variant="soft"
+        icon
+        aria-label={count > 0 ? `Pedidos para confirmar (${count})` : 'Pedidos para confirmar'}
+        title={count > 0 ? `${count} ${count === 1 ? 'pedido' : 'pedidos'} para confirmar` : 'Nenhum pedido esperando'}
+        className="notif"
+        onClick={() => setOpen(true)}
+      >
+        <Bell size={18} />
+        {count > 0 && (
+          <span className="notif__count" aria-hidden="true">
+            {count > 9 ? '9+' : count}
+          </span>
+        )}
+      </Button>
+      {open && <PendingDialog onClose={() => setOpen(false)} />}
+    </>
+  )
+}
+
 /** editar cadastro: nome da pessoa e do negócio */
 function ProfileDialog({ onClose }: { onClose: () => void }) {
   const { displayName, salon, session, updateProfile, signOut } = useAuth()
@@ -296,6 +331,7 @@ export default function AppShell() {
 
   return (
     <SubscriptionProvider>
+    <AgendaProvider>
     <div className="shell">
       <header className="topbar">
         <div className="topbar__inner">
@@ -306,10 +342,7 @@ export default function AppShell() {
               <Search size={16} aria-hidden="true" />
               <input type="search" placeholder="Buscar cliente ou serviço" aria-label="Buscar" />
             </label>
-            <Button variant="soft" icon aria-label="Notificações (3 novas)" className="notif">
-              <Bell size={18} />
-              <span className="notif__dot" aria-hidden="true" />
-            </Button>
+            <PendingBell />
             <button type="button" className="user" aria-label="Editar cadastro" title="Editar cadastro" onClick={() => setEditing(true)}>
               <Avatar name={displayName} />
               <div className="user__text">
@@ -324,14 +357,13 @@ export default function AppShell() {
         </div>
       </header>
       <main className="content">
-        <AgendaProvider>
-          <BillingBanner />
-          <Outlet />
-        </AgendaProvider>
+        <BillingBanner />
+        <Outlet />
       </main>
       <BottomNav />
       {editing && <ProfileDialog onClose={closeEdit} />}
     </div>
+    </AgendaProvider>
     </SubscriptionProvider>
   )
 }

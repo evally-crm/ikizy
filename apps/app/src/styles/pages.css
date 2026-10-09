@@ -1592,3 +1592,55 @@
 .cmlist__end .cmrule {
   flex: 1;
 }
+
+/* ---------------------------------------------------------------- pedidos online */
+.pending {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+}
+.pending__item {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+.pending__item:first-child {
+  border-top: 0;
+}
+.pending__who {
+  flex: 1 1 180px;
+  min-width: 0;
+}
+.pending__name {
+  margin: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.pending__meta {
+  margin: 2px 0 0;
+  font-size: 0.8125rem;
+  color: var(--ink-500);
+  overflow-wrap: anywhere;
+}
+.pending__actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.pending__actions .btn--light {
+  border: 1px solid var(--line-strong);
+}
+.pendingcard {
+  border: 1px solid var(--brand-tint);
+}
+.pendingcard .card__head {
+  gap: 12px;
+}
+
+.agenda__pending {
+  margin: 0 0 12px;
+}

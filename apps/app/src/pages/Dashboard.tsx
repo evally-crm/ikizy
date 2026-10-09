@@ -8,11 +8,12 @@ import { useAgenda } from '../data/AgendaProvider'
 import { ACTIVE_STATUSES } from '../types'
 import { MONTHLY_GOAL, getMonths } from '../data/finance'
 import { TodayMessages } from '../components/TodayMessages'
+import { PendingDialog, PendingList } from '../components/PendingRequests'
 import { can } from '../lib/permissions'
 import { formatBRL, formatTime } from '../lib/format'
 import { useAuth } from '../auth/AuthProvider'
 import { dash } from '../lib/routes'
-import { Avatar, Card, Em, Money, StatusBadge } from '../components/ui'
+import { Avatar, Button, Card, Em, Money, StatusBadge } from '../components/ui'
 
 const short = (v: number) => formatBRL(v).replace(',00', '')
 
@@ -52,7 +53,8 @@ export default function Dashboard() {
   // recepção e profissional não veem valores do caixa
   const seesMoney = can(salon?.role, 'finance')
   const now = useMemo(() => new Date(), [])
-  const { professionals, appointments } = useAgenda()
+  const { professionals, appointments, pending } = useAgenda()
+  const [showPending, setShowPending] = useState(false)
   const proName = (id: string) => professionals.find((p) => p.id === id)?.name ?? ''
   const todayKey = format(now, 'yyyy-MM-dd')
   const today = appointments
@@ -124,6 +126,27 @@ export default function Dashboard() {
         </span>
         </div>
       </header>
+
+      {/* pedidos do site esperando resposta: primeiro da tela, para nenhum se perder */}
+      {pending.length > 0 && (
+        <Card className="pendingcard">
+          <div className="card__head">
+            <div>
+              <h2 className="card__title">
+                {pending.length === 1 ? '1 pedido para confirmar' : `${pending.length} pedidos para confirmar`}
+              </h2>
+              <p className="card__sub">Agendados pela cliente no seu site. Confirme ou recuse: o WhatsApp dela abre com a mensagem pronta.</p>
+            </div>
+            {pending.length > 3 && (
+              <Button variant="light" size="sm" onClick={() => setShowPending(true)}>
+                Ver todos
+              </Button>
+            )}
+          </div>
+          <PendingList items={pending} limit={3} />
+        </Card>
+      )}
+      {showPending && <PendingDialog onClose={() => setShowPending(false)} />}
 
       <div className={`dash ${seesMoney ? '' : 'dash--team'}`}>
         {/* faturamento da semana */}

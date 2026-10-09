@@ -7,6 +7,8 @@ import { ptBR } from 'date-fns/locale'
 
 export type MessageKind =
   | 'confirmacao'
+  | 'aceito'
+  | 'recusado'
   | 'lembrete'
   | 'hoje'
   | 'pos'
@@ -19,6 +21,8 @@ export type MessageKind =
 
 export const MESSAGE_LABEL: Record<MessageKind, string> = {
   confirmacao: 'Confirmar horário',
+  aceito: 'Pedido confirmado',
+  recusado: 'Pedido recusado',
   lembrete: 'Lembrete da véspera',
   hoje: 'Tudo certo para hoje?',
   pos: 'Pós-atendimento',
@@ -65,6 +69,10 @@ export function renderMessage(kind: MessageKind, ctx: MessageContext): string {
   switch (kind) {
     case 'confirmacao':
       return `Oi, ${nome}! Tudo bem? 😊\n\nSeu horário está marcado aqui no ${salao}:\n📅 ${quando}\n💅 ${servico}\n\nPode me confirmar se está tudo certo?`
+    case 'aceito':
+      return `Oi, ${nome}! Recebi seu pedido pelo site e seu horário está confirmado. ✅\n\n📅 ${quando}\n💅 ${servico}\n\nTe espero aqui no ${salao}! Se precisar remarcar, é só me avisar por aqui.`
+    case 'recusado':
+      return `Oi, ${nome}! Recebi seu pedido pelo site para ${quando}, mas infelizmente não vou conseguir te atender nesse horário. 😕\n\nPosso te sugerir outro? Me diz qual dia fica bom para você.${agendar}`
     case 'lembrete':
       return `Oi, ${nome}! Passando para lembrar do seu horário amanhã:\n📅 ${quando}\n💅 ${servico}\n\nVocê confirma? Se precisar remarcar, é só me avisar por aqui. 💕`
     case 'hoje':
