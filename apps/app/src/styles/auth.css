@@ -33,7 +33,7 @@
   background: rgba(255, 255, 255, 0.9);
 }
 
-/* celular: o rosto fica bem apagado atrás do formulário, só como textura */
+/* celular: o olho fica bem apagado atrás do formulário, só como textura */
 .auth__art {
   position: absolute;
   inset: 0;
@@ -43,7 +43,7 @@
   opacity: 0.14;
 }
 
-/* desktop: painel claro com o formulário à esquerda e o rosto em Braille ocupando o lado direito */
+/* desktop: painel claro com o formulário à esquerda e o olho em linhas ocupando o lado direito */
 @media (min-width: 1024px) {
   .auth {
     grid-template-columns: 42% 1fr;

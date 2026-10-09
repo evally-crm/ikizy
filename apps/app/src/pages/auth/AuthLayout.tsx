@@ -1,7 +1,7 @@
 import { useId, type InputHTMLAttributes, type ReactNode } from 'react'
 import { ArrowRight } from 'lucide-react'
 import { Card } from '../../components/ui'
-import { BrailleFace } from './BrailleFace'
+import { DitherEye } from './DitherEye'
 
 /** `topAction` fica à direita da marca (ex.: link "Criar conta") */
 export function AuthLayout({ children, topAction }: { children: ReactNode; topAction?: ReactNode }) {
@@ -11,7 +11,7 @@ export function AuthLayout({ children, topAction }: { children: ReactNode; topAc
         <span />
         <span />
       </div>
-      <BrailleFace />
+      <DitherEye />
       <div className="auth__box">
         <header className="auth__top">
           <p className="logo auth__logo">
