@@ -5,8 +5,8 @@ import { PIX_DISCOUNT_PCT, PLANS, TRIAL_DAYS, brlNumber } from '../lib/pricing'
 
 const ticker = ['Agenda online', 'Clientes que voltam', 'Financeiro descomplicado', 'Site do seu negócio', 'Comissões da equipe', 'Mensagens prontas no WhatsApp', 'Fechamento do mês']
 
-/** especialidades da seção "Para quem é"; a última ("Você") ganha a mão em pixel art */
-const crafts = ['Lash designer', 'Brow designer', 'Cabeleireiro(a)', 'Nail designer', 'Esteticista', 'Maquiadora']
+/** especialidades que passam no título do "Para quem é", uma por vez, até chegar em "você." com a mão */
+const crafts = ['lash designers', 'brow designers', 'cabeleireiros(as)', 'nail designers', 'esteticistas', 'maquiadoras']
 
 /** recursos reais do sistema, contados pelo que mudam na rotina (o "antes" vem da antiga seção "Do caderno ao sistema") */
 const features = [
@@ -15,7 +15,6 @@ const features = [
   { was: 'Mensagem digitada uma a uma', title: 'Mensagens prontas', text: 'Confirmação, lembrete e pós-atendimento abrem prontos no seu WhatsApp. É só conferir e enviar.', ui: 'message' },
   { was: 'Caixa e comissão na calculadora', title: 'Financeiro e comissões', text: 'Entradas, saídas e a comissão de cada profissional, com o fechamento do mês em recibo.', ui: 'money' },
   { was: 'Horário marcado por direct', title: 'Site do seu negócio', text: 'Uma página sua para a cliente ver os serviços e pedir um horário.', ui: 'site' },
-  { was: 'Senha da dona com todo mundo', title: 'Equipe com acesso certo', text: 'Dona, gerente, recepção e profissional: cada pessoa vê só o que precisa.', ui: 'roles' },
 ]
 
 /** passo a passo com telas reais do sistema (modo demonstração, com dados de exemplo) */
@@ -94,70 +93,21 @@ const faqSchema = {
   </section>
 
   <!-- PARA QUEM É -->
-  <section id="para-quem" class="section container you" aria-labelledby="you-title">
+  <section id="para-quem" class="section container you" aria-labelledby="you-title" data-you>
     <p class="eyebrow">Para quem é</p>
-    <h2 id="you-title" class="you__title">A IKIZY é feita <em>para você.</em></h2>
+    <h2 id="you-title" class="you__title">
+      A IKIZY é feita para
+      <span class="you__rot" aria-hidden="true" data-you-rot>
+        {crafts.map((c) => <span>{c}</span>)}
+        <span class="is-in">você.</span>
+      </span>
+      <span class="sr-only">você: {crafts.join(', ')}.</span>
+    </h2>
+    <img class="you__hand" src="/mao.webp" alt="" width="446" height="386" loading="lazy" decoding="async" />
     <p class="lead you__lead">
       Não importa se você trabalha com cabelos, unhas, cílios ou sobrancelhas. Se você atende clientes por conta própria ou gerencia uma
       equipe, a IKIZY ajuda a organizar sua rotina para que você possa cuidar de quem confia no seu trabalho.
     </p>
-    <ul class="you__list" aria-label="Especialidades atendidas">
-      {crafts.map((c) => <li>{c}</li>)}
-      <li class="you__me">
-              <svg class="you__hand" viewBox="0 0 25 14" width="75" height="42" shape-rendering="crispEdges" aria-hidden="true">
-                <rect x="5" y="1" width="5" height="1" fill="var(--ink-900)" />
-                <rect x="4" y="2" width="1" height="1" fill="var(--ink-900)" />
-                <rect x="5" y="2" width="5" height="1" fill="var(--white)" />
-                <rect x="10" y="2" width="1" height="1" fill="var(--ink-900)" />
-                <rect x="4" y="3" width="1" height="1" fill="var(--ink-900)" />
-                <rect x="5" y="3" width="5" height="1" fill="var(--white)" />
-                <rect x="10" y="3" width="14" height="1" fill="var(--ink-900)" />
-                <rect x="0" y="4" width="5" height="1" fill="var(--ink-900)" />
-                <rect x="5" y="4" width="19" height="1" fill="var(--white)" />
-                <rect x="24" y="4" width="1" height="1" fill="var(--ink-900)" />
-                <rect x="0" y="5" width="1" height="1" fill="var(--ink-900)" />
-                <rect x="1" y="5" width="2" height="1" fill="var(--wine)" />
-                <rect x="3" y="5" width="1" height="1" fill="var(--ink-900)" />
-                <rect x="4" y="5" width="20" height="1" fill="var(--white)" />
-                <rect x="24" y="5" width="1" height="1" fill="var(--ink-900)" />
-                <rect x="0" y="6" width="1" height="1" fill="var(--ink-900)" />
-                <rect x="1" y="6" width="2" height="1" fill="var(--wine)" />
-                <rect x="3" y="6" width="1" height="1" fill="var(--ink-900)" />
-                <rect x="4" y="6" width="8" height="1" fill="var(--white)" />
-                <rect x="12" y="6" width="13" height="1" fill="var(--ink-900)" />
-                <rect x="0" y="7" width="1" height="1" fill="var(--ink-900)" />
-                <rect x="1" y="7" width="2" height="1" fill="var(--wine)" />
-                <rect x="3" y="7" width="1" height="1" fill="var(--ink-900)" />
-                <rect x="4" y="7" width="11" height="1" fill="var(--white)" />
-                <rect x="15" y="7" width="1" height="1" fill="var(--ink-900)" />
-                <rect x="0" y="8" width="1" height="1" fill="var(--ink-900)" />
-                <rect x="1" y="8" width="2" height="1" fill="var(--wine)" />
-                <rect x="3" y="8" width="1" height="1" fill="var(--ink-900)" />
-                <rect x="4" y="8" width="8" height="1" fill="var(--white)" />
-                <rect x="12" y="8" width="4" height="1" fill="var(--ink-900)" />
-                <rect x="0" y="9" width="1" height="1" fill="var(--ink-900)" />
-                <rect x="1" y="9" width="2" height="1" fill="var(--wine)" />
-                <rect x="3" y="9" width="1" height="1" fill="var(--ink-900)" />
-                <rect x="4" y="9" width="11" height="1" fill="var(--white)" />
-                <rect x="15" y="9" width="1" height="1" fill="var(--ink-900)" />
-                <rect x="0" y="10" width="1" height="1" fill="var(--ink-900)" />
-                <rect x="1" y="10" width="2" height="1" fill="var(--wine)" />
-                <rect x="3" y="10" width="1" height="1" fill="var(--ink-900)" />
-                <rect x="4" y="10" width="8" height="1" fill="var(--white)" />
-                <rect x="12" y="10" width="4" height="1" fill="var(--ink-900)" />
-                <rect x="0" y="11" width="1" height="1" fill="var(--ink-900)" />
-                <rect x="1" y="11" width="2" height="1" fill="var(--wine)" />
-                <rect x="3" y="11" width="1" height="1" fill="var(--ink-900)" />
-                <rect x="4" y="11" width="11" height="1" fill="var(--white)" />
-                <rect x="15" y="11" width="1" height="1" fill="var(--ink-900)" />
-                <rect x="0" y="12" width="5" height="1" fill="var(--ink-900)" />
-                <rect x="5" y="12" width="8" height="1" fill="var(--white)" />
-                <rect x="13" y="12" width="2" height="1" fill="var(--ink-900)" />
-                <rect x="4" y="13" width="10" height="1" fill="var(--ink-900)" />
-              </svg>
-        <span>Você</span>
-      </li>
-    </ul>
   </section>
 
   <!-- POR QUE TROCAR (recursos) -->
@@ -201,13 +151,6 @@ const faqSchema = {
                 </div>
               )}
               {f.ui === 'site' && <span class="ui ui--url">seu-negocio.ikizy.com</span>}
-              {f.ui === 'roles' && (
-                <ul class="ui ui--list">
-                  <li><span>Dona</span><i class="ui__sw is-on" /></li>
-                  <li><span>Gerente</span><i class="ui__sw is-on" /></li>
-                  <li><span>Recepção</span><i class="ui__sw" /></li>
-                </ul>
-              )}
             </div>
             <p class="feat__was"><span>Antes</span><s>{f.was}</s></p>
             <h3>{f.title}</h3>
@@ -215,6 +158,12 @@ const faqSchema = {
           </li>
         ))
       }
+      <li class="feat feat--more">
+        <a class="feat__plus" href="#como-funciona">
+          <span class="feat__circle" aria-hidden="true">+</span>
+          <span>Veja a IKIZY por dentro</span>
+        </a>
+      </li>
     </ul>
   </section>
 
@@ -262,11 +211,13 @@ const faqSchema = {
           <h2 id="price-title" class="h2">Um plano para o <em>tamanho</em> do seu negócio</h2>
           <p class="lead">Todos os planos começam com {TRIAL_DAYS} dias grátis.</p>
         </div>
-        <div class="toggle" role="radiogroup" aria-label="Período de cobrança" data-toggle>
-          <button type="button" role="radio" aria-checked="true" class="toggle__opt is-active" data-period="1">Mensal</button>
-          <button type="button" role="radio" aria-checked="false" class="toggle__opt" data-period="3">
-            Trimestral <small class="toggle__off">−{PIX_DISCOUNT_PCT[3]}%</small>
+        <div class="toggle" data-toggle>
+          <button type="button" class="toggle__label is-active" tabindex="-1" data-period="1">Mensal</button>
+          <button type="button" role="switch" aria-checked="false" aria-label="Ver preços do plano trimestral" class="toggle__switch" data-switch>
+            <span aria-hidden="true"></span>
           </button>
+          <button type="button" class="toggle__label" tabindex="-1" data-period="3">Trimestral</button>
+          <span class="toggle__off">Economize {PIX_DISCOUNT_PCT[3]}%</span>
         </div>
       </div>
 
@@ -479,7 +430,7 @@ const faqSchema = {
 </script>
 
 <script is:inline id="pricing-script">
-  // toggle Mensal/Trimestral: troca preço, textos e o destaque de economia de cada plano, com um fade curto
+  // interruptor Mensal/Trimestral: troca preço, textos e o destaque de economia de cada plano, com um fade curto
   (() => {
     const toggle = document.querySelector('[data-toggle]')
     const plans = document.querySelector('[data-plans]')
@@ -514,28 +465,54 @@ const faqSchema = {
       })
     }
 
-    toggle.addEventListener('click', (e) => {
-      const btn = e.target.closest('[data-period]')
-      if (!btn || btn.classList.contains('is-active')) return
-      toggle.querySelectorAll('[data-period]').forEach((b) => {
-        const on = b === btn
-        b.classList.toggle('is-active', on)
-        b.setAttribute('aria-checked', on ? 'true' : 'false')
-      })
-      plans.classList.toggle('is-quarterly', btn.dataset.period === '3')
+    const sw = toggle.querySelector('[data-switch]')
+    let period = 1
+    function setPeriod(months) {
+      if (months === period) return
+      period = months
+      sw.setAttribute('aria-checked', months === 3 ? 'true' : 'false')
+      toggle.querySelectorAll('[data-period]').forEach((b) => b.classList.toggle('is-active', Number(b.dataset.period) === months))
+      plans.classList.toggle('is-quarterly', months === 3)
       plans.classList.add('is-swapping')
       setTimeout(() => {
-        render(Number(btn.dataset.period))
+        render(months)
         plans.classList.remove('is-swapping')
       }, 160)
-    })
-    // setas do teclado alternam entre as duas opções, como num grupo de rádio
-    toggle.addEventListener('keydown', (e) => {
-      if (!['ArrowLeft', 'ArrowRight'].includes(e.key)) return
-      const next = toggle.querySelector('[data-period]:not(.is-active)')
-      next.click()
-      next.focus()
-    })
+    }
+    // o interruptor alterna; as palavras "Mensal" e "Trimestral" escolhem direto
+    sw.addEventListener('click', () => setPeriod(period === 1 ? 3 : 1))
+    toggle.querySelectorAll('[data-period]').forEach((b) => b.addEventListener('click', () => setPeriod(Number(b.dataset.period))))
+  })()
+</script>
+
+<script is:inline id="you-script">
+  // "Para quem é": as profissões passam uma por vez no título (uma única vez) e terminam em "você." com a mão
+  (() => {
+    const section = document.querySelector('[data-you]')
+    const rot = document.querySelector('[data-you-rot]')
+    if (!section || !rot) return
+    const words = [...rot.children]
+    const last = words.length - 1
+    const fit = (el) => (rot.style.width = el.offsetWidth + 'px')
+    const done = () => section.classList.add('is-done')
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return done()
+    let i = 0
+    words.forEach((w, k) => w.classList.toggle('is-in', k === 0))
+    fit(words[0])
+    const step = () => {
+      words[i].classList.replace('is-in', 'is-out')
+      i += 1
+      words[i].classList.add('is-in')
+      fit(words[i])
+      if (i === last) return setTimeout(done, 450)
+      setTimeout(step, 1000)
+    }
+    new IntersectionObserver((entries, obs) => {
+      if (!entries[0].isIntersecting) return
+      obs.disconnect()
+      setTimeout(step, 900)
+    }, { threshold: 0.6 }).observe(rot)
+    addEventListener('resize', () => fit(words[i]))
   })()
 </script>
 
@@ -548,16 +525,19 @@ const faqSchema = {
     const next = document.querySelector('[data-tour-next]')
     const count = document.querySelector('[data-tour-count]')
     const slides = [...track.children]
-    const current = () => Math.round(track.scrollLeft / slides[0].offsetWidth)
+    // etapa mais próxima da borda esquerda, pela posição real de cada card (conta o espaço entre eles)
+    const start = (el) => el.offsetLeft - slides[0].offsetLeft
+    const current = () =>
+      slides.reduce((best, el, k) => (Math.abs(start(el) - track.scrollLeft) < Math.abs(start(slides[best]) - track.scrollLeft) ? k : best), 0)
     const go = (i) => {
       const target = slides[Math.max(0, Math.min(slides.length - 1, i))]
-      track.scrollTo({ left: target.offsetLeft - slides[0].offsetLeft, behavior: 'smooth' })
+      track.scrollTo({ left: start(target), behavior: 'smooth' })
     }
     const sync = () => {
-      const i = Math.min(slides.length - 1, current())
-      count.textContent = i + 1 + ' / ' + slides.length
+      const atEnd = track.scrollLeft + track.clientWidth >= track.scrollWidth - 4
+      count.textContent = (atEnd ? slides.length : current() + 1) + ' / ' + slides.length
       prev.disabled = track.scrollLeft < 4
-      next.disabled = track.scrollLeft + track.clientWidth >= track.scrollWidth - 4
+      next.disabled = atEnd
     }
     prev.addEventListener('click', () => go(current() - 1))
     next.addEventListener('click', () => go(current() + 1))
