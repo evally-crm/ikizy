@@ -660,15 +660,23 @@ em {
 .you__lead {
   max-width: 60ch;
 }
-/* palavra que troca, numa linha própria abaixo do título; todas na mesma célula da grade */
+/* linha de baixo do título: a palavra que troca e a mão em símbolos logo ao lado */
+.you__line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.18em;
+}
+/* todas as palavras na mesma célula da grade; o JS anima a largura para a palavra da vez */
 .you__rot {
   display: grid;
-  justify-items: center;
+  justify-items: start;
   font-family: var(--font-serif);
   font-style: italic;
   font-weight: 400;
   letter-spacing: -0.02em;
   color: var(--wine);
+  transition: width 0.45s ease;
 }
 .you__rot > span {
   grid-area: 1 / 1;
@@ -685,13 +693,22 @@ em {
   opacity: 0;
   transform: translateY(-0.45em);
 }
-/* a mão em símbolos: o canvas guarda o espaço e os símbolos surgem quando chega em "você." */
 .you__hand {
-  width: clamp(220px, 26vw, 340px);
+  flex: none;
+  height: 1.45em;
   aspect-ratio: 128 / 111;
-  margin: 6px auto 0;
+}
+/* no celular a palavra mais longa precisa caber junto da mão */
+@media (max-width: 520px) {
+  .you__line {
+    font-size: 0.78em;
+  }
+  .you__hand {
+    height: 1.8em;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
+  .you__rot,
   .you__rot > span {
     transition: none;
   }
