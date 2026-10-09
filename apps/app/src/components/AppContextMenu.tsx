@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Copy, ExternalLink, Globe, KeyRound, Link2, LogIn, LogOut, RotateCw, Sparkles, UserPlus } from 'lucide-react'
+import { CalendarPlus, Copy, ExternalLink, Globe, KeyRound, Link2, LogIn, LogOut, RotateCw, Sparkles, UserPlus, UserRoundPlus } from 'lucide-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useSalonInfo } from '../hooks/useSalonInfo'
-import { ROUTES } from '../lib/routes'
+import { dash, ROUTES } from '../lib/routes'
 import { ContextMenu, type MenuEntry } from './ContextMenu'
 import { navItems } from './layout/nav'
 
@@ -48,6 +48,11 @@ export function AppContextMenu() {
       if (entries.length) entries.push({ kind: 'sep' })
 
       if (pathname.startsWith(ROUTES.dashboard)) {
+        entries.push(
+          { kind: 'item', label: 'Novo agendamento', hint: 'N', icon: CalendarPlus, onSelect: () => navigate(dash('/agenda?nova=1')) },
+          { kind: 'item', label: 'Nova cliente', hint: 'K', icon: UserRoundPlus, onSelect: () => navigate(dash('/clientes?nova=1')) },
+          { kind: 'sep' },
+        )
         navItems.forEach((item, i) =>
           entries.push({
             kind: 'item',

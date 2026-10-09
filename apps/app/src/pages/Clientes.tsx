@@ -1,5 +1,5 @@
-import { useMemo, useState, type ReactNode } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { addDays, format, isAfter } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import {
@@ -570,6 +570,14 @@ export default function Clientes() {
   const navigate = useNavigate()
   const isWide = useMediaQuery('(min-width: 1100px)')
   const [dialog, setDialog] = useState<'new' | 'edit' | null>(null)
+  const [params, setParams] = useSearchParams()
+
+  // /dashboard/clientes?nova=1 abre o cadastro de cliente (atalho do botão direito)
+  useEffect(() => {
+    if (params.get('nova') !== '1') return
+    setDialog('new')
+    setParams({}, { replace: true })
+  }, [params, setParams])
 
   const selected = clients.find((c) => c.id === id) ?? (isWide ? clients[0] : undefined)
   const missing = clients.filter((c) => clientTags(c, today).includes('sumida')).length
