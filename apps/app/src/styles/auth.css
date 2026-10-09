@@ -357,6 +357,26 @@
   font-size: 13px;
   color: var(--ink-500);
 }
+.wiz__add {
+  margin-top: 10px;
+}
+.wiz__add .input {
+  padding-right: 6px;
+}
+.wiz__add-btn {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--ink-900);
+  color: var(--white);
+}
+.wiz__add-btn:disabled {
+  opacity: 0.3;
+}
 .wiz__prices {
   display: flex;
   flex-direction: column;

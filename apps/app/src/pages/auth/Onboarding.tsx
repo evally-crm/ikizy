@@ -1,10 +1,10 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import { Navigate } from 'react-router-dom'
-import { ArrowLeft, ArrowRight, Check, User } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Check, Plus, User } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
 import { ROUTES } from '../../lib/routes'
 import { isReservedSlug, SITE_DOMAIN, SLUG_PATTERN, siteHost, slugify } from '../../lib/slug'
-import { SEGMENTS, TEAM_SIZES, type SalonSetup, type TeamSize } from '../../lib/segments'
+import { OTHER_SEGMENT, SEGMENTS, TEAM_SIZES, type SalonSetup, type Segment, type TeamSize } from '../../lib/segments'
 import { Em } from '../../components/ui'
 import { AuthField, AuthLayout, FormMessages } from './AuthLayout'
 
@@ -40,7 +40,7 @@ const COPY: Record<StepId, { title: React.ReactNode; subtitle?: string }> = {
         Quais <Em>serviços</Em> você faz?
       </>
     ),
-    subtitle: 'Marcamos os mais comuns. Tire o que você não faz.',
+    subtitle: 'Marcamos os mais comuns. Tire o que você não faz e adicione o que faltar.',
   },
   precos: {
     title: (
@@ -63,11 +63,25 @@ const COPY: Record<StepId, { title: React.ReactNode; subtitle?: string }> = {
 // quem atende sozinha precisa estar na agenda: o nome não pode ser pulado
 const SKIPPABLE: StepId[] = ['precos']
 
+/** duração inicial de um serviço digitado pela pessoa; ela ajusta no painel */
+const CUSTOM_DURATION = 60
+
+interface CustomService {
+  id: string
+  name: string
+  segmentId: string
+}
+
 /** /cadastro/salao: questionário em passos que já monta o negócio conforme o setor de beleza */
 export default function Onboarding() {
   const { status, session, createSalon, signOut } = useAuth()
   const [index, setIndex] = useState(0)
   const [segments, setSegments] = useState<string[]>([])
+  // "Outro": área que não está na lista (ex.: maquiagem); os serviços dela entram na categoria "Outros"
+  const [otherLabel, setOtherLabel] = useState('')
+  // serviços digitados no passo de serviços, por área
+  const [customs, setCustoms] = useState<CustomService[]>([])
+  const [drafts, setDrafts] = useState<Record<string, string>>({})
   const [team, setTeam] = useState<TeamSize | null>(null)
   // já vem com o nome do cadastro (Google ou formulário), quando houver
   const [proName, setProName] = useState(() => {
@@ -82,7 +96,18 @@ export default function Onboarding() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const chosen = useMemo(() => SEGMENTS.filter((s) => segments.includes(s.id)), [segments])
+  // áreas marcadas, já com os serviços digitados no fim de cada uma
+  const chosen = useMemo<Segment[]>(() => {
+    const base = SEGMENTS.filter((s) => segments.includes(s.id))
+    if (segments.includes(OTHER_SEGMENT.id)) base.push({ ...OTHER_SEGMENT, label: otherLabel.trim() || OTHER_SEGMENT.label })
+    return base.map((segment) => ({
+      ...segment,
+      services: [
+        ...segment.services,
+        ...customs.filter((c) => c.segmentId === segment.id).map((c) => ({ id: c.id, name: c.name, duration: CUSTOM_DURATION })),
+      ],
+    }))
+  }, [segments, otherLabel, customs])
   const steps = useMemo<StepId[]>(() => {
     const list: StepId[] = ['segmentos', 'equipe']
     if (team === 'solo') list.push('profissional')
@@ -100,9 +125,9 @@ export default function Onboarding() {
   const copy = COPY[step]
 
   const toggleSegment = (id: string) => {
-    const segment = SEGMENTS.find((s) => s.id === id)
+    const segment = [...SEGMENTS, OTHER_SEGMENT].find((s) => s.id === id)
     if (!segment) return
-    const ids = segment.services.map((s) => s.id)
+    const ids = [...segment.services, ...customs.filter((c) => c.segmentId === id)].map((s) => s.id)
     if (segments.includes(id)) {
       setSegments(segments.filter((s) => s !== id))
       setPicked(picked.filter((p) => !ids.includes(p)))
@@ -113,6 +138,23 @@ export default function Onboarding() {
   }
 
   const togglePicked = (id: string) => setPicked(picked.includes(id) ? picked.filter((p) => p !== id) : [...picked, id])
+
+  const addCustom = (segmentId: string) => {
+    const name = (drafts[segmentId] ?? '').trim().replace(/\s+/g, ' ')
+    if (name.length < 2) return
+    setDrafts({ ...drafts, [segmentId]: '' })
+    const group = chosen.find((g) => g.id === segmentId)
+    const same = group?.services.find((s) => s.name.toLowerCase() === name.toLowerCase())
+    // nome repetido só volta a marcar o que já existe
+    if (same) {
+      if (!picked.includes(same.id)) setPicked([...picked, same.id])
+      return
+    }
+    // a lista só cresce, então o tamanho dela basta para o id ser único
+    const id = `custom-${customs.length}`
+    setCustoms([...customs, { id, name: name.slice(0, 60), segmentId }])
+    setPicked([...picked, id])
+  }
 
   const next = () => {
     setError(null)
@@ -133,7 +175,9 @@ export default function Onboarding() {
   }
 
   const canContinue =
-    step === 'segmentos' ? segments.length > 0 : step === 'equipe' ? team !== null : step === 'profissional' ? proName.trim().length >= 2 : true
+    step === 'segmentos'
+      ? segments.length > 0 && (!segments.includes(OTHER_SEGMENT.id) || otherLabel.trim().length >= 2)
+      : step === 'equipe' ? team !== null : step === 'profissional' ? proName.trim().length >= 2 : true
 
   const buildSetup = (): SalonSetup => ({
     services: chosen.flatMap((segment) =>
@@ -201,7 +245,7 @@ export default function Onboarding() {
 
         {step === 'segmentos' && (
           <div className="wiz__options">
-            {SEGMENTS.map((s) => (
+            {[...SEGMENTS, OTHER_SEGMENT].map((s) => (
               <button
                 key={s.id}
                 type="button"
@@ -214,6 +258,16 @@ export default function Onboarding() {
               </button>
             ))}
           </div>
+        )}
+
+        {step === 'segmentos' && segments.includes(OTHER_SEGMENT.id) && (
+          <AuthField
+            label="Qual? Ex.: Maquiagem, Depilação a laser"
+            maxLength={40}
+            autoFocus
+            value={otherLabel}
+            onChange={(e) => setOtherLabel(e.target.value)}
+          />
         )}
 
         {step === 'equipe' && (
@@ -263,6 +317,34 @@ export default function Onboarding() {
                     {s.name}
                   </button>
                 ))}
+              </div>
+              <div className="wiz__add">
+                <AuthField
+                  label={segment.services.length > 0 ? 'Outro serviço' : 'Nome do serviço'}
+                  aria-label={`Adicionar serviço em ${segment.label}`}
+                  maxLength={60}
+                  value={drafts[segment.id] ?? ''}
+                  onChange={(e) => setDrafts({ ...drafts, [segment.id]: e.target.value })}
+                  onKeyDown={(e) => {
+                    // Enter adiciona o serviço em vez de avançar o questionário
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      addCustom(segment.id)
+                    }
+                  }}
+                  action={
+                    <button
+                      type="button"
+                      className="wiz__add-btn"
+                      onClick={() => addCustom(segment.id)}
+                      disabled={(drafts[segment.id] ?? '').trim().length < 2}
+                      aria-label="Adicionar serviço"
+                      title="Adicionar serviço"
+                    >
+                      <Plus size={18} aria-hidden="true" />
+                    </button>
+                  }
+                />
               </div>
             </div>
           ))}
