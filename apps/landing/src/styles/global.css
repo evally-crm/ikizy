@@ -19,6 +19,8 @@
 :root {
   /* as cores do IKIZY, iguais às do sistema: cinza, preto, branco e vinho (só em pontos específicos) */
   --wine: #800513;
+  /* vermelho mais vivo, da mesma família do vinho, para aparecer sobre o preto (marca no rodapé) */
+  --red: #c8102e;
   --white: #ffffff;
   --gray-100: #f5f5f7;
   --gray-200: #e8e8ea;
@@ -1354,12 +1356,13 @@ em {
   }
 }
 
-/* ---------- footer ---------- */
+/* ---------- footer: preto, texto branco e a marca grande em vermelho ---------- */
 .footer {
   margin-top: clamp(48px, 8vw, 96px);
   border-radius: var(--radius-lg);
   padding: 56px 0 0;
-  background: var(--gray-100);
+  background: var(--ink-900);
+  color: var(--white);
   overflow: hidden;
 }
 .footer__grid {
@@ -1371,15 +1374,21 @@ em {
     grid-template-columns: 1.4fr 1fr 1fr 1fr;
   }
 }
+.footer .logo {
+  color: var(--white);
+}
+.footer .logo span {
+  color: var(--red);
+}
 .footer p {
-  color: var(--ink-500);
+  color: rgba(255, 255, 255, 0.62);
 }
 .footer h4 {
   margin-bottom: 12px;
   font-size: 12px;
   font-weight: 500;
   letter-spacing: 0;
-  color: var(--ink-500);
+  color: rgba(255, 255, 255, 0.5);
 }
 .footer ul {
   display: flex;
@@ -1387,22 +1396,25 @@ em {
   gap: 6px;
   font-size: 18px;
   letter-spacing: -0.02em;
-  color: var(--ink-900);
+  color: var(--white);
+}
+.footer a {
+  transition: color 0.15s;
 }
 .footer a:hover {
-  color: var(--wine);
+  color: var(--red);
 }
 .footer__bottom {
   margin-top: 40px;
   font-size: 13px;
 }
-.footer__mark {
+.footer .footer__mark {
   margin: 12px 0 -0.14em;
   font-size: clamp(110px, 29vw, 440px);
   font-weight: 500;
   line-height: 0.8;
   letter-spacing: -0.07em;
-  color: var(--wine);
+  color: var(--red);
   text-align: center;
   user-select: none;
 }
@@ -1413,13 +1425,6 @@ em {
   }
   * {
     transition-duration: 0.01ms !important;
-  }
-  .ticker span {
-    animation: none;
-  }
-  .ticker span:first-child {
-    opacity: 1;
-    transform: none;
   }
 }
 
