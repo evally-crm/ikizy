@@ -206,11 +206,9 @@ const faqSchema = {
   <section id="precos" class="section container" aria-labelledby="price-title">
     <div class="pricing">
       <div class="pricing__head">
-        <div class="section__head">
-          <p class="eyebrow">Planos</p>
-          <h2 id="price-title" class="h2">Um plano para o <em>tamanho</em> do seu negócio</h2>
-          <p class="lead">Todos os planos começam com {TRIAL_DAYS} dias grátis.</p>
-        </div>
+        <p class="eyebrow">Planos</p>
+        <h2 id="price-title" class="h2">Um plano para o <em>tamanho</em> do seu negócio</h2>
+        <p class="lead">Todos os planos começam com {TRIAL_DAYS} dias grátis.</p>
         <div class="toggle" data-toggle>
           <button type="button" class="toggle__label is-active" tabindex="-1" data-period="1">Mensal</button>
           <button type="button" role="switch" aria-checked="false" aria-label="Ver preços do plano trimestral" class="toggle__switch" data-switch>
@@ -223,23 +221,43 @@ const faqSchema = {
 
       <div class="plans" data-plans data-discount={PIX_DISCOUNT_PCT[3]}>
         {
-          PLANS.map((p) => (
-            <article class={`plan ${p.hot ? 'plan--hot' : ''}`} data-cents={p.cents}>
-              <div class="plan__top">
-                <h3>{p.name}</h3>
-                {p.hot && <span class="plan__tag">Mais escolhido</span>}
-                <span class="plan__save" data-save hidden />
-              </div>
-              <div class="plan__swap" data-swap>
-                <p class="plan__price"><small>R$</small><span data-total>{brlNumber(p.cents)}</span><small data-unit>/mês</small></p>
-                <p class="plan__equiv" data-equiv>Cobrança mensal: no cartão, renova sozinha todo mês, ou no Pix, mês a mês.</p>
-              </div>
-              <ul class="plan__list">
-                {p.items.map((it) => <li>{it}</li>)}
-              </ul>
-              <a class={`btn ${p.hot ? 'btn--primary' : 'btn--ghost'}`} href={LINKS.signup}>{p.cta}</a>
-            </article>
-          ))
+          PLANS.map((p, i) => {
+            // o 1º item é o público do plano; "Tudo do X" vira o título da lista
+            const [audience, ...rest] = p.items
+            const base = rest.find((it) => it.startsWith('Tudo do'))
+            const list = rest.filter((it) => it !== base)
+            const [int, dec] = brlNumber(p.cents).split(',')
+            return (
+              <article class={`plan ${p.hot ? 'plan--hot' : ''}`} data-cents={p.cents}>
+                <div class="plan__top">
+                  <span class="plan__icon" aria-hidden="true">
+                    {Array.from({ length: i + 1 }, () => <i />)}
+                  </span>
+                  {p.hot && <span class="plan__tag">Mais escolhido</span>}
+                </div>
+                <div>
+                  <h3>{p.name}</h3>
+                  <p class="plan__aud">{audience}</p>
+                </div>
+                <div class="plan__swap">
+                  <p class="plan__price">
+                    <small>R$</small>
+                    <span><span data-int>{int}</span><span class="plan__dec" data-dec>,{dec}</span></span>
+                    <small data-unit>/mês</small>
+                  </p>
+                  <p class="plan__equiv" data-equiv>Cobrança mensal: no cartão, renova sozinha todo mês, ou no Pix, mês a mês.</p>
+                  <span class="plan__save" data-save hidden />
+                </div>
+                <div class="plan__inc">
+                  <p class="plan__inc-title">{base ? `${base}, mais:` : 'O que está incluído:'}</p>
+                  <ul class="plan__list">
+                    {list.map((it) => <li>{it}</li>)}
+                  </ul>
+                </div>
+                <a class="btn btn--primary" href={LINKS.signup}>{p.cta}</a>
+              </article>
+            )
+          })
         }
       </div>
     </div>
@@ -438,6 +456,12 @@ const faqSchema = {
     const pct = Number(plans.dataset.discount)
     const num = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     const brl = (c) => 'R$ ' + num.format(c / 100)
+    // preço grande: inteiro em preto e os centavos em cinza
+    const setPrice = (plan, c) => {
+      const [int, dec] = num.format(c / 100).split(',')
+      plan.querySelector('[data-int]').textContent = int
+      plan.querySelector('[data-dec]').textContent = ',' + dec
+    }
 
     function render(months) {
       plans.querySelectorAll('[data-cents]').forEach((plan) => {
@@ -448,13 +472,13 @@ const faqSchema = {
         const save = plan.querySelector('[data-save]')
         const eq = plan.querySelector('[data-equiv]')
         if (months === 1) {
-          plan.querySelector('[data-total]').textContent = num.format(cents / 100)
+          setPrice(plan, cents)
           plan.querySelector('[data-unit]').textContent = '/mês'
           eq.textContent = 'Cobrança mensal: no cartão, renova sozinha todo mês, ou no Pix, mês a mês.'
           save.hidden = true
           return
         }
-        plan.querySelector('[data-total]').textContent = num.format(total / 100)
+        setPrice(plan, total)
         plan.querySelector('[data-unit]').textContent = '/3 meses'
         eq.textContent = ''
         const old = document.createElement('s')
