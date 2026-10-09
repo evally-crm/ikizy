@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { isNeonConfigured, neon, type NeonSession as Session } from '../lib/neon'
 import { dash, ROUTES } from '../lib/routes'
+import type { PlanId } from '../lib/plans'
 import type { SalonSetup } from '../lib/segments'
 
 export type MemberRole = 'owner' | 'manager' | 'reception' | 'professional'
@@ -28,8 +29,8 @@ interface AuthState {
   /** abre o login do Google; ao voltar, a sessão é restaurada e o dashboard decide entre salão ou onboarding */
   signInWithGoogle: () => Promise<string | null>
   signOut: () => Promise<void>
-  /** cria o negócio e, se houver `setup`, já cadastra serviços e a profissional sugeridos pelo questionário */
-  createSalon: (name: string, slug: string, setup?: SalonSetup) => Promise<string | null>
+  /** cria o negócio (com o teste grátis no `plan` escolhido) e, se houver `setup`, já cadastra serviços e a profissional sugeridos pelo questionário */
+  createSalon: (name: string, slug: string, setup?: SalonSetup, plan?: PlanId) => Promise<string | null>
   /** nome de exibição de quem está logada (cadastro > e-mail > padrão) */
   displayName: string
   /** edita o cadastro: nome da pessoa e nome do negócio (só dono/gerente altera o negócio) */
@@ -194,9 +195,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSalon(null)
         setProfile({})
       },
-      async createSalon(name, slug, setup) {
+      async createSalon(name, slug, setup, plan) {
         if (!neon || !userId) return 'Você precisa estar logada.'
-        const { data: salonId, error } = await neon.rpc('create_salon', { p_name: name, p_slug: slug })
+        let { data: salonId, error } = await neon.rpc('create_salon', { p_name: name, p_slug: slug, ...(plan ? { p_plan: plan } : {}) })
+        // banco ainda sem a migration do plano no cadastro (create_salon de 2 argumentos): cria no teste padrão
+        if (error?.code === 'PGRST202' && plan) {
+          ;({ data: salonId, error } = await neon.rpc('create_salon', { p_name: name, p_slug: slug }))
+        }
         if (error) {
           if (error.message.includes('salons_slug_key') || error.code === '23505') {
             return error.message.includes('já pertence') ? 'Esta conta já tem um salão.' : 'Este endereço já está em uso. Escolha outro.'
@@ -213,12 +218,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (setup.professionalName) {
             await neon.from('professionals').insert({ salon_id: salonId, user_id: userId, name: setup.professionalName })
           }
+          // cadastro por e-mail não tem nome: sem isso, a saudação usa o começo do e-mail
+          if (setup.ownerName && !sessionName) {
+            const { error: nameError } = await neon.auth.getBetterAuthInstance().updateUser({ name: setup.ownerName })
+            if (!nameError) setProfile((p) => ({ ...p, userName: setup.ownerName }))
+          }
         }
         await loadSalon(userId)
         return null
       },
     }),
-    [status, session, salon, shownSalon, displayName, userId, loadSalon],
+    [status, session, salon, shownSalon, displayName, sessionName, userId, loadSalon],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

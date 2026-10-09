@@ -8,6 +8,7 @@ import { useAgenda } from '../data/AgendaProvider'
 import { ACTIVE_STATUSES } from '../types'
 import { MONTHLY_GOAL, getMonths } from '../data/finance'
 import { TodayMessages } from '../components/TodayMessages'
+import TrialCard from '../components/TrialCard'
 import { formatBRL, formatTime } from '../lib/format'
 import { useAuth } from '../auth/AuthProvider'
 import { dash } from '../lib/routes'
@@ -117,6 +118,8 @@ export default function Dashboard() {
         </span>
         </div>
       </header>
+
+      <TrialCard />
 
       <div className="dash">
         {/* faturamento da semana */}

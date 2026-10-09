@@ -1,8 +1,9 @@
-import { useState, type FormEvent } from 'react'
-import { Link, Navigate } from 'react-router-dom'
+import { useEffect, useState, type FormEvent } from 'react'
+import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import { Lock, Mail } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
 import { ROUTES } from '../../lib/routes'
+import { rememberPlan } from '../../lib/signupPlan'
 import { Em } from '../../components/ui'
 import { AuthCard, AuthField, AuthLayout, AuthSubmit, FormMessages, GoogleButton } from './AuthLayout'
 
@@ -13,6 +14,9 @@ export default function Cadastro() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
+  const [params] = useSearchParams()
+  // plano escolhido na landing: o questionário já abre com ele marcado
+  useEffect(() => rememberPlan(params.get('plano')), [params])
 
   if (status === 'ready' || status === 'demo') return <Navigate to={ROUTES.dashboard} replace />
   if (status === 'no-salon') return <Navigate to={ROUTES.createSalon} replace />

@@ -14,9 +14,10 @@ export interface PlanInfo {
   cents: number
   audience: string
   features: string[]
-  /** só o Solo tem teste grátis */
-  trialDays: number
 }
+
+/** todo negócio novo começa com este teste grátis, sem cartão, no plano que escolheu no cadastro */
+export const TRIAL_DAYS = 30
 
 export const PLANS: Record<PlanId, PlanInfo> = {
   solo: {
@@ -25,7 +26,6 @@ export const PLANS: Record<PlanId, PlanInfo> = {
     cents: 990,
     audience: 'Para quem atende sozinha',
     features: ['Agenda e clientes', 'Financeiro básico', 'Site do negócio'],
-    trialDays: 30,
   },
   studio: {
     id: 'studio',
@@ -33,7 +33,6 @@ export const PLANS: Record<PlanId, PlanInfo> = {
     cents: 2990,
     audience: 'Equipe pequena',
     features: ['Tudo do Solo', 'Comissões por profissional', 'Fechamento mensal em recibo', 'Relatórios'],
-    trialDays: 0,
   },
   salao: {
     id: 'salao',
@@ -41,11 +40,14 @@ export const PLANS: Record<PlanId, PlanInfo> = {
     cents: 5990,
     audience: 'Equipe maior',
     features: ['Tudo do Studio', 'Mais profissionais e permissões', 'Atendimento prioritário'],
-    trialDays: 0,
   },
 }
 
 export const PLAN_IDS = Object.keys(PLANS) as PlanId[]
+
+/** plano sugerido no cadastro conforme o tamanho da equipe */
+export const recommendedPlan = (team: 'solo' | 'small' | 'large' | null): PlanId =>
+  team === 'large' ? 'salao' : team === 'small' ? 'studio' : 'solo'
 export const isPlanId = (v: unknown): v is PlanId => typeof v === 'string' && v in PLANS
 
 /** quantos meses a pessoa pode pagar adiantado no Pix (o Pix não renova sozinho nas contas Stripe do Brasil) */
@@ -87,7 +89,7 @@ export interface SubscriptionInfo {
 }
 
 /**
- * trial     teste do Solo em andamento
+ * trial     teste grátis em andamento
  * active    pagando e com acesso
  * ending    acesso acaba em breve sem renovação automática (Pix ou cancelamento agendado)
  * past_due  a cobrança do cartão falhou; ainda dentro da tolerância
@@ -105,7 +107,7 @@ export function daysLeft(until: Date, now = new Date()): number {
 /** avisamos quando faltam até 7 dias */
 export const WARN_DAYS = 7
 
-/** assinou no cartão durante o teste do Solo: já é assinante, a primeira cobrança só vem no fim do teste */
+/** assinou no cartão durante o teste grátis: já é assinante, a primeira cobrança só vem no fim do teste */
 export const isCardTrial = (sub: SubscriptionInfo) => sub.status === 'trialing' && sub.method === 'card'
 
 export function accessState(sub: SubscriptionInfo, now = new Date()): AccessState {

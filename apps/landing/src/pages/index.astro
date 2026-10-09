@@ -36,7 +36,7 @@ const faq = [
   { q: 'O que é a IKIZY?', a: 'A IKIZY é um sistema de gestão online para salões e negócios de beleza. Reúne agenda, cadastro de clientes, financeiro, equipe e um site próprio para receber agendamentos.' },
   { q: 'Para quem a IKIZY é indicada?', a: 'Para cabeleireiras, nail designers, profissionais de cílios e sobrancelhas, studios e salões, de quem atende sozinha a quem tem equipe.' },
   { q: 'Preciso instalar alguma coisa?', a: 'Não. A IKIZY funciona direto no navegador, no computador ou no celular.' },
-  { q: 'Posso testar antes de assinar?', a: 'Sim. O plano Solo tem 1 mês grátis, sem pedir cartão. Crie sua conta e use o sistema durante o teste antes de decidir.' },
+  { q: 'Posso testar antes de assinar?', a: 'Sim. Todos os planos têm 1 mês grátis, sem pedir cartão. Você escolhe o plano ao criar a conta, usa o sistema durante o teste e só paga se quiser continuar.' },
   { q: 'Como posso pagar?', a: 'No cartão de crédito, com renovação automática todo mês, ou no Pix, pagando 1, 3 ou 12 meses adiantado, sendo que 12 meses têm 5% de desconto. O Pix não renova sozinho: avisamos antes de o período acabar.' },
   { q: 'O que acontece quando o teste ou o período pago termina?', a: 'O sistema fica só para leitura: seus dados continuam salvos e você pode consultá-los. Ao escolher um plano, tudo volta a funcionar.' },
   { q: 'Meus dados ficam separados dos de outros negócios?', a: 'Sim. Cada negócio enxerga apenas os próprios dados, e o acesso da equipe é controlado por papéis: dona, gerente, recepção e profissional.' },
@@ -329,7 +329,7 @@ const faqSchema = {
             <ul class="plan__list">
               {p.items.map((it) => <li>{it}</li>)}
             </ul>
-            <a class={`btn ${p.hot ? 'btn--light' : 'btn--primary'}`} href={LINKS.signup}>{p.cta}</a>
+            <a class={`btn ${p.hot ? 'btn--light' : 'btn--primary'}`} href={`${LINKS.signup}?plano=${p.id}`}>{p.cta}</a>
           </article>
         ))
       }

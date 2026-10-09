@@ -105,4 +105,6 @@ export interface SalonSetup {
   services: { name: string; category: Category; price: number; duration: number }[]
   /** quando trabalha sozinha(o), já cria o cadastro da própria profissional */
   professionalName?: string
+  /** nome de quem criou a conta (vai para o cadastro da pessoa, se ainda não tiver) */
+  ownerName?: string
 }

@@ -5,10 +5,13 @@ import { useAuth } from '../../auth/AuthProvider'
 import { ROUTES } from '../../lib/routes'
 import { isReservedSlug, SITE_DOMAIN, SLUG_PATTERN, siteHost, slugify } from '../../lib/slug'
 import { SEGMENTS, TEAM_SIZES, type SalonSetup, type TeamSize } from '../../lib/segments'
+import { PLAN_IDS, PLANS, recommendedPlan, TRIAL_DAYS, type PlanId } from '../../lib/plans'
+import { formatBRL } from '../../lib/format'
+import { rememberedPlan } from '../../lib/signupPlan'
 import { Em } from '../../components/ui'
 import { AuthField, AuthLayout, FormMessages } from './AuthLayout'
 
-type StepId = 'segmentos' | 'equipe' | 'profissional' | 'servicos' | 'precos' | 'negocio'
+type StepId = 'segmentos' | 'equipe' | 'profissional' | 'servicos' | 'precos' | 'negocio' | 'plano'
 
 const COPY: Record<StepId, { title: React.ReactNode; subtitle?: string }> = {
   segmentos: {
@@ -56,7 +59,15 @@ const COPY: Record<StepId, { title: React.ReactNode; subtitle?: string }> = {
         Como se chama o seu <Em>negócio</Em>?
       </>
     ),
-    subtitle: 'Último passo. O resto você ajusta depois, no painel.',
+    subtitle: 'Esse endereço vira o site do seu negócio. Ele não muda depois.',
+  },
+  plano: {
+    title: (
+      <>
+        Escolha o seu <Em>plano</Em>
+      </>
+    ),
+    subtitle: `Último passo. Você usa ${TRIAL_DAYS} dias grátis, sem cartão, e só paga se quiser continuar. Dá para trocar de plano quando quiser.`,
   },
 }
 
@@ -79,24 +90,29 @@ export default function Onboarding() {
   const [name, setName] = useState('')
   const [slug, setSlug] = useState('')
   const [slugTouched, setSlugTouched] = useState(false)
+  // null: ainda não escolheu (nem veio da landing), vale a sugestão pelo tamanho da equipe
+  const [plan, setPlan] = useState<PlanId | null>(rememberedPlan)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const chosen = useMemo(() => SEGMENTS.filter((s) => segments.includes(s.id)), [segments])
   const steps = useMemo<StepId[]>(() => {
     const list: StepId[] = ['segmentos', 'equipe']
-    if (team === 'solo') list.push('profissional')
+    // o nome vale para todo mundo (saudação e conta); quem atende sozinha também entra na agenda com ele
+    list.push('profissional')
     list.push('servicos')
     if (picked.length > 0) list.push('precos')
-    list.push('negocio')
+    list.push('negocio', 'plano')
     return list
-  }, [team, picked.length])
+  }, [picked.length])
 
   if (status === 'signed-out') return <Navigate to={ROUTES.login} replace />
   if (status === 'ready' || status === 'demo') return <Navigate to={ROUTES.dashboard} replace />
 
   const step = steps[Math.min(index, steps.length - 1)]
-  const last = step === 'negocio'
+  const last = step === 'plano'
+  const suggested = recommendedPlan(team)
+  const chosenPlan = plan ?? suggested
   const copy = COPY[step]
 
   const toggleSegment = (id: string) => {
@@ -133,7 +149,22 @@ export default function Onboarding() {
   }
 
   const canContinue =
-    step === 'segmentos' ? segments.length > 0 : step === 'equipe' ? team !== null : step === 'profissional' ? proName.trim().length >= 2 : true
+    step === 'segmentos'
+      ? segments.length > 0
+      : step === 'equipe'
+        ? team !== null
+        : step === 'profissional'
+          ? proName.trim().length >= 2
+          : step === 'negocio'
+            ? name.trim().length >= 2 && slug.length >= 3
+            : true
+
+  /** confere o endereço antes de sair do passo do negócio (se já estiver em uso, o banco avisa no fim) */
+  const slugError = () => {
+    if (slug.length < 3) return 'O endereço precisa ter pelo menos 3 caracteres.'
+    if (isReservedSlug(slug)) return 'Esse endereço é reservado. Escolha outro.'
+    return null
+  }
 
   const buildSetup = (): SalonSetup => ({
     services: chosen.flatMap((segment) =>
@@ -145,26 +176,26 @@ export default function Onboarding() {
         }),
     ),
     professionalName: team === 'solo' && proName.trim().length >= 2 ? proName.trim() : undefined,
+    ownerName: proName.trim().length >= 2 ? proName.trim() : undefined,
   })
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault()
     if (!last) {
+      if (step === 'negocio' && slugError()) {
+        setError(slugError())
+        return
+      }
       if (canContinue) next()
       return
     }
     setError(null)
-    if (slug.length < 3) {
-      setError('O endereço precisa ter pelo menos 3 caracteres.')
-      return
-    }
-    if (isReservedSlug(slug)) {
-      setError('Esse endereço é reservado. Escolha outro.')
-      return
-    }
     setBusy(true)
-    setError(await createSalon(name, slug, buildSetup()))
+    const message = await createSalon(name.trim(), slug, buildSetup(), chosenPlan)
     setBusy(false)
+    // problema no nome ou no endereço: volta para o passo onde a pessoa corrige
+    if (message && /endereço|caracteres|letras/i.test(message)) setIndex(steps.indexOf('negocio'))
+    setError(message)
   }
 
   return (
@@ -197,7 +228,11 @@ export default function Onboarding() {
 
         <p className="wiz__eyebrow">Sobre o seu negócio</p>
         <h1 className="auth__title">{copy.title}</h1>
-        {copy.subtitle && <p className="card__sub">{copy.subtitle}</p>}
+        {step === 'profissional' && team !== 'solo' ? (
+          <p className="card__sub">É assim que vamos te chamar no sistema.</p>
+        ) : (
+          copy.subtitle && <p className="card__sub">{copy.subtitle}</p>
+        )}
 
         {step === 'segmentos' && (
           <div className="wiz__options">
@@ -322,6 +357,35 @@ export default function Onboarding() {
           </>
         )}
 
+        {step === 'plano' && (
+          <div className="wiz__plans" role="radiogroup" aria-label="Plano">
+            {PLAN_IDS.map((id) => {
+              const p = PLANS[id]
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  role="radio"
+                  aria-checked={chosenPlan === id}
+                  className="wiz__plan"
+                  onClick={() => setPlan(id)}
+                >
+                  <span className="wiz__plan-top">
+                    <strong>{p.name}</strong>
+                    {id === suggested && <span className="wiz__plan-tag">Indicado para você</span>}
+                    <span className="wiz__plan-price">
+                      {formatBRL(p.cents / 100)}
+                      <small>/mês</small>
+                    </span>
+                  </span>
+                  <span className="wiz__plan-audience">{p.audience}</span>
+                  <span className="wiz__plan-features">{p.features.join(' · ')}</span>
+                </button>
+              )
+            })}
+          </div>
+        )}
+
         <FormMessages error={error} />
 
         <div className="auth__foot">
@@ -331,12 +395,19 @@ export default function Onboarding() {
           {step !== 'equipe' && (
             <button
               type="submit"
-              className="auth__go"
+              className={last ? 'auth__go auth__go--text' : 'auth__go'}
               disabled={busy || !canContinue}
-              aria-label={last ? (busy ? 'Criando…' : 'Criar meu negócio') : 'Continuar'}
-              title={last ? 'Criar meu negócio' : 'Continuar'}
+              aria-label={last ? undefined : 'Continuar'}
+              title={last ? undefined : 'Continuar'}
             >
-              {last ? <Check size={22} aria-hidden="true" /> : <ArrowRight size={22} aria-hidden="true" />}
+              {last ? (
+                <>
+                  {busy ? 'Criando…' : 'Começar grátis'}
+                  <ArrowRight size={20} aria-hidden="true" />
+                </>
+              ) : (
+                <ArrowRight size={22} aria-hidden="true" />
+              )}
             </button>
           )}
         </div>

@@ -44,17 +44,18 @@ flowchart TD
 ```mermaid
 flowchart TD
     S1[1. Segmentos<br/>Unhas, Cílios, Sobrancelha, Cabelo, Estética<br/>multi-escolha] --> S2[2. Equipe]
-    S2 -->|Atendo sozinha| S3[3. Seu nome<br/>pode pular]
-    S2 -->|Equipe| S4
+    S2 --> S3[3. Seu nome<br/>sozinha: também vira profissional na agenda]
     S3 --> S4[4. Serviços<br/>pré-marcados por segmento]
     S4 -->|ao menos 1 marcado| S5[5. Preços<br/>pode pular]
     S4 -->|nenhum| S6
     S5 --> S6[6. Nome do negócio + endereço<br/>slug.ikizy.com]
-    S6 --> V{slug ≥ 3, 3–40 chars,<br/>não reservado, livre?}
+    S6 --> V{slug ≥ 3, 3–40 chars,<br/>não reservado?}
     V -->|não| S6
-    V -->|sim| R[RPC create_salon]
+    V -->|sim| S7[7. Plano<br/>Solo / Studio / Salão, sugerido pela equipe<br/>ou vindo da landing ?plano=]
+    S7 -->|Começar grátis| R[RPC create_salon com p_plan]
+    R -->|endereço em uso| S6
     R --> R1[(salons + members=owner<br/>+ site_settings)]
-    R --> R2[(subscriptions:<br/>plano Solo, trial 30 dias)]
+    R --> R2[(subscriptions:<br/>plano escolhido, trial 30 dias)]
     R --> R3[(services e professional<br/>do questionário)]
     R3 --> D[/dashboard/]
 ```

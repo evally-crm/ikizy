@@ -119,7 +119,7 @@ export default function Assinatura() {
             <p className="billing-status__title">
               {state === 'trial' && !isCardTrial(sub) && (
                 <>
-                  Teste grátis · restam <Em>{daysLeft(sub.accessUntil)} dias</Em>
+                  Teste grátis · {daysLeft(sub.accessUntil) === 1 ? 'resta' : 'restam'} <Em>{daysLeft(sub.accessUntil) === 1 ? '1 dia' : `${daysLeft(sub.accessUntil)} dias`}</Em>
                 </>
               )}
               {state === 'active' && <>Assinatura ativa</>}
@@ -177,7 +177,7 @@ export default function Assinatura() {
         {PLAN_IDS.map((id) => {
           const plan = PLANS[id]
           const current = sub?.plan === id && state !== 'expired'
-          const inTrialOffer = id === 'solo' && state === 'trial'
+          const inTrialOffer = state === 'trial'
           const total = pixAmountCents(id, months)
           const full = pixFullCents(id, months)
           const discount = PIX_DISCOUNT_PCT[months]
@@ -186,7 +186,6 @@ export default function Assinatura() {
               <div className="billing-plan__head">
                 <h2>{plan.name}</h2>
                 {current && <Badge>Seu plano</Badge>}
-                {plan.trialDays > 0 && !current && <Badge>{plan.trialDays} dias grátis</Badge>}
               </div>
               <p className="billing-plan__audience">{plan.audience}</p>
               <p className="billing-plan__price">

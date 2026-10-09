@@ -1,6 +1,6 @@
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { useSubscription } from '../billing/SubscriptionProvider'
-import { dash } from '../lib/routes'
+import { dash, ROUTES } from '../lib/routes'
 import { daysLeft, periodEnd, WARN_DAYS } from '../lib/plans'
 
 const fmt = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' })
@@ -8,7 +8,10 @@ const fmt = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' 
 /** aviso no topo do sistema: só aparece quando a pessoa precisa agir (teste acabando, Pix vencendo, cartão com falha, sem acesso) */
 export default function BillingBanner() {
   const { sub, state, loading } = useSubscription()
+  const { pathname } = useLocation()
   if (loading || !sub) return null
+  // no Início e na própria Assinatura a contagem do teste já aparece em destaque
+  if (state === 'trial' && (pathname === ROUTES.dashboard || pathname === dash('/assinatura'))) return null
 
   const days = daysLeft(sub.accessUntil)
   let tone: 'info' | 'warn' | 'alert' | null = null

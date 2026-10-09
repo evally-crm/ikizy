@@ -23,7 +23,7 @@ Módulos do sistema (`app.ikizy.com/dashboard`):
 | Meu site | editor do site público do negócio (detalhado na seção 5) |
 | Assinatura | plano do IKIZY (Stripe: cartão e Pix) |
 
-Planos do IKIZY: Solo R$ 9,90, Studio R$ 29,90, Salão R$ 59,90 (fonte única: `apps/app/src/lib/plans.ts`). Todo salão novo ganha 30 dias de teste do Solo.
+Planos do IKIZY: Solo R$ 9,90, Studio R$ 29,90, Salão R$ 59,90 (fonte única: `apps/app/src/lib/plans.ts`). Todo salão novo ganha 30 dias de teste grátis, sem cartão, no plano que escolhe no fim do cadastro (sugerido pelo tamanho da equipe, ou o que veio da landing por `?plano=`). Durante o teste, o Início mostra um card com a contagem dos dias.
 
 ---
 
@@ -100,6 +100,7 @@ npm run build
 | `20261019000000_palette_dark` | paleta escura `preto-branco` aceita no banco |
 | `20261020000000_client_file` | ficha completa da cliente (e-mail, Instagram, endereço, profissão, como conheceu, anamnese em jsonb, assinatura do termo), `loyalty_settings`, `loyalty_entries` (selos extras e resgates) e `client_notes` |
 | `20261021000000_client_photos` | fotos de antes e depois na ficha (`client_photos`: miniatura + foto, só membros do salão leem; não passam pela página pública) |
+| `20261022000000_signup_plan` | `create_salon(p_name, p_slug, p_plan)`: o teste de 30 dias passa a valer no plano escolhido no cadastro (antes só Solo). **Ainda não aplicada**: até aplicar, o app cai no `create_salon` antigo (teste do Solo) |
 
 Regras importantes:
 - Toda tabela tem `salon_id` + RLS. Escrita de catálogo/site só `owner`/`manager`; sem assinatura ativa, escrita bloqueada (políticas restritivas).

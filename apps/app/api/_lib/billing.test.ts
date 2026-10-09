@@ -132,14 +132,20 @@ describe('createCheckout', () => {
     assert.equal(s.subscription_data.metadata.salon_id, 'salon-1')
   })
 
-  it('cartão: sem trial_end quando faltam menos de 49 h ou em outro plano', async () => {
+  it('cartão em outro plano durante o teste também preserva os dias que sobraram', async () => {
+    const { stripe, created } = fakeStripe()
+    await createCheckout(deps(fakeDb().db, stripe), user, { plan: 'studio', method: 'card', months: 1 })
+    assert.equal((created[0] as any).subscription_data.trial_end, Math.floor((NOW.getTime() + 20 * DAY) / 1000))
+  })
+
+  it('cartão: sem trial_end quando faltam menos de 49 h ou fora do teste', async () => {
     const soon = fakeDb({ sub: { trialEndsAt: new Date(NOW.getTime() + 30 * 60 * 60 * 1000) } })
     const a = fakeStripe()
     await createCheckout(deps(soon.db, a.stripe), user, { plan: 'solo', method: 'card', months: 1 })
     assert.equal((a.created[0] as any).subscription_data.trial_end, undefined)
 
     const b = fakeStripe()
-    await createCheckout(deps(fakeDb().db, b.stripe), user, { plan: 'studio', method: 'card', months: 1 })
+    await createCheckout(deps(fakeDb({ sub: { status: 'active', trialEndsAt: null } }).db, b.stripe), user, { plan: 'studio', method: 'card', months: 1 })
     assert.equal((b.created[0] as any).subscription_data.trial_end, undefined)
   })
 
