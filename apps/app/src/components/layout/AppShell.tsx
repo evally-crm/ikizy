@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { Navigate, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { Bell, ChevronDown, Ellipsis, LogOut, Search, X } from 'lucide-react'
+import { ChevronDown, Ellipsis, LogOut, Search, X } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
 import { SubscriptionProvider, useSubscription } from '../../billing/SubscriptionProvider'
 import { AgendaProvider } from '../../data/AgendaProvider'
 import BillingBanner from '../BillingBanner'
+import { PendingBell, PendingToast } from '../PendingRequests'
 import { navItems } from './nav'
 import { describeSubscription } from '../../lib/plans'
 import { dash, ROUTES } from '../../lib/routes'
@@ -294,6 +295,7 @@ export default function AppShell() {
 
   return (
     <SubscriptionProvider>
+    <AgendaProvider>
     <div className="shell">
       <header className="topbar">
         <div className="topbar__inner">
@@ -304,10 +306,7 @@ export default function AppShell() {
               <Search size={16} aria-hidden="true" />
               <input type="search" placeholder="Buscar cliente ou serviço" aria-label="Buscar" />
             </label>
-            <Button variant="soft" icon aria-label="Notificações (3 novas)" className="notif">
-              <Bell size={18} />
-              <span className="notif__dot" aria-hidden="true" />
-            </Button>
+            <PendingBell />
             <button type="button" className="user" aria-label="Editar cadastro" title="Editar cadastro" onClick={() => setEditing(true)}>
               <Avatar name={displayName} />
               <div className="user__text">
@@ -319,16 +318,16 @@ export default function AppShell() {
         </div>
       </header>
       <main className="content">
-        <AgendaProvider>
-          <RequirePlan>
-            <BillingBanner />
-            <Outlet />
-          </RequirePlan>
-        </AgendaProvider>
+        <RequirePlan>
+          <BillingBanner />
+          <Outlet />
+        </RequirePlan>
       </main>
       <BottomNav />
+      <PendingToast />
       {editing && <ProfileDialog onClose={closeEdit} />}
     </div>
+    </AgendaProvider>
     </SubscriptionProvider>
   )
 }

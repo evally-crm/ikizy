@@ -238,7 +238,7 @@ Hoje: a cliente escolhe serviço, profissional, dia e horário livre, informa no
 
 | Prioridade | Melhoria | Por quê / como |
 |---|---|---|
-| P1 | **Aviso de novo pedido para o salão** | Hoje o pedido só aparece na agenda. Mostrar no sininho do app (contagem de pendentes), destacar na Agenda e no Início ("3 pedidos para confirmar"), e opcionalmente e-mail/push. Sem isso o salão perde pedidos. |
+| ~~P1~~ | **Aviso de novo pedido para o salão** (feito) | `components/PendingRequests.tsx`: sininho do topo com contagem e lista, faixa "N pedidos do site para confirmar" no Início e na Agenda, contagem no título da aba e aviso rápido (toast) quando chega pedido com o sistema aberto. Pedido = atendimento `pendente` daqui para a frente (os criados no sistema já entram `confirmado`); busca a cada 60 s e ao voltar para a aba (`pending` no `AgendaProvider`). Clicar abre `/dashboard/agenda?pedido=id`, que vai ao dia e abre o atendimento (Confirmar já existe lá). Falta: e-mail/push com o sistema fechado (depende do PWA). |
 | P1 | **Confirmar/recusar em um toque** | Lista "Pedidos online" com botões Confirmar e Recusar; ao confirmar, abrir o WhatsApp da cliente com mensagem pronta ("Seu horário de X, dia Y às Z, está confirmado"). |
 | P1 | **Confirmação automática (opcional)** | Chave "confirmar sozinho" por salão: pedidos dentro do expediente já entram como confirmados. |
 | P1 | **Link da cliente para ver, remarcar ou cancelar** | Após o pedido, um link único (token) com o status; cancelar libera a vaga; remarcar reaproveita a escolha de horário. Regra de antecedência para cancelar. |

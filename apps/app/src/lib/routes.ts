@@ -12,3 +12,6 @@ export const ROUTES = {
 
 /** caminho dentro do dashboard: dash('/agenda') => '/dashboard/agenda' */
 export const dash = (path = '') => `${ROUTES.dashboard}${path}`
+
+/** abre um pedido do site na agenda: ela vai até o dia e abre o atendimento */
+export const requestLink = (id: string) => dash(`/agenda?pedido=${id}`)

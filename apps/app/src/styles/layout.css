@@ -69,17 +69,76 @@
 .notif {
   position: relative;
 }
-.notif__dot {
+.notif__count {
   position: absolute;
-  top: 10px;
-  right: 11px;
-  width: 8px;
-  height: 8px;
+  top: -4px;
+  right: -6px;
+  display: grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
   border: 2px solid var(--white);
-  border-radius: 50%;
+  border-radius: var(--radius-pill);
   background: var(--brand-500);
+  color: var(--white);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
   box-sizing: content-box;
 }
+
+/* pedidos do site: lista do sininho */
+.pendbell {
+  position: relative;
+}
+.pendpop {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 40;
+  width: min(360px, calc(100vw - 24px));
+  padding: 8px;
+  border-radius: 22px;
+  background: var(--white);
+  box-shadow: var(--shadow-md);
+}
+/* no celular o sininho fica à direita do logo: a lista ocupa a largura da tela */
+@media (max-width: 1023px) {
+  .pendbell {
+    position: static;
+  }
+  .pendpop {
+    right: 12px;
+    left: 12px;
+    width: auto;
+    top: calc(100% - 4px);
+  }
+}
+.pendpop__head {
+  padding: 10px 12px 8px;
+}
+.pendpop__title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink-900);
+}
+.pendpop__sub {
+  font-size: 12px;
+  color: var(--ink-500);
+}
+.pendpop__list {
+  display: grid;
+  gap: 2px;
+  max-height: min(420px, 60vh);
+  overflow-y: auto;
+}
+.pendpop__empty {
+  padding: 4px 12px 12px;
+  font-size: 13px;
+  color: var(--ink-500);
+}
+
 .user {
   display: flex;
   align-items: center;

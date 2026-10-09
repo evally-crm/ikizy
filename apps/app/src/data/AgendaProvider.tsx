@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { addMonths, format, startOfMonth } from 'date-fns'
 import { useAuth } from '../auth/AuthProvider'
 import { isNeonConfigured, neon } from '../lib/neon'
@@ -46,6 +46,12 @@ interface AgendaState {
   clients: ClientOption[]
   services: ServiceOption[]
   appointments: Appointment[]
+  /**
+   * pedidos para confirmar: atendimentos pendentes daqui para a frente, do pedido mais novo ao mais antigo.
+   * Só o agendamento online cria pendentes (os feitos no sistema já entram confirmados).
+   * null até a primeira busca. Atualiza a cada minuto e ao voltar para a aba.
+   */
+  pending: Appointment[] | null
   /** horário de atendimento por profissional; sem entrada = ainda não configurado */
   workingHours: Record<string, HourInterval[]>
   /** false quando o banco ainda não tem a tabela de horários (migration pendente) */
@@ -104,6 +110,9 @@ interface Row {
   status: AppointmentStatus
   clients: { name: string; phone: string } | null
 }
+
+/** de quanto em quanto tempo procura pedidos novos do site */
+const PENDING_POLL_MS = 60_000
 
 const SELECT =
   'id, client_id, professional_id, service_id, service_name, starts_at, duration, price, status, clients ( name, phone )'
@@ -171,6 +180,8 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(live)
   const [error, setError] = useState<string | null>(null)
   const [tick, setTick] = useState(0)
+  const [livePending, setLivePending] = useState<Appointment[] | null>(null)
+  const pendingIds = useRef<Set<string> | null>(null)
   const [win, setWin] = useState(() => ({
     from: startOfMonth(addMonths(new Date(), -1)),
     to: startOfMonth(addMonths(new Date(), 2)),
@@ -256,6 +267,50 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
       cancelled = true
     }
   }, [live, salonId, win, tick])
+
+  // pedidos do site esperando confirmação: busca própria, fora da janela da agenda, repetida a cada minuto
+  useEffect(() => {
+    if (!live || !neon || !salonId) return
+    let cancelled = false
+    const load = async () => {
+      if (document.visibilityState === 'hidden') return
+      const { data, error: err } = await neon!
+        .from('appointments')
+        .select(SELECT)
+        .eq('salon_id', salonId)
+        .eq('status', 'pendente')
+        .gte('starts_at', new Date().toISOString())
+        .order('created_at', { ascending: false })
+        .limit(50)
+      if (cancelled || err) return
+      const list = (data as unknown as Row[]).map(fromRow)
+      // chegou pedido novo: recarrega a agenda para ele aparecer na grade também
+      const known = pendingIds.current
+      if (known && list.some((a) => !known.has(a.id))) setTick((t) => t + 1)
+      pendingIds.current = new Set(list.map((a) => a.id))
+      setLivePending(list)
+    }
+    void load()
+    const timer = window.setInterval(() => void load(), PENDING_POLL_MS)
+    const onVisible = () => document.visibilityState === 'visible' && void load()
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      cancelled = true
+      window.clearInterval(timer)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
+  }, [live, salonId])
+
+  // demonstração: os pendentes de hoje que ainda não passaram
+  const pending = useMemo(() => {
+    if (live) return livePending
+    // a demonstração começa com a lista vazia por um instante: sem isso, os pendentes de exemplo "chegariam" como novos
+    if (loading || !appointments.length) return null
+    const now = new Date()
+    const today = dayKey(now)
+    const minutes = now.getHours() * 60 + now.getMinutes()
+    return appointments.filter((a) => a.status === 'pendente' && (a.date > today || (a.date === today && a.start > minutes)))
+  }, [live, livePending, loading, appointments])
 
   const focus = useCallback((date: Date) => {
     setWin((w) =>
@@ -346,6 +401,10 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
         if (paymentMethod) await neon.from('appointments').update({ payment_method: paymentMethod }).eq('id', id)
       }
       setAppointments((list) => list.map((a) => (a.id === id ? { ...a, ...patch } : a)))
+      // confirmado, recusado etc. sai na hora da lista de pedidos
+      setLivePending((list) =>
+        list && (patch.status && patch.status !== 'pendente' ? list.filter((a) => a.id !== id) : list.map((a) => (a.id === id ? { ...a, ...patch } : a))),
+      )
       return null
     },
     [live, appointments],
@@ -397,6 +456,7 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
       clients,
       services,
       appointments,
+      pending,
       workingHours,
       hoursAvailable,
       saveHours,
@@ -406,7 +466,7 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
       update,
       addProfessional,
     }),
-    [loading, error, professionals, clients, services, appointments, workingHours, hoursAvailable, saveHours, focus, reload, create, update, addProfessional],
+    [loading, error, professionals, clients, services, appointments, pending, workingHours, hoursAvailable, saveHours, focus, reload, create, update, addProfessional],
   )
 
   return <AgendaContext.Provider value={value}>{children}</AgendaContext.Provider>

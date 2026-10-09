@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { format, getDay } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { ArrowRight, ArrowUpRight, CalendarDays, ChevronRight, Clock, TrendingDown, TrendingUp, Wallet } from 'lucide-react'
@@ -9,9 +9,10 @@ import { ACTIVE_STATUSES } from '../types'
 import { MONTHLY_GOAL, getMonths } from '../data/finance'
 import { TodayMessages } from '../components/TodayMessages'
 import TrialCountdown from '../components/TrialCountdown'
+import { PendingBanner } from '../components/PendingRequests'
 import { formatBRL, formatTime } from '../lib/format'
 import { useAuth } from '../auth/AuthProvider'
-import { dash } from '../lib/routes'
+import { dash, requestLink } from '../lib/routes'
 import { Avatar, Card, Em, Money, StatusBadge } from '../components/ui'
 
 const short = (v: number) => formatBRL(v).replace(',00', '')
@@ -49,6 +50,7 @@ function Ticks({ ratio, label }: { ratio: number; label: string }) {
 
 export default function Dashboard() {
   const { displayName } = useAuth()
+  const navigate = useNavigate()
   const now = useMemo(() => new Date(), [])
   const { professionals, appointments } = useAgenda()
   const proName = (id: string) => professionals.find((p) => p.id === id)?.name ?? ''
@@ -120,6 +122,8 @@ export default function Dashboard() {
       </header>
 
       <TrialCountdown />
+
+      <PendingBanner onOpen={(id) => navigate(requestLink(id))} />
 
       <div className="dash">
         {/* faturamento da semana */}

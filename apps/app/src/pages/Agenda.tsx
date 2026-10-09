@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { addDays, addMonths, endOfMonth, format, getDay, isSameDay, startOfMonth } from 'date-fns'
+import { addDays, addMonths, endOfMonth, format, getDay, isSameDay, parseISO, startOfMonth } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { CalendarPlus, ChevronLeft, ChevronRight, Clock, Plus, RotateCcw } from 'lucide-react'
 import { findConflict, useAgenda } from '../data/AgendaProvider'
@@ -16,6 +16,7 @@ import { ContextMenu, type MenuEntry } from '../components/ContextMenu'
 import { ConfirmDialog } from '../components/Modal'
 import { AppointmentMessageDialog } from '../components/MessageDialog'
 import { WorkingHoursDialog } from '../components/WorkingHoursDialog'
+import { PendingBanner } from '../components/PendingRequests'
 import type { Appointment, AppointmentStatus } from '../types'
 
 const HOUR_H = 72
@@ -331,7 +332,7 @@ function DayList({
 export default function Agenda() {
   const isMobile = useMediaQuery('(max-width: 767px)')
   const isDesktop = useMediaQuery('(min-width: 1100px)')
-  const { professionals, appointments, workingHours, loading, error, focus, reload, update } = useAgenda()
+  const { professionals, appointments, pending, workingHours, loading, error, focus, reload, update } = useAgenda()
   const [params, setParams] = useSearchParams()
   const { sub, loading: subLoading } = useSubscription()
   const [editingHours, setEditingHours] = useState(false)
@@ -403,6 +404,20 @@ export default function Agenda() {
     setCreating({ date: dayKey(new Date()), start: null, clientName: params.get('cliente') ?? undefined })
     setParams({}, { replace: true })
   }, [params, setParams, loading])
+
+  const openRequest = (a: Appointment) => {
+    setDate(parseISO(a.date))
+    setDialog({ id: a.id, reschedule: false })
+  }
+
+  // /dashboard/agenda?pedido=id (sininho, Início): vai até o dia do pedido e abre o atendimento
+  useEffect(() => {
+    const id = params.get('pedido')
+    if (!id || pending === null) return
+    const a = pending.find((x) => x.id === id) ?? appointments.find((x) => x.id === id)
+    if (a) openRequest(a)
+    setParams({}, { replace: true })
+  }, [params, setParams, pending]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const newNow = () => setCreating({ date: today, start: null })
 
@@ -527,6 +542,12 @@ export default function Agenda() {
           subLoading ? null : sub && sub.plan !== 'solo' ? <FirstProfessional /> : <SoloProfessional />
         ) : (
           <>
+            <PendingBanner
+              onOpen={(id) => {
+                const a = pending?.find((x) => x.id === id)
+                if (a) openRequest(a)
+              }}
+            />
             <div className="chips" role="group" aria-label="Filtrar por profissional">
               {!isMobile && (
                 <button type="button" className="chip" aria-pressed={activePro === 'all'} onClick={() => setProFilter('all')}>
