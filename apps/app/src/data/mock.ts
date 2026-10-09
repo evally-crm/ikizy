@@ -26,16 +26,6 @@ export const appointments: MockAppointment[] = [
   { id: '12', professionalId: 'carla', client: 'Débora Freitas', service: 'Escova modelada', start: t(16, 30), duration: 60, price: 90, status: 'confirmado' },
 ]
 
-export const weekRevenue = [
-  { day: 'Seg', value: 1480 },
-  { day: 'Ter', value: 1920 },
-  { day: 'Qua', value: 1310 },
-  { day: 'Qui', value: 2240 },
-  { day: 'Sex', value: 2760 },
-  { day: 'Sáb', value: 3180 },
-  { day: 'Dom', value: 0 },
-]
-
 export const birthdays = [
   { name: 'Marina Costa', when: 'Hoje' },
   { name: 'Camila Duarte', when: 'Amanhã' },

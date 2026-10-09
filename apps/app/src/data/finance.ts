@@ -46,8 +46,6 @@ export interface MonthClosing {
   daily: (number | null)[]
 }
 
-export const MONTHLY_GOAL = 30000
-
 const CATEGORIES = [
   { name: 'Unhas', qty: 96, avg: 118 },
   { name: 'Cílios', qty: 48, avg: 176 },

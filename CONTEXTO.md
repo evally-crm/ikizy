@@ -16,7 +16,7 @@ Módulos do sistema (`app.ikizy.com/dashboard`):
 
 | Módulo | O que faz |
 |---|---|
-| Início | resumo do dia, faturamento da semana, próximos atendimentos |
+| Início | resumo do dia, faturamento da semana, próximos atendimentos, contagem do teste grátis (dados reais: agenda + o mesmo cálculo do Financeiro) |
 | Agenda | calendário semana/mês, grade por profissional, horário de atendimento, criar/remarcar/confirmar/concluir |
 | Clientes | carteira, VIP, novas, sumidas, histórico |
 | Financeiro | fechamento mensal (recibo), saídas, comissões, formas de pagamento |
@@ -100,7 +100,7 @@ npm run build
 | `20261019000000_palette_dark` | paleta escura `preto-branco` aceita no banco |
 | `20261020000000_client_file` | ficha completa da cliente (e-mail, Instagram, endereço, profissão, como conheceu, anamnese em jsonb, assinatura do termo), `loyalty_settings`, `loyalty_entries` (selos extras e resgates) e `client_notes` |
 | `20261021000000_client_photos` | fotos de antes e depois na ficha (`client_photos`: miniatura + foto, só membros do salão leem; não passam pela página pública) |
-| `20261022000000_signup_plan` | `create_salon(p_name, p_slug, p_plan)`: o teste de 30 dias passa a valer no plano escolhido no cadastro (antes só Solo). **Ainda não aplicada**: até aplicar, o app cai no `create_salon` antigo (teste do Solo) |
+| `20261022000000_signup_plan` | `create_salon(p_name, p_slug, p_plan)`: o teste de 30 dias passa a valer no plano escolhido no cadastro (antes só Solo). Aplicada em 09/10/2026, depois de testada numa branch do Neon |
 
 Regras importantes:
 - Toda tabela tem `salon_id` + RLS. Escrita de catálogo/site só `owner`/`manager`; sem assinatura ativa, escrita bloqueada (políticas restritivas).

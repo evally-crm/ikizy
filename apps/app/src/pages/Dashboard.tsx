@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { format, getDay } from 'date-fns'
+import { addDays, format, getDay, startOfWeek } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { ArrowRight, ArrowUpRight, CalendarDays, ChevronRight, Clock, TrendingDown, TrendingUp, Wallet } from 'lucide-react'
-import { weekRevenue } from '../data/mock'
 import { useAgenda } from '../data/AgendaProvider'
 import { ACTIVE_STATUSES } from '../types'
-import { MONTHLY_GOAL, getMonths } from '../data/finance'
+import { useFinance } from '../data/useFinance'
+import type { MonthClosing } from '../data/finance'
 import { TodayMessages } from '../components/TodayMessages'
 import TrialCard from '../components/TrialCard'
 import { formatBRL, formatTime } from '../lib/format'
@@ -20,7 +20,8 @@ const short = (v: number) => formatBRL(v).replace(',00', '')
 const WORK_MINUTES = 10 * 60
 
 /** variação percentual; `invert` quando subir é ruim (ex.: faltas) */
-function Delta({ value, invert = false }: { value: number; invert?: boolean }) {
+function Delta({ value, invert = false }: { value: number | null; invert?: boolean }) {
+  if (value === null) return <span className="delta">sem mês anterior para comparar</span>
   if (!Number.isFinite(value) || Math.abs(value) < 0.5) return <span className="delta">igual ao mês passado</span>
   const up = value > 0
   const good = invert ? !up : up
@@ -47,6 +48,43 @@ function Ticks({ ratio, label }: { ratio: number; label: string }) {
   )
 }
 
+const WEEK_LABELS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
+
+/** mês vazio enquanto o financeiro carrega (ou se falhar), para o Início nunca mostrar número inventado */
+function emptyMonth(date: Date): MonthClosing {
+  const daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()
+  return {
+    id: format(date, 'yyyy-MM'),
+    date,
+    label: format(date, 'MMMM', { locale: ptBR }),
+    isCurrent: true,
+    closedAt: null,
+    daysInMonth,
+    elapsedDays: date.getDate(),
+    categories: [],
+    gross: 0,
+    cardFees: 0,
+    products: 0,
+    expenses: 0,
+    commissions: [],
+    commissionsTotal: 0,
+    net: 0,
+    payments: [],
+    appointments: 0,
+    ticket: 0,
+    newClients: 0,
+    returnRate: 0,
+    noShows: 0,
+    daily: [],
+  }
+}
+
+/** faturamento (atendimentos concluídos) de um dia, lido do resumo diário dos meses carregados */
+function dayRevenue(months: MonthClosing[], day: Date): number {
+  const month = months.find((m) => m.id === format(day, 'yyyy-MM'))
+  return month?.daily[day.getDate() - 1] ?? 0
+}
+
 export default function Dashboard() {
   const { displayName } = useAuth()
   const now = useMemo(() => new Date(), [])
@@ -65,18 +103,25 @@ export default function Dashboard() {
   // índice do dia atual com a semana começando na segunda
   const todayIdx = (getDay(now) + 6) % 7
   const [selectedDay, setSelectedDay] = useState(todayIdx)
+  const fin = useFinance()
+  const months = fin.months
+  const month = months.at(-1) ?? emptyMonth(now)
+  const prev = months.at(-2) ?? emptyMonth(now)
+
+  // semana de segunda a domingo, e a anterior para comparar
+  const weekStart = startOfWeek(now, { weekStartsOn: 1 })
+  const weekRevenue = WEEK_LABELS.map((day, i) => ({ day, value: dayRevenue(months, addDays(weekStart, i)) }))
+  const lastWeekTotal = WEEK_LABELS.reduce((s, _, i) => s + dayRevenue(months, addDays(weekStart, i - 7)), 0)
   const best = Math.max(...weekRevenue.map((d) => d.value), 1)
   const weekTotal = weekRevenue.reduce((s, d) => s + d.value, 0)
-  const growth = 12
+  const growth = lastWeekTotal ? Math.round(((weekTotal - lastWeekTotal) / lastWeekTotal) * 100) : null
 
-  const months = getMonths(now)
-  const month = months[2]
-  const prev = months[1]
   const daysLeft = month.daysInMonth - month.elapsedDays
-  const goalPct = Math.round((month.gross / MONTHLY_GOAL) * 100)
   const monthName = month.label[0].toUpperCase() + month.label.slice(1)
+  const loadingNumbers = fin.loading
 
-  const pct = (cur: number, old: number) => (old ? ((cur - old) / old) * 100 : 0)
+  // sem atendimentos no mês anterior não há comparação (salão novo, por exemplo)
+  const pct = (cur: number, old: number) => (prev.appointments === 0 ? null : old ? ((cur - old) / old) * 100 : 0)
   const ticketDelta = pct(month.ticket, prev.ticket)
   const noShowRate = month.appointments ? (month.noShows / (month.appointments + month.noShows)) * 100 : 0
   const prevNoShowRate = prev.appointments ? (prev.noShows / (prev.appointments + prev.noShows)) * 100 : 0
@@ -137,11 +182,24 @@ export default function Dashboard() {
 
           <div className="tracker__body">
             <div className="tracker__summary">
-              <p className="tracker__growth">
-                +{growth}
-                <small>%</small>
-              </p>
-              <p className="card__sub">acima da semana passada</p>
+              {growth !== null ? (
+                <>
+                  <p className="tracker__growth">
+                    {growth > 0 ? '+' : growth < 0 ? '−' : ''}
+                    {Math.abs(growth)}
+                    <small>%</small>
+                  </p>
+                  <p className="card__sub">{growth >= 0 ? 'acima da' : 'abaixo da'} semana passada</p>
+                </>
+              ) : (
+                <p className="card__sub">
+                  {loadingNumbers
+                    ? 'Carregando…'
+                    : weekTotal > 0
+                      ? 'Primeira semana com atendimentos concluídos.'
+                      : 'Conclua os atendimentos na agenda e o valor aparece aqui.'}
+                </p>
+              )}
               <Money value={weekTotal} size="md" />
             </div>
 
@@ -219,7 +277,12 @@ export default function Dashboard() {
               </ul>
             </div>
           ) : (
-            <p className="card__sub">Nenhum atendimento restante hoje.</p>
+            <div className="upnext__empty">
+              <p className="card__sub">{today.length ? 'Nenhum atendimento restante hoje.' : 'Nenhum atendimento marcado para hoje.'}</p>
+              <Link to={dash('/agenda')} className="textlink">
+                Abrir a agenda
+              </Link>
+            </div>
           )}
         </Card>
 
@@ -242,7 +305,7 @@ export default function Dashboard() {
               )}
             </h2>
             <p className="card__sub">
-              {short(month.gross)} acumulados · {goalPct}% da meta de {short(MONTHLY_GOAL)}
+              {short(month.gross)} acumulados · {month.appointments} {month.appointments === 1 ? 'atendimento concluído' : 'atendimentos concluídos'}
             </p>
           </div>
           <Link to={dash('/financeiro')} className="closecard__cta">
@@ -274,7 +337,7 @@ export default function Dashboard() {
                 <small>%</small>
               </p>
               <span className="delta">
-                {freeHours} {freeHours === 1 ? 'hora livre' : 'horas livres'} na equipe
+                {capacity === 0 ? 'Cadastre quem atende na agenda' : `${freeHours} ${freeHours === 1 ? 'hora livre' : 'horas livres'} na equipe`}
               </span>
             </div>
             <div className="kpis__item">
@@ -301,17 +364,22 @@ export default function Dashboard() {
               Ver financeiro
             </Link>
           </div>
+          {ranking.length === 0 && (
+            <p className="card__sub">
+              {loadingNumbers ? 'Carregando…' : 'Quando você concluir atendimentos na agenda, os serviços que mais rendem aparecem aqui.'}
+            </p>
+          )}
           <ol className="rank">
             {ranking.map((c) => (
               <li key={c.name} className="rank__item">
                 <div className="rank__top">
                   <p className="upnext__name">{c.name}</p>
                   <p className="card__sub">
-                    {c.qty} atendimentos · ticket {short(c.qty ? Math.round(c.total / c.qty) : 0)}
+                    {c.qty} {c.qty === 1 ? 'atendimento' : 'atendimentos'} · ticket {short(c.qty ? Math.round(c.total / c.qty) : 0)}
                   </p>
                   <p className="rank__value">{short(c.total)}</p>
                 </div>
-                <div className="rank__bar" role="img" aria-label={`${c.name}: ${Math.round((c.total / month.gross) * 100)}% do faturamento`}>
+                <div className="rank__bar" role="img" aria-label={`${c.name}: ${month.gross ? Math.round((c.total / month.gross) * 100) : 0}% do faturamento`}>
                   <span style={{ width: `${(c.total / topTotal) * 100}%` }} />
                 </div>
               </li>
