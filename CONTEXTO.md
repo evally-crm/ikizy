@@ -23,7 +23,7 @@ Módulos do sistema (`app.ikizy.com/dashboard`):
 | Meu site | editor do site público do negócio (detalhado na seção 5) |
 | Assinatura | plano do IKIZY (Stripe: cartão e Pix) |
 
-Planos do IKIZY: Solo R$ 9,90, Studio R$ 29,90, Salão R$ 59,90 (fonte única: `apps/app/src/lib/plans.ts`). Todo salão novo ganha 30 dias de teste do Solo.
+Planos do IKIZY: Solo R$ 9,90, Studio R$ 29,90, Salão R$ 59,90 (fonte única: `apps/app/src/lib/plans.ts`). Todo salão novo ganha 30 dias de teste em qualquer plano; no cadastro a dona escolhe o plano e se paga no cartão (débito automático no fim do teste) ou por Pix.
 
 ---
 
@@ -100,6 +100,7 @@ npm run build
 | `20261019000000_palette_dark` | paleta escura `preto-branco` aceita no banco |
 | `20261020000000_client_file` | ficha completa da cliente (e-mail, Instagram, endereço, profissão, como conheceu, anamnese em jsonb, assinatura do termo), `loyalty_settings`, `loyalty_entries` (selos extras e resgates) e `client_notes` |
 | `20261021000000_client_photos` | fotos de antes e depois na ficha (`client_photos`: miniatura + foto, só membros do salão leem; não passam pela página pública) |
+| `20261023000000_plan_choice` | passo de plano no cadastro: `subscriptions.plan_chosen_at` e `choose_trial_plan()` (teste sem cartão, paga por Pix) |
 
 Regras importantes:
 - Toda tabela tem `salon_id` + RLS. Escrita de catálogo/site só `owner`/`manager`; sem assinatura ativa, escrita bloqueada (políticas restritivas).

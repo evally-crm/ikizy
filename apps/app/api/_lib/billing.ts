@@ -74,6 +74,8 @@ export interface CheckoutInput {
   plan: PlanId
   method: BillingMethod
   months: PixMonths
+  /** de onde veio: o passo de plano do cadastro volta para ele; o resto volta para a tela de assinatura */
+  from: 'onboarding' | 'assinatura'
 }
 
 export function parseCheckoutInput(body: unknown): CheckoutInput {
@@ -82,7 +84,8 @@ export function parseCheckoutInput(body: unknown): CheckoutInput {
   if (b.method !== 'card' && b.method !== 'pix') throw new HttpError(400, 'invalid_method', 'Forma de pagamento inválida.')
   const months = b.months === undefined ? 1 : b.months
   if (b.method === 'pix' && !isPixMonths(months)) throw new HttpError(400, 'invalid_months', 'Período inválido para o Pix.')
-  return { plan: b.plan, method: b.method, months: (b.method === 'pix' ? months : 1) as PixMonths }
+  const from = b.from === 'onboarding' ? 'onboarding' : 'assinatura'
+  return { plan: b.plan, method: b.method, months: (b.method === 'pix' ? months : 1) as PixMonths, from }
 }
 
 interface CheckoutDeps {
@@ -124,12 +127,13 @@ export async function createCheckout(deps: CheckoutDeps, user: { id: string; ema
   }
 
   const plan = PLANS[input.plan]
+  const returnPath = input.from === 'onboarding' ? '/cadastro/plano' : '/dashboard/assinatura'
   const base = {
     customer: customerId,
     client_reference_id: member.salonId,
     locale: 'pt-BR' as const,
-    success_url: `${appUrl}/dashboard/assinatura?retorno=ok`,
-    cancel_url: `${appUrl}/dashboard/assinatura?retorno=cancelado`,
+    success_url: `${appUrl}${returnPath}?retorno=ok`,
+    cancel_url: `${appUrl}${returnPath}?retorno=cancelado`,
   }
 
   if (input.method === 'pix') {
@@ -158,10 +162,10 @@ export async function createCheckout(deps: CheckoutDeps, user: { id: string; ema
   const price = prices.data[0]
   if (!price) throw new HttpError(500, 'price_missing', 'Preço do plano não configurado no Stripe.')
 
-  // quem assina o Solo ainda no teste não perde os dias que sobraram (o Stripe exige >= 48 h)
+  // quem assina ainda no teste (qualquer plano) não perde os dias que sobraram: a 1ª cobrança vem no fim dele (o Stripe exige >= 48 h)
   let trialEnd: number | undefined
   if (
-    input.plan === 'solo' &&
+    plan.trialDays > 0 &&
     sub.status === 'trialing' &&
     sub.trialEndsAt &&
     sub.trialEndsAt.getTime() - now.getTime() > MIN_TRIAL_END_HOURS * 60 * 60 * 1000
