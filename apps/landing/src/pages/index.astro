@@ -396,7 +396,7 @@ const faqSchema = {
 </Base>
 
 <script is:inline id="halftone-script">
-  // boca em pontos redondos, aberta e com bordas esfumadas; o batom (vermelho) se espalha de um canto ao outro, segura e volta, em loop
+  // boca em símbolos (ponto, +, x, quadrado), aberta e com bordas esfumadas; o batom (vermelho) se espalha de um canto ao outro, segura e volta, em loop
   (() => {
     const canvas = document.getElementById('halftone')
     if (!canvas) return
@@ -444,6 +444,32 @@ const faqSchema = {
       return Math.max(0, smooth(-0.1, 0.12, out) * smooth(-0.02, 0.07, inner) - lipLine)
     }
 
+    /** símbolo conforme a densidade, como no login: nada · ponto · + · x · quadradinho · quadrado */
+    function glyph(x, y, cell, d, mix) {
+      const m = cell / 2
+      const a = cell * 0.3
+      if (d < 0.1) return
+      if (d >= 0.56 && mix < 0.3) d = 0.5
+      if (d < 0.24) return ctx.fillRect(x + m - 0.9, y + m - 0.9, 1.8, 1.8)
+      ctx.beginPath()
+      if (d < 0.4) {
+        ctx.moveTo(x + m, y + m - a)
+        ctx.lineTo(x + m, y + m + a)
+        ctx.moveTo(x + m - a, y + m)
+        ctx.lineTo(x + m + a, y + m)
+        return ctx.stroke()
+      }
+      if (d < 0.56) {
+        ctx.moveTo(x + m - a * 0.9, y + m - a * 0.9)
+        ctx.lineTo(x + m + a * 0.9, y + m + a * 0.9)
+        ctx.moveTo(x + m + a * 0.9, y + m - a * 0.9)
+        ctx.lineTo(x + m - a * 0.9, y + m + a * 0.9)
+        return ctx.stroke()
+      }
+      if (d < 0.72) return ctx.fillRect(x + m - a, y + m - a, a * 2, a * 2)
+      ctx.fillRect(x + 1, y + 1, cell - 2, cell - 2)
+    }
+
     function draw(t) {
       const dpr = Math.min(devicePixelRatio || 1, 2)
       const { width, height } = canvas.getBoundingClientRect()
@@ -458,7 +484,7 @@ const faqSchema = {
       ctx.clearRect(0, 0, width, height)
 
       const S = Math.min(width * 0.46, height * 0.66)
-      const STEP = Math.max(9, Math.round(S / 19))
+      const STEP = Math.max(7, Math.round(S / 30))
       const cx = width / 2
       const cy = height / 2
       // ciclo do batom: espera, o vermelho se espalha da esquerda para a direita, segura e volta ao escuro
@@ -466,35 +492,30 @@ const faqSchema = {
       const sweep = -1.3 + smooth(0.8, 4.8, p) * 2.6
       const fade = 1 - smooth(7.6, 9.4, p)
 
+      ctx.lineWidth = 1.4
       for (let row = 0, y = STEP / 2; y < height; row++, y += STEP) {
-        for (let x = STEP / 2; x < width; x += STEP) {
+        for (let col = 0, x = STEP / 2; x < width; col++, x += STEP) {
           const u = (x - cx) / S + Math.sin(y * 0.02 + t * 0.8) * 0.01
           const v = (y - cy) / S + Math.sin(x * 0.017 - t * 0.6) * 0.01
+          const n = hash(row, col)
+          const wave = waveAt(x, y, t)
           let d = density(u, v, t)
-          const n = hash(row, Math.round(x))
           if (d <= 0.02) {
-            // pontinhos soltos em volta, como pó
+            // pontinhos e + soltos em volta, como pó
             const e = Math.hypot(u / 1.12, v / 0.78)
             const inMouth = Math.abs(u) < OPEN_W + 0.06 && Math.abs(v) < 0.2
-            if (!inMouth && e < 1.2 && n < smooth(1.2, 0.85, e) * 0.35 * waveAt(x, y, t)) d = 0.12
+            if (!inMouth && e < 1.2 && n < smooth(1.2, 0.85, e) * 0.45 * wave) d = 0.15 + n * 0.4
             else continue
-          }
-          d *= 0.82 + 0.18 * waveAt(x, y, t)
-          const paint = smooth(u + 0.05, u + 0.3, sweep) * fade
-          const col = INK.map((c, i) => Math.round(c + (RED[i] - c) * paint))
-          const r = STEP * 0.47 * Math.pow(d, 0.65)
-          if (r < 0.8) continue
-          ctx.fillStyle = ctx.strokeStyle = 'rgb(' + col + ')'
-          ctx.beginPath()
-          // na borda esfumada parte dos pontos vira anel, como na impressão
-          if (d < 0.6 && n < 0.3) {
-            ctx.lineWidth = Math.max(1, r * 0.3)
-            ctx.arc(x, y, r * 0.85, 0, Math.PI * 2)
-            ctx.stroke()
           } else {
-            ctx.arc(x, y, r, 0, Math.PI * 2)
-            ctx.fill()
+            // volume dos lábios: mais escuro junto à abertura, brilho no lábio de baixo, e ondas que fazem os símbolos irem e voltarem
+            const gloss = bell(u - 0.12, 0.25) * bell(v - 0.36, 0.08) * 0.45
+            const rim = bell(Math.abs(v) - 0.16, 0.06) * 0.2
+            d = d * (0.74 + 0.26 * wave) + rim - gloss
           }
+          const paint = smooth(u + 0.05, u + 0.3, sweep) * fade
+          const col3 = INK.map((c, i) => Math.round(c + (RED[i] - c) * paint))
+          ctx.fillStyle = ctx.strokeStyle = 'rgb(' + col3 + ')'
+          glyph(x - STEP / 2, y - STEP / 2, STEP, d + (n - 0.5) * 0.14, hash(col, row))
         }
       }
     }
