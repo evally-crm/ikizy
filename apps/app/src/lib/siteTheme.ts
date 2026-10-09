@@ -88,5 +88,6 @@ export const fontHref = (id: FontId) => `https://fonts.googleapis.com/css2?famil
 
 export const isFontId = (v: unknown): v is FontId => typeof v === 'string' && v in FONTS
 
-export const CATEGORIES = ['Unhas', 'Cílios', 'Sobrancelha', 'Cabelo', 'Estética'] as const
+// mesma ordem do enum service_category no banco; "Outros" fica por último na página e no painel
+export const CATEGORIES = ['Unhas', 'Cílios', 'Sobrancelha', 'Cabelo', 'Estética', 'Outros'] as const
 export type Category = (typeof CATEGORIES)[number]
