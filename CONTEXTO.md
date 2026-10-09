@@ -1,7 +1,7 @@
 # IKIZY: contexto completo do projeto
 
 Documento de passagem: o que é o projeto, como está montado, o que já foi feito, como trabalhar nele e o que falta.
-Atualizado em 08/10/2026. Complementa o [README](README.md), que explica como rodar e configurar Neon e Stripe.
+Atualizado em 09/10/2026. Complementa o [README](README.md), que explica como rodar e configurar Neon e Stripe.
 
 > Sem segredos aqui. Chaves e senhas ficam em `.env.local` (raiz e `apps/app/`, fora do git) e nas variáveis da Vercel.
 
@@ -156,6 +156,43 @@ Regras importantes:
 
 ---
 
+## 5b. Confirmação de e-mail no cadastro (código pronto, ainda DESLIGADA)
+
+**Estado em 09/10/2026:** o app já sabe lidar com a confirmação por código, mas ela está **desligada no Neon Auth**.
+Hoje quem se cadastra com e-mail e senha entra direto, sem provar que o e-mail é dela.
+
+Configuração atual do Neon Auth (branch `production`, conferida pelo MCP do Neon com `get_neon_auth_config`):
+
+| Opção | Valor hoje | Para ligar |
+|---|---|---|
+| `verify_email_on_sign_up` | `false` | `true` (manda o código ao criar a conta) |
+| `require_email_verification` | `false` | `true` (sem confirmar, o login é recusado com `email_not_confirmed`) |
+| `verify_email_on_sign_in` | `false` | opcional (reenvia o código ao tentar entrar sem ter confirmado) |
+| `email_verification_method` | `otp` | manter: o app usa código de 6 números, **não** link |
+| `auto_sign_in_after_verification` | `true` | manter: com o código certo a sessão já abre |
+| `email_provider` | `shared` (remetente `auth@mail.myneon.app`, nome "Neon Auth") | trocar por SMTP próprio (ver abaixo) |
+
+O que já está pronto no app (commit `8bc2935`):
+- Tela `/verificar-email?email=...` (`pages/auth/VerificarEmail.tsx`): campo do código, reenvio com espera de 60 s, "usar outro e-mail".
+  Com o código certo vai para `/dashboard` (que leva ao questionário); se a sessão não abrir, vai para o login com aviso de "e-mail confirmado".
+- `AuthProvider.tsx`: `signUp` trata `session_not_found` (conta criada sem sessão = falta o código) e leva à tela do código;
+  `signIn` trata `email_not_confirmed` (senha certa, e-mail não confirmado) e também leva à tela do código;
+  `verifyEmailCode` e `resendVerificationCode` chamam o Better Auth (`emailOtp.verifyEmail` / `sendVerificationOtp`) via `authCall()`.
+- Login com Google não passa por isso (o Google já garante o e-mail).
+
+Pendências para ligar de verdade:
+1. **SMTP próprio** antes de ligar: com o provedor compartilhado o e-mail chega como "Neon Auth" de `mail.myneon.app`, cai mais no spam
+   e tem limite de envio. Usar um remetente do domínio (ex.: `nao-responda@ikizy.com` via Resend, Postmark ou SES), com SPF/DKIM no DNS da Vercel.
+   Se der, personalizar o texto do e-mail em português com a marca IKIZY.
+2. **Ligar** `verify_email_on_sign_up` e `require_email_verification` no console do Neon (Auth → configurações) ou pelo MCP (`update_auth_config`).
+3. **Testar em produção** o caminho todo: cadastro → código chega → código errado/expirado → reenviar → código certo → questionário;
+   e login de conta não confirmada → tela do código.
+4. **Contas que já existem** sem e-mail confirmado: com `require_email_verification` ligado elas passam a receber `email_not_confirmed` no login
+   e caem na tela do código (funciona, mas é bom avisar ou marcar essas contas como confirmadas antes de ligar).
+5. Só ligar quando a usuária pedir: muda o primeiro contato de toda cliente nova.
+
+---
+
 ## 6. Preferências da usuária (como ela gosta de trabalhar)
 
 - **Mobile-first** em tudo; testar em 375px e em desktop (ela usa tela larga ~1840×880).
@@ -181,7 +218,11 @@ Regras importantes:
 
 ## 8. Estado atual
 
-- `main` e `dev` iguais e em produção (merge `2e61050`): setas entre as etapas, serviços agrupados, planos por assinatura (Novidade), guia sem rolagem, paletas combinadas, guia no UX da criação de conta, tela cheia, vitrine e fotos, agendamento online.
+- 09/10/2026, já na `main`: confirmação de e-mail por código pronta no app mas desligada no Neon (seção 5b); seleção de texto em vermelho
+  (landing e sistema); menu próprio do botão direito no sistema (`components/AppContextMenu.tsx`: novo agendamento, nova cliente,
+  seções, ver o site, copiar link, recarregar, sair; campos de texto e Shift + botão direito mantêm o menu do navegador;
+  `/dashboard/clientes?nova=1` abre o cadastro de cliente, como `/dashboard/agenda?nova=1` já fazia).
+- Antes disso, `main` e `dev` iguais e em produção (merge `2e61050`): setas entre as etapas, serviços agrupados, planos por assinatura (Novidade), guia sem rolagem, paletas combinadas, guia no UX da criação de conta, tela cheia, vitrine e fotos, agendamento online.
 - Salão de teste: slug `salao` (12 serviços, 1 profissional), site publicado pela usuária durante os testes.
 
 ---
@@ -249,6 +290,7 @@ Hoje: a cliente escolhe serviço, profissional, dia e horário livre, informa no
 
 | Prioridade | Melhoria | Por quê / como |
 |---|---|---|
+| P1 | **Ligar a confirmação de e-mail** | Código pronto; falta SMTP próprio e ligar no Neon Auth. Passo a passo na seção 5b. |
 | P1 | **Checklist de primeiros passos no Início** | "Defina seu horário → cadastre serviços → publique o site → ligue o agendamento". Guia o salão até ter valor no primeiro dia (a GlossGenius faz isso). |
 | P1 | **App instalável (PWA) + notificações push** | Base para avisar novos pedidos e lembretes. |
 | P2 | **Indique e ganhe** | Como o "Give $30, get $30" da GlossGenius: link de indicação, crédito na assinatura das duas. Crescimento barato. |
