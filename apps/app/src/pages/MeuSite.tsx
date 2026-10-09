@@ -137,7 +137,11 @@ export default function MeuSite() {
   const { draft, setDraft, dirty, publish, discard, loading, error: loadError, isLive, publishedSlug } = useStudio()
   const isWide = useMediaQuery('(min-width: 1100px)')
   const splitGuide = useMediaQuery('(min-width: 900px)')
-  const [tab, setTab] = useState<Tab>('pagina')
+  // ?etapa=servicos abre direto numa etapa (links do checklist do Início)
+  const [tab, setTab] = useState<Tab>(() => {
+    const wanted = new URLSearchParams(window.location.search).get('etapa')
+    return TABS.find((t) => t.id === wanted)?.id ?? 'pagina'
+  })
   const [justPublished, setJustPublished] = useState(false)
   const [publishing, setPublishing] = useState(false)
   const [publishError, setPublishError] = useState<string | null>(null)

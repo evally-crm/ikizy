@@ -8,6 +8,7 @@ import { useAgenda } from '../data/AgendaProvider'
 import { ACTIVE_STATUSES } from '../types'
 import { MONTHLY_GOAL, getMonths } from '../data/finance'
 import { TodayMessages } from '../components/TodayMessages'
+import FirstSteps from '../components/FirstSteps'
 import { PendingDialog, PendingList } from '../components/PendingRequests'
 import { can } from '../lib/permissions'
 import { formatBRL, formatTime } from '../lib/format'
@@ -126,6 +127,8 @@ export default function Dashboard() {
         </span>
         </div>
       </header>
+
+      <FirstSteps />
 
       {/* pedidos do site esperando resposta: primeiro da tela, para nenhum se perder */}
       {pending.length > 0 && (

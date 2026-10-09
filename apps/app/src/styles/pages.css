@@ -1644,3 +1644,114 @@
 .agenda__pending {
   margin: 0 0 12px;
 }
+
+/* ---------------------------------------------------------------- primeiros passos */
+.steps {
+  display: grid;
+  gap: 14px;
+}
+.steps__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.steps__count {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-500);
+}
+.steps__title {
+  margin: 2px 0 0;
+  font-size: 22px;
+  font-weight: 500;
+}
+.steps__bar {
+  flex: none;
+}
+.steps__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+}
+@media (min-width: 900px) {
+  .steps__list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 24px;
+  }
+}
+.steps__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+  min-width: 0;
+}
+.steps__mark {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1.5px solid var(--line-strong);
+  color: var(--white);
+}
+.steps__item.is-done .steps__mark {
+  background: var(--ink-900);
+  border-color: var(--ink-900);
+}
+.steps__item.is-done .steps__name {
+  color: var(--ink-500);
+}
+/* passo atual: o botão desce para baixo do texto quando não cabe ao lado */
+.steps__item.is-next {
+  flex-wrap: wrap;
+}
+.steps__item.is-next .steps__body {
+  flex: 1 1 220px;
+}
+@media (max-width: 560px) {
+  .steps__item.is-next .steps__go {
+    margin-left: 36px;
+  }
+}
+.steps__item.is-next .steps__mark {
+  border-color: var(--brand-500);
+}
+.steps__body {
+  flex: 1;
+  min-width: 0;
+}
+.steps__name {
+  margin: 0;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.steps__text {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--ink-500);
+}
+.steps__go {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  color: var(--ink-900);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+}
+.steps__go.is-primary {
+  padding: 0 14px;
+  background: var(--brand-700);
+  border-color: var(--brand-700);
+  color: var(--white);
+}
