@@ -118,7 +118,9 @@ export default function Onboarding() {
   }, [team, picked.length])
 
   if (status === 'signed-out') return <Navigate to={ROUTES.login} replace />
-  if (status === 'ready' || status === 'demo') return <Navigate to={ROUTES.dashboard} replace />
+  if (status === 'demo') return <Navigate to={ROUTES.dashboard} replace />
+  // negócio criado: segue para a escolha do plano (quem já escolheu é mandada de lá para o dashboard)
+  if (status === 'ready') return <Navigate to={ROUTES.choosePlan} replace />
 
   const step = steps[Math.min(index, steps.length - 1)]
   const last = step === 'negocio'

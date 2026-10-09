@@ -56,7 +56,8 @@ Em produção, o envio de e-mails (verificação e recuperação de senha) exige
 
 Planos: **Solo R$ 9,90**, **Studio R$ 29,90** e **Salão R$ 59,90** por mês (valores em `apps/app/src/lib/plans.ts`, a única fonte).
 
-- **Teste:** só o Solo, 30 dias sem cartão. Todo salão novo já nasce com o teste (`create_salon()` cria a linha em `subscriptions`).
+- **Teste:** 30 dias grátis em qualquer plano. Todo salão novo já nasce com o teste (`create_salon()` cria a linha em `subscriptions`).
+- **Cadastro:** e-mail e senha (ou Google) > questionário (`/cadastro/salao`) > plano (`/cadastro/plano`) > dashboard. No passo de plano a dona escolhe o plano e como pagar no fim do teste: cartão (Checkout do Stripe com `trial_end` no fim do teste; nada é cobrado antes) ou Pix (sem cartão, grava com `choose_trial_plan()`). `subscriptions.plan_chosen_at` marca que ela passou por esse passo; sem ele, o dashboard manda de volta para a escolha. O dashboard mostra a contagem dos dias grátis.
 - **Cartão:** assinatura mensal recorrente (Checkout do Stripe). Mudar de plano, trocar cartão e cancelar ficam no portal do cliente.
 - **Pix:** pré-pago de 1, 3 ou 12 meses. Contas Stripe do Brasil só aceitam Pix de pagamento único (o Pix Automático não está disponível), então o Pix não renova sozinho: a tela e o aviso no topo lembram de pagar de novo.
 - **Sem acesso = só leitura:** `subscriptions.access_until` manda. Vencido, o banco recusa insert/update/delete nas tabelas operacionais (políticas restritivas); os dados continuam visíveis.

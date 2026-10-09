@@ -100,6 +100,7 @@ export function createDb(): BillingDb {
           cancel_at_period_end = false,
           access_until = greatest(access_until, now()) + (${months}::int * interval '1 month'),
           stripe_customer_id = coalesce(stripe_customer_id, ${customerId}),
+          plan_chosen_at = coalesce(plan_chosen_at, now()),
           updated_at = now()
         where salon_id = ${salonId} and exists (select 1 from ins)
         returning salon_id`) as Row[]
@@ -119,6 +120,7 @@ export function createDb(): BillingDb {
           access_until = case when ${p.onlyShrink} then least(access_until, ${p.accessUntil.toISOString()}::timestamptz)
                               else ${p.accessUntil.toISOString()}::timestamptz end,
           last_event_at = ${p.eventAt.toISOString()}::timestamptz,
+          plan_chosen_at = coalesce(plan_chosen_at, now()),
           updated_at = now()
         where salon_id = ${p.salonId}
           and (last_event_at is null or last_event_at <= ${p.eventAt.toISOString()}::timestamptz)`
