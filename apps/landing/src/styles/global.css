@@ -39,7 +39,6 @@
   --pink-100: var(--gray-100);
   --pink-300: var(--gray-300);
 
-  --font-serif: 'Instrument Serif', Georgia, 'Times New Roman', serif;
   /* fonte pixelada das palavras em destaque (as que ficam em vinho) */
   --font-accent: 'Geist Pixel', ui-monospace, 'SFMono-Regular', monospace;
   --font-sans: 'Lufga', 'Outfit Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -481,25 +480,16 @@ em {
 }
 .display__main {
   display: flex;
-  align-items: center;
-  gap: clamp(12px, 1.8vw, 28px);
+  align-items: baseline;
+  gap: 0.22em;
   font-size: clamp(50px, min(7vw, 13vh), 130px);
   line-height: 0.95;
   letter-spacing: -0.06em;
 }
 .display__main em {
-  /* o "simples" do hero é preto: continua na serifa itálica (o pixel fica só nos destaques em vinho) */
-  font-family: var(--font-serif);
-  font-style: italic;
+  /* o "simples" do hero fica preto, na mesma fonte pixelada dos destaques */
   color: var(--ink-900);
-  font-size: 1.08em;
-  letter-spacing: -0.03em;
-  padding-right: 0.05em;
-}
-.display__line {
-  flex: 0 1 clamp(30px, 6vw, 110px);
-  height: 1px;
-  background: var(--ink-900);
+  letter-spacing: -0.04em;
 }
 .display__sub {
   font-size: clamp(15px, 1.5vw, 19px);
