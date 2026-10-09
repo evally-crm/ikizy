@@ -600,38 +600,6 @@ em {
   font-size: 13px;
   color: var(--ink-900);
 }
-.ui--list li {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 4px;
-}
-.ui--list li + li {
-  border-top: 1px solid var(--line);
-}
-.ui__sw {
-  position: relative;
-  width: 32px;
-  height: 18px;
-  border-radius: var(--radius-pill);
-  background: var(--gray-300);
-}
-.ui__sw::after {
-  content: '';
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: var(--white);
-}
-.ui__sw.is-on {
-  background: var(--ink-900);
-}
-.ui__sw.is-on::after {
-  left: 16px;
-}
 .ui--client {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -816,6 +784,41 @@ em {
 .feat__text {
   font-size: 15px;
   color: var(--ink-500);
+}
+/* sexto item: só um círculo com "+" que leva para o passo a passo, como o "Why iPhone" */
+.feat--more {
+  display: grid;
+  place-items: center;
+  min-height: 200px;
+  background: transparent;
+}
+.feat__plus {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  font-size: 15px;
+  color: var(--ink-900);
+}
+.feat__circle {
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--white);
+  box-shadow: 0 10px 30px rgba(14, 13, 13, 0.08);
+  font-size: 40px;
+  font-weight: 300;
+  line-height: 1;
+  transition: background-color 0.2s, color 0.2s, transform 0.2s;
+}
+.feat__plus:hover .feat__circle,
+.feat__plus:focus-visible .feat__circle {
+  background: var(--ink-900);
+  color: var(--white);
+  transform: scale(1.05);
 }
 .ui--bubble {
   max-width: 240px;

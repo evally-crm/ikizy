@@ -15,7 +15,6 @@ const features = [
   { was: 'Mensagem digitada uma a uma', title: 'Mensagens prontas', text: 'Confirmação, lembrete e pós-atendimento abrem prontos no seu WhatsApp. É só conferir e enviar.', ui: 'message' },
   { was: 'Caixa e comissão na calculadora', title: 'Financeiro e comissões', text: 'Entradas, saídas e a comissão de cada profissional, com o fechamento do mês em recibo.', ui: 'money' },
   { was: 'Horário marcado por direct', title: 'Site do seu negócio', text: 'Uma página sua para a cliente ver os serviços e pedir um horário.', ui: 'site' },
-  { was: 'Senha da dona com todo mundo', title: 'Equipe com acesso certo', text: 'Dona, gerente, recepção e profissional: cada pessoa vê só o que precisa.', ui: 'roles' },
 ]
 
 /** passo a passo com telas reais do sistema (modo demonstração, com dados de exemplo) */
@@ -152,13 +151,6 @@ const faqSchema = {
                 </div>
               )}
               {f.ui === 'site' && <span class="ui ui--url">seu-negocio.ikizy.com</span>}
-              {f.ui === 'roles' && (
-                <ul class="ui ui--list">
-                  <li><span>Dona</span><i class="ui__sw is-on" /></li>
-                  <li><span>Gerente</span><i class="ui__sw is-on" /></li>
-                  <li><span>Recepção</span><i class="ui__sw" /></li>
-                </ul>
-              )}
             </div>
             <p class="feat__was"><span>Antes</span><s>{f.was}</s></p>
             <h3>{f.title}</h3>
@@ -166,6 +158,12 @@ const faqSchema = {
           </li>
         ))
       }
+      <li class="feat feat--more">
+        <a class="feat__plus" href="#como-funciona">
+          <span class="feat__circle" aria-hidden="true">+</span>
+          <span>Veja a IKIZY por dentro</span>
+        </a>
+      </li>
     </ul>
   </section>
 
