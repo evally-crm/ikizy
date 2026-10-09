@@ -262,11 +262,13 @@ const faqSchema = {
           <h2 id="price-title" class="h2">Um plano para o <em>tamanho</em> do seu negócio</h2>
           <p class="lead">Todos os planos começam com {TRIAL_DAYS} dias grátis.</p>
         </div>
-        <div class="toggle" role="radiogroup" aria-label="Período de cobrança" data-toggle>
-          <button type="button" role="radio" aria-checked="true" class="toggle__opt is-active" data-period="1">Mensal</button>
-          <button type="button" role="radio" aria-checked="false" class="toggle__opt" data-period="3">
-            Trimestral <small class="toggle__off">−{PIX_DISCOUNT_PCT[3]}%</small>
+        <div class="toggle" data-toggle>
+          <button type="button" class="toggle__label is-active" tabindex="-1" data-period="1">Mensal</button>
+          <button type="button" role="switch" aria-checked="false" aria-label="Ver preços do plano trimestral" class="toggle__switch" data-switch>
+            <span aria-hidden="true"></span>
           </button>
+          <button type="button" class="toggle__label" tabindex="-1" data-period="3">Trimestral</button>
+          <span class="toggle__off">Economize {PIX_DISCOUNT_PCT[3]}%</span>
         </div>
       </div>
 
@@ -479,7 +481,7 @@ const faqSchema = {
 </script>
 
 <script is:inline id="pricing-script">
-  // toggle Mensal/Trimestral: troca preço, textos e o destaque de economia de cada plano, com um fade curto
+  // interruptor Mensal/Trimestral: troca preço, textos e o destaque de economia de cada plano, com um fade curto
   (() => {
     const toggle = document.querySelector('[data-toggle]')
     const plans = document.querySelector('[data-plans]')
@@ -514,28 +516,23 @@ const faqSchema = {
       })
     }
 
-    toggle.addEventListener('click', (e) => {
-      const btn = e.target.closest('[data-period]')
-      if (!btn || btn.classList.contains('is-active')) return
-      toggle.querySelectorAll('[data-period]').forEach((b) => {
-        const on = b === btn
-        b.classList.toggle('is-active', on)
-        b.setAttribute('aria-checked', on ? 'true' : 'false')
-      })
-      plans.classList.toggle('is-quarterly', btn.dataset.period === '3')
+    const sw = toggle.querySelector('[data-switch]')
+    let period = 1
+    function setPeriod(months) {
+      if (months === period) return
+      period = months
+      sw.setAttribute('aria-checked', months === 3 ? 'true' : 'false')
+      toggle.querySelectorAll('[data-period]').forEach((b) => b.classList.toggle('is-active', Number(b.dataset.period) === months))
+      plans.classList.toggle('is-quarterly', months === 3)
       plans.classList.add('is-swapping')
       setTimeout(() => {
-        render(Number(btn.dataset.period))
+        render(months)
         plans.classList.remove('is-swapping')
       }, 160)
-    })
-    // setas do teclado alternam entre as duas opções, como num grupo de rádio
-    toggle.addEventListener('keydown', (e) => {
-      if (!['ArrowLeft', 'ArrowRight'].includes(e.key)) return
-      const next = toggle.querySelector('[data-period]:not(.is-active)')
-      next.click()
-      next.focus()
-    })
+    }
+    // o interruptor alterna; as palavras "Mensal" e "Trimestral" escolhem direto
+    sw.addEventListener('click', () => setPeriod(period === 1 ? 3 : 1))
+    toggle.querySelectorAll('[data-period]').forEach((b) => b.addEventListener('click', () => setPeriod(Number(b.dataset.period))))
   })()
 </script>
 
