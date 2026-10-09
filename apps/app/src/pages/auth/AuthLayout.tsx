@@ -1,7 +1,7 @@
-import { useId, type InputHTMLAttributes, type ReactNode } from 'react'
-import { ArrowRight } from 'lucide-react'
+import { useId, useState, type InputHTMLAttributes, type ReactNode } from 'react'
+import { ArrowRight, Eye, EyeOff } from 'lucide-react'
 import { Card } from '../../components/ui'
-import { HalftoneArt } from './HalftoneArt'
+import { HalftoneFace } from './HalftoneFace'
 
 /** `topAction` fica à direita da marca (ex.: link "Criar conta") */
 export function AuthLayout({ children, topAction }: { children: ReactNode; topAction?: ReactNode }) {
@@ -11,7 +11,7 @@ export function AuthLayout({ children, topAction }: { children: ReactNode; topAc
         <span />
         <span />
       </div>
-      <HalftoneArt />
+      <HalftoneFace />
       <div className="auth__box">
         <header className="auth__top">
           <p className="logo auth__logo">
@@ -58,6 +58,9 @@ export function AuthField({
   ...input
 }: { label: string; hint?: string; icon?: ReactNode; action?: ReactNode } & InputHTMLAttributes<HTMLInputElement>) {
   const id = useId()
+  // campos de senha ganham o botão de mostrar/ocultar
+  const isPassword = input.type === 'password'
+  const [visible, setVisible] = useState(false)
   return (
     <div className="field">
       <label htmlFor={id} className="field__label">
@@ -69,7 +72,19 @@ export function AuthField({
             {icon}
           </span>
         )}
-        <input id={id} placeholder={label} {...input} />
+        <input id={id} placeholder={label} {...input} type={isPassword && visible ? 'text' : input.type} />
+        {isPassword && (
+          <button
+            type="button"
+            className="auth__eye"
+            aria-label={visible ? 'Ocultar senha' : 'Mostrar senha'}
+            aria-pressed={visible}
+            aria-controls={id}
+            onClick={() => setVisible((v) => !v)}
+          >
+            {visible ? <EyeOff size={18} /> : <Eye size={18} />}
+          </button>
+        )}
         {action}
       </span>
       {hint && <p className="field__hint">{hint}</p>}

@@ -396,20 +396,75 @@ const faqSchema = {
 </Base>
 
 <script is:inline id="halftone-script">
+  // boca preta em símbolos (ponto, +, x, quadrado), aberta e com bordas esfumadas, se mexendo
   (() => {
     const canvas = document.getElementById('halftone')
     if (!canvas) return
     const ctx = canvas.getContext('2d')
-    const STEP = 9
-    const INK = '14, 13, 12'
-    const CUTS = [0.12, 0.3, 0.48, 0.66, 0.84]
+    const INK = 'rgb(14, 13, 12)'
     const still = matchMedia('(prefers-reduced-motion: reduce)').matches
     let visible = true
     let last = 0
 
     const smooth = (a, b, x) => {
-      const t = Math.min(1, Math.max(0, (x - a) / (b - a)))
-      return t * t * (3 - 2 * t)
+      const k = Math.min(1, Math.max(0, (x - a) / (b - a)))
+      return k * k * (3 - 2 * k)
+    }
+    const bell = (x, w) => Math.exp(-((x / w) ** 2))
+    const hash = (c, r) => {
+      const s = Math.sin(c * 12.9898 + r * 78.233) * 43758.5453
+      return s - Math.floor(s)
+    }
+    const waveAt = (x, y, t) =>
+      (Math.sin(x * 0.012 + Math.sin(y * 0.009 + t * 0.6) * 2.4 + t) + Math.sin(y * 0.014 - x * 0.007 + 1.7 - t * 0.8) * 0.8 + 1.8) / 3.6
+
+    // contornos arredondados em u ∈ [-1, 1]: oval com um leve arco do cupido, e a abertura no meio onde fica a marca
+    const top = (u) => -0.56 * Math.pow(1 - u * u, 0.6) + 0.11 * bell(u, 0.14)
+    const bottom = (u) => 0.58 * Math.pow(1 - u * u, 0.55)
+    const OPEN_W = 0.52
+    const opening = (u, t) => Math.sqrt(Math.max(0, 1 - (u / OPEN_W) ** 2)) * (1 + Math.sin(t * 0.7) * 0.06)
+
+    /** densidade (0..1) da boca: cheia no meio dos lábios, esfumando perto da borda e da abertura */
+    function density(u, v, t) {
+      if (Math.abs(u) >= 1) return 0
+      const o = opening(u, t)
+      const ui = -0.12 * o
+      const li = 0.14 * o
+      const tp = top(u)
+      const bt = bottom(u)
+      if (v < tp - 0.14 || v > bt + 0.14) return 0
+      if (v > ui && v < li) return 0
+      // distância (em u) até a borda mais próxima: de fora ou da abertura
+      const out = Math.min(v - tp, bt - v)
+      const inner = v <= ui ? ui - v : v - li
+      const lipLine = Math.abs(v) < 0.03 && o === 0 ? 0.35 : 0 // fenda entre os lábios perto dos cantos
+      return Math.max(0, smooth(-0.08, 0.26, out) * smooth(-0.01, 0.14, inner) - lipLine)
+    }
+
+    /** símbolo conforme a densidade, como no login: nada · ponto · + · x · quadradinho · quadrado */
+    function glyph(x, y, cell, d, mix) {
+      const m = cell / 2
+      const a = cell * 0.3
+      if (d < 0.1) return
+      if (d >= 0.56 && mix < 0.3) d = 0.5
+      if (d < 0.24) return ctx.fillRect(x + m - 0.9, y + m - 0.9, 1.8, 1.8)
+      ctx.beginPath()
+      if (d < 0.4) {
+        ctx.moveTo(x + m, y + m - a)
+        ctx.lineTo(x + m, y + m + a)
+        ctx.moveTo(x + m - a, y + m)
+        ctx.lineTo(x + m + a, y + m)
+        return ctx.stroke()
+      }
+      if (d < 0.56) {
+        ctx.moveTo(x + m - a * 0.9, y + m - a * 0.9)
+        ctx.lineTo(x + m + a * 0.9, y + m + a * 0.9)
+        ctx.moveTo(x + m + a * 0.9, y + m - a * 0.9)
+        ctx.lineTo(x + m - a * 0.9, y + m + a * 0.9)
+        return ctx.stroke()
+      }
+      if (d < 0.72) return ctx.fillRect(x + m - a, y + m - a, a * 2, a * 2)
+      ctx.fillRect(x + 1, y + 1, cell - 2, cell - 2)
     }
 
     function draw(t) {
@@ -424,38 +479,34 @@ const faqSchema = {
       }
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
       ctx.clearRect(0, 0, width, height)
+
+      const S = Math.min(width * 0.46, height * 0.66)
+      const STEP = 7
       const cx = width / 2
       const cy = height / 2
-      const R = Math.min(width * 0.46, height * 0.5)
-      const cuts = CUTS.map((f) => f * width)
-      ctx.fillStyle = 'rgb(' + INK + ')'
-      for (let y = STEP / 2; y < height; y += STEP) {
-        for (let x = STEP / 2; x < width; x += STEP) {
-          const d = Math.hypot(x - cx, y - cy) / R
-          if (d > 1) continue
-          const ex = (x - cx) / (R * 0.5)
-          const ey = (y - cy) / (R * 0.16)
-          if (ex * ex + ey * ey < 1) continue
-          let k = 0
-          let gap = false
-          for (const b of cuts) {
-            if (x > b) k++
-            if (Math.abs(x - b) < STEP * 0.45) gap = true
+
+      ctx.lineWidth = 1.3
+      ctx.fillStyle = ctx.strokeStyle = INK
+      for (let row = 0, y = STEP / 2; y < height; row++, y += STEP) {
+        for (let col = 0, x = STEP / 2; x < width; col++, x += STEP) {
+          const u = (x - cx) / S + Math.sin(y * 0.02 + t * 0.8) * 0.01
+          const v = (y - cy) / S + Math.sin(x * 0.017 - t * 0.6) * 0.01
+          const n = hash(row, col)
+          const wave = waveAt(x, y, t)
+          let d = density(u, v, t)
+          if (d <= 0.02) {
+            // pontinhos e + soltos em volta, como pó
+            const e = Math.hypot(u / 1.12, v / 0.78)
+            const inMouth = Math.abs(u) < OPEN_W + 0.06 && Math.abs(v) < 0.2
+            if (!inMouth && e < 1.2 && n < smooth(1.2, 0.85, e) * 0.45 * wave) d = 0.15 + n * 0.4
+            else continue
+          } else {
+            // volume dos lábios: mais escuro junto à abertura, brilho no lábio de baixo, e ondas que fazem os símbolos irem e voltarem
+            const gloss = bell(u - 0.12, 0.25) * bell(v - 0.36, 0.08) * 0.45
+            const rim = bell(Math.abs(v) - 0.16, 0.06) * 0.2
+            d = d * (0.84 + 0.16 * wave) + rim - gloss
           }
-          if (gap) continue
-          const xs = x + k * 70
-          const ys = y + k * 40
-          const wave =
-            Math.sin(xs * 0.012 + Math.sin(ys * 0.009 + t * 0.6) * 2.4 + t) +
-            Math.sin(ys * 0.014 - xs * 0.007 + 1.7 - t * 0.8) * 0.8 +
-            Math.sin((xs + ys) * 0.006 + Math.sin(xs * 0.01 - t * 0.5) * 1.6) * 0.6
-          const v = (wave + 2.4) / 4.8
-          const body = smooth(0, 0.35, 1 - d)
-          const size = STEP * 0.6 * body * (0.3 + 0.7 * Math.pow(v, 1.3))
-          if (size < 0.45) continue
-          ctx.beginPath()
-          ctx.arc(x, y, size, 0, Math.PI * 2)
-          ctx.fill()
+          glyph(x - STEP / 2, y - STEP / 2, STEP, d + (n - 0.5) * 0.14, hash(col, row))
         }
       }
     }
@@ -469,7 +520,7 @@ const faqSchema = {
     const tick = (now) => {
       if (visible && now - last >= 1000 / 30) {
         last = now
-        draw(now / 4000)
+        draw(now / 1000)
       }
       requestAnimationFrame(tick)
     }
