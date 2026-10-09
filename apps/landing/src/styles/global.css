@@ -39,7 +39,8 @@
   --pink-100: var(--gray-100);
   --pink-300: var(--gray-300);
 
-  --font-serif: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+  /* fonte pixelada das palavras em destaque (as que ficam em vinho) */
+  --font-accent: 'Geist Pixel', ui-monospace, 'SFMono-Regular', monospace;
   --font-sans: 'Lufga', 'Outfit Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
 
   --radius-md: 16px;
@@ -54,6 +55,35 @@
 @media (min-width: 768px) {
   :root {
     --gutter: 28px;
+  }
+}
+
+/* barra de rolagem fina e clara, sem fundo e sem setas.
+   Chrome/Safari/Edge usam os pseudo-elementos; o Firefox, as propriedades padrão. */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  border-radius: 99px;
+  background: var(--gray-300);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--gray-400);
+}
+::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+@supports not selector(::-webkit-scrollbar) {
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: var(--gray-300) transparent;
   }
 }
 
@@ -140,12 +170,12 @@ svg {
   top: 12px;
 }
 
-/* destaque dos títulos: serifa em itálico, na cor vinho do IKIZY */
+/* destaque dos títulos: fonte pixelada, na cor vinho do IKIZY */
 em {
-  font-family: var(--font-serif);
-  font-style: italic;
+  font-family: var(--font-accent);
+  font-style: normal;
   font-weight: 400;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
   text-transform: none;
   color: var(--wine);
 }
@@ -450,22 +480,16 @@ em {
 }
 .display__main {
   display: flex;
-  align-items: center;
-  gap: clamp(12px, 1.8vw, 28px);
+  align-items: baseline;
+  gap: 0.22em;
   font-size: clamp(50px, min(7vw, 13vh), 130px);
   line-height: 0.95;
   letter-spacing: -0.06em;
 }
 .display__main em {
+  /* o "simples" do hero fica preto, na mesma fonte pixelada dos destaques */
   color: var(--ink-900);
-  font-size: 1.08em;
-  letter-spacing: -0.03em;
-  padding-right: 0.05em;
-}
-.display__line {
-  flex: 0 1 clamp(30px, 6vw, 110px);
-  height: 1px;
-  background: var(--ink-900);
+  letter-spacing: -0.04em;
 }
 .display__sub {
   font-size: clamp(15px, 1.5vw, 19px);
@@ -669,10 +693,9 @@ em {
 .you__rot {
   display: grid;
   justify-items: start;
-  font-family: var(--font-serif);
-  font-style: italic;
+  font-family: var(--font-accent);
   font-weight: 400;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
   color: var(--wine);
   transition: width 0.45s ease;
 }
