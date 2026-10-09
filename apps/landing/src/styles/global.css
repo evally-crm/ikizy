@@ -660,18 +660,15 @@ em {
 .you__lead {
   max-width: 60ch;
 }
-/* palavra que troca no título: todas na mesma célula da grade; o JS ajusta a largura para a palavra da vez */
+/* palavra que troca, numa linha própria abaixo do título; todas na mesma célula da grade */
 .you__rot {
-  display: inline-grid;
-  justify-items: start;
-  margin-left: 0.22em;
-  overflow: visible;
+  display: grid;
+  justify-items: center;
   font-family: var(--font-serif);
   font-style: italic;
   font-weight: 400;
   letter-spacing: -0.02em;
   color: var(--wine);
-  transition: width 0.45s ease;
 }
 .you__rot > span {
   grid-area: 1 / 1;
@@ -688,23 +685,14 @@ em {
   opacity: 0;
   transform: translateY(-0.45em);
 }
-/* a mão aparece quando chega em "você." */
+/* a mão em símbolos: o canvas guarda o espaço e os símbolos surgem quando chega em "você." */
 .you__hand {
-  width: clamp(130px, 16vw, 210px);
-  height: auto;
-  margin: 4px auto -6px;
-  opacity: 0;
-  transform: translateY(18px) rotate(-6deg) scale(0.92);
-  transition: opacity 0.6s ease, transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-.you.is-done .you__hand {
-  opacity: 1;
-  transform: none;
+  width: clamp(220px, 26vw, 340px);
+  aspect-ratio: 128 / 111;
+  margin: 6px auto 0;
 }
 @media (prefers-reduced-motion: reduce) {
-  .you__rot,
-  .you__rot > span,
-  .you__hand {
+  .you__rot > span {
     transition: none;
   }
 }
