@@ -40,6 +40,8 @@
   --pink-300: var(--gray-300);
 
   --font-serif: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+  /* fonte pixelada das palavras em destaque (as que ficam em vinho) */
+  --font-accent: 'Geist Pixel', ui-monospace, 'SFMono-Regular', monospace;
   --font-sans: 'Lufga', 'Outfit Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
 
   --radius-md: 16px;
@@ -54,6 +56,35 @@
 @media (min-width: 768px) {
   :root {
     --gutter: 28px;
+  }
+}
+
+/* barra de rolagem fina e clara, sem fundo e sem setas.
+   Chrome/Safari/Edge usam os pseudo-elementos; o Firefox, as propriedades padrão. */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  border-radius: 99px;
+  background: var(--gray-300);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--gray-400);
+}
+::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+@supports not selector(::-webkit-scrollbar) {
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: var(--gray-300) transparent;
   }
 }
 
@@ -140,12 +171,12 @@ svg {
   top: 12px;
 }
 
-/* destaque dos títulos: serifa em itálico, na cor vinho do IKIZY */
+/* destaque dos títulos: fonte pixelada, na cor vinho do IKIZY */
 em {
-  font-family: var(--font-serif);
-  font-style: italic;
+  font-family: var(--font-accent);
+  font-style: normal;
   font-weight: 400;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
   text-transform: none;
   color: var(--wine);
 }
@@ -457,6 +488,9 @@ em {
   letter-spacing: -0.06em;
 }
 .display__main em {
+  /* o "simples" do hero é preto: continua na serifa itálica (o pixel fica só nos destaques em vinho) */
+  font-family: var(--font-serif);
+  font-style: italic;
   color: var(--ink-900);
   font-size: 1.08em;
   letter-spacing: -0.03em;
@@ -669,10 +703,9 @@ em {
 .you__rot {
   display: grid;
   justify-items: start;
-  font-family: var(--font-serif);
-  font-style: italic;
+  font-family: var(--font-accent);
   font-weight: 400;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
   color: var(--wine);
   transition: width 0.45s ease;
 }
