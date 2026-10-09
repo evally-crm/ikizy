@@ -58,6 +58,12 @@
   }
 }
 
+/* texto selecionado em vermelho (no lugar do azul padrão do navegador) */
+::selection {
+  background: var(--red);
+  color: var(--white);
+}
+
 /* barra de rolagem fina e clara, sem fundo e sem setas.
    Chrome/Safari/Edge usam os pseudo-elementos; o Firefox, as propriedades padrão. */
 ::-webkit-scrollbar {
