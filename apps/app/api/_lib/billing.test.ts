@@ -85,8 +85,9 @@ async function rejects(p: Promise<unknown>, status: number, code?: string) {
 
 describe('parseCheckoutInput', () => {
   it('aceita cartão e Pix com meses válidos', () => {
-    assert.deepEqual(parseCheckoutInput({ plan: 'studio', method: 'card' }), { plan: 'studio', method: 'card', months: 1 })
-    assert.deepEqual(parseCheckoutInput({ plan: 'salao', method: 'pix', months: 12 }), { plan: 'salao', method: 'pix', months: 12 })
+    assert.deepEqual(parseCheckoutInput({ plan: 'studio', method: 'card' }), { plan: 'studio', method: 'card', months: 1, from: 'assinatura' })
+    assert.deepEqual(parseCheckoutInput({ plan: 'salao', method: 'pix', months: 12 }), { plan: 'salao', method: 'pix', months: 12, from: 'assinatura' })
+    assert.equal(parseCheckoutInput({ plan: 'solo', method: 'card', from: 'onboarding' }).from, 'onboarding')
   })
   it('rejeita plano, forma e período inválidos', () => {
     assert.throws(() => parseCheckoutInput({ plan: 'gratis', method: 'card' }), HttpError)
@@ -105,7 +106,7 @@ describe('createCheckout', () => {
   it('Pix: sessão de pagamento único com o valor de N meses e metadados', async () => {
     const { db, calls } = fakeDb()
     const { stripe, created } = fakeStripe()
-    const out = await createCheckout(deps(db, stripe), user, { plan: 'studio', method: 'pix', months: 3 })
+    const out = await createCheckout(deps(db, stripe), user, { plan: 'studio', method: 'pix', months: 3, from: 'assinatura' })
     assert.equal(out.url, 'https://checkout.stripe.test/session')
     const s = created[0] as Record<string, any>
     assert.equal(s.mode, 'payment')
@@ -113,17 +114,17 @@ describe('createCheckout', () => {
     assert.equal(s.line_items[0].price_data.currency, 'brl')
     assert.equal(s.line_items[0].price_data.unit_amount, 2990 * 3)
     // 12 meses: o servidor cobra o valor com desconto
-    await createCheckout(deps(fakeDb().db, stripe), user, { plan: 'studio', method: 'pix', months: 12 })
+    await createCheckout(deps(fakeDb().db, stripe), user, { plan: 'studio', method: 'pix', months: 12, from: 'assinatura' })
     assert.equal((created[1] as Record<string, any>).line_items[0].price_data.unit_amount, 34086)
     assert.deepEqual(s.metadata, { kind: 'pix_prepaid', salon_id: 'salon-1', plan: 'studio', months: '3' })
     assert.equal(s.customer, 'cus_new_1')
     assert.deepEqual(calls.setCustomerId, ['cus_new_1'])
   })
 
-  it('cartão no Solo durante o teste: assinatura que preserva os dias que sobraram', async () => {
+  it('cartão durante o teste: assinatura que preserva os dias que sobraram', async () => {
     const { db } = fakeDb()
     const { stripe, created } = fakeStripe()
-    await createCheckout(deps(db, stripe), user, { plan: 'solo', method: 'card', months: 1 })
+    await createCheckout(deps(db, stripe), user, { plan: 'solo', method: 'card', months: 1, from: 'assinatura' })
     const s = created[0] as Record<string, any>
     assert.equal(s.mode, 'subscription')
     assert.deepEqual(s.allowed_payment_method_types, ['card'])
@@ -132,50 +133,67 @@ describe('createCheckout', () => {
     assert.equal(s.subscription_data.metadata.salon_id, 'salon-1')
   })
 
-  it('cartão: sem trial_end quando faltam menos de 49 h ou em outro plano', async () => {
+  it('cartão em outro plano durante o teste: também preserva os dias que sobraram', async () => {
+    const { stripe, created } = fakeStripe()
+    await createCheckout(deps(fakeDb().db, stripe), user, { plan: 'studio', method: 'card', months: 1, from: 'assinatura' })
+    assert.equal((created[0] as any).subscription_data.trial_end, Math.floor((NOW.getTime() + 20 * DAY) / 1000))
+  })
+
+  it('cartão: sem trial_end quando faltam menos de 49 h ou fora do teste', async () => {
     const soon = fakeDb({ sub: { trialEndsAt: new Date(NOW.getTime() + 30 * 60 * 60 * 1000) } })
     const a = fakeStripe()
-    await createCheckout(deps(soon.db, a.stripe), user, { plan: 'solo', method: 'card', months: 1 })
+    await createCheckout(deps(soon.db, a.stripe), user, { plan: 'solo', method: 'card', months: 1, from: 'assinatura' })
     assert.equal((a.created[0] as any).subscription_data.trial_end, undefined)
 
     const b = fakeStripe()
-    await createCheckout(deps(fakeDb().db, b.stripe), user, { plan: 'studio', method: 'card', months: 1 })
+    await createCheckout(deps(fakeDb({ sub: { status: 'active', billingMethod: 'pix' } }).db, b.stripe), user, { plan: 'studio', method: 'card', months: 1, from: 'assinatura' })
     assert.equal((b.created[0] as any).subscription_data.trial_end, undefined)
+  })
+
+  it('volta para o passo de plano quando veio do cadastro', async () => {
+    const { stripe, created } = fakeStripe()
+    await createCheckout(deps(fakeDb().db, stripe), user, { plan: 'salao', method: 'card', months: 1, from: 'onboarding' })
+    const s = created[0] as any
+    assert.match(s.success_url, /\/cadastro\/plano\?retorno=ok$/)
+    assert.match(s.cancel_url, /\/cadastro\/plano\?retorno=cancelado$/)
+    const c = fakeStripe()
+    await createCheckout(deps(fakeDb().db, c.stripe), user, { plan: 'salao', method: 'card', months: 1, from: 'assinatura' })
+    assert.match((c.created[0] as any).success_url, /\/dashboard\/assinatura\?retorno=ok$/)
   })
 
   it('reaproveita o cliente do Stripe já salvo', async () => {
     const { db, calls } = fakeDb({ sub: { stripeCustomerId: 'cus_old' } })
     const { stripe, created } = fakeStripe()
-    await createCheckout(deps(db, stripe), user, { plan: 'solo', method: 'pix', months: 1 })
+    await createCheckout(deps(db, stripe), user, { plan: 'solo', method: 'pix', months: 1, from: 'assinatura' })
     assert.equal((created[0] as any).customer, 'cus_old')
     assert.equal(calls.setCustomerId.length, 0)
   })
 
   it('só a dona paga', async () => {
     const { db } = fakeDb({ member: { salonId: 'salon-1', salonName: 'X', role: 'reception' } })
-    await rejects(createCheckout(deps(db, fakeStripe().stripe), user, { plan: 'solo', method: 'card', months: 1 }), 403, 'not_owner')
+    await rejects(createCheckout(deps(db, fakeStripe().stripe), user, { plan: 'solo', method: 'card', months: 1, from: 'assinatura' }), 403, 'not_owner')
   })
 
   it('sem negócio ou sem assinatura', async () => {
-    await rejects(createCheckout(deps(fakeDb({ member: null }).db, fakeStripe().stripe), user, { plan: 'solo', method: 'card', months: 1 }), 404, 'no_salon')
-    await rejects(createCheckout(deps(fakeDb({ sub: null }).db, fakeStripe().stripe), user, { plan: 'solo', method: 'card', months: 1 }), 404, 'no_subscription')
+    await rejects(createCheckout(deps(fakeDb({ member: null }).db, fakeStripe().stripe), user, { plan: 'solo', method: 'card', months: 1, from: 'assinatura' }), 404, 'no_salon')
+    await rejects(createCheckout(deps(fakeDb({ sub: null }).db, fakeStripe().stripe), user, { plan: 'solo', method: 'card', months: 1, from: 'assinatura' }), 404, 'no_subscription')
   })
 
   it('assinatura de cartão ativa: manda para o portal em vez de cobrar em dobro', async () => {
     const { db } = fakeDb({ sub: { status: 'active', billingMethod: 'card', stripeSubscriptionId: 'sub_1', stripeCustomerId: 'cus_1' } })
-    await rejects(createCheckout(deps(db, fakeStripe().stripe), user, { plan: 'studio', method: 'card', months: 1 }), 409, 'use_portal')
-    await rejects(createCheckout(deps(db, fakeStripe().stripe), user, { plan: 'studio', method: 'pix', months: 1 }), 409, 'use_portal')
+    await rejects(createCheckout(deps(db, fakeStripe().stripe), user, { plan: 'studio', method: 'card', months: 1, from: 'assinatura' }), 409, 'use_portal')
+    await rejects(createCheckout(deps(db, fakeStripe().stripe), user, { plan: 'studio', method: 'pix', months: 1, from: 'assinatura' }), 409, 'use_portal')
   })
 
   it('quem já assinou no cartão durante o teste (trialing) também vai para o portal', async () => {
     const { db } = fakeDb({ sub: { status: 'trialing', billingMethod: 'card', stripeSubscriptionId: 'sub_1', stripeCustomerId: 'cus_1' } })
-    await rejects(createCheckout(deps(db, fakeStripe().stripe), user, { plan: 'studio', method: 'card', months: 1 }), 409, 'use_portal')
+    await rejects(createCheckout(deps(db, fakeStripe().stripe), user, { plan: 'studio', method: 'card', months: 1, from: 'assinatura' }), 409, 'use_portal')
   })
 
   it('assinatura de cartão já cancelada para o fim do período pode assinar de novo', async () => {
     const { db } = fakeDb({ sub: { status: 'active', billingMethod: 'card', stripeSubscriptionId: 'sub_1', stripeCustomerId: 'cus_1', cancelAtPeriodEnd: true } })
     const { stripe, created } = fakeStripe()
-    await createCheckout(deps(db, stripe), user, { plan: 'studio', method: 'pix', months: 1 })
+    await createCheckout(deps(db, stripe), user, { plan: 'studio', method: 'pix', months: 1, from: 'assinatura' })
     assert.equal(created.length, 1)
   })
 })
@@ -313,6 +331,7 @@ const info = (over: Partial<SubscriptionInfo> = {}): SubscriptionInfo => ({
   method: null,
   cancelAtPeriodEnd: false,
   hasCustomer: false,
+  planChosen: true,
   ...over,
 })
 
@@ -350,6 +369,9 @@ describe('accessState', () => {
     assert.equal(parsed?.plan, 'salao')
     assert.equal(parsed?.method, 'pix')
     assert.equal(parsed?.hasCustomer, true)
+    assert.equal(parsed?.planChosen, false) // ainda não passou pela escolha de plano do cadastro
+    const chosen = parseSubscription({ plan: 'solo', status: 'trialing', access_until: '2026-11-01T00:00:00Z', plan_chosen_at: '2026-10-09T12:00:00Z' })
+    assert.equal(chosen?.planChosen, true)
     assert.equal(parseSubscription({ plan: 'x' }), null)
   })
   it('describeSubscription resume o plano em uma linha', () => {

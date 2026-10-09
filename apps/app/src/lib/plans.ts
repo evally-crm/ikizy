@@ -14,9 +14,12 @@ export interface PlanInfo {
   cents: number
   audience: string
   features: string[]
-  /** só o Solo tem teste grátis */
+  /** dias grátis antes da 1ª cobrança (todos os planos têm) */
   trialDays: number
 }
+
+/** teste grátis de todo negócio novo (o banco usa o mesmo valor em create_salon) */
+export const TRIAL_DAYS = 30
 
 export const PLANS: Record<PlanId, PlanInfo> = {
   solo: {
@@ -25,7 +28,7 @@ export const PLANS: Record<PlanId, PlanInfo> = {
     cents: 990,
     audience: 'Para quem atende sozinha',
     features: ['Agenda e clientes', 'Financeiro básico', 'Site do negócio'],
-    trialDays: 30,
+    trialDays: TRIAL_DAYS,
   },
   studio: {
     id: 'studio',
@@ -33,7 +36,7 @@ export const PLANS: Record<PlanId, PlanInfo> = {
     cents: 2990,
     audience: 'Equipe pequena',
     features: ['Tudo do Solo', 'Comissões por profissional', 'Fechamento mensal em recibo', 'Relatórios'],
-    trialDays: 0,
+    trialDays: TRIAL_DAYS,
   },
   salao: {
     id: 'salao',
@@ -41,7 +44,7 @@ export const PLANS: Record<PlanId, PlanInfo> = {
     cents: 5990,
     audience: 'Equipe maior',
     features: ['Tudo do Studio', 'Mais profissionais e permissões', 'Atendimento prioritário'],
-    trialDays: 0,
+    trialDays: TRIAL_DAYS,
   },
 }
 
@@ -84,6 +87,8 @@ export interface SubscriptionInfo {
   method: BillingMethod | null
   cancelAtPeriodEnd: boolean
   hasCustomer: boolean
+  /** a dona já passou pela escolha de plano do cadastro (cartão ou Pix) */
+  planChosen: boolean
 }
 
 /**
@@ -136,6 +141,7 @@ export function parseSubscription(row: Record<string, unknown>): SubscriptionInf
     method: row.billing_method === 'card' || row.billing_method === 'pix' ? row.billing_method : null,
     cancelAtPeriodEnd: row.cancel_at_period_end === true,
     hasCustomer: typeof row.stripe_customer_id === 'string' && row.stripe_customer_id.length > 0,
+    planChosen: typeof row.plan_chosen_at === 'string',
   }
 }
 
