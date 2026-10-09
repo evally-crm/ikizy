@@ -1,53 +1,37 @@
 ---
 import Base from '../layouts/Base.astro'
 import { CONTACT_EMAIL, CTA, LINKS } from '../lib/site'
-import { PIX_DISCOUNT_PCT, PIX_MONTHS, PLANS, brlNumber } from '../lib/pricing'
+import { PIX_DISCOUNT_PCT, PLANS, TRIAL_DAYS, brlNumber } from '../lib/pricing'
 
-const crafts = [
-  { name: 'Cabeleireira', hint: 'Agenda por profissional' },
-  { name: 'Nail Designer', hint: 'Serviços e custo por produto' },
-  { name: 'Lash Design', hint: 'Retorno e manutenção' },
-  { name: 'Sobrancelha', hint: 'Retorno e lembretes' },
+const ticker = ['Agenda online', 'Clientes que voltam', 'Financeiro descomplicado', 'Site do seu negócio', 'Comissões da equipe', 'Mensagens prontas no WhatsApp', 'Fechamento do mês']
+
+/** especialidades da seção "Para quem é"; a última ("Você") ganha a mão em pixel art */
+const crafts = ['Lash designer', 'Brow designer', 'Cabeleireiro(a)', 'Nail designer', 'Esteticista', 'Maquiadora']
+
+/** recursos reais do sistema, contados pelo que mudam na rotina (o "antes" vem da antiga seção "Do caderno ao sistema") */
+const features = [
+  { was: 'Agenda no caderno', title: 'Agenda online', text: 'O dia de cada profissional na tela, no celular ou no computador, sem instalar nada.', ui: 'agenda' },
+  { was: 'Cliente que sumiu', title: 'Clientes que voltam', text: 'Ficha com histórico, preferências e alergias, e aviso de quem passou da hora de voltar.', ui: 'client' },
+  { was: 'Mensagem digitada uma a uma', title: 'Mensagens prontas', text: 'Confirmação, lembrete e pós-atendimento abrem prontos no seu WhatsApp. É só conferir e enviar.', ui: 'message' },
+  { was: 'Caixa e comissão na calculadora', title: 'Financeiro e comissões', text: 'Entradas, saídas e a comissão de cada profissional, com o fechamento do mês em recibo.', ui: 'money' },
+  { was: 'Horário marcado por direct', title: 'Site do seu negócio', text: 'Uma página sua para a cliente ver os serviços e pedir um horário.', ui: 'site' },
+  { was: 'Senha da dona com todo mundo', title: 'Equipe com acesso certo', text: 'Dona, gerente, recepção e profissional: cada pessoa vê só o que precisa.', ui: 'roles' },
 ]
 
-const ticker = ['Agenda online', 'Clientes que voltam', 'Financeiro descomplicado', 'Site do seu negócio', 'Comissões da equipe', 'Lembretes por WhatsApp', 'Relatórios']
-
-const pains = [
-  { was: 'Cliente esqueceu o horário', title: 'Lembrete automático', text: 'Confirmação por WhatsApp antes do horário.' },
-  { was: 'Caixa no caderno', title: 'Financeiro em um lugar', text: 'Entradas, saídas e fechamento do mês.' },
-  { was: 'Cliente que sumiu', title: 'Aviso de retorno', text: 'Veja quem está atrasada para voltar.' },
-  { was: 'Comissão na calculadora', title: 'Comissão por profissional', text: 'Calculada sozinha, sem planilha.' },
-]
-
-const reasons = [
-  { tag: 'Simples', title: 'Pronto em minutos', text: 'Sem curso e sem manual.', ui: 'setup' },
-  { tag: 'Feito para beleza', title: 'Pensado para beleza', text: 'Aviso de quem está atrasada para o retorno.', ui: 'client' },
-  { tag: 'No celular', title: 'Sua agenda no bolso', text: 'No navegador, sem instalar nada.', ui: 'agenda' },
-  { tag: 'Segurança', title: 'Cada um vê o que deve', text: 'Acesso por papel para toda a equipe.', ui: 'roles' },
-]
-
-const steps = [
-  { title: 'Crie sua conta', text: 'Leva poucos minutos.' },
-  { title: 'Cadastre serviços e equipe', text: 'O sistema sugere o básico do seu segmento.' },
-  { title: 'Agende e acompanhe', text: 'Divulgue seu site e acompanhe tudo.' },
+/** passo a passo com telas reais do sistema (modo demonstração, com dados de exemplo) */
+const tour = [
+  { img: '/telas/inicio.webp', title: 'Seu dia num relance', text: 'Ao entrar, você vê o faturamento, os próximos atendimentos e as mensagens do dia.' },
+  { img: '/telas/agenda.webp', title: 'Marque e acompanhe horários', text: 'A agenda do dia por profissional, com o status de cada atendimento.' },
+  { img: '/telas/clientes.webp', title: 'Conheça cada cliente', text: 'Histórico, preferências, alergias e quando ela deve voltar, tudo na ficha.' },
+  { img: '/telas/financeiro.webp', title: 'Feche o mês sem planilha', text: 'Faturamento, comissões e lucro do mês, com o recibo pronto para conferir.' },
+  { img: '/telas/site.webp', title: 'Receba pedidos pelo seu site', text: 'Personalize sua página e divulgue o link para as clientes pedirem horário.' },
 ]
 
 const faq = [
-  { q: 'O que é a IKIZY?', a: 'A IKIZY é um sistema de gestão online para salões e negócios de beleza. Reúne agenda, cadastro de clientes, financeiro, equipe e um site próprio para receber agendamentos.' },
-  { q: 'Para quem a IKIZY é indicada?', a: 'Para cabeleireiras, nail designers, profissionais de cílios e sobrancelhas, studios e salões, de quem atende sozinha a quem tem equipe.' },
-  { q: 'Preciso instalar alguma coisa?', a: 'Não. A IKIZY funciona direto no navegador, no computador ou no celular.' },
-  { q: 'Posso testar antes de assinar?', a: 'Sim. O plano Solo tem 1 mês grátis, sem pedir cartão. Crie sua conta e use o sistema durante o teste antes de decidir.' },
-  { q: 'Como posso pagar?', a: 'No cartão de crédito, com renovação automática todo mês, ou no Pix, pagando 1, 3 ou 12 meses adiantado, sendo que 12 meses têm 5% de desconto. O Pix não renova sozinho: avisamos antes de o período acabar.' },
-  { q: 'O que acontece quando o teste ou o período pago termina?', a: 'O sistema fica só para leitura: seus dados continuam salvos e você pode consultá-los. Ao escolher um plano, tudo volta a funcionar.' },
-  { q: 'Meus dados ficam separados dos de outros negócios?', a: 'Sim. Cada negócio enxerga apenas os próprios dados, e o acesso da equipe é controlado por papéis: dona, gerente, recepção e profissional.' },
-]
-
-const extras = ['Equipe e comissões', 'Serviços e custos', 'Relatórios', 'Lembretes por WhatsApp', 'Acesso por papel']
-
-const values = [
-  { title: 'Estética', text: 'Ferramentas à altura de quem trabalha com beleza.' },
-  { title: 'Elegância', text: 'Telas limpas, sem excesso.' },
-  { title: 'Autenticidade', text: 'Seu negócio com identidade própria.' },
+  { q: 'Posso testar a IKIZY antes de assinar?', a: `Sim. Todo negócio novo tem ${TRIAL_DAYS} dias grátis, em qualquer plano, e dá para testar sem cadastrar cartão.` },
+  { q: 'Posso cancelar minha assinatura quando quiser?', a: 'Sim. No cartão, você cancela quando quiser e o acesso continua até o fim do período já pago. No Pix não há renovação automática: o acesso vale pelo período que você pagou.' },
+  { q: 'Meus dados ficam seguros na IKIZY?', a: 'Cada negócio enxerga apenas os próprios dados, e a equipe acessa por papéis: dona, gerente, recepção e profissional. Os pagamentos são feitos pela Stripe, e a IKIZY não guarda os dados do seu cartão.' },
+  { q: 'Consigo incluir quantas pessoas na minha equipe?', a: 'O Solo é para quem atende sozinha. Para trabalhar com equipe, escolha o Studio, pensado para equipes pequenas, ou o Salão, para equipes maiores, com mais profissionais e permissões.' },
 ]
 
 const faqSchema = {
@@ -62,7 +46,7 @@ const faqSchema = {
 
 <Base
   title="IKIZY"
-  description="Agenda online, clientes, financeiro e site próprio em um só sistema. Gestão simples para salões, nail designers, lash e sobrancelha. Teste grátis por 1 mês."
+  description="Agenda online, clientes, financeiro e site próprio em um só sistema. Gestão simples para salões, nail designers, lash, sobrancelha e estética. 30 dias grátis."
   schema={[faqSchema]}
 >
   <!-- HERO -->
@@ -74,11 +58,11 @@ const faqSchema = {
           <span class="display__sub">para negócios de beleza</span>
         </h1>
         <p class="hero2__note">
-          Agenda, clientes e caixa em um só lugar.
+          Agenda, clientes, financeiro e o site do seu negócio em um só lugar. Menos tempo organizando, mais tempo atendendo.
         </p>
         <div class="btn-row">
           <a class="btn btn--primary" href={LINKS.signup}>{CTA.main}</a>
-          <a class="btn btn--ghost" href="#recursos">Ver recursos</a>
+          <a class="btn btn--ghost" href="#como-funciona">Ver como funciona</a>
         </div>
         <p class="hero2__hint">{CTA.hint}</p>
       </div>
@@ -109,94 +93,86 @@ const faqSchema = {
     </div>
   </section>
 
-  <!-- PARA QUEM -->
-  <section class="section screen container forwho" aria-labelledby="forwho-title">
-    <header class="forwho__head">
-      <p class="eyebrow">Para quem é</p>
-      <h2 id="forwho-title" class="forwho__title">A IKIZY é feita <em>para você</em></h2>
-    </header>
-
-    <div class="forwho__stage">
-      <div class="forwho__circle" aria-hidden="true">
-        <span class="forwho__time">Hoje, 14:30</span>
-        <div class="ticker">
-          {crafts.map((c, i) => <span style={`--i:${i}`}>{c.name}</span>)}
-        </div>
-      </div>
-      <ol class="forwho__list">
-        {
-          crafts.map((c, i) => (
-            <li class={`craft craft--${i + 1}`}>
-              <div class="craft__top">
-                <strong>{c.name}</strong>
-                <span class="craft__n">{String(i + 1).padStart(2, '0')}</span>
-              </div>
-              <p>{c.hint}</p>
-            </li>
-          ))
-        }
-      </ol>
-    </div>
-
-    <div class="forwho__foot">
-      <p class="lead">Sozinha ou com equipe.</p>
-      <a class="btn btn--primary" href={LINKS.signup}>{CTA.main}</a>
-    </div>
+  <!-- PARA QUEM É -->
+  <section id="para-quem" class="section container you" aria-labelledby="you-title">
+    <p class="eyebrow">Para quem é</p>
+    <h2 id="you-title" class="you__title">A IKIZY é feita <em>para você.</em></h2>
+    <p class="lead you__lead">
+      Não importa se você trabalha com cabelos, unhas, cílios ou sobrancelhas. Se você atende clientes por conta própria ou gerencia uma
+      equipe, a IKIZY ajuda a organizar sua rotina para que você possa cuidar de quem confia no seu trabalho.
+    </p>
+    <ul class="you__list" aria-label="Especialidades atendidas">
+      {crafts.map((c) => <li>{c}</li>)}
+      <li class="you__me">
+              <svg class="you__hand" viewBox="0 0 25 14" width="75" height="42" shape-rendering="crispEdges" aria-hidden="true">
+                <rect x="5" y="1" width="5" height="1" fill="var(--ink-900)" />
+                <rect x="4" y="2" width="1" height="1" fill="var(--ink-900)" />
+                <rect x="5" y="2" width="5" height="1" fill="var(--white)" />
+                <rect x="10" y="2" width="1" height="1" fill="var(--ink-900)" />
+                <rect x="4" y="3" width="1" height="1" fill="var(--ink-900)" />
+                <rect x="5" y="3" width="5" height="1" fill="var(--white)" />
+                <rect x="10" y="3" width="14" height="1" fill="var(--ink-900)" />
+                <rect x="0" y="4" width="5" height="1" fill="var(--ink-900)" />
+                <rect x="5" y="4" width="19" height="1" fill="var(--white)" />
+                <rect x="24" y="4" width="1" height="1" fill="var(--ink-900)" />
+                <rect x="0" y="5" width="1" height="1" fill="var(--ink-900)" />
+                <rect x="1" y="5" width="2" height="1" fill="var(--wine)" />
+                <rect x="3" y="5" width="1" height="1" fill="var(--ink-900)" />
+                <rect x="4" y="5" width="20" height="1" fill="var(--white)" />
+                <rect x="24" y="5" width="1" height="1" fill="var(--ink-900)" />
+                <rect x="0" y="6" width="1" height="1" fill="var(--ink-900)" />
+                <rect x="1" y="6" width="2" height="1" fill="var(--wine)" />
+                <rect x="3" y="6" width="1" height="1" fill="var(--ink-900)" />
+                <rect x="4" y="6" width="8" height="1" fill="var(--white)" />
+                <rect x="12" y="6" width="13" height="1" fill="var(--ink-900)" />
+                <rect x="0" y="7" width="1" height="1" fill="var(--ink-900)" />
+                <rect x="1" y="7" width="2" height="1" fill="var(--wine)" />
+                <rect x="3" y="7" width="1" height="1" fill="var(--ink-900)" />
+                <rect x="4" y="7" width="11" height="1" fill="var(--white)" />
+                <rect x="15" y="7" width="1" height="1" fill="var(--ink-900)" />
+                <rect x="0" y="8" width="1" height="1" fill="var(--ink-900)" />
+                <rect x="1" y="8" width="2" height="1" fill="var(--wine)" />
+                <rect x="3" y="8" width="1" height="1" fill="var(--ink-900)" />
+                <rect x="4" y="8" width="8" height="1" fill="var(--white)" />
+                <rect x="12" y="8" width="4" height="1" fill="var(--ink-900)" />
+                <rect x="0" y="9" width="1" height="1" fill="var(--ink-900)" />
+                <rect x="1" y="9" width="2" height="1" fill="var(--wine)" />
+                <rect x="3" y="9" width="1" height="1" fill="var(--ink-900)" />
+                <rect x="4" y="9" width="11" height="1" fill="var(--white)" />
+                <rect x="15" y="9" width="1" height="1" fill="var(--ink-900)" />
+                <rect x="0" y="10" width="1" height="1" fill="var(--ink-900)" />
+                <rect x="1" y="10" width="2" height="1" fill="var(--wine)" />
+                <rect x="3" y="10" width="1" height="1" fill="var(--ink-900)" />
+                <rect x="4" y="10" width="8" height="1" fill="var(--white)" />
+                <rect x="12" y="10" width="4" height="1" fill="var(--ink-900)" />
+                <rect x="0" y="11" width="1" height="1" fill="var(--ink-900)" />
+                <rect x="1" y="11" width="2" height="1" fill="var(--wine)" />
+                <rect x="3" y="11" width="1" height="1" fill="var(--ink-900)" />
+                <rect x="4" y="11" width="11" height="1" fill="var(--white)" />
+                <rect x="15" y="11" width="1" height="1" fill="var(--ink-900)" />
+                <rect x="0" y="12" width="5" height="1" fill="var(--ink-900)" />
+                <rect x="5" y="12" width="8" height="1" fill="var(--white)" />
+                <rect x="13" y="12" width="2" height="1" fill="var(--ink-900)" />
+                <rect x="4" y="13" width="10" height="1" fill="var(--ink-900)" />
+              </svg>
+        <span>Você</span>
+      </li>
+    </ul>
   </section>
 
-  <!-- DORES -->
-  <section class="section screen container pains" aria-labelledby="pains-title">
-    <header class="pains__head">
-      <p class="eyebrow">Antes e depois</p>
-      <h2 id="pains-title" class="pains__title">Do caderno ao <em>sistema</em></h2>
-    </header>
-    <ol class="pains__list">
+  <!-- POR QUE TROCAR (recursos) -->
+  <section id="recursos" class="section container feats" aria-labelledby="feats-title">
+    <div class="section__head">
+      <p class="eyebrow">Recursos</p>
+      <h2 id="feats-title" class="h2">Por que trocar para a <em>IKIZY</em></h2>
+      <p class="lead">Tudo o que você fazia no caderno, na calculadora e de cabeça, agora num lugar só.</p>
+    </div>
+    <ul class="feats__grid">
       {
-        pains.map((x, i) => (
-          <li class="pain">
-            <span class="pain__n" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
-            <div class="pain__body">
-              <p class="pain__was">
-                <span>Antes</span>
-                <s>{x.was}</s>
-              </p>
-              <h3>{x.title}</h3>
-              <p class="pain__text">{x.text}</p>
-            </div>
-          </li>
-        ))
-      }
-    </ol>
-  </section>
-
-  <!-- POR QUE NÓS -->
-  <section class="section screen container why" aria-labelledby="why-title">
-    <h2 id="why-title" class="why__title">Por que trocar para a <em>IKIZY</em></h2>
-    <div class="why__list">
-      {
-        reasons.map((r) => (
-          <article class="why__card">
-            <div class="why__text">
-              <p class="why__tag">{r.tag}</p>
-              <h3>{r.title}</h3>
-              <p>{r.text}</p>
-            </div>
-            <div class="why__visual" aria-hidden="true">
-              {r.ui === 'setup' && (
-                <ul class="ui ui--list">
-                  <li><span>Serviços</span><i class="ui__ok" /></li>
-                  <li><span>Equipe</span><i class="ui__ok" /></li>
-                  <li><span>Horários</span><i class="ui__ok" /></li>
-                </ul>
-              )}
-              {r.ui === 'client' && (
-                <div class="ui ui--client">
-                  <span class="ui__avatar">AM</span>
-                  <div><b>Ana Martins</b><small>Lash · manutenção</small></div>
-                  <span class="ui__late">12 dias atrasada</span>
-                </div>
-              )}
-              {r.ui === 'agenda' && (
+        features.map((f) => (
+          <li class="feat">
+            <div class="feat__visual" aria-hidden="true">
+              {f.ui === 'agenda' && (
                 <div class="ui ui--phone">
                   <small>Hoje</small>
                   <span>09:00 · Escova</span>
@@ -204,7 +180,28 @@ const faqSchema = {
                   <span>14:30 · Cílios</span>
                 </div>
               )}
-              {r.ui === 'roles' && (
+              {f.ui === 'client' && (
+                <div class="ui ui--client">
+                  <span class="ui__avatar">AM</span>
+                  <div><b>Ana Martins</b><small>Lash · manutenção</small></div>
+                  <span class="ui__late">12 dias atrasada</span>
+                </div>
+              )}
+              {f.ui === 'message' && (
+                <div class="ui ui--bubble">
+                  <p>Oi, Ana! Passando para lembrar do seu horário amanhã às 10:30.</p>
+                  <small>Abrir no WhatsApp</small>
+                </div>
+              )}
+              {f.ui === 'money' && (
+                <div class="ui ui--money">
+                  <span>Comissão · Bia</span>
+                  <b>R$ 1.240,00</b>
+                  <div class="ui__bars"><i style="--h: 40%" /><i style="--h: 62%" /><i style="--h: 48%" /><i style="--h: 80%" /><i style="--h: 66%" /></div>
+                </div>
+              )}
+              {f.ui === 'site' && <span class="ui ui--url">seu-negocio.ikizy.com</span>}
+              {f.ui === 'roles' && (
                 <ul class="ui ui--list">
                   <li><span>Dona</span><i class="ui__sw is-on" /></li>
                   <li><span>Gerente</span><i class="ui__sw is-on" /></li>
@@ -212,159 +209,97 @@ const faqSchema = {
                 </ul>
               )}
             </div>
-          </article>
+            <p class="feat__was"><span>Antes</span><s>{f.was}</s></p>
+            <h3>{f.title}</h3>
+            <p class="feat__text">{f.text}</p>
+          </li>
         ))
       }
-    </div>
-  </section>
-
-  <!-- RECURSOS -->
-  <section id="recursos" class="section screen container" aria-labelledby="res-title">
-    <div class="section__head">
-      <p class="eyebrow">Recursos</p>
-      <h2 id="res-title" class="h2">Tudo o que o seu dia <em>precisa</em></h2>
-    </div>
-
-    <div class="cols">
-      <article class="col" tabindex="0">
-        <span class="col__n">01</span>
-        <div class="col__visual" aria-hidden="true">
-          <div class="slots">
-            <span>09:00</span><span class="is-busy">10:00</span><span class="is-busy">11:30</span><span>13:00</span><span class="is-busy">14:30</span><span>16:00</span>
-          </div>
-        </div>
-        <div>
-          <h3>Agenda online</h3>
-          <p>Por dia e por profissional, com lembrete.</p>
-        </div>
-      </article>
-
-      <article class="col" tabindex="0">
-        <span class="col__n">02</span>
-        <div class="col__visual" aria-hidden="true">
-          <div class="avatars"><span>JP</span><span>MC</span><span>PL</span><span>+48</span></div>
-        </div>
-        <div>
-          <h3>Clientes que voltam</h3>
-          <p>Histórico, preferências e aviso de retorno.</p>
-        </div>
-      </article>
-
-      <article class="col" tabindex="0">
-        <span class="col__n">03</span>
-        <div class="col__visual" aria-hidden="true">
-          <div class="bars"><i style="--h: 38%"></i><i style="--h: 55%"></i><i style="--h: 46%"></i><i style="--h: 72%"></i><i style="--h: 64%"></i><i style="--h: 90%"></i></div>
-        </div>
-        <div>
-          <h3>Financeiro</h3>
-          <p>Entradas, saídas e comissões num lugar só.</p>
-        </div>
-      </article>
-
-      <article class="col" tabindex="0">
-        <span class="col__n">04</span>
-        <div class="col__visual" aria-hidden="true">
-          <span class="urlpill">seu-negocio.ikizy.com</span>
-        </div>
-        <div>
-          <h3>Seu site</h3>
-          <p>Sua página para receber agendamentos.</p>
-        </div>
-      </article>
-    </div>
-
-    <ul class="chips" aria-label="Outros recursos">
-      {extras.map((x) => <li>{x}</li>)}
     </ul>
   </section>
 
-  <!-- COMO COMEÇAR -->
-  <section class="section screen container" aria-labelledby="steps-title">
-    <div class="section__head">
-      <p class="eyebrow">Como começar</p>
-      <h2 id="steps-title" class="h2">Do cadastro ao primeiro <em>agendamento</em></h2>
+  <!-- COMO FUNCIONA (carrossel com telas reais) -->
+  <section id="como-funciona" class="section container tour" aria-labelledby="tour-title">
+    <div class="tour__head">
+      <div class="section__head">
+        <p class="eyebrow">Como começar</p>
+        <h2 id="tour-title" class="h2">Veja a IKIZY <em>por dentro</em></h2>
+      </div>
+      <div class="tour__nav">
+        <span class="tour__count" aria-live="polite" data-tour-count>1 / {tour.length}</span>
+        <button type="button" class="tour__arrow" aria-label="Etapa anterior" data-tour-prev disabled>
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="1.6" /></svg>
+        </button>
+        <button type="button" class="tour__arrow" aria-label="Próxima etapa" data-tour-next>
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.6" /></svg>
+        </button>
+      </div>
     </div>
-    <ol class="steps">
+    <ol class="tour__track" aria-label="Etapas" data-tour-track tabindex="0">
       {
-        steps.map((s, i) => (
-          <li>
-            <span class="steps__n">{String(i + 1).padStart(2, '0')}</span>
-            <h3>{s.title}</h3>
-            <p>{s.text}</p>
+        tour.map((t, i) => (
+          <li class="tour__slide" aria-label={`${i + 1} de ${tour.length}`}>
+            <figure>
+              <img src={t.img} alt={`Tela do sistema IKIZY: ${t.title.toLowerCase()}`} width="1600" height="1000" loading={i === 0 ? 'eager' : 'lazy'} decoding="async" />
+              <figcaption>
+                <span class="tour__n">{String(i + 1).padStart(2, '0')}</span>
+                <h3>{t.title}</h3>
+                <p>{t.text}</p>
+              </figcaption>
+            </figure>
           </li>
         ))
       }
     </ol>
   </section>
 
-  <!-- PREÇOS -->
-  <section id="precos" class="section screen container" aria-labelledby="price-title">
-    <div class="section__head">
-      <p class="eyebrow">Planos</p>
-      <h2 id="price-title" class="h2">Um plano para o <em>tamanho</em> do seu negócio</h2>
-    </div>
-    <div class="period">
-      <p id="period-label" class="period__label">Se pagar com Pix, quantos meses adiantado?</p>
-      <div class="seg" role="radiogroup" aria-labelledby="period-label" data-seg>
+  <!-- PLANOS -->
+  <section id="precos" class="section container" aria-labelledby="price-title">
+    <div class="pricing">
+      <div class="pricing__head">
+        <div class="section__head">
+          <p class="eyebrow">Planos</p>
+          <h2 id="price-title" class="h2">Um plano para o <em>tamanho</em> do seu negócio</h2>
+          <p class="lead">Todos os planos começam com {TRIAL_DAYS} dias grátis.</p>
+        </div>
+        <div class="toggle" role="radiogroup" aria-label="Período de cobrança" data-toggle>
+          <button type="button" role="radio" aria-checked="true" class="toggle__opt is-active" data-period="1">Mensal</button>
+          <button type="button" role="radio" aria-checked="false" class="toggle__opt" data-period="3">
+            Trimestral <small class="toggle__off">−{PIX_DISCOUNT_PCT[3]}%</small>
+          </button>
+        </div>
+      </div>
+
+      <div class="plans" data-plans data-discount={PIX_DISCOUNT_PCT[3]}>
         {
-          PIX_MONTHS.map((m) => (
-            <button type="button" role="radio" aria-checked={m === 1 ? 'true' : 'false'} class={`seg__item ${m === 1 ? 'is-active' : ''}`} data-months={m}>
-              {m === 1 ? '1 mês' : `${m} meses`}
-              {PIX_DISCOUNT_PCT[m] > 0 && <small class="seg__off">{PIX_DISCOUNT_PCT[m]}% off</small>}
-            </button>
+          PLANS.map((p) => (
+            <article class={`plan ${p.hot ? 'plan--hot' : ''}`} data-cents={p.cents}>
+              <div class="plan__top">
+                <h3>{p.name}</h3>
+                {p.hot && <span class="plan__tag">Mais escolhido</span>}
+                <span class="plan__save" data-save hidden />
+              </div>
+              <div class="plan__swap" data-swap>
+                <p class="plan__price"><small>R$</small><span data-total>{brlNumber(p.cents)}</span><small data-unit>/mês</small></p>
+                <p class="plan__equiv" data-equiv>Cobrança mensal: no cartão, renova sozinha todo mês, ou no Pix, mês a mês.</p>
+              </div>
+              <ul class="plan__list">
+                {p.items.map((it) => <li>{it}</li>)}
+              </ul>
+              <a class={`btn ${p.hot ? 'btn--primary' : 'btn--ghost'}`} href={LINKS.signup}>{p.cta}</a>
+            </article>
           ))
         }
       </div>
-      <p class="period__hint">Cartão renova todo mês. Pix não renova sozinho.</p>
-    </div>
-
-    <div class="plans" data-plans data-discount={JSON.stringify(PIX_DISCOUNT_PCT)}>
-      {
-        PLANS.map((p) => (
-          <article class={`plan ${p.hot ? 'plan--hot' : ''}`} data-cents={p.cents}>
-            {p.hot && <span class="plan__tag">Mais escolhido</span>}
-            <h3>{p.name}</h3>
-            <p class="plan__price"><small>R$</small><span data-total>{brlNumber(p.cents)}</span><small data-unit>/mês</small></p>
-            <p class="plan__equiv" data-equiv>No Pix por 1 mês, ou cartão com renovação mensal</p>
-            <ul class="plan__list">
-              {p.items.map((it) => <li>{it}</li>)}
-            </ul>
-            <a class={`btn ${p.hot ? 'btn--light' : 'btn--primary'}`} href={LINKS.signup}>{p.cta}</a>
-          </article>
-        ))
-      }
-    </div>
-  </section>
-
-  <!-- SOBRE -->
-  <section id="sobre" class="section screen container" aria-labelledby="about-title">
-    <div class="about">
-      <div class="about__text">
-        <p class="eyebrow">Sobre a IKIZY</p>
-        <h2 id="about-title" class="h2">Gestão simples, para quem cuida da <em>beleza</em></h2>
-        <p class="lead">Menos caderno e planilha, mais tempo na sua arte.</p>
-      </div>
-      <ol class="steps about__values">
-        {
-          values.map((v, i) => (
-            <li>
-              <span class="steps__n">{String(i + 1).padStart(2, '0')}</span>
-              <h3>{v.title}</h3>
-              <p>{v.text}</p>
-            </li>
-          ))
-        }
-      </ol>
     </div>
   </section>
 
   <!-- FAQ -->
-  <section class="section screen container" aria-labelledby="faq-title">
+  <section class="section container" aria-labelledby="faq-title">
     <div class="faqs">
       <div class="faqs__side">
         <p class="eyebrow">Dúvidas</p>
         <h2 id="faq-title" class="h2">Perguntas <em>frequentes</em></h2>
-        <p class="lead">Não achou? Fale com a gente.</p>
         <a class="btn btn--ghost" href="#contato">Falar com a IKIZY</a>
       </div>
       <div class="faqs__list">
@@ -381,16 +316,31 @@ const faqSchema = {
   </section>
 
   <!-- CONTATO -->
-  <section id="contato" class="screen container" aria-labelledby="contact-title">
-    <div class="statement">
+  <section id="contato" class="section container contact" aria-labelledby="contact-title">
+    <form class="contact__form" action={`mailto:${CONTACT_EMAIL}`} method="post" enctype="text/plain" data-contact>
+      <label class="field">
+        <span>Nome</span>
+        <input name="nome" type="text" autocomplete="name" required />
+      </label>
+      <label class="field">
+        <span>E-mail</span>
+        <input name="email" type="email" autocomplete="email" required />
+      </label>
+      <label class="field">
+        <span>Mensagem</span>
+        <textarea name="mensagem" rows="5" required></textarea>
+      </label>
+      <button type="submit" class="btn btn--primary">Enviar mensagem</button>
+      <p class="contact__note" role="status" data-contact-note hidden>
+        Abrimos seu e-mail com a mensagem pronta. Se nada abriu, escreva para <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
+      </p>
+    </form>
+    <div class="contact__text">
       <p class="eyebrow">Contato</p>
-      <h2 id="contact-title">Vamos <em>conversar</em>?</h2>
-      <p>Dúvidas sobre o sistema ou os planos? Escreva para a gente.</p>
-      <a class="statement__mail" href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
-      <div class="btn-row" style="justify-content: center; margin-top: 8px;">
-        <a class="btn btn--light" href={LINKS.signup}>{CTA.main}</a>
-        <a class="btn btn--outline-light" href={LINKS.login}>Já tenho conta</a>
-      </div>
+      <h2 id="contact-title" class="h2">Vamos construir uma <em>rotina melhor?</em></h2>
+      <p class="lead">Quer conhecer a IKIZY, tirar dúvidas ou conversar sobre o seu negócio? Escreva para a gente.</p>
+      <a class="contact__mail" href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
+      <p class="contact__login">Já tem conta? <a href={LINKS.login}>Entrar</a></p>
     </div>
   </section>
 </Base>
@@ -529,46 +479,111 @@ const faqSchema = {
 </script>
 
 <script is:inline id="pricing-script">
+  // toggle Mensal/Trimestral: troca preço, textos e o destaque de economia de cada plano, com um fade curto
   (() => {
-    const seg = document.querySelector("[data-seg]")
-    const plans = document.querySelector("[data-plans]")
-    if (!seg || !plans) return
-    const discount = JSON.parse(plans.dataset.discount)
-    const num = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-    const brl = (c) => "R$ " + num.format(c / 100)
+    const toggle = document.querySelector('[data-toggle]')
+    const plans = document.querySelector('[data-plans]')
+    if (!toggle || !plans) return
+    const pct = Number(plans.dataset.discount)
+    const num = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    const brl = (c) => 'R$ ' + num.format(c / 100)
 
-    function update(months) {
-      const pct = discount[months] || 0
-      plans.querySelectorAll("[data-cents]").forEach((plan) => {
+    function render(months) {
+      plans.querySelectorAll('[data-cents]').forEach((plan) => {
         const cents = Number(plan.dataset.cents)
-        const full = cents * months
+        const full = cents * 3
+        // mesmo cálculo da cobrança (pixAmountCents): arredonda o total do período para o centavo
         const total = Math.round((full * (100 - pct)) / 100)
-        plan.querySelector("[data-total]").textContent = num.format(total / 100)
-        plan.querySelector("[data-unit]").textContent = months === 1 ? "/mês" : "/" + months + " meses"
-        const eq = plan.querySelector("[data-equiv]")
-        eq.textContent = ""
+        const save = plan.querySelector('[data-save]')
+        const eq = plan.querySelector('[data-equiv]')
         if (months === 1) {
-          eq.textContent = "No Pix por 1 mês, ou cartão com renovação mensal"
+          plan.querySelector('[data-total]').textContent = num.format(cents / 100)
+          plan.querySelector('[data-unit]').textContent = '/mês'
+          eq.textContent = 'Cobrança mensal: no cartão, renova sozinha todo mês, ou no Pix, mês a mês.'
+          save.hidden = true
           return
         }
-        if (pct > 0) {
-          const old = document.createElement("s")
-          old.textContent = brl(full)
-          eq.append(old, " ")
-        }
-        eq.append((pct > 0 ? "no" : "No") + " Pix, equivale a " + brl(total / months) + "/mês" + (pct > 0 ? " (" + pct + "% de desconto)" : ""))
+        plan.querySelector('[data-total]').textContent = num.format(total / 100)
+        plan.querySelector('[data-unit]').textContent = '/3 meses'
+        eq.textContent = ''
+        const old = document.createElement('s')
+        old.textContent = brl(full)
+        eq.append(old, ' Equivale a ' + brl(Math.round(total / 3)) + '/mês. Pago no Pix, de uma vez, pelos 3 meses; não renova sozinho.')
+        save.textContent = 'Economize ' + brl(full - total)
+        save.hidden = false
       })
     }
 
-    seg.addEventListener("click", (e) => {
-      const btn = e.target.closest("[data-months]")
-      if (!btn) return
-      seg.querySelectorAll("[data-months]").forEach((b) => {
+    toggle.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-period]')
+      if (!btn || btn.classList.contains('is-active')) return
+      toggle.querySelectorAll('[data-period]').forEach((b) => {
         const on = b === btn
-        b.classList.toggle("is-active", on)
-        b.setAttribute("aria-checked", on ? "true" : "false")
+        b.classList.toggle('is-active', on)
+        b.setAttribute('aria-checked', on ? 'true' : 'false')
       })
-      update(Number(btn.dataset.months))
+      plans.classList.toggle('is-quarterly', btn.dataset.period === '3')
+      plans.classList.add('is-swapping')
+      setTimeout(() => {
+        render(Number(btn.dataset.period))
+        plans.classList.remove('is-swapping')
+      }, 160)
+    })
+    // setas do teclado alternam entre as duas opções, como num grupo de rádio
+    toggle.addEventListener('keydown', (e) => {
+      if (!['ArrowLeft', 'ArrowRight'].includes(e.key)) return
+      const next = toggle.querySelector('[data-period]:not(.is-active)')
+      next.click()
+      next.focus()
+    })
+  })()
+</script>
+
+<script is:inline id="tour-script">
+  // carrossel do "Como começar": setas avançam e voltam uma etapa; também rola no dedo ou no trackpad
+  (() => {
+    const track = document.querySelector('[data-tour-track]')
+    if (!track) return
+    const prev = document.querySelector('[data-tour-prev]')
+    const next = document.querySelector('[data-tour-next]')
+    const count = document.querySelector('[data-tour-count]')
+    const slides = [...track.children]
+    const current = () => Math.round(track.scrollLeft / slides[0].offsetWidth)
+    const go = (i) => {
+      const target = slides[Math.max(0, Math.min(slides.length - 1, i))]
+      track.scrollTo({ left: target.offsetLeft - slides[0].offsetLeft, behavior: 'smooth' })
+    }
+    const sync = () => {
+      const i = Math.min(slides.length - 1, current())
+      count.textContent = i + 1 + ' / ' + slides.length
+      prev.disabled = track.scrollLeft < 4
+      next.disabled = track.scrollLeft + track.clientWidth >= track.scrollWidth - 4
+    }
+    prev.addEventListener('click', () => go(current() - 1))
+    next.addEventListener('click', () => go(current() + 1))
+    track.addEventListener('scroll', () => requestAnimationFrame(sync), { passive: true })
+    track.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') (e.preventDefault(), go(current() - 1))
+      if (e.key === 'ArrowRight') (e.preventDefault(), go(current() + 1))
+    })
+    addEventListener('resize', sync)
+    sync()
+  })()
+</script>
+
+<script is:inline id="contact-script">
+  // o formulário abre o e-mail da pessoa já preenchido (não há envio pelo servidor)
+  (() => {
+    const form = document.querySelector('[data-contact]')
+    if (!form) return
+    form.addEventListener('submit', (e) => {
+      e.preventDefault()
+      const d = new FormData(form)
+      const to = form.getAttribute('action').replace('mailto:', '')
+      const subject = 'Contato pelo site · ' + d.get('nome')
+      const body = d.get('mensagem') + '\n\n' + d.get('nome') + '\n' + d.get('email')
+      location.href = 'mailto:' + to + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body)
+      form.querySelector('[data-contact-note]').hidden = false
     })
   })()
 </script>

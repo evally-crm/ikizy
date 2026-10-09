@@ -5,8 +5,8 @@
     { "source": "/recursos/", "destination": "/#recursos", "statusCode": 301 },
     { "source": "/precos", "destination": "/#precos", "statusCode": 301 },
     { "source": "/precos/", "destination": "/#precos", "statusCode": 301 },
-    { "source": "/sobre", "destination": "/#sobre", "statusCode": 301 },
-    { "source": "/sobre/", "destination": "/#sobre", "statusCode": 301 },
+    { "source": "/sobre", "destination": "/#para-quem", "statusCode": 301 },
+    { "source": "/sobre/", "destination": "/#para-quem", "statusCode": 301 },
     { "source": "/contato", "destination": "/#contato", "statusCode": 301 },
     { "source": "/contato/", "destination": "/#contato", "statusCode": 301 }
   ]
