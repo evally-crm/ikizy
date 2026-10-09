@@ -39,7 +39,8 @@
   --pink-100: var(--gray-100);
   --pink-300: var(--gray-300);
 
-  --font-serif: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+  /* fonte pixelada das palavras em destaque (as que ficam em vinho) */
+  --font-accent: 'Geist Pixel', ui-monospace, 'SFMono-Regular', monospace;
   --font-sans: 'Lufga', 'Outfit Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
 
   --radius-md: 16px;
@@ -54,6 +55,35 @@
 @media (min-width: 768px) {
   :root {
     --gutter: 28px;
+  }
+}
+
+/* barra de rolagem fina e clara, sem fundo e sem setas.
+   Chrome/Safari/Edge usam os pseudo-elementos; o Firefox, as propriedades padrão. */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  border-radius: 99px;
+  background: var(--gray-300);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--gray-400);
+}
+::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+@supports not selector(::-webkit-scrollbar) {
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: var(--gray-300) transparent;
   }
 }
 
@@ -140,12 +170,12 @@ svg {
   top: 12px;
 }
 
-/* destaque dos títulos: serifa em itálico, na cor vinho do IKIZY */
+/* destaque dos títulos: fonte pixelada, na cor vinho do IKIZY */
 em {
-  font-family: var(--font-serif);
-  font-style: italic;
+  font-family: var(--font-accent);
+  font-style: normal;
   font-weight: 400;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
   text-transform: none;
   color: var(--wine);
 }
@@ -450,22 +480,16 @@ em {
 }
 .display__main {
   display: flex;
-  align-items: center;
-  gap: clamp(12px, 1.8vw, 28px);
+  align-items: baseline;
+  gap: 0.22em;
   font-size: clamp(50px, min(7vw, 13vh), 130px);
   line-height: 0.95;
   letter-spacing: -0.06em;
 }
 .display__main em {
+  /* o "simples" do hero fica preto, na mesma fonte pixelada dos destaques */
   color: var(--ink-900);
-  font-size: 1.08em;
-  letter-spacing: -0.03em;
-  padding-right: 0.05em;
-}
-.display__line {
-  flex: 0 1 clamp(30px, 6vw, 110px);
-  height: 1px;
-  background: var(--ink-900);
+  letter-spacing: -0.04em;
 }
 .display__sub {
   font-size: clamp(15px, 1.5vw, 19px);
@@ -660,15 +684,20 @@ em {
 .you__lead {
   max-width: 60ch;
 }
-/* palavra que troca, numa linha própria abaixo do título; todas na mesma célula da grade */
+/* linha de baixo do título: a palavra que troca, centralizada */
+.you__line {
+  display: flex;
+  justify-content: center;
+}
+/* todas as palavras na mesma célula da grade; o JS anima a largura para a palavra da vez ficar centrada */
 .you__rot {
   display: grid;
-  justify-items: center;
-  font-family: var(--font-serif);
-  font-style: italic;
+  justify-items: start;
+  font-family: var(--font-accent);
   font-weight: 400;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
   color: var(--wine);
+  transition: width 0.45s ease;
 }
 .you__rot > span {
   grid-area: 1 / 1;
@@ -680,18 +709,22 @@ em {
 .you__rot > span.is-in {
   opacity: 1;
   transform: none;
+  transition-delay: 0.2s;
 }
+/* a que sai some rápido, antes da próxima entrar, para as duas não se sobreporem */
 .you__rot > span.is-out {
   opacity: 0;
   transform: translateY(-0.45em);
+  transition-duration: 0.22s;
 }
-/* a mão em símbolos: o canvas guarda o espaço e os símbolos surgem quando chega em "você." */
-.you__hand {
-  width: clamp(220px, 26vw, 340px);
-  aspect-ratio: 128 / 111;
-  margin: 6px auto 0;
+/* no celular a palavra mais longa precisa caber na largura */
+@media (max-width: 520px) {
+  .you__line {
+    font-size: 0.82em;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
+  .you__rot,
   .you__rot > span {
     transition: none;
   }
