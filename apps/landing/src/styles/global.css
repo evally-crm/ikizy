@@ -17,20 +17,20 @@
 */
 
 :root {
-  /* fundo claro, bege quente e preto; o vermelho aparece só em pontos específicos */
-  --red: #e11d2a;
+  /* as cores do IKIZY, iguais às do sistema: cinza, preto, branco e vinho (só em pontos específicos) */
+  --wine: #800513;
   --white: #ffffff;
-  --gray-100: #f0eeea;
-  --gray-200: #e6e3dd;
-  --gray-300: #d2cec6;
-  --gray-400: #a9a49b;
-  --ink-500: #67645e;
-  --ink-700: #2a2824;
-  --ink-900: #0e0d0c;
-  --line: rgba(14, 13, 12, 0.12);
+  --gray-100: #f5f5f7;
+  --gray-200: #e8e8ea;
+  --gray-300: #c9c9cd;
+  --gray-400: #a3a3a8;
+  --ink-500: #6b6668;
+  --ink-700: #242424;
+  --ink-900: #0e0d0d;
+  --line: rgba(14, 13, 13, 0.12);
 
   /* apelidos usados pelas páginas internas */
-  --brand-500: var(--red);
+  --brand-500: var(--wine);
   --brand-700: #2a2a2a;
   --brand-900: var(--ink-900);
   --blush: var(--gray-100);
@@ -113,7 +113,7 @@ svg {
   max-width: 100%;
 }
 :focus-visible {
-  outline: 2px solid var(--red);
+  outline: 2px solid var(--wine);
   outline-offset: 3px;
 }
 .sr-only {
@@ -138,17 +138,17 @@ svg {
   top: 12px;
 }
 
-/* destaque: sem itálico; só as marcadas com .hl ficam vermelhas */
+/* destaque dos títulos: serifa em itálico, na cor vinho do IKIZY */
 em {
   font-family: var(--font-serif);
   font-style: italic;
   font-weight: 400;
   letter-spacing: -0.02em;
   text-transform: none;
-  color: var(--ink-500);
+  color: var(--wine);
 }
 .hl {
-  color: var(--red);
+  color: var(--wine);
 }
 .eyebrow {
   font-size: 15px;
@@ -251,7 +251,7 @@ em {
   color: var(--ink-500);
 }
 .announce a:hover {
-  color: var(--red);
+  color: var(--wine);
 }
 
 /* ---------- header ---------- */
@@ -298,7 +298,7 @@ em {
   background: none;
 }
 .is-home .header .nav a:hover {
-  background: rgba(14, 13, 12, 0.07);
+  background: rgba(14, 13, 13, 0.07);
 }
 .is-home .header__inner {
   padding: 0 clamp(20px, 3vw, 44px);
@@ -311,7 +311,7 @@ em {
   color: var(--ink-900);
 }
 .logo span {
-  color: var(--red);
+  color: var(--wine);
 }
 .nav {
   display: none;
@@ -426,7 +426,7 @@ em {
   background: var(--ink-500);
 }
 .dot--live {
-  background: var(--red);
+  background: var(--wine);
 }
 
 /* ---------- hero (cartão claro com esfera de pontos) ---------- */
@@ -538,7 +538,7 @@ em {
   max-width: 96px;
   padding: 3px 8px;
   border-radius: 8px;
-  background: rgba(240, 238, 234, 0.92);
+  background: rgba(245, 245, 247, 0.92);
   font-size: 11px;
   line-height: 1.25;
   color: var(--ink-700);
@@ -582,7 +582,7 @@ em {
   background: var(--gray-300);
 }
 .marquee__track i:nth-of-type(3n) {
-  background: var(--red);
+  background: var(--wine);
 }
 @keyframes marquee {
   to {
@@ -931,9 +931,9 @@ em {
   justify-self: start;
   padding: 4px 10px;
   border-radius: var(--radius-pill);
-  background: rgba(225, 29, 42, 0.1);
+  background: rgba(128, 5, 19, 0.08);
   font-size: 12px;
-  color: var(--red);
+  color: var(--wine);
 }
 .ui--phone {
   display: flex;
@@ -1032,13 +1032,13 @@ em {
   border-color: transparent;
 }
 .col:hover .slots .is-busy {
-  background: var(--red);
+  background: var(--wine);
 }
 .col:hover .bars i {
   background: rgba(255, 255, 255, 0.25);
 }
 .col:hover .bars i:last-child {
-  background: var(--red);
+  background: var(--wine);
 }
 .slots {
   display: grid;
@@ -1074,7 +1074,7 @@ em {
   transition: background-color 0.3s;
 }
 .bars i:last-child {
-  background: var(--red);
+  background: var(--wine);
 }
 .avatars {
   display: flex;
@@ -1114,7 +1114,7 @@ em {
   font-weight: 500;
 }
 .col__more:hover {
-  color: var(--red);
+  color: var(--wine);
 }
 
 /* ---------- passos ---------- */
@@ -1136,7 +1136,7 @@ em {
   color: var(--gray-400);
 }
 .steps li:hover .steps__n {
-  color: var(--red);
+  color: var(--wine);
 }
 .steps h3 {
   font-size: clamp(22px, 3vw, 38px);
@@ -1173,7 +1173,7 @@ em {
   font-size: clamp(34px, 5.8vw, 76px);
 }
 .statement em {
-  color: var(--red);
+  color: var(--wine);
 }
 .statement p {
   max-width: 56ch;
@@ -1194,8 +1194,8 @@ em {
   border-bottom: 1px solid rgba(255, 255, 255, 0.4);
 }
 .statement__mail:hover {
-  color: var(--red);
-  border-color: var(--red);
+  color: var(--wine);
+  border-color: var(--wine);
 }
 
 /* ---------- planos ---------- */
@@ -1229,7 +1229,7 @@ em {
   align-self: flex-start;
   padding: 3px 12px;
   border-radius: var(--radius-pill);
-  background: var(--red);
+  background: var(--wine);
   color: var(--white);
   font-size: 12px;
 }
@@ -1386,7 +1386,7 @@ em {
   color: var(--ink-700);
 }
 .pain__was s {
-  text-decoration-color: var(--red);
+  text-decoration-color: var(--wine);
 }
 .pain h3 {
   font-size: clamp(20px, 2vw, 24px);
@@ -1445,7 +1445,7 @@ em {
 .seg__off {
   padding: 1px 8px;
   border-radius: var(--radius-pill);
-  background: var(--red);
+  background: var(--wine);
   color: #fff;
   font-size: 11px;
   font-weight: 500;
@@ -1570,7 +1570,7 @@ em {
   color: var(--white);
 }
 .faqs details[open] summary {
-  color: var(--red);
+  color: var(--wine);
 }
 .faqs details p {
   max-width: 62ch;
@@ -1625,7 +1625,7 @@ em {
   color: var(--ink-900);
 }
 .footer a:hover {
-  color: var(--red);
+  color: var(--wine);
 }
 .footer__bottom {
   margin-top: 40px;
@@ -1637,7 +1637,7 @@ em {
   font-weight: 500;
   line-height: 0.8;
   letter-spacing: -0.07em;
-  color: var(--red);
+  color: var(--wine);
   text-align: center;
   user-select: none;
 }
