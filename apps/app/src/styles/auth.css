@@ -40,10 +40,11 @@
   z-index: 0;
   width: 100%;
   height: 100%;
-  opacity: 0.14;
+  color: var(--ink-900);
+  opacity: 0.09;
 }
 
-/* desktop: painel claro com o formulário à esquerda e o olho em linhas ocupando o lado direito */
+/* desktop: painel claro com o formulário à esquerda e o olho em símbolos claros sobre o painel escuro da direita */
 @media (min-width: 1024px) {
   .auth {
     grid-template-columns: 42% 1fr;
@@ -51,7 +52,7 @@
     padding: 0;
   }
   .auth__bg {
-    background: linear-gradient(90deg, #ffffff 0 42%, #efeff1 42% 100%);
+    background: linear-gradient(90deg, #ffffff 0 42%, #0e0e10 42% 100%);
   }
   .auth__bg span {
     display: none;
@@ -59,6 +60,7 @@
   .auth__art {
     inset: 0 0 0 42%;
     width: 58%;
+    color: #f2f2f3;
     opacity: 1;
   }
   .auth .auth__box {
