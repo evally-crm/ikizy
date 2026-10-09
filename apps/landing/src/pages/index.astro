@@ -2,11 +2,10 @@
 import Base from '../layouts/Base.astro'
 import { CONTACT_EMAIL, CTA, LINKS } from '../lib/site'
 import { PIX_DISCOUNT_PCT, PLANS, TRIAL_DAYS, brlNumber } from '../lib/pricing'
-import { HAND_B64, HAND_H, HAND_W } from '../lib/handTone'
 
 const ticker = ['Agenda online', 'Clientes que voltam', 'Financeiro descomplicado', 'Site do seu negócio', 'Comissões da equipe', 'Mensagens prontas no WhatsApp', 'Fechamento do mês']
 
-/** especialidades que passam sem parar abaixo do título do "Para quem é", com "você." a cada volta e a mão ao lado */
+/** especialidades que passam sem parar abaixo do título do "Para quem é", com "você." a cada volta */
 const crafts = ['lash designers', 'brow designers', 'cabeleireiros(as)', 'nail designers', 'esteticistas', 'maquiadoras']
 
 /** recursos reais do sistema, contados pelo que mudam na rotina (o "antes" vem da antiga seção "Do caderno ao sistema") */
@@ -103,7 +102,6 @@ const faqSchema = {
           {crafts.map((c) => <span>{c}</span>)}
           <span class="is-in">você.</span>
         </span>
-        <canvas class="you__hand" data-hand></canvas>
       </span>
       <span class="sr-only">você: {crafts.join(', ')}.</span>
     </h2>
@@ -514,7 +512,6 @@ const faqSchema = {
 
 <script is:inline id="you-script">
   // "Para quem é": as profissões passam sem parar abaixo do título; "você." fica um pouco mais em cada volta.
-  // A largura da palavra anima, para a mão ao lado deslizar junto em vez de pular.
   (() => {
     const rot = document.querySelector('[data-you-rot]')
     if (!rot) return
@@ -540,108 +537,6 @@ const faqSchema = {
     new IntersectionObserver((e) => (visible = e[0].isIntersecting), { threshold: 0.4 }).observe(rot)
     timer = setTimeout(tick, 1800)
     addEventListener('resize', () => fit(words[i]))
-  })()
-</script>
-
-<script id="hand-script" define:vars={{ HAND_B64, HAND_W, HAND_H }}>
-  // a mão ao lado da palavra do "Para quem é", desenhada com os mesmos símbolos da boca (ponto, +, x, quadrado):
-  // os símbolos surgem na primeira vez que a seção aparece e depois ondulam sem parar
-  (() => {
-    const canvas = document.querySelector('[data-hand]')
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    const TONE = Float32Array.from(atob(HAND_B64), (c) => c.charCodeAt(0) / 255)
-    // o tamanho do símbolo acompanha o da mão: sempre ~42 colunas, no desktop e no celular
-    let CELL = 3
-    const INK = 'rgb(14, 13, 12)'
-    const still = matchMedia('(prefers-reduced-motion: reduce)').matches
-    let shownAt = 0
-    let visible = false
-
-    const hash = (c, r) => {
-      const s = Math.sin(c * 12.9898 + r * 78.233) * 43758.5453
-      return s - Math.floor(s)
-    }
-    function sample(px, py) {
-      if (px < 0 || py < 0 || px >= HAND_W - 1 || py >= HAND_H - 1) return 0
-      const x0 = Math.floor(px)
-      const y0 = Math.floor(py)
-      const fx = px - x0
-      const fy = py - y0
-      const i = y0 * HAND_W + x0
-      return (TONE[i] * (1 - fx) + TONE[i + 1] * fx) * (1 - fy) + (TONE[i + HAND_W] * (1 - fx) + TONE[i + HAND_W + 1] * fx) * fy
-    }
-    function glyph(x, y, d, mix) {
-      const m = CELL / 2
-      const a = CELL * 0.32
-      if (d < 0.1) return
-      if (d >= 0.56 && mix < 0.3) d = 0.5
-      if (d < 0.24) return ctx.fillRect(x + m - 0.6, y + m - 0.6, 1.2, 1.2)
-      ctx.beginPath()
-      if (d < 0.4) {
-        ctx.moveTo(x + m, y + m - a)
-        ctx.lineTo(x + m, y + m + a)
-        ctx.moveTo(x + m - a, y + m)
-        ctx.lineTo(x + m + a, y + m)
-        return ctx.stroke()
-      }
-      if (d < 0.56) {
-        ctx.moveTo(x + m - a, y + m - a)
-        ctx.lineTo(x + m + a, y + m + a)
-        ctx.moveTo(x + m + a, y + m - a)
-        ctx.lineTo(x + m - a, y + m + a)
-        return ctx.stroke()
-      }
-      if (d < 0.72) return ctx.fillRect(x + m - a, y + m - a, a * 2, a * 2)
-      ctx.fillRect(x + 0.5, y + 0.5, CELL - 1, CELL - 1)
-    }
-    function draw(t) {
-      const dpr = Math.min(devicePixelRatio || 1, 2)
-      const { width, height } = canvas.getBoundingClientRect()
-      if (!width || !height) return
-      if (canvas.width !== Math.round(width * dpr)) {
-        canvas.width = Math.round(width * dpr)
-        canvas.height = Math.round(height * dpr)
-      }
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-      ctx.clearRect(0, 0, width, height)
-      ctx.fillStyle = ctx.strokeStyle = INK
-      CELL = Math.max(1.6, width / 42)
-      ctx.lineWidth = Math.max(0.6, CELL / 3.5)
-      // quanto da mão já apareceu (0..1): os símbolos surgem em ordem aleatória
-      const reveal = still ? 1 : Math.min(1, (t - shownAt) / 1.1)
-      const unit = width / HAND_W
-      for (let r = 0; r * CELL < height; r++) {
-        for (let c = 0; c * CELL < width; c++) {
-          const x = c * CELL + CELL / 2
-          const y = r * CELL + CELL / 2
-          if (hash(r, c) > reveal) continue
-          const wave = still ? 0.5 : Math.sin(x * 0.03 + Math.sin(y * 0.02 + t * 0.7) * 1.6 + t * 0.9) * 0.5 + 0.5
-          const px = x / unit + (still ? 0 : Math.sin(y * 0.05 + t * 0.8) * 0.35)
-          const py = y / unit
-          const d = sample(px, py) * (0.9 + wave * 0.2) + (hash(c, r) - 0.5) * 0.12
-          glyph(c * CELL, r * CELL, d, hash(c + 7, r))
-        }
-      }
-    }
-    const start = () => {
-      shownAt = performance.now() / 1000
-      if (still) return draw(0)
-      let last = 0
-      const tick = (now) => {
-        if (visible && now - last >= 1000 / 30) {
-          last = now
-          draw(now / 1000)
-        }
-        requestAnimationFrame(tick)
-      }
-      requestAnimationFrame(tick)
-    }
-    let started = false
-    new IntersectionObserver((e) => {
-      visible = e[0].isIntersecting
-      if (visible && !started) (started = true), start()
-    }).observe(canvas)
   })()
 </script>
 

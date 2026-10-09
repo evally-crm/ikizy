@@ -660,14 +660,12 @@ em {
 .you__lead {
   max-width: 60ch;
 }
-/* linha de baixo do título: a palavra que troca e a mão em símbolos logo ao lado */
+/* linha de baixo do título: a palavra que troca, centralizada */
 .you__line {
   display: flex;
-  align-items: center;
   justify-content: center;
-  gap: 0.18em;
 }
-/* todas as palavras na mesma célula da grade; o JS anima a largura para a palavra da vez */
+/* todas as palavras na mesma célula da grade; o JS anima a largura para a palavra da vez ficar centrada */
 .you__rot {
   display: grid;
   justify-items: start;
@@ -688,23 +686,18 @@ em {
 .you__rot > span.is-in {
   opacity: 1;
   transform: none;
+  transition-delay: 0.2s;
 }
+/* a que sai some rápido, antes da próxima entrar, para as duas não se sobreporem */
 .you__rot > span.is-out {
   opacity: 0;
   transform: translateY(-0.45em);
+  transition-duration: 0.22s;
 }
-.you__hand {
-  flex: none;
-  height: 1.45em;
-  aspect-ratio: 128 / 111;
-}
-/* no celular a palavra mais longa precisa caber junto da mão */
+/* no celular a palavra mais longa precisa caber na largura */
 @media (max-width: 520px) {
   .you__line {
-    font-size: 0.78em;
-  }
-  .you__hand {
-    height: 1.8em;
+    font-size: 0.82em;
   }
 }
 @media (prefers-reduced-motion: reduce) {
