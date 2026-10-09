@@ -210,6 +210,26 @@
   background: var(--gray-200);
   color: var(--ink-500);
 }
+.auth__eye {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-500);
+  cursor: pointer;
+}
+.auth__eye:hover {
+  background: var(--gray-200);
+  color: var(--ink-900);
+}
+.auth__eye:focus-visible {
+  outline: 2px solid var(--ink-900);
+  outline-offset: 2px;
+}
 .auth__pill {
   flex: none;
   padding: 8px 14px;
