@@ -511,13 +511,13 @@ const faqSchema = {
 </script>
 
 <script is:inline id="you-script">
-  // "Para quem é": as profissões passam sem parar abaixo do título; "você." fica um pouco mais em cada volta.
+  // "Para quem é": as profissões trocam sem parar abaixo do título, no lugar (some uma, aparece a outra);
+  // "você." fica um pouco mais em cada volta.
   (() => {
     const rot = document.querySelector('[data-you-rot]')
     if (!rot) return
     const words = [...rot.children]
     const last = words.length - 1
-    const fit = (el) => (rot.style.width = el.offsetWidth + 'px')
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return
     let i = last
     let visible = false
@@ -529,14 +529,11 @@ const faqSchema = {
       setTimeout(() => prev.classList.remove('is-out'), 500)
       i = (i + 1) % words.length
       words[i].classList.add('is-in')
-      fit(words[i])
       timer = setTimeout(tick, i === last ? 2600 : 1400)
     }
     const tick = () => (visible ? step() : (timer = setTimeout(tick, 400)))
-    fit(words[i])
     new IntersectionObserver((e) => (visible = e[0].isIntersecting), { threshold: 0.4 }).observe(rot)
     timer = setTimeout(tick, 1800)
-    addEventListener('resize', () => fit(words[i]))
   })()
 </script>
 
