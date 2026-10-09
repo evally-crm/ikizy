@@ -10,7 +10,7 @@ export const LINKS = {
 export const CTA = {
   main: 'Organizar meu salão grátis',
   short: 'Teste grátis',
-  hint: '1 mês grátis, sem cartão.',
+  hint: '30 dias grátis, sem cartão.',
 } as const
 
 export const CONTACT_EMAIL = 'contato@ikizy.com'
@@ -24,8 +24,8 @@ export const COMPANY = {
 
 export const NAV = [
   { href: '/#recursos', label: 'Recursos' },
+  { href: '/#como-funciona', label: 'Como funciona' },
   { href: '/#precos', label: 'Preços' },
-  { href: '/#sobre', label: 'Sobre' },
   { href: '/#contato', label: 'Contato' },
 ] as const
 
