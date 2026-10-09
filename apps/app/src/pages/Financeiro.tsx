@@ -1,8 +1,11 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { ArrowDownRight, ArrowUpRight, Download, Lock, Plus, Send, Trash2, X } from 'lucide-react'
+import { ArrowDownRight, ArrowUpRight, Download, Lock, Plus, Send, Settings2, Trash2, X } from 'lucide-react'
 import { useAuth } from '../auth/AuthProvider'
+import { useSubscription } from '../billing/SubscriptionProvider'
+import { CommissionDialog } from '../components/CommissionDialog'
+import { planHasCommission } from '../lib/commission'
 import { type MonthClosing } from '../data/finance'
 import { CARD_FEE_PCT, useFinance, type Expense } from '../data/useFinance'
 import { formatBRL } from '../lib/format'
@@ -414,6 +417,9 @@ export default function Financeiro() {
   const [confirming, setConfirming] = useState(false)
   const [addingExpense, setAddingExpense] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
+  const [editingCommission, setEditingCommission] = useState(false)
+  const { sub } = useSubscription()
+  const hasCommission = planHasCommission(sub?.plan)
 
   if (fin.loading) {
     return (
@@ -454,7 +460,7 @@ export default function Financeiro() {
     { label: 'Taxas', value: month.cardFees, cls: 'is-fee' },
   ].filter((c) => c.value > 0 || c.cls === 'is-net')
   // card de comissões só faz sentido com equipe (ou se já houve comissão)
-  const showTeam = professionals.length > 1 || month.commissionsTotal > 0
+  const showTeam = professionals.length > 1 || month.commissionsTotal > 0 || (hasCommission && fin.commission.enabled)
   const paymentsTotal = month.payments.reduce((a, p) => a + p.total, 0)
   const maxPayment = Math.max(...month.payments.map((p) => p.total), 1)
   const summary = `Fechamento de ${month.label} - ${salonName}\nFaturamento: ${formatBRL(month.gross)}\nLucro líquido: ${formatBRL(month.net)}\nAtendimentos: ${month.appointments}`
@@ -707,10 +713,27 @@ export default function Financeiro() {
                 <p className="ftile__label">Equipe</p>
                 <h2 className="ftile__title">Comissões</h2>
               </div>
-              {month.commissionsTotal > 0 && <strong className="ftile__total">{formatBRL(month.commissionsTotal)}</strong>}
+              <div className="ftile__side">
+                {month.commissionsTotal > 0 && <strong className="ftile__total">{formatBRL(month.commissionsTotal)}</strong>}
+                {hasCommission && fin.commissionAvailable && (
+                  <Button variant="light" size="sm" onClick={() => setEditingCommission(true)}>
+                    <Settings2 size={14} aria-hidden="true" /> Configurar
+                  </Button>
+                )}
+              </div>
             </div>
-            {month.commissions.length === 0 ? (
-              <p className="ftile__hint">Nenhuma profissional com comissão definida. Defina o percentual de cada uma para calcular.</p>
+            {!hasCommission ? (
+              <p className="ftile__hint">
+                Comissão da equipe está nos planos Studio e Salão. <Link to={dash('/assinatura')}>Ver planos</Link>
+              </p>
+            ) : !fin.commissionAvailable ? (
+              <p className="ftile__hint">A configuração de comissões fica disponível assim que a atualização do banco for aplicada.</p>
+            ) : month.commissions.length === 0 ? (
+              <p className="ftile__hint">
+                {fin.commission.enabled
+                  ? `Nenhuma comissão em ${month.label}.`
+                  : 'Comissão desligada. Em Configurar, defina se a equipe ganha por porcentagem ou valor fixo, por profissional ou por serviço.'}
+              </p>
             ) : (
               <ul className="list">
                 {month.commissions.map((c) => {
@@ -768,6 +791,15 @@ export default function Financeiro() {
       </div>
 
       {addingExpense && <ExpenseDialog month={month} onSave={fin.addExpense} onClose={() => setAddingExpense(false)} />}
+      {editingCommission && (
+        <CommissionDialog
+          config={fin.commission}
+          professionals={professionals}
+          services={fin.services}
+          onSave={fin.saveCommission}
+          onClose={() => setEditingCommission(false)}
+        />
+      )}
       {confirming && <CloseDialog month={month} onCancel={() => setConfirming(false)} onConfirm={() => void onClose()} />}
     </div>
   )

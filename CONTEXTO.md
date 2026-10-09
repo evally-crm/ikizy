@@ -19,7 +19,7 @@ Módulos do sistema (`app.ikizy.com/dashboard`):
 | Início | resumo do dia, faturamento da semana, próximos atendimentos |
 | Agenda | calendário semana/mês, grade por profissional, horário de atendimento, criar/remarcar/confirmar/concluir |
 | Clientes | carteira, VIP, novas, sumidas, histórico |
-| Financeiro | fechamento mensal (recibo), saídas, comissões, formas de pagamento |
+| Financeiro | fechamento mensal (recibo), saídas, comissões (Configurar: opcional, só Studio/Salão; cálculo em `lib/commission.ts`), formas de pagamento |
 | Meu site | editor do site público do negócio (detalhado na seção 5) |
 | Equipe | quem atende (limite do plano), quem entra no sistema (papéis), convites por link (copiar ou WhatsApp) |
 | Assinatura | plano do IKIZY (Stripe: cartão e Pix) |
@@ -114,6 +114,7 @@ npm run build
 | `20261022000000_plan_limits` | **ainda não aplicada.** Limite de profissionais ativas por plano (Solo 1, Studio 4, Salão sem limite; gatilho no banco), teste grátis de 30 dias em todos os planos (`create_salon` recebe o plano escolhido no cadastro; `set_trial_plan()` troca durante o teste), cortesia para beta (`grant_courtesy()` / `end_courtesy()`, só pelo console do banco) |
 | `20261023000000_team` | **ainda não aplicada (depois da plan_limits).** Equipe: `invites` (convite por link, 7 dias, uso único), `get_invite()` / `accept_invite()`, `members.name`; quem sai da equipe perde o vínculo com a profissional; cadastro de profissionais só dona/gerente; saídas e fechamentos só dona/gerente leem |
 | `20261024000000_invite_email` | **ainda não aplicada (depois da team).** `invites.email`, `email_sent_at`, `email_count`: convite também por e-mail (Resend, função `/api/team/invite-email`) |
+| `20261025000000_commissions` | **ainda não aplicada (depois da invite_email).** Comissão personalizável: `commission_settings` (liga/desliga, base: valor cobrado ou sem a taxa do cartão), `commission_rules` (% ou R$ fixo; profissional + serviço > serviço > profissional > padrão), `save_commission_config()` salva tudo de uma vez; o `commission_pct` antigo vira regra |
 | `20261021000000_client_photos` | fotos de antes e depois na ficha (`client_photos`: miniatura + foto, só membros do salão leem; não passam pela página pública) |
 
 Regras importantes:

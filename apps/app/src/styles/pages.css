@@ -1496,3 +1496,99 @@
 .invite__actions .btn {
   text-decoration: none;
 }
+
+/* ---------------------------------------------------------------- comissões */
+.ftile__side {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.ftile__side .btn--light {
+  border: 1px solid var(--line-strong);
+}
+.cmrule {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.cmrule__kind {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--page-bg);
+  border: 1px solid var(--line);
+  flex: none;
+}
+.cmrule__kind button {
+  border: 0;
+  background: transparent;
+  color: var(--ink-700);
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.875rem;
+  min-width: 38px;
+  height: 34px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.cmrule__kind button[aria-checked='true'] {
+  background: var(--ink-900);
+  color: var(--white);
+}
+.cmrule__value {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.cmrule__value input {
+  min-width: 0;
+}
+.cmrule__unit {
+  font-size: 0.75rem;
+  color: var(--ink-500);
+  white-space: nowrap;
+  padding-right: 4px;
+}
+.cmlist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.cmlist__row {
+  display: grid;
+  gap: 6px;
+  align-items: center;
+}
+@media (min-width: 640px) {
+  .cmlist__row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+    gap: 12px;
+  }
+}
+.cmlist__name {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.cmlist__row--exc {
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+}
+.cmlist__pick {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+.cmlist__end {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.cmlist__end .cmrule {
+  flex: 1;
+}

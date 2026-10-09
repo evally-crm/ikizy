@@ -2,9 +2,19 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { addMonths, format, getDate, getDaysInMonth, startOfMonth } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { useAuth } from '../auth/AuthProvider'
+import { useSubscription } from '../billing/SubscriptionProvider'
+import {
+  DEFAULT_COMMISSION,
+  commissionsByProfessional,
+  planHasCommission,
+  type CommissionBase,
+  type CommissionRule,
+  type CommissionSettings,
+} from '../lib/commission'
 import { isNeonConfigured, neon } from '../lib/neon'
 import { PAYMENT_LABEL, type PaymentMethod } from '../types'
 import { professionals as mockProfessionals } from './mock'
+import { DEFAULT_STUDIO } from './catalog'
 import { getMonths, type MonthClosing } from './finance'
 
 export interface Expense {
@@ -20,6 +30,16 @@ export interface FinanceProfessional {
   name: string
 }
 
+export interface FinanceService {
+  id: string
+  name: string
+  category: string
+}
+
+export interface CommissionConfig extends CommissionSettings {
+  rules: CommissionRule[]
+}
+
 /** taxa média cobrada pela maquininha nos pagamentos em crédito e débito (estimativa) */
 export const CARD_FEE_PCT = 3.1
 
@@ -28,6 +48,7 @@ const MONTHS_SHOWN = 3
 interface ApptRow {
   client_id: string
   professional_id: string
+  service_id?: string | null
   service_name: string
   starts_at: string
   price: number | string
@@ -66,6 +87,7 @@ interface Inputs {
   clientsCreated: Record<string, Date>
   productsSpend: number
   expenses: Expense[]
+  commission: CommissionConfig
 }
 
 function buildMonth(date: Date, today: Date, current: boolean, d: Inputs): MonthClosing {
@@ -89,22 +111,14 @@ function buildMonth(date: Date, today: Date, current: boolean, d: Inputs): Month
   }
   const categories = [...byCategory.entries()].map(([name, v]) => ({ name, ...v })).sort((a, b) => b.total - a.total)
 
-  const byPro = new Map<string, { qty: number; total: number }>()
-  for (const a of done) {
-    const row = byPro.get(a.professional_id) ?? { qty: 0, total: 0 }
-    row.qty += 1
-    row.total += money(a)
-    byPro.set(a.professional_id, row)
-  }
-  // só entra comissão de quem tem percentual definido; sem equipe (ou sem %), não há o que descontar
-  const commissions = d.pros
-    .filter((p) => Number(p.commission_pct) > 0)
-    .map((p) => {
-      const sold = byPro.get(p.id) ?? { qty: 0, total: 0 }
-      return { professionalId: p.id, qty: sold.qty, total: Math.round(sold.total * (Number(p.commission_pct) / 100) * 100) / 100 }
-    })
-    .filter((c) => c.qty > 0)
-  const commissionsTotal = commissions.reduce((s, c) => s + c.total, 0)
+  // comissão pelas regras do salão (desligada ou no Solo, não há o que descontar)
+  const commissions = commissionsByProfessional(
+    done.map((a) => ({ professionalId: a.professional_id, serviceId: a.service_id ?? null, price: money(a), paymentMethod: a.payment_method })),
+    d.commission.rules,
+    d.commission,
+    CARD_FEE_PCT,
+  )
+  const commissionsTotal = Math.round(commissions.reduce((s, c) => s + c.total, 0) * 100) / 100
 
   const paid = new Map<string, number>()
   for (const a of done) {
@@ -168,6 +182,8 @@ function friendly(error: { code?: string; message: string }) {
 /** financeiro do salão: calculado dos atendimentos concluídos (ou dados de exemplo quando não há banco) */
 export function useFinance() {
   const { salon } = useAuth()
+  const { sub } = useSubscription()
+  const plan = sub?.plan
   const salonId = salon?.id
   const live = isNeonConfigured && Boolean(neon) && Boolean(salonId)
   const today = useMemo(() => new Date(), [])
@@ -176,6 +192,12 @@ export function useFinance() {
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [professionals, setProfessionals] = useState<FinanceProfessional[]>(() => (live ? [] : mockProfessionals))
   const [expensesAvailable, setExpensesAvailable] = useState(true)
+  const [services, setServices] = useState<FinanceService[]>(() =>
+    live ? [] : DEFAULT_STUDIO.services.map((x) => ({ id: x.id, name: x.name, category: x.category })),
+  )
+  const [commission, setCommission] = useState<CommissionConfig>({ ...DEFAULT_COMMISSION, rules: [] })
+  /** false enquanto a migration das comissões não for aplicada */
+  const [commissionAvailable, setCommissionAvailable] = useState(true)
   const [loading, setLoading] = useState(live)
   const [error, setError] = useState<string | null>(null)
   const [tick, setTick] = useState(0)
@@ -190,7 +212,7 @@ export function useFinance() {
         neon!
           .from('appointments')
           .select(
-            `client_id, professional_id, service_name, starts_at, price, status, ${withPayment ? 'payment_method, ' : ''}services ( category )`,
+            `client_id, professional_id, service_id, service_name, starts_at, price, status, ${withPayment ? 'payment_method, ' : ''}services ( category )`,
           )
           .eq('salon_id', salonId)
           .in('status', ['concluido', 'faltou'])
@@ -200,12 +222,15 @@ export function useFinance() {
       // a coluna de forma de pagamento vem da migration do financeiro; sem ela, seguimos sem esse detalhe
       if (apptRes.error) apptRes = await apptSelect(false)
 
-      const [pros, cls, prods, closings, exps] = await Promise.all([
+      const [pros, cls, prods, closings, exps, svcs, cset, crules] = await Promise.all([
         neon.from('professionals').select('id, name, commission_pct').eq('salon_id', salonId),
         neon.from('clients').select('id, created_at').eq('salon_id', salonId),
         neon.from('products').select('monthly_spend').eq('salon_id', salonId),
         neon.from('month_closings').select('month, closed_at, snapshot').eq('salon_id', salonId).gte('month', format(first, 'yyyy-MM-dd')),
         neon.from('expenses').select('id, spent_on, description, amount').eq('salon_id', salonId).gte('spent_on', format(first, 'yyyy-MM-dd')).order('spent_on', { ascending: false }),
+        neon.from('services').select('id, name, category').eq('salon_id', salonId).order('name'),
+        neon.from('commission_settings').select('enabled, base').eq('salon_id', salonId).maybeSingle(),
+        neon.from('commission_rules').select('professional_id, service_id, kind, value').eq('salon_id', salonId),
       ])
       if (cancelled) return
       if (apptRes.error || pros.error || cls.error || prods.error || closings.error) {
@@ -221,12 +246,33 @@ export function useFinance() {
         amount: Number(e.amount),
       }))
       const proRows = (pros.data ?? []) as unknown as ProRow[]
+      // sem a migration das comissões, vale o percentual antigo de cada profissional
+      const ready = !cset.error && !crules.error
+      const config: CommissionConfig = ready
+        ? {
+            enabled: cset.data?.enabled === true,
+            base: (cset.data?.base as CommissionBase | undefined) ?? 'price',
+            rules: (crules.data ?? []).map((r) => ({
+              professionalId: (r.professional_id as string | null) ?? null,
+              serviceId: (r.service_id as string | null) ?? null,
+              kind: r.kind as CommissionRule['kind'],
+              value: Number(r.value),
+            })),
+          }
+        : {
+            enabled: proRows.some((p) => Number(p.commission_pct) > 0),
+            base: 'price',
+            rules: proRows.filter((p) => Number(p.commission_pct) > 0).map((p) => ({ professionalId: p.id, serviceId: null, kind: 'percent', value: Number(p.commission_pct) })),
+          }
+      // comissão é recurso de equipe: no Solo não entra na conta
+      const effective = { ...config, enabled: config.enabled && planHasCommission(plan) }
       const inputs: Inputs = {
         appts: (apptRes.data ?? []) as unknown as ApptRow[],
         pros: proRows,
         clientsCreated: Object.fromEntries((cls.data ?? []).map((c) => [c.id as string, new Date(c.created_at as string)])),
         productsSpend: (prods.data ?? []).reduce((s, p) => s + Number(p.monthly_spend), 0),
         expenses: expenseList,
+        commission: effective,
       }
       const closed = new Map(((closings.data ?? []) as unknown as ClosingRow[]).map((c) => [c.month.slice(0, 7), c]))
       const list = Array.from({ length: MONTHS_SHOWN }, (_, i) => {
@@ -235,6 +281,9 @@ export function useFinance() {
         return snap ? revive(snap.snapshot, snap.closed_at) : buildMonth(date, today, i === MONTHS_SHOWN - 1, inputs)
       })
       setProfessionals(proRows.map((p) => ({ id: p.id, name: p.name })))
+      setServices(((svcs.data ?? []) as Record<string, unknown>[]).map((r) => ({ id: r.id as string, name: r.name as string, category: String(r.category ?? '') })))
+      setCommission(config)
+      setCommissionAvailable(ready)
       setExpenses(expenseList)
       setMonths(list)
       setError(null)
@@ -243,7 +292,7 @@ export function useFinance() {
     return () => {
       cancelled = true
     }
-  }, [live, salonId, today, tick])
+  }, [live, salonId, today, tick, plan])
 
   const reload = useCallback(() => setTick((t) => t + 1), [])
 
@@ -272,6 +321,26 @@ export function useFinance() {
       const { data, error: err } = await neon.from('expenses').delete().eq('id', id).select('id')
       if (err) return friendly(err)
       if (!data?.length) return 'Só a dona ou a gerente pode apagar saídas.'
+      reload()
+      return null
+    },
+    [live, salonId, reload],
+  )
+
+  /** salva a configuração inteira de comissão (liga/desliga, base e regras) de uma vez */
+  const saveCommission = useCallback(
+    async (config: CommissionConfig): Promise<string | null> => {
+      if (!live || !neon || !salonId) {
+        setCommission(config)
+        return null
+      }
+      const { error: err } = await neon.rpc('save_commission_config', {
+        p_salon: salonId,
+        p_enabled: config.enabled,
+        p_base: config.base,
+        p_rules: config.rules.map((r) => ({ professional_id: r.professionalId, service_id: r.serviceId, kind: r.kind, value: r.value })),
+      })
+      if (err) return friendly(err)
       reload()
       return null
     },
@@ -312,6 +381,10 @@ export function useFinance() {
     expenses,
     professionals,
     expensesAvailable,
+    services,
+    commission,
+    commissionAvailable,
+    saveCommission,
     loading,
     error,
     reload,
