@@ -115,6 +115,7 @@ npm run build
 | `20261023000000_team` | **ainda não aplicada (depois da plan_limits).** Equipe: `invites` (convite por link, 7 dias, uso único), `get_invite()` / `accept_invite()`, `members.name`; quem sai da equipe perde o vínculo com a profissional; cadastro de profissionais só dona/gerente; saídas e fechamentos só dona/gerente leem |
 | `20261024000000_invite_email` | **ainda não aplicada (depois da team).** `invites.email`, `email_sent_at`, `email_count`: convite também por e-mail (Resend, função `/api/team/invite-email`) |
 | `20261025000000_commissions` | **ainda não aplicada (depois da invite_email).** Comissão personalizável: `commission_settings` (liga/desliga, base: valor cobrado ou sem a taxa do cartão), `commission_rules` (% ou R$ fixo; profissional + serviço > serviço > profissional > padrão), `save_commission_config()` salva tudo de uma vez; o `commission_pct` antigo vira regra |
+| `20261026000000_cover_gallery` | **ainda não aplicada.** A capa do site aceita `capa:<id>` (fundos prontos em `apps/app/public/capas`, lista em `src/lib/covers.ts`) |
 | `20261021000000_client_photos` | fotos de antes e depois na ficha (`client_photos`: miniatura + foto, só membros do salão leem; não passam pela página pública) |
 
 Regras importantes:
@@ -170,6 +171,13 @@ Regras importantes:
 - O pedido entra na agenda como **pendente** para o salão confirmar. Fuso fixo: America/Sao_Paulo.
 
 ---
+
+## 5b. Avisos, primeiros passos e app instalável
+
+- **Pedidos online:** o sininho do topo mostra quantos pedidos esperam confirmação (consulta própria em `AgendaProvider`, a cada minuto e ao voltar à aba). Confirmar/Recusar em um toque muda o status e abre o WhatsApp da cliente com a mensagem pronta (`aceito` / `recusado` em `lib/messages.ts`). Também aparece no topo do Início e na Agenda.
+- **Primeiros passos** (`components/FirstSteps.tsx`): checklist no Início para dona e gerente; some quando tudo está feito ou quando a pessoa esconde.
+- **Capa pronta:** 10 fundos gerados por código (não são fotos de banco; a rede do ambiente de desenvolvimento bloqueava Unsplash/Pexels). Para usar fotos reais, troque os arquivos `<id>.jpg` (1600×1000) e `<id>-mini.jpg` (480×300) em `public/capas/`.
+- **PWA:** `public/manifest.webmanifest`, `public/sw.js` (telas sempre da rede, cópia para abrir sem internet; nunca intercepta `/api` nem `/s/`), ícones em `public/icons/`. O service worker só é registrado no build de produção. No celular, o Início mostra "Tenha o IKIZY na tela inicial" (Android: botão do navegador; iPhone: passo a passo). Notificações push ainda não existem.
 
 ## 6. Preferências da usuária (como ela gosta de trabalhar)
 

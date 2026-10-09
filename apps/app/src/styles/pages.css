@@ -1755,3 +1755,57 @@
   border-color: var(--brand-700);
   color: var(--white);
 }
+
+/* ---------------------------------------------------------------- instalar o app */
+.install {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 12px 12px 14px;
+  border-radius: var(--radius-md);
+  background: var(--ink-900);
+  color: var(--white);
+}
+.install__icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+}
+.install__text {
+  flex: 1;
+  min-width: 0;
+}
+.install__title {
+  margin: 0;
+  font-weight: 600;
+  font-size: 14px;
+}
+.install__sub {
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.75);
+}
+.install__sub svg {
+  vertical-align: -2px;
+}
+.install .btn--primary {
+  background: var(--white);
+  color: var(--ink-900);
+}
+.install__x {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+}

@@ -9,6 +9,7 @@ import { ACTIVE_STATUSES } from '../types'
 import { MONTHLY_GOAL, getMonths } from '../data/finance'
 import { TodayMessages } from '../components/TodayMessages'
 import FirstSteps from '../components/FirstSteps'
+import InstallApp from '../components/InstallApp'
 import { PendingDialog, PendingList } from '../components/PendingRequests'
 import { can } from '../lib/permissions'
 import { formatBRL, formatTime } from '../lib/format'
@@ -128,6 +129,7 @@ export default function Dashboard() {
         </div>
       </header>
 
+      <InstallApp />
       <FirstSteps />
 
       {/* pedidos do site esperando resposta: primeiro da tela, para nenhum se perder */}
