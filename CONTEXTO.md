@@ -2,6 +2,7 @@
 
 Documento de passagem: o que é o projeto, como está montado, o que já foi feito, como trabalhar nele e o que falta.
 Atualizado em 09/10/2026. Complementa o [README](README.md), que explica como rodar e configurar Neon e Stripe.
+**Antes de mexer em telas, leia o [plano de experiência](docs/PLANO-DE-EXPERIENCIA.md)** (10/10/2026): diagnóstico, nova organização, perfis e fluxos.
 
 > Sem segredos aqui. Chaves e senhas ficam em `.env.local` (raiz e `apps/app/`, fora do git) e nas variáveis da Vercel.
 

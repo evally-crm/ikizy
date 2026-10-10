@@ -1,5 +1,7 @@
 # IKIZY — fluxos de cadastro e uso
 
+> **Desatualizado.** Use o [PLANO-DE-EXPERIENCIA.md](PLANO-DE-EXPERIENCIA.md) (10/10/2026), que tem o estado atual e a proposta.
+
 Levantado do código em 07/10/2026 (branch `dev`, inclui alterações ainda não commitadas).
 Renderiza em GitHub, VS Code (extensão Mermaid) ou https://mermaid.live.
 
