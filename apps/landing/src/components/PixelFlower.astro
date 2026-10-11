@@ -1,0 +1,51 @@
+---
+/**
+ * flor de pixels: quadradinhos densos no miolo e nas pétalas, soltando nas pontas.
+ * gerada no build com um sorteio de semente fixa, então sai sempre igual e fica nítida em qualquer tela.
+ */
+interface Props {
+  class?: string
+}
+
+const { class: className } = Astro.props
+
+const N = 30 // grade N x N
+const PETALS = 5
+const c = (N - 1) / 2
+
+// sorteio com semente fixa (mulberry32)
+let seed = 7
+const rand = () => {
+  seed = (seed + 0x6d2b79f5) | 0
+  let t = Math.imul(seed ^ (seed >>> 15), 1 | seed)
+  t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+}
+
+const cells: { x: number; y: number; s: number; o: number }[] = []
+for (let y = 0; y < N; y++) {
+  for (let x = 0; x < N; x++) {
+    const dx = (x - c) / c
+    const dy = (y - c) / c
+    const r = Math.hypot(dx, dy)
+    // ângulo torcido conforme se afasta do miolo: as pétalas fazem curva, como uma flor aberta
+    const a = Math.atan2(dy, dx) + 0.3 + 0.55 * r
+    // contorno da pétala: rosácea de 5 pétalas finas e compridas
+    const petal = 0.1 + 0.98 * Math.pow(Math.abs(Math.cos((PETALS / 2) * a)), 1.3)
+    const edge = r / petal // < 1 dentro da pétala
+    let p = 0
+    if (r < 0.14) p = 1 // miolo
+    else if (edge < 0.7) p = 0.78
+    else if (edge < 1) p = 0.45
+    else if (edge < 1.5) p = 0.1 // pixels soltos em volta
+    if (rand() < p) {
+      const small = edge > 0.75 && rand() < 0.5
+      cells.push({ x, y, s: small ? 0.6 : 1, o: edge < 0.7 ? 1 : 0.5 + rand() * 0.5 })
+    }
+  }
+}
+---
+
+<svg class={className} viewBox={`1 1 ${N - 2} ${N - 2}`} aria-hidden="true" shape-rendering="crispEdges">
+  {cells.map((q) => <rect x={q.x + (1 - q.s) / 2} y={q.y + (1 - q.s) / 2} width={q.s} height={q.s} fill="currentColor" opacity={q.o.toFixed(2)} />)}
+</svg>

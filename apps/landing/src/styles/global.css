@@ -575,7 +575,7 @@ em {
   }
 }
 
-/* ticket de cadastro: duas peças lado a lado (logo em fundo cinza + convite).
+/* ticket de cadastro: duas peças lado a lado (flor de pixels em fundo vinho + convite).
    só no desktop, no canto inferior direito do início, por cima da boca */
 .ticket {
   display: none;
@@ -602,14 +602,15 @@ em {
   align-items: center;
   justify-content: center;
   width: 112px;
-  background: var(--gray-200);
-  font-size: 24px;
-  font-weight: 500;
-  letter-spacing: -0.06em;
-  color: var(--ink-900);
+  overflow: hidden;
+  background: var(--wine);
+  color: var(--white);
 }
-.ticket__stub span {
-  color: var(--wine);
+.ticket__stub svg {
+  width: 130%;
+  max-width: none;
+  height: auto;
+  transform: rotate(-12deg);
 }
 .ticket__body {
   display: flex;

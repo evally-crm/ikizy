@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro'
 import Field from '../components/Field.astro'
+import PixelFlower from '../components/PixelFlower.astro'
 import { CONTACT_EMAIL, CTA, LINKS } from '../lib/site'
 import { PIX_DISCOUNT_PCT, PLANS, TRIAL_DAYS, brlNumber } from '../lib/pricing'
 
@@ -68,9 +69,9 @@ const faqSchema = {
         </div>
       </div>
 
-      <!-- ticket de cadastro no canto inferior direito, perto da boca (só no desktop; no celular o cadastro é o botão largo) -->
+      <!-- ticket de cadastro (flor de pixels + convite) no canto inferior direito, perto da boca (só no desktop; no celular o cadastro é o botão largo) -->
       <aside class="ticket" aria-label="Teste grátis">
-        <div class="ticket__stub" aria-hidden="true">ikizy<span>.</span></div>
+        <div class="ticket__stub" aria-hidden="true"><PixelFlower /></div>
         <div class="ticket__body">
           <p class="ticket__meta">{CTA.hint}</p>
           <p class="ticket__title">Organize seu salão</p>
