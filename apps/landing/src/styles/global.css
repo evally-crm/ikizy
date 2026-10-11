@@ -1155,6 +1155,8 @@ em {
 @media (min-width: 1024px) {
   .tour__track {
     grid-auto-columns: calc((100% - 28px) / 3.2);
+    padding-left: 30%;
+    scroll-padding-left: 30%;
   }
 }
 .tour__slide {
