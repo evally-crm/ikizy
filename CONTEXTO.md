@@ -40,7 +40,8 @@ Planos do IKIZY: Solo R$ 9,90, Studio R$ 29,90, Salão R$ 59,90 (fonte única: `
 | Item | Valor |
 |---|---|
 | Repositório | `https://github.com/evally-crm/ikizy` (o remoto antigo `evally-crm/evally` redireciona) |
-| Neon | projeto `gentle-glade-92407636` ("evally"), org `org-tiny-waterfall-27334723`, branch `production` (ver `.neon`) |
+| Neon | projeto **`lingering-base-71670281` ("ikizy")**, org `org-winter-waterfall-22088107` (Maria Eduarda), região São Paulo (`aws-sa-east-1`), branch `production` (`br-ancient-sunset-b6oxgwr8`). Criado do zero em 11/10/2026 com todas as migrations. Desde 11/10/2026 a Vercel (`ikizy-app`, Production) aponta para ele (`DATABASE_URL`, `NEON_AUTH_BASE_URL`, `VITE_NEON_AUTH_URL`, `VITE_NEON_DATA_API_URL`). O projeto antigo `gentle-glade-92407636` ("evally", org do Daniel) ficou parado; só apagar com aprovação |
+| Neon Auth / Data API | `https://ep-twilight-heart-b66hba33.neonauth.c-2.sa-east-1.aws.neon.tech/neondb/auth` · `https://ep-twilight-heart-b66hba33.apirest.c-2.sa-east-1.aws.neon.tech/neondb/rest/v1` |
 | Vercel | time `dfdudas-projects`: projetos `ikizy-app` (app.ikizy.com e `*.ikizy.com`) e `ikizy-landing` (ikizy.com, www) |
 | DNS | `ikizy.com` registrado e com nameservers na Vercel; curinga `*.ikizy.com` no `ikizy-app` |
 
@@ -103,7 +104,7 @@ npm run build
 | `20261020000000_client_file` | ficha completa da cliente (e-mail, Instagram, endereço, profissão, como conheceu, anamnese em jsonb, assinatura do termo), `loyalty_settings`, `loyalty_entries` (selos extras e resgates) e `client_notes` |
 | `20261021000000_client_photos` | fotos de antes e depois na ficha (`client_photos`: miniatura + foto, só membros do salão leem; não passam pela página pública) |
 | `20261023000000_plan_choice` | passo de plano no cadastro: `subscriptions.plan_chosen_at` e `choose_trial_plan()` (teste sem cartão, paga por Pix) |
-| `20261024000000_fase1` | aplicada em 11/10/2026 (testada antes numa branch). `schema_migrations`; apaga as campanhas de WhatsApp órfãs e a fidelidade; `appointments.origin` (sistema/site); trava contra dois atendimentos da mesma profissional no mesmo horário (`appointments_no_overlap`); `slug_available()` |
+| `20261024000000_fase1` | aplicada em 11/10/2026 (testada antes numa branch). No projeto novo `ikizy` todas foram aplicadas do zero; `create_salon(text,text,text)`, que existia só no banco antigo (sem migration), não foi recriada. `schema_migrations`; apaga as campanhas de WhatsApp órfãs e a fidelidade; `appointments.origin` (sistema/site); trava contra dois atendimentos da mesma profissional no mesmo horário (`appointments_no_overlap`); `slug_available()` |
 
 Regras importantes:
 - Toda tabela tem `salon_id` + RLS. Escrita de catálogo/site só `owner`/`manager`; sem assinatura ativa, escrita bloqueada (políticas restritivas).

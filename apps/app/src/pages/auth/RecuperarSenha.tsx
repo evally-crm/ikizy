@@ -27,7 +27,7 @@ export default function RecuperarSenha() {
       <AuthCard
         title={
           <>
-            Recuperar <Em>senha</Em>
+            <Em>Recuperar</Em> senha
           </>
         }
         subtitle="Informe o e-mail da sua conta e enviaremos um link para criar uma nova senha."

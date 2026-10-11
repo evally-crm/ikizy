@@ -100,6 +100,28 @@
   font-size: 16px;
   color: var(--ink-700);
 }
+/* X de fechar: só o traço, sem círculo nem borda, na mesma cor do link "Entrar" das outras telas */
+.auth__close {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  margin-right: -4px;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--ink-700);
+  cursor: pointer;
+}
+.auth__close:hover {
+  color: var(--brand-700);
+}
+.auth__close:focus-visible {
+  outline: 2px solid var(--brand-700);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
 .auth__toplink:hover {
   color: var(--brand-700);
 }
@@ -132,6 +154,15 @@
   letter-spacing: -0.035em;
   text-wrap: balance;
 }
+/* títulos como o "Escolha seu plano" do site: a primeira palavra em cinza, numa linha só dela, e o resto em preto */
+.auth__title .em {
+  display: block;
+  font-family: inherit;
+  font-style: normal;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  color: #a3a3a8;
+}
 .auth__switch {
   margin-top: 8px;
   font-size: 14px;
@@ -144,48 +175,6 @@
   background: none;
   font-size: inherit;
   color: var(--brand-700);
-}
-
-/* Google: botão grande antes do formulário (a maioria prefere entrar assim) */
-.auth__google {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  width: 100%;
-  min-height: 56px;
-  margin-top: 6px;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-pill);
-  background: var(--white);
-  color: var(--ink-900);
-  font: inherit;
-  font-size: 15px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: border-color 0.15s;
-}
-.auth__google:hover:not(:disabled) {
-  border-color: var(--ink-900);
-}
-.auth__google:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-.auth__or {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 4px 0 -4px;
-  font-size: 13px;
-  color: var(--ink-500);
-}
-.auth__or::before,
-.auth__or::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--line-strong);
 }
 
 /* pílula social compacta, ao lado do título */
@@ -673,10 +662,6 @@
     background: var(--white);
   }
 }
-.auth__google svg {
-  width: 18px;
-  height: 18px;
-}
 /* cadastro em uma tela: link do site, perguntas curtas */
 .wiz__link {
   margin: -4px 0 0 18px;
@@ -703,4 +688,112 @@
   font-size: 15px;
   font-weight: 500;
   color: var(--ink-900);
+}
+
+/* escolha do plano no cadastro: igual à lista do site (o marcado fica branco, os outros cinza e apagados) */
+.auth .plans {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  margin: 6px 0 0;
+  padding: 0;
+  border: 0;
+}
+.plans__legend {
+  margin: 0 0 8px 18px;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-700);
+}
+.auth .plan {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  border-radius: 20px;
+  background: rgba(14, 13, 13, 0.07);
+  opacity: 0.6;
+  cursor: pointer;
+  transition: background-color 0.25s, opacity 0.25s;
+}
+.auth .plan:hover {
+  opacity: 0.85;
+}
+.auth .plan:has(input:checked) {
+  background: var(--white);
+  opacity: 1;
+}
+.auth .plan input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.plan__radio {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1.5px solid rgba(14, 13, 13, 0.25);
+  border-radius: 50%;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+.auth .plan:has(input:checked) .plan__radio {
+  border-color: var(--ink-900);
+  background: var(--ink-900);
+}
+.auth .plan:has(input:checked) .plan__radio::after {
+  content: '';
+  width: 9px;
+  height: 5px;
+  margin-top: -2px;
+  border-left: 1.5px solid var(--white);
+  border-bottom: 1.5px solid var(--white);
+  transform: rotate(-45deg);
+}
+.auth .plan:has(input:focus-visible) {
+  outline: 2px solid #800513;
+  outline-offset: 3px;
+}
+.auth .plan__info,
+.auth .plan__price {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.auth .plan__price {
+  align-items: flex-end;
+}
+.auth .plan__info b,
+.auth .plan__price b {
+  font-size: 17px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  color: var(--ink-900);
+}
+.auth .plan__info small,
+.auth .plan__price small {
+  font-size: 12px;
+  color: var(--ink-500);
+}
+.plan__tag {
+  position: absolute;
+  top: -10px;
+  right: 18px;
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  background: #800513;
+  font-size: 11px;
+  color: var(--white);
+}
+.auth .plans__note {
+  margin: 0;
+  font-size: 12px;
+  text-align: center;
+  color: var(--ink-500);
 }

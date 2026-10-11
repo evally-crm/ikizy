@@ -17,14 +17,14 @@ export default function Cadastro() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // guarda o plano do site para depois do cadastro (inclusive passando pelo Google)
+  // guarda o plano do site para o passo do plano (inclusive passando pelo Google)
   useEffect(() => {
     const plan = params.get('plano')
     if (!isPlanId(plan)) return
     try {
       localStorage.setItem(CHOSEN_PLAN_KEY, plan)
     } catch {
-      // sem armazenamento: o teste começa no plano que combina com a equipe
+      // sem armazenamento: o passo do plano começa no mais escolhido
     }
   }, [params])
 
@@ -75,12 +75,12 @@ export default function Cadastro() {
       <AuthCard
         title={
           <>
-            Crie sua <Em>conta</Em>
+            <Em>Criar</Em> sua conta
           </>
         }
         subtitle="30 dias grátis, sem cartão. Leva um minuto."
+        aside={<GoogleButton onClick={onGoogle} disabled={busy} />}
       >
-        <GoogleButton wide onClick={onGoogle} disabled={busy} />
         <form className="form" onSubmit={onSubmit}>
           <AuthField
             label="Seu nome"

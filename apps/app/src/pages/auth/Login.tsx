@@ -76,12 +76,12 @@ export default function Login() {
       <AuthCard
         title={
           <>
-            Bem-vinda de <Em>volta</Em>
+            <Em>Entrar</Em> no IKIZY
           </>
         }
         subtitle="Entre para ver a agenda do seu negócio."
+        aside={<GoogleButton onClick={onGoogle} disabled={busy} />}
       >
-        <GoogleButton wide onClick={onGoogle} disabled={busy} />
         <form className="form" onSubmit={onSubmit}>
           <AuthField
             label="E-mail"

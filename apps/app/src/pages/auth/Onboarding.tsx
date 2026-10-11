@@ -1,14 +1,15 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { Navigate } from 'react-router-dom'
-import { Check, User } from 'lucide-react'
+import { Navigate, useSearchParams } from 'react-router-dom'
+import { ArrowRight, Check, User, X } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
 import { neon } from '../../lib/neon'
-import { CHOSEN_PLAN_KEY, isPlanId } from '../../lib/plans'
+import { CHOSEN_PLAN_KEY, isPlanId, type PlanId } from '../../lib/plans'
 import { ROUTES } from '../../lib/routes'
 import { isReservedSlug, SITE_DOMAIN, SLUG_PATTERN, slugify } from '../../lib/slug'
-import { OTHER_SEGMENT, SEGMENTS, TEAM_SIZES, starterServices, type TeamSize } from '../../lib/segments'
+import { OTHER_SEGMENT, SEGMENTS, starterServices } from '../../lib/segments'
 import { Em } from '../../components/ui'
 import { AuthField, AuthLayout, FormMessages } from './AuthLayout'
+import { DEFAULT_PLAN, PlanChoice } from './PlanChoice'
 
 /** rascunho guardado no aparelho: sair para responder um WhatsApp e voltar não apaga o que já foi preenchido */
 const DRAFT_KEY = 'ikizy:cadastro-negocio'
@@ -19,7 +20,6 @@ interface Draft {
   slugTouched: boolean
   segments: string[]
   otherLabel: string
-  team: TeamSize | null
   ownerName: string
 }
 
@@ -48,8 +48,19 @@ export default function Onboarding() {
   const [editingSlug, setEditingSlug] = useState(false)
   const [segments, setSegments] = useState<string[]>(saved.segments ?? [])
   const [otherLabel, setOtherLabel] = useState(saved.otherLabel ?? '')
-  const [team, setTeam] = useState<TeamSize | null>(saved.team ?? null)
   const [ownerName, setOwnerName] = useState(saved.ownerName ?? '')
+  const [params, setParams] = useSearchParams()
+  const step = params.get('passo') === 'negocio' ? 'negocio' : 'plano'
+  // plano: o do link do site (guardado no cadastro) ou o mais escolhido; vale para quem entrou pelo Google também
+  const [plan, setPlan] = useState<PlanId>(() => {
+    try {
+      const stored = localStorage.getItem(CHOSEN_PLAN_KEY)
+      if (isPlanId(stored)) return stored
+    } catch {
+      // sem armazenamento: vale o padrão
+    }
+    return DEFAULT_PLAN
+  })
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   // null = ainda não conferido (ou o banco ainda não tem a função): o erro aparece ao criar, como antes
@@ -57,11 +68,19 @@ export default function Onboarding() {
 
   useEffect(() => {
     try {
-      localStorage.setItem(DRAFT_KEY, JSON.stringify({ name, slug, slugTouched, segments, otherLabel, team, ownerName } satisfies Draft))
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({ name, slug, slugTouched, segments, otherLabel, ownerName } satisfies Draft))
     } catch {
       // sem armazenamento: o rascunho vale só nesta visita
     }
-  }, [name, slug, slugTouched, segments, otherLabel, team, ownerName])
+  }, [name, slug, slugTouched, segments, otherLabel, ownerName])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(CHOSEN_PLAN_KEY, plan)
+    } catch {
+      // sem armazenamento: vale só nesta visita
+    }
+  }, [plan])
 
   // confere o link enquanto a pessoa digita (meio segundo depois de parar)
   useEffect(() => {
@@ -109,40 +128,94 @@ export default function Onboarding() {
     }
     if (segments.length === 0) return setError('Marque o que você faz.')
     if (segments.includes(OTHER_SEGMENT.id) && otherLabel.trim().length < 2) return setError('Conte qual é a outra área.')
-    if (!team) return setError('Conte quem atende no seu negócio.')
-
-    let plan: 'solo' | 'studio' | 'salao' = team === 'team' ? 'studio' : 'solo'
-    try {
-      const fromSite = localStorage.getItem(CHOSEN_PLAN_KEY)
-      if (isPlanId(fromSite)) plan = fromSite
-    } catch {
-      // sem armazenamento: vale o plano da resposta da equipe
-    }
 
     setBusy(true)
-    const message = await createSalon(name.trim(), slug, { services: starterServices(segments), professionalName: person, plan })
+    const message = await create(name.trim(), slug, starterServices(segments), person)
     setBusy(false)
     if (message) {
       if (message.includes('endereço')) setEditingSlug(true)
       setError(message.replace('Este endereço', 'Este link').replace('Esse endereço', 'Esse link'))
-      return
-    }
-    try {
-      localStorage.removeItem(DRAFT_KEY)
-      localStorage.removeItem(CHOSEN_PLAN_KEY)
-    } catch {
-      // nada a limpar
     }
   }
 
+  /** cria o negócio no plano escolhido no passo 1 e limpa o rascunho */
+  const create = async (bizName: string, bizSlug: string, services: ReturnType<typeof starterServices>, person: string) => {
+    const message = await createSalon(bizName, bizSlug, { services, professionalName: person, plan })
+    if (!message) {
+      try {
+        localStorage.removeItem(DRAFT_KEY)
+        localStorage.removeItem(CHOSEN_PLAN_KEY)
+      } catch {
+        // nada a limpar
+      }
+    }
+    return message
+  }
+
+  /**
+   * "Pular etapa": cria o negócio com nome e link provisórios (a partir do nome da pessoa) e sem serviços.
+   * Nome do negócio, link e serviços se ajustam depois, em Meu negócio e Meu site.
+   */
+  const onSkip = async () => {
+    setError(null)
+    const person = (accountName || ownerName).trim()
+    if (person.length < 2) return setError('Conte como você se chama.')
+    const first = person.split(/\s+/)[0]
+    const bizName = `Studio ${first}`
+    setBusy(true)
+    let message: string | null = null
+    for (let i = 0; i < 3; i++) {
+      const suffix = String(Math.floor(1000 + Math.random() * 9000))
+      message = await create(bizName, `${slugify(bizName) || 'studio'}-${suffix}`, [], person)
+      if (!message || !message.includes('endereço')) break
+    }
+    setBusy(false)
+    if (message) setError(message)
+  }
+
+  const close = (
+    <button type="button" className="auth__close" aria-label="Fechar e sair desta conta" title="Fechar e sair desta conta" onClick={() => void signOut()}>
+      <X size={24} strokeWidth={1.5} aria-hidden="true" />
+    </button>
+  )
+
+  if (step === 'plano') {
+    return (
+      <AuthLayout topAction={close}>
+        <form
+          className="wiz"
+          onSubmit={(e) => {
+            e.preventDefault()
+            setParams({ passo: 'negocio' })
+          }}
+        >
+          <p className="wiz__eyebrow">Passo 1 de 2</p>
+          <h1 className="auth__title">
+            <Em>Escolha</Em> seu plano
+          </h1>
+          <p className="card__sub">30 dias grátis, sem cartão. Você pode trocar de plano quando quiser.</p>
+          <PlanChoice value={plan} onChange={setPlan} />
+          <div className="auth__foot">
+            <span />
+            <button type="submit" className="auth__go" aria-label="Continuar" title="Continuar">
+              <ArrowRight size={22} aria-hidden="true" />
+            </button>
+          </div>
+        </form>
+      </AuthLayout>
+    )
+  }
+
   return (
-    <AuthLayout>
+    <AuthLayout
+      topAction={close}
+    >
       <form className="wiz" onSubmit={onSubmit}>
-        <p className="wiz__eyebrow">Último passo</p>
+        <p className="wiz__eyebrow">Passo 2 de 2</p>
         <h1 className="auth__title">
-          Seu <Em>negócio</Em>
+          <Em>Seu</Em> negócio
         </h1>
-        <p className="card__sub">O resto você ajusta depois, já com a agenda na frente.</p>
+        <p className="card__sub">Pode pular: o resto você ajusta depois, já com a agenda na frente.</p>
 
         {!accountName && (
           <AuthField
@@ -203,21 +276,11 @@ export default function Onboarding() {
           <AuthField label="Qual?" maxLength={40} placeholder="Ex.: Maquiagem, Depilação a laser" value={otherLabel} onChange={(e) => setOtherLabel(e.target.value)} />
         )}
 
-        <p className="wiz__q">Quem atende?</p>
-        <div className="wiz__options">
-          {TEAM_SIZES.map((t) => (
-            <button key={t.id} type="button" className="wiz__opt" aria-pressed={team === t.id} onClick={() => setTeam(t.id)}>
-              {team === t.id && <Check size={16} aria-hidden="true" />}
-              {t.label}
-            </button>
-          ))}
-        </div>
-
         <FormMessages error={error} />
 
         <div className="auth__foot">
-          <button type="button" className="textlink" onClick={() => void signOut()}>
-            Sair desta conta
+          <button type="button" className="textlink" onClick={() => void onSkip()} disabled={busy}>
+            Pular etapa
           </button>
           <button type="submit" className="auth__go" disabled={busy} aria-label={busy ? 'Criando…' : 'Criar meu negócio'} title="Criar meu negócio">
             <Check size={22} aria-hidden="true" />
