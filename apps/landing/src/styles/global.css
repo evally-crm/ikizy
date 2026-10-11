@@ -804,8 +804,8 @@ em {
   }
 }
 
-/* ---------- por que trocar: cartões de tamanhos diferentes (agenda alta, financeiro preto e grande) ---------- */
-/* celular e tablet: 2 colunas, agenda alta à esquerda, financeiro e site ocupando a largura toda */
+/* ---------- por que trocar: cartões encaixados sem sobra (agenda e financeiro altos, site em faixa) ---------- */
+/* celular e tablet: 2 colunas; agenda tem a altura de clientes + mensagens */
 .feats__grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -816,15 +816,14 @@ em {
     'site site';
   gap: 10px;
 }
-/* desktop: 3 colunas, como na referência */
+/* desktop: 3 colunas; agenda e financeiro têm a altura de clientes + mensagens, site é uma faixa baixa */
 @media (min-width: 1024px) {
   .feats__grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     grid-template-areas:
-      'agenda client message'
-      'agenda money money'
-      'site money money';
-    grid-auto-rows: minmax(170px, auto);
+      'agenda client money'
+      'agenda message money'
+      'site site site';
     gap: 14px;
   }
 }
@@ -885,20 +884,32 @@ em {
   line-height: 1.1;
   letter-spacing: -0.03em;
 }
-/* telinha do sistema no canto inferior direito do cartão, menor no celular */
+/* telinha do sistema centralizada no espaço que sobra do cartão (sem buraco entre título e telinha) */
 .feat__visual {
   display: flex;
   flex: 1;
-  align-items: flex-end;
-  justify-content: flex-end;
-  margin-top: 12px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 10px;
   zoom: 0.7;
 }
 @media (min-width: 1024px) {
   .feat__visual {
-    margin-top: 10px;
     zoom: 0.85;
   }
+}
+
+/* site: faixa baixa, título à esquerda e o link à direita */
+.feat--site {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 16px;
+}
+.feat--site .feat__visual {
+  grid-row: 1 / 3;
+  grid-column: 2;
+  margin-top: 0;
 }
 
 /* financeiro: cartão preto de destaque, título grande e o círculo "+" no canto */
@@ -910,7 +921,7 @@ em {
 .feat--money h3 {
   max-width: 10ch;
   color: var(--white);
-  font-size: clamp(30px, 4vw, 52px);
+  font-size: clamp(30px, 3.4vw, 46px);
   line-height: 1;
 }
 .feat--money .feat__was {
@@ -920,6 +931,7 @@ em {
   border-color: rgba(255, 255, 255, 0.25);
 }
 .feat--money .feat__visual {
+  align-items: flex-end;
   justify-content: flex-start;
 }
 .feat--money .ui--money {
