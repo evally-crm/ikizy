@@ -62,13 +62,13 @@ Variáveis (só nomes):
 
 ### Migrations
 
-Ficam em `neon/migrations/` e são aplicadas **manualmente, em ordem**, no banco de produção (não há ferramenta automática).
-Como foram aplicadas até agora: um script Node com `pg` que lê `DATABASE_URL_UNPOOLED` do `.env.local` da raiz e roda o arquivo
-inteiro dentro de `begin ... commit` (com `rollback` em erro). Toda migration termina com `notify pgrst, 'reload schema';`
-para a Data API enxergar colunas novas (sem isso o app acusa "coluna não existe").
+Ficam em `neon/migrations/`. Desde `20261024000000_fase1` o banco tem a tabela `schema_migrations` e o script
+`npm run db:migrate` (em `apps/app`) lista o que falta; `npm run db:migrate -- --aplicar` aplica em ordem, cada uma em
+`begin ... commit`. Usa `DATABASE_URL_UNPOOLED` do `.env.local` da raiz.
 
-Boa prática usada: antes de aplicar uma migration com lógica, rodar a migration e um roteiro de testes dentro de uma transação
-que termina em `rollback`, com um salão fictício.
+**Sempre testar antes numa branch do Neon** (cópia da produção): criar a branch, apontar
+`DATABASE_URL_UNPOOLED=<url da branch>` e rodar o script; conferir; só então aplicar na produção.
+Toda migration termina com `notify pgrst, 'reload schema';` para a Data API enxergar colunas novas.
 
 ### Verificações antes de commitar
 
@@ -103,6 +103,7 @@ npm run build
 | `20261020000000_client_file` | ficha completa da cliente (e-mail, Instagram, endereço, profissão, como conheceu, anamnese em jsonb, assinatura do termo), `loyalty_settings`, `loyalty_entries` (selos extras e resgates) e `client_notes` |
 | `20261021000000_client_photos` | fotos de antes e depois na ficha (`client_photos`: miniatura + foto, só membros do salão leem; não passam pela página pública) |
 | `20261023000000_plan_choice` | passo de plano no cadastro: `subscriptions.plan_chosen_at` e `choose_trial_plan()` (teste sem cartão, paga por Pix) |
+| `20261024000000_fase1` | **testada numa branch, ainda não aplicada em produção.** `schema_migrations`; apaga as campanhas de WhatsApp órfãs e a fidelidade; `appointments.origin` (sistema/site); trava contra dois atendimentos da mesma profissional no mesmo horário (`appointments_no_overlap`); `slug_available()` |
 
 Regras importantes:
 - Toda tabela tem `salon_id` + RLS. Escrita de catálogo/site só `owner`/`manager`; sem assinatura ativa, escrita bloqueada (políticas restritivas).
@@ -220,6 +221,12 @@ Pendências para ligar de verdade:
 
 ## 8. Estado atual
 
+- 11/10/2026, Fase 1 do [plano de experiência](docs/PLANO-DE-EXPERIENCIA.md) em andamento, já na `main`: Agenda é a tela
+  inicial (o Início com números de exemplo saiu), lista do dia no celular, pedidos com Confirmar/Recusar, barra do celular
+  com [+], **Meu negócio** (`/dashboard/negocio`: dados, horário, serviços, custos), cadastro em 3 telas (nome na conta,
+  "Seu negócio" numa tela, teste sem cartão no plano certo), login que volta para onde ia, Caixa de hoje no Financeiro,
+  Primeiros passos na agenda e planos sem promessas. Falta: aplicar a migration `fase1` em produção e os serviços externos
+  (seção 5 da [especificação](docs/ESPECIFICACAO-PRODUCAO.md)).
 - 09/10/2026, já na `main`: confirmação de e-mail por código pronta no app mas desligada no Neon (seção 5b); seleção de texto em vermelho
   (landing e sistema); menu próprio do botão direito no sistema (`components/AppContextMenu.tsx`: novo agendamento, nova cliente,
   seções, ver o site, copiar link, recarregar, sair; campos de texto e Shift + botão direito mantêm o menu do navegador;

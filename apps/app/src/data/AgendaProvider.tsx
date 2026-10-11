@@ -139,6 +139,8 @@ function fromRow(r: Row): Appointment {
 
 function friendly(error: { code?: string; message: string }) {
   if (error.code === '23514' || error.message.includes('já está fechado')) return 'O mês desse atendimento já está fechado.'
+  // trava do banco: a mesma profissional não tem dois atendimentos ativos no mesmo horário
+  if (error.code === '23P01' || error.message.includes('appointments_no_overlap')) return 'Essa profissional já tem um atendimento nesse horário.'
   return 'Não foi possível salvar agora. Tente novamente.'
 }
 

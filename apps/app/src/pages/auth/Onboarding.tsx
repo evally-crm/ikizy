@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { Navigate } from 'react-router-dom'
 import { Check, User } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
+import { neon } from '../../lib/neon'
 import { CHOSEN_PLAN_KEY, isPlanId } from '../../lib/plans'
 import { ROUTES } from '../../lib/routes'
 import { isReservedSlug, SITE_DOMAIN, SLUG_PATTERN, slugify } from '../../lib/slug'
@@ -51,6 +52,8 @@ export default function Onboarding() {
   const [ownerName, setOwnerName] = useState(saved.ownerName ?? '')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // null = ainda não conferido (ou o banco ainda não tem a função): o erro aparece ao criar, como antes
+  const [taken, setTaken] = useState<string | null>(null)
 
   useEffect(() => {
     try {
@@ -59,6 +62,21 @@ export default function Onboarding() {
       // sem armazenamento: o rascunho vale só nesta visita
     }
   }, [name, slug, slugTouched, segments, otherLabel, team, ownerName])
+
+  // confere o link enquanto a pessoa digita (meio segundo depois de parar)
+  useEffect(() => {
+    if (!neon || slug.length < 3 || isReservedSlug(slug)) return
+    let cancelled = false
+    const timer = window.setTimeout(() => {
+      void neon!.rpc('slug_available', { p_slug: slug }).then(({ data, error: err }) => {
+        if (!cancelled && !err) setTaken(data === false ? slug : null)
+      })
+    }, 500)
+    return () => {
+      cancelled = true
+      window.clearTimeout(timer)
+    }
+  }, [slug])
 
   if (status === 'signed-out') return <Navigate to={ROUTES.login} replace />
   if (status === 'demo') return <Navigate to={ROUTES.dashboard} replace />
@@ -70,7 +88,14 @@ export default function Onboarding() {
     if (!slugTouched) setSlug(slugify(value))
   }
   const toggle = (id: string) => setSegments(segments.includes(id) ? segments.filter((s) => s !== id) : [...segments, id])
-  const slugError = slug.length > 0 && slug.length < 3 ? 'O link precisa ter pelo menos 3 letras.' : isReservedSlug(slug) ? 'Esse link é reservado. Escolha outro.' : null
+  const slugError =
+    slug.length > 0 && slug.length < 3
+      ? 'O link precisa ter pelo menos 3 letras.'
+      : isReservedSlug(slug)
+        ? 'Esse link é reservado. Escolha outro.'
+        : taken === slug
+          ? 'Esse link já está em uso. Troque por outro.'
+          : null
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault()
