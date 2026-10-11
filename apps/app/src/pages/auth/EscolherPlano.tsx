@@ -159,7 +159,7 @@ function PlanStep() {
             <QrCode size={20} aria-hidden="true" />
             <span>
               <strong>{busy === 'pix' ? 'Salvando…' : 'Pix, sem cartão'}</strong>
-              <small>Teste sem cadastrar cartão. Antes do fim do teste, você paga por Pix (1, 3 ou 12 meses).</small>
+              <small>Teste sem cadastrar cartão. Antes do fim do teste, você paga por Pix (1 ou 3 meses).</small>
             </span>
           </button>
         </div>

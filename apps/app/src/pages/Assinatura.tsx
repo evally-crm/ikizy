@@ -173,7 +173,7 @@ export default function Assinatura() {
               className={`seg__item ${months === m ? 'is-active' : ''}`}
               onClick={() => setMonths(m)}
             >
-              {monthsLabel(m)}
+              {m === 1 ? 'Mensal' : 'Trimestral'}
               {PIX_DISCOUNT_PCT[m] > 0 && <small className="seg__off">{PIX_DISCOUNT_PCT[m]}% off</small>}
             </button>
           ))}

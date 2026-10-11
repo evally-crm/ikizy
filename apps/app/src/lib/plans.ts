@@ -55,7 +55,7 @@ export const CHOSEN_PLAN_KEY = 'ikizy:plano-escolhido'
 export const isPlanId = (v: unknown): v is PlanId => typeof v === 'string' && v in PLANS
 
 /** quantos meses a pessoa pode pagar adiantado no Pix (o Pix não renova sozinho nas contas Stripe do Brasil) */
-export const PIX_MONTHS = [1, 3, 12] as const
+export const PIX_MONTHS = [1, 3] as const
 export type PixMonths = (typeof PIX_MONTHS)[number]
 export const isPixMonths = (v: unknown): v is PixMonths => PIX_MONTHS.includes(v as PixMonths)
 
@@ -69,7 +69,7 @@ export const MIN_TRIAL_END_HOURS = 49
 export const priceLookupKey = (plan: PlanId) => `ikizy_${plan}_monthly`
 
 /** desconto (em %) de quem paga mais meses adiantado no Pix */
-export const PIX_DISCOUNT_PCT: Record<PixMonths, number> = { 1: 0, 3: 15, 12: 5 }
+export const PIX_DISCOUNT_PCT: Record<PixMonths, number> = { 1: 0, 3: 15 }
 
 /** valor cheio do período, sem desconto */
 export const pixFullCents = (plan: PlanId, months: PixMonths) => PLANS[plan].cents * months

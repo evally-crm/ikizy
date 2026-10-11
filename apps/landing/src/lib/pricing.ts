@@ -2,12 +2,12 @@
  * Preços exibidos na landing. A cobrança real vem de apps/app/src/lib/plans.ts; o teste
  * apps/app/api/_lib/billing.test.ts confere que os dois arquivos estão com os mesmos valores.
  */
-export type PixMonths = 1 | 3 | 12
+export type PixMonths = 1 | 3
 
-export const PIX_MONTHS: PixMonths[] = [1, 3, 12]
+export const PIX_MONTHS: PixMonths[] = [1, 3]
 
 /** desconto (em %) de quem paga mais meses adiantado no Pix (igual ao de apps/app/src/lib/plans.ts) */
-export const PIX_DISCOUNT_PCT: Record<PixMonths, number> = { 1: 0, 3: 15, 12: 5 }
+export const PIX_DISCOUNT_PCT: Record<PixMonths, number> = { 1: 0, 3: 15 }
 
 export interface LandingPlan {
   id: 'solo' | 'studio' | 'salao'
