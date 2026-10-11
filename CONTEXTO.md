@@ -103,7 +103,7 @@ npm run build
 | `20261020000000_client_file` | ficha completa da cliente (e-mail, Instagram, endereço, profissão, como conheceu, anamnese em jsonb, assinatura do termo), `loyalty_settings`, `loyalty_entries` (selos extras e resgates) e `client_notes` |
 | `20261021000000_client_photos` | fotos de antes e depois na ficha (`client_photos`: miniatura + foto, só membros do salão leem; não passam pela página pública) |
 | `20261023000000_plan_choice` | passo de plano no cadastro: `subscriptions.plan_chosen_at` e `choose_trial_plan()` (teste sem cartão, paga por Pix) |
-| `20261024000000_fase1` | **testada numa branch, ainda não aplicada em produção.** `schema_migrations`; apaga as campanhas de WhatsApp órfãs e a fidelidade; `appointments.origin` (sistema/site); trava contra dois atendimentos da mesma profissional no mesmo horário (`appointments_no_overlap`); `slug_available()` |
+| `20261024000000_fase1` | aplicada em 11/10/2026 (testada antes numa branch). `schema_migrations`; apaga as campanhas de WhatsApp órfãs e a fidelidade; `appointments.origin` (sistema/site); trava contra dois atendimentos da mesma profissional no mesmo horário (`appointments_no_overlap`); `slug_available()` |
 
 Regras importantes:
 - Toda tabela tem `salon_id` + RLS. Escrita de catálogo/site só `owner`/`manager`; sem assinatura ativa, escrita bloqueada (políticas restritivas).
@@ -225,7 +225,7 @@ Pendências para ligar de verdade:
   inicial (o Início com números de exemplo saiu), lista do dia no celular, pedidos com Confirmar/Recusar, barra do celular
   com [+], **Meu negócio** (`/dashboard/negocio`: dados, horário, serviços, custos), cadastro em 3 telas (nome na conta,
   "Seu negócio" numa tela, teste sem cartão no plano certo), login que volta para onde ia, Caixa de hoje no Financeiro,
-  Primeiros passos na agenda e planos sem promessas. Falta: aplicar a migration `fase1` em produção e os serviços externos
+  Primeiros passos na agenda e planos sem promessas. Migration `fase1` aplicada em produção. Falta: os serviços externos
   (seção 5 da [especificação](docs/ESPECIFICACAO-PRODUCAO.md)).
 - 09/10/2026, já na `main`: confirmação de e-mail por código pronta no app mas desligada no Neon (seção 5b); seleção de texto em vermelho
   (landing e sistema); menu próprio do botão direito no sistema (`components/AppContextMenu.tsx`: novo agendamento, nova cliente,
