@@ -115,6 +115,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void loadSalon(userId)
   }, [userId, sessionReady, loadSalon])
 
+  // pede o código de confirmação ao Neon Auth. O envio automático do cadastro (`verify_email_on_sign_up`)
+  // não tem controle no console e está desligado em produção, então o app pede o código ele mesmo
+  const sendCode = useCallback(
+    (email: string) =>
+      authCall(() => neon!.auth.getBetterAuthInstance().emailOtp.sendVerificationOtp({ email: email.trim(), type: 'email-verification' })),
+    [],
+  )
+
   const status: AuthStatus = !isNeonConfigured
     ? 'demo'
     : !sessionReady || (userId && salonFor !== userId)
@@ -159,7 +167,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!neon) return { error: 'Neon não configurado.', unverified: false }
         const { data, error } = await neon.auth.signInWithPassword({ email: email.trim(), password })
         // só chega aqui com a senha certa: o Neon Auth confere a senha antes de recusar o e-mail não confirmado
-        if (error?.code === 'email_not_confirmed') return { error: null, unverified: true }
+        if (error?.code === 'email_not_confirmed') {
+          await sendCode(email)
+          return { error: null, unverified: true }
+        }
         // mensagem genérica: não revela se o e-mail existe
         if (error) return { error: 'E-mail ou senha incorretos.', unverified: false }
         setSession(data.session)
@@ -176,7 +187,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (error) {
           // com a confirmação de e-mail ligada, o Neon Auth cria a conta sem abrir sessão e o adaptador
           // devolve 'session_not_found': a conta existe, falta só o código que já foi enviado
-          if (error.code === 'session_not_found') return { error: null, needsConfirmation: true }
+          if (error.code === 'session_not_found') {
+            await sendCode(email)
+            return { error: null, needsConfirmation: true }
+          }
           // e-mail já cadastrado (ex.: conta criada antes de terminar o questionário): com a senha certa, só entra e segue
           const exists = error.code === 'user_already_exists' || error.code === 'email_exists' || /already exists/i.test(error.message)
           if (exists) {
@@ -186,12 +200,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               return { error: null, needsConfirmation: false }
             }
             // senha certa, mas o e-mail ainda não foi confirmado: segue para a tela do código
-            if (signInError.code === 'email_not_confirmed') return { error: null, needsConfirmation: true }
+            if (signInError.code === 'email_not_confirmed') {
+              await sendCode(email)
+              return { error: null, needsConfirmation: true }
+            }
             return { error: 'Este e-mail já tem conta. Entre com a sua senha ou use "Esqueci a senha".', needsConfirmation: false }
           }
           return { error: 'Não foi possível criar a conta. Confira os dados e tente novamente.', needsConfirmation: false }
         }
         if (data.session) setSession(data.session)
+        else await sendCode(email)
         return { error: null, needsConfirmation: !data.session }
       },
       async verifyEmailCode(email, code) {
@@ -209,8 +227,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
       async resendVerificationCode(email) {
         if (!neon) return 'Neon não configurado.'
-        const auth = neon.auth.getBetterAuthInstance()
-        const error = await authCall(() => auth.emailOtp.sendVerificationOtp({ email: email.trim(), type: 'email-verification' }))
+        const error = await sendCode(email)
         if (!error) return null
         return error.status === 429 ? 'Muitos pedidos seguidos. Espere um pouco e tente de novo.' : 'Não foi possível enviar o código agora. Tente novamente.'
       },
@@ -283,7 +300,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return null
       },
     }),
-    [status, session, salon, shownSalon, displayName, userId, loadSalon, sessionName],
+    [status, session, salon, shownSalon, displayName, userId, loadSalon, sessionName, sendCode],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
