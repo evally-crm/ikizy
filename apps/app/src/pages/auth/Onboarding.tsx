@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Navigate, useSearchParams } from 'react-router-dom'
-import { ArrowRight, Check, User, X } from 'lucide-react'
+import { ArrowRight, Check, Link2, Store, User, X } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
 import { neon } from '../../lib/neon'
 import { CHOSEN_PLAN_KEY, isPlanId, type PlanId } from '../../lib/plans'
@@ -50,7 +50,6 @@ export default function Onboarding() {
   const [otherLabel, setOtherLabel] = useState(saved.otherLabel ?? '')
   const [ownerName, setOwnerName] = useState(saved.ownerName ?? '')
   const [params, setParams] = useSearchParams()
-  const step = params.get('passo') === 'negocio' ? 'negocio' : 'plano'
   // plano: o do link do site (guardado no cadastro) ou o mais escolhido; vale para quem entrou pelo Google também
   const [plan, setPlan] = useState<PlanId>(() => {
     try {
@@ -115,32 +114,34 @@ export default function Onboarding() {
         : taken === slug
           ? 'Esse link já está em uso. Troque por outro.'
           : null
+  const person = (accountName || ownerName).trim()
+  // o que é obrigatório (passo 1): nome da pessoa, nome do negócio (o link sai dele) e o plano, que já vem marcado
+  const basicsError =
+    person.length < 2
+      ? 'Conte como você se chama.'
+      : name.trim().length < 2
+        ? 'Dê um nome ao seu negócio.'
+        : slugError || slug.length < 3
+          ? (slugError ?? 'O link precisa ter pelo menos 3 letras.')
+          : null
+  // o passo 2 só abre com o passo 1 em dia (quem chega direto pelo endereço volta ao 1)
+  const step = params.get('passo') === 'areas' && !basicsError ? 'areas' : 'plano'
 
-  const onSubmit = async (e: FormEvent) => {
+  const onBasics = (e: FormEvent) => {
     e.preventDefault()
     setError(null)
-    const person = (accountName || ownerName).trim()
-    if (person.length < 2) return setError('Conte como você se chama.')
-    if (name.trim().length < 2) return setError('Dê um nome ao seu negócio.')
-    if (slugError || slug.length < 3) {
-      setEditingSlug(true)
-      return setError(slugError ?? 'O link precisa ter pelo menos 3 letras.')
+    if (basicsError) {
+      if (slugError) setEditingSlug(true)
+      return setError(basicsError)
     }
-    if (segments.length === 0) return setError('Marque o que você faz.')
-    if (segments.includes(OTHER_SEGMENT.id) && otherLabel.trim().length < 2) return setError('Conte qual é a outra área.')
-
-    setBusy(true)
-    const message = await create(name.trim(), slug, starterServices(segments), person)
-    setBusy(false)
-    if (message) {
-      if (message.includes('endereço')) setEditingSlug(true)
-      setError(message.replace('Este endereço', 'Este link').replace('Esse endereço', 'Esse link'))
-    }
+    setParams({ passo: 'areas' })
   }
 
   /** cria o negócio no plano escolhido no passo 1 e limpa o rascunho */
-  const create = async (bizName: string, bizSlug: string, services: ReturnType<typeof starterServices>, person: string) => {
-    const message = await createSalon(bizName, bizSlug, { services, professionalName: person, plan })
+  const create = async (services: ReturnType<typeof starterServices>) => {
+    setBusy(true)
+    const message = await createSalon(name.trim(), slug, { services, professionalName: person, plan })
+    setBusy(false)
     if (!message) {
       try {
         localStorage.removeItem(DRAFT_KEY)
@@ -148,29 +149,28 @@ export default function Onboarding() {
       } catch {
         // nada a limpar
       }
+      return
     }
-    return message
+    // link tomado por outra pessoa entre os passos: volta ao 1 para trocar
+    if (message.includes('endereço')) {
+      setEditingSlug(true)
+      setParams({})
+    }
+    setError(message.replace('Este endereço', 'Este link').replace('Esse endereço', 'Esse link'))
   }
 
-  /**
-   * "Pular etapa": cria o negócio com nome e link provisórios (a partir do nome da pessoa) e sem serviços.
-   * Nome do negócio, link e serviços se ajustam depois, em Meu negócio e Meu site.
-   */
+  const onAreas = async (e: FormEvent) => {
+    e.preventDefault()
+    setError(null)
+    if (segments.length === 0) return setError('Marque o que você faz ou toque em Pular etapa.')
+    if (segments.includes(OTHER_SEGMENT.id) && otherLabel.trim().length < 2) return setError('Conte qual é a outra área.')
+    await create(starterServices(segments))
+  }
+
+  /** "Pular etapa": cria o negócio sem serviços; eles se cadastram depois, em Meu negócio */
   const onSkip = async () => {
     setError(null)
-    const person = (accountName || ownerName).trim()
-    if (person.length < 2) return setError('Conte como você se chama.')
-    const first = person.split(/\s+/)[0]
-    const bizName = `Studio ${first}`
-    setBusy(true)
-    let message: string | null = null
-    for (let i = 0; i < 3; i++) {
-      const suffix = String(Math.floor(1000 + Math.random() * 9000))
-      message = await create(bizName, `${slugify(bizName) || 'studio'}-${suffix}`, [], person)
-      if (!message || !message.includes('endereço')) break
-    }
-    setBusy(false)
-    if (message) setError(message)
+    await create([])
   }
 
   const close = (
@@ -182,19 +182,60 @@ export default function Onboarding() {
   if (step === 'plano') {
     return (
       <AuthLayout topAction={close}>
-        <form
-          className="wiz"
-          onSubmit={(e) => {
-            e.preventDefault()
-            setParams({ passo: 'negocio' })
-          }}
-        >
+        <form className="wiz" onSubmit={onBasics}>
           <p className="wiz__eyebrow">Passo 1 de 2</p>
           <h1 className="auth__title">
             <Em>Escolha</Em> seu plano
           </h1>
-          <p className="card__sub">30 dias grátis, sem cartão. Você pode trocar de plano quando quiser.</p>
+          <p className="card__sub">Dê um nome ao seu negócio e escolha o plano. 30 dias grátis, sem cartão.</p>
+
+          {!accountName && (
+            <AuthField
+              label="Seu nome"
+              icon={<User size={16} />}
+              autoComplete="name"
+              maxLength={80}
+              value={ownerName}
+              onChange={(e) => setOwnerName(e.target.value)}
+            />
+          )}
+          <AuthField
+            label="Nome do negócio"
+            icon={<Store size={16} />}
+            required
+            minLength={2}
+            maxLength={60}
+            autoComplete="organization"
+            value={name}
+            onChange={(e) => onName(e.target.value)}
+          />
+          {editingSlug ? (
+            <AuthField
+              label="Link da sua página"
+              icon={<Link2 size={16} />}
+              minLength={3}
+              maxLength={40}
+              pattern={SLUG_PATTERN}
+              title="Use letras minúsculas, números e hífen"
+              hint={`${slug || 'seu-negocio'}.${SITE_DOMAIN}`}
+              value={slug}
+              onChange={(e) => {
+                setSlugTouched(true)
+                setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))
+              }}
+            />
+          ) : (
+            <p className="wiz__link">
+              Seu link: <strong>{slug || 'seu-negocio'}.{SITE_DOMAIN}</strong>{' '}
+              <button type="button" className="textlink" onClick={() => setEditingSlug(true)}>
+                Trocar
+              </button>
+            </p>
+          )}
+          {slugError && <p className="field__hint wiz__warn">{slugError}</p>}
+
           <PlanChoice value={plan} onChange={setPlan} />
+          <FormMessages error={error} />
           <div className="auth__foot">
             <span />
             <button type="submit" className="auth__go" aria-label="Continuar" title="Continuar">
@@ -207,63 +248,14 @@ export default function Onboarding() {
   }
 
   return (
-    <AuthLayout
-      topAction={close}
-    >
-      <form className="wiz" onSubmit={onSubmit}>
+    <AuthLayout topAction={close}>
+      <form className="wiz" onSubmit={onAreas}>
         <p className="wiz__eyebrow">Passo 2 de 2</p>
         <h1 className="auth__title">
-          <Em>Seu</Em> negócio
+          <Em>O que</Em> você faz?
         </h1>
-        <p className="card__sub">Pode pular: o resto você ajusta depois, já com a agenda na frente.</p>
+        <p className="card__sub">Monto seus serviços a partir disso. Pode pular e preencher depois, já com a agenda na frente.</p>
 
-        {!accountName && (
-          <AuthField
-            label="Seu nome"
-            icon={<User size={16} />}
-            autoComplete="name"
-            maxLength={80}
-            placeholder="Como as clientes te chamam"
-            value={ownerName}
-            onChange={(e) => setOwnerName(e.target.value)}
-          />
-        )}
-
-        <AuthField
-          label="Nome do negócio"
-          required
-          minLength={2}
-          maxLength={60}
-          autoComplete="organization"
-          placeholder="Ex.: Studio Maria Beauty"
-          value={name}
-          onChange={(e) => onName(e.target.value)}
-        />
-        {editingSlug ? (
-          <AuthField
-            label="Link da sua página"
-            minLength={3}
-            maxLength={40}
-            pattern={SLUG_PATTERN}
-            title="Use letras minúsculas, números e hífen"
-            hint={`${slug || 'seu-negocio'}.${SITE_DOMAIN}`}
-            value={slug}
-            onChange={(e) => {
-              setSlugTouched(true)
-              setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))
-            }}
-          />
-        ) : (
-          <p className="wiz__link">
-            Seu link: <strong>{slug || 'seu-negocio'}.{SITE_DOMAIN}</strong>{' '}
-            <button type="button" className="textlink" onClick={() => setEditingSlug(true)}>
-              Trocar
-            </button>
-          </p>
-        )}
-        {slugError && <p className="field__hint wiz__warn">{slugError}</p>}
-
-        <p className="wiz__q">O que você faz?</p>
         <div className="wiz__options">
           {[...SEGMENTS, OTHER_SEGMENT].map((s) => (
             <button key={s.id} type="button" className="wiz__opt" aria-pressed={segments.includes(s.id)} onClick={() => toggle(s.id)}>
@@ -273,7 +265,7 @@ export default function Onboarding() {
           ))}
         </div>
         {segments.includes(OTHER_SEGMENT.id) && (
-          <AuthField label="Qual?" maxLength={40} placeholder="Ex.: Maquiagem, Depilação a laser" value={otherLabel} onChange={(e) => setOtherLabel(e.target.value)} />
+          <AuthField label="Qual?" maxLength={40} placeholder="Qual? Ex.: Maquiagem, Depilação a laser" value={otherLabel} onChange={(e) => setOtherLabel(e.target.value)} />
         )}
 
         <FormMessages error={error} />

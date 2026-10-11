@@ -63,7 +63,7 @@ export function AuthField({
   const [visible, setVisible] = useState(false)
   return (
     <div className="field">
-      <label htmlFor={id} className="field__label">
+      <label htmlFor={id} className="sr-only">
         {label}
       </label>
       <span className="input">
@@ -72,7 +72,7 @@ export function AuthField({
             {icon}
           </span>
         )}
-        <input id={id} {...input} type={isPassword && visible ? 'text' : input.type} />
+        <input id={id} placeholder={label} {...input} type={isPassword && visible ? 'text' : input.type} />
         {isPassword && (
           <button
             type="button"
