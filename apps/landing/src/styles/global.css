@@ -215,14 +215,13 @@ em {
   color: var(--ink-500);
 }
 
-/* botões: pílula baixa, texto em maiúsculas à esquerda e o triângulo ▸ à direita */
+/* botões: pílula preta baixa com texto em maiúsculas */
 .btn {
   display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 28px;
+  justify-content: center;
   min-height: 44px;
-  padding: 0 20px 0 24px;
+  padding: 0 24px;
   border: 0;
   border-radius: var(--radius-pill);
   font-family: inherit;
@@ -234,18 +233,6 @@ em {
   cursor: pointer;
   transition: background-color 0.15s, color 0.15s, transform 0.15s;
 }
-.btn::after {
-  content: '';
-  flex: none;
-  width: 7px;
-  height: 8px;
-  background: currentColor;
-  clip-path: polygon(0 0, 100% 50%, 0 100%);
-  transition: transform 0.2s ease;
-}
-.btn:hover::after {
-  transform: translateX(3px);
-}
 .btn:active {
   transform: scale(0.98);
 }
@@ -256,21 +243,14 @@ em {
 .btn--primary:hover {
   background: var(--ink-700);
 }
-/* secundário: link de texto com o ▸ dentro de um círculo preto */
+/* secundário: link de texto sublinhado */
 .btn--ghost {
-  gap: 12px;
   padding: 0;
   background: none;
   color: var(--ink-900);
-}
-.btn--ghost::after {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: var(--ink-900)
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 7 8'%3E%3Cpath d='M0 0l7 4-7 4z' fill='%23fff'/%3E%3C/svg%3E")
-    center / 7px 8px no-repeat;
-  clip-path: none;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 6px;
 }
 .btn--ghost:hover {
   color: var(--wine);
@@ -401,7 +381,8 @@ em {
 }
 .menu__panel .btn {
   margin-top: 6px;
-  padding: 0 20px 0 24px;
+  justify-content: center;
+  padding: 0 24px;
   border-radius: var(--radius-pill);
 }
 .menu__panel .btn:hover {
