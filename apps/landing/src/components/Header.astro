@@ -13,11 +13,8 @@ const current = (href: string) => (path === href ? 'page' : undefined)
       {NAV.map((item) => <a href={item.href} aria-current={current(item.href)}>{item.label}</a>)}
     </nav>
 
-    <!-- desktop: entrar e teste grátis sempre à vista -->
-    <div class="header__actions">
-      <a class="header__login" href={LINKS.login}>Entrar</a>
-      <a class="btn btn--primary btn--sm" href={LINKS.signup}>{CTA.short}</a>
-    </div>
+    <!-- desktop: teste grátis sempre à vista (entrar fica no menu do celular, no contato e no rodapé) -->
+    <a class="btn btn--primary btn--sm header__cta" href={LINKS.signup}>{CTA.short}</a>
 
     <!-- celular: quatro pontinhos abrem os links, entrar e teste grátis -->
     <details class="menu">

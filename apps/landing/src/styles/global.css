@@ -49,7 +49,6 @@
   --gutter: 12px;
   --max: 1320px;
   --header-h: 72px;
-  --ann-h: 38px;
   --frame: 12px;
 }
 @media (min-width: 768px) {
@@ -106,7 +105,7 @@ html {
 body {
   margin: 0;
   min-width: 320px;
-  padding: 0 var(--frame) var(--frame);
+  padding: var(--frame);
   background: var(--white);
   color: var(--ink-700);
   font-family: var(--font-sans);
@@ -277,23 +276,6 @@ em {
   gap: 10px;
 }
 
-/* ---------- aviso do topo ---------- */
-.announce {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: var(--ann-h);
-  margin: var(--frame) 0;
-  border-radius: 14px;
-  background: var(--gray-100);
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--ink-500);
-}
-.announce a:hover {
-  color: var(--wine);
-}
-
 /* ---------- header ---------- */
 .header {
   position: sticky;
@@ -307,7 +289,7 @@ em {
   gap: 24px;
   height: var(--header-h);
 }
-/* desktop: logo à esquerda, links no centro, entrar e teste grátis à direita */
+/* desktop: logo à esquerda, links no centro e teste grátis à direita */
 @media (min-width: 960px) {
   .header__inner {
     display: grid;
@@ -317,7 +299,7 @@ em {
 /* na home o menu fica transparente, por cima do hero */
 .is-home .header {
   position: absolute;
-  top: calc(var(--ann-h) + 2 * var(--frame));
+  top: var(--frame);
   left: var(--frame);
   right: var(--frame);
   background: none;
@@ -411,25 +393,14 @@ em {
 .menu__panel .btn {
   margin-top: 6px;
 }
-.header__actions {
+.header__cta {
   display: none;
-  align-items: center;
-  gap: 22px;
   justify-self: end;
 }
-.header__login {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--ink-900);
-  transition: color 0.15s;
-}
-.header__login:hover {
-  color: var(--wine);
-}
-/* no desktop os links e os botões ficam à vista: o menu dos pontinhos é só do celular */
+/* no desktop os links e o teste grátis ficam à vista: o menu dos pontinhos é só do celular */
 @media (min-width: 960px) {
   .nav,
-  .header__actions {
+  .header__cta {
     display: flex;
   }
   .header .menu {
@@ -459,8 +430,8 @@ em {
   position: relative;
   display: flex;
   flex-direction: column;
-  min-height: calc(100vh - var(--ann-h) - 3 * var(--frame));
-  min-height: calc(100svh - var(--ann-h) - 3 * var(--frame));
+  min-height: calc(100vh - 2 * var(--frame));
+  min-height: calc(100svh - 2 * var(--frame));
   padding: var(--header-h) clamp(20px, 3vw, 44px) 0;
   border-radius: var(--radius-lg);
   background: var(--gray-100);
