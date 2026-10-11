@@ -1356,3 +1356,131 @@
     font-size: 11.5px;
   }
 }
+
+/* ---------- Meu negócio ---------- */
+.biz__grid {
+  display: grid;
+  gap: 16px;
+  margin-top: 18px;
+}
+@media (min-width: 1024px) {
+  .biz__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+  .biz__card--wide {
+    grid-row: span 2;
+  }
+}
+.biz__card {
+  display: grid;
+  gap: 14px;
+}
+.biz__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  scroll-margin-top: 90px;
+}
+.biz__head > div {
+  flex: 1;
+  min-width: 0;
+}
+.biz__add {
+  flex: none;
+}
+.biz__form {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
+@media (min-width: 768px) {
+  .biz__form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .biz__wide {
+    grid-column: 1 / -1;
+  }
+}
+.biz__actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+.biz__group {
+  display: grid;
+  gap: 6px;
+}
+.biz__group-title {
+  margin: 4px 4px 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-500);
+}
+.biz__list {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.biz__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 56px;
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: transparent;
+  color: var(--ink-500);
+  font: inherit;
+  text-align: left;
+}
+button.biz__item:not(:disabled) {
+  cursor: pointer;
+}
+button.biz__item:not(:disabled):hover {
+  background: var(--page-bg);
+}
+.biz__item-text {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+.biz__item-text strong {
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ink-900);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.biz__item-text small {
+  font-size: 12px;
+}
+.biz__price {
+  flex: none;
+  font-weight: 500;
+  color: var(--ink-900);
+}
+.biz__more {
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: var(--page-bg);
+}
+.biz__more summary {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-700);
+  cursor: pointer;
+}
+.biz__more[open] summary {
+  margin-bottom: 8px;
+}
+.biz__more .form__pair {
+  margin-top: 10px;
+}

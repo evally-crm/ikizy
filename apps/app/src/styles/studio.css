@@ -319,6 +319,24 @@
 .row__name {
   flex: 1;
 }
+/* serviço no Meu site: nome e preço só para conferir (editam em Meu negócio) */
+.row__label {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+.row__label strong {
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-900);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.row__label small {
+  font-size: 12px;
+  color: var(--ink-500);
+}
 .row__top .switch {
   flex: none;
 }

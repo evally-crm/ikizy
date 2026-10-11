@@ -15,6 +15,7 @@ import RedefinirSenha from './pages/auth/RedefinirSenha'
 import VerificarEmail from './pages/auth/VerificarEmail'
 import Clientes from './pages/Clientes'
 import Financeiro from './pages/Financeiro'
+import MeuNegocio from './pages/MeuNegocio'
 import MeuSite from './pages/MeuSite'
 
 /**
@@ -48,6 +49,7 @@ export default function App() {
             <Route path="clientes/:id" element={<Clientes />} />
             <Route path="financeiro" element={<Financeiro />} />
             <Route path="site" element={<MeuSite />} />
+            <Route path="negocio" element={<MeuNegocio />} />
             <Route path="assinatura" element={<Assinatura />} />
             <Route path="*" element={<Navigate to={ROUTES.dashboard} replace />} />
           </Route>

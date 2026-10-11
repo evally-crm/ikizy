@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { Check, Circle, Clock } from 'lucide-react'
 import { useAgenda } from '../data/AgendaProvider'
-import { agenda } from '../lib/routes'
+import { agenda, dash } from '../lib/routes'
 import { Card } from './ui'
 
 type State = 'ok' | 'todo' | 'soon'
@@ -55,7 +55,7 @@ export default function OnlineBookingChecklist({ whatsapp, online }: { whatsapp:
             ? 'Todas as profissionais têm horário definido.'
             : `${withHours.length} de ${professionals.length} profissionais com horário definido.`,
       state: professionals.length > 0 && hoursAvailable && withHours.length === professionals.length ? 'ok' : 'todo',
-      action: professionals.length > 0 && hoursAvailable ? { to: agenda('horarios=1'), label: 'Definir horários' } : undefined,
+      action: professionals.length > 0 && hoursAvailable ? { to: dash('/negocio#horario'), label: 'Definir horários' } : undefined,
     },
     {
       id: 'whatsapp',
