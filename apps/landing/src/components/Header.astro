@@ -13,7 +13,13 @@ const current = (href: string) => (path === href ? 'page' : undefined)
       {NAV.map((item) => <a href={item.href} aria-current={current(item.href)}>{item.label}</a>)}
     </nav>
 
-    <!-- quatro pontinhos: abre o menu com entrar e criar conta (e os links, no celular) -->
+    <!-- desktop: entrar e teste grátis sempre à vista -->
+    <div class="header__actions">
+      <a class="header__login" href={LINKS.login}>Entrar</a>
+      <a class="btn btn--primary btn--sm" href={LINKS.signup}>{CTA.short}</a>
+    </div>
+
+    <!-- celular: quatro pontinhos abrem os links, entrar e teste grátis -->
     <details class="menu">
       <summary aria-label="Abrir menu">
         <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor" aria-hidden="true">
@@ -24,7 +30,7 @@ const current = (href: string) => (path === href ? 'page' : undefined)
         </svg>
       </summary>
       <div class="menu__panel">
-        {NAV.map((item) => <a class="menu__link" href={item.href} aria-current={current(item.href)}>{item.label}</a>)}
+        {NAV.map((item) => <a href={item.href} aria-current={current(item.href)}>{item.label}</a>)}
         <a href={LINKS.login}>Entrar</a>
         <a class="btn btn--primary" href={LINKS.signup}>{CTA.short}</a>
       </div>

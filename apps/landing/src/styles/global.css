@@ -307,14 +307,11 @@ em {
   gap: 24px;
   height: var(--header-h);
 }
-/* desktop: logo à esquerda, links no centro e os quatro pontinhos à direita */
+/* desktop: logo à esquerda, links no centro, entrar e teste grátis à direita */
 @media (min-width: 960px) {
   .header__inner {
     display: grid;
     grid-template-columns: 1fr auto 1fr;
-  }
-  .header .menu {
-    justify-self: end;
   }
 }
 /* na home o menu fica transparente, por cima do hero */
@@ -414,13 +411,29 @@ em {
 .menu__panel .btn {
   margin-top: 6px;
 }
+.header__actions {
+  display: none;
+  align-items: center;
+  gap: 22px;
+  justify-self: end;
+}
+.header__login {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-900);
+  transition: color 0.15s;
+}
+.header__login:hover {
+  color: var(--wine);
+}
+/* no desktop os links e os botões ficam à vista: o menu dos pontinhos é só do celular */
 @media (min-width: 960px) {
-  .nav {
+  .nav,
+  .header__actions {
     display: flex;
   }
-  /* no desktop os links já estão no centro: o menu mostra só entrar e criar conta */
-  .menu__link {
-    display: none !important;
+  .header .menu {
+    display: none;
   }
 }
 
@@ -1230,36 +1243,82 @@ em {
   flex-direction: column;
   gap: 14px;
 }
+/* ---------- campos (componente Field) ---------- */
+/* pílula sem borda; o título fica dentro e sobe ao clicar ou quando já tem texto */
 .field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: 13px;
-  color: var(--ink-500);
+  position: relative;
 }
 .field input,
 .field textarea {
+  display: block;
   width: 100%;
-  padding: 14px 18px;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  background: var(--white);
+  height: 60px;
+  padding: 24px 26px 8px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--gray-100);
   font: inherit;
   font-size: 16px;
   color: var(--ink-900);
-  transition: border-color 0.15s;
+  transition: background-color 0.2s;
 }
 .field textarea {
+  height: auto;
+  min-height: 160px;
+  padding: 32px 26px 18px;
+  border-radius: 28px;
   resize: vertical;
-  min-height: 140px;
 }
-.field input:focus,
-.field textarea:focus {
+.field label {
+  position: absolute;
+  top: 30px;
+  left: 26px;
+  font-size: 16px;
+  line-height: 1;
+  color: var(--ink-500);
+  pointer-events: none;
+  transform: translateY(-50%);
+  transform-origin: left center;
+  transition: top 0.2s ease, transform 0.2s ease, color 0.2s;
+}
+.field input:hover,
+.field textarea:hover {
+  background: #efeff1;
+}
+/* sem borda no foco: o fundo escurece e o título fica preto */
+.field input:focus-visible,
+.field textarea:focus-visible {
   outline: none;
-  border-color: var(--ink-900);
+  background: var(--gray-200);
 }
+.field :is(input, textarea):is(:focus, :not(:placeholder-shown)) + label {
+  top: 17px;
+  transform: translateY(-50%) scale(0.75);
+}
+.field--multiline textarea:is(:focus, :not(:placeholder-shown)) + label {
+  top: 18px;
+}
+.field :is(input, textarea):focus + label {
+  color: var(--ink-900);
+}
+/* inválido (só depois que a pessoa mexeu): título vinho e fundo rosado */
+.field :is(input, textarea):user-invalid {
+  background: #fbeef0;
+}
+.field :is(input, textarea):user-invalid + label {
+  color: var(--wine);
+}
+/* preenchimento automático do navegador sem fundo amarelo/azul */
+.field input:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 60px var(--gray-100) inset;
+  -webkit-text-fill-color: var(--ink-900);
+}
+
+/* ---------- contato ---------- */
 .contact__form .btn {
   align-self: flex-start;
+  min-height: 60px;
+  padding: 0 34px;
 }
 .contact__note {
   font-size: 13px;

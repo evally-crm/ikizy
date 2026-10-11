@@ -1,5 +1,6 @@
 ---
 import Base from '../layouts/Base.astro'
+import Field from '../components/Field.astro'
 import { CONTACT_EMAIL, CTA, LINKS } from '../lib/site'
 import { PIX_DISCOUNT_PCT, PLANS, TRIAL_DAYS, brlNumber } from '../lib/pricing'
 
@@ -288,18 +289,9 @@ const faqSchema = {
   <!-- CONTATO -->
   <section id="contato" class="section container contact" aria-labelledby="contact-title">
     <form class="contact__form" action={`mailto:${CONTACT_EMAIL}`} method="post" enctype="text/plain" data-contact>
-      <label class="field">
-        <span>Nome</span>
-        <input name="nome" type="text" autocomplete="name" required />
-      </label>
-      <label class="field">
-        <span>E-mail</span>
-        <input name="email" type="email" autocomplete="email" required />
-      </label>
-      <label class="field">
-        <span>Mensagem</span>
-        <textarea name="mensagem" rows="5" required></textarea>
-      </label>
+      <Field label="Nome" name="nome" autocomplete="name" required />
+      <Field label="E-mail" name="email" type="email" autocomplete="email" required />
+      <Field label="Mensagem" name="mensagem" multiline required />
       <button type="submit" class="btn btn--primary">Enviar mensagem</button>
       <p class="contact__note" role="status" data-contact-note hidden>
         Abrimos seu e-mail com a mensagem pronta. Se nada abriu, escreva para <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
