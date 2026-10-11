@@ -555,6 +555,13 @@ em {
     width: 100%;
     min-height: 52px;
   }
+  /* "30 dias grátis" colado no botão, e o link um pouco mais abaixo */
+  .hero2__hint {
+    margin-top: -6px;
+  }
+  .hero2__actions .btn--ghost {
+    margin-top: 10px;
+  }
 }
 
 /* boca de pontos (canvas animado no script do fim da página) */
@@ -574,6 +581,7 @@ em {
   .art {
     order: -1;
     min-height: 240px;
+    margin-bottom: 28px;
   }
 }
 
