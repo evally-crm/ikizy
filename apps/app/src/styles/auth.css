@@ -33,7 +33,7 @@
   background: rgba(255, 255, 255, 0.9);
 }
 
-/* celular: o rosto fica bem apagado e só embaixo, longe dos textos; o conteúdo começa no alto */
+/* celular: o rosto fica bem apagado e só embaixo, longe dos textos; o cartão fica centralizado na tela */
 .auth__art {
   position: absolute;
   inset: 0;
@@ -47,8 +47,7 @@
 }
 @media (max-width: 1023px) {
   .auth {
-    place-items: start center;
-    padding-top: 20px;
+    place-items: center;
   }
   /* celular: tudo dentro de um cartão de vidro, com a marca e o link do topo dentro dele */
   .auth__box {
