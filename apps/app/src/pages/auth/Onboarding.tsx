@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Navigate } from 'react-router-dom'
-import { Check, User } from 'lucide-react'
+import { Check, User, X } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
 import { neon } from '../../lib/neon'
 import { CHOSEN_PLAN_KEY, isPlanId } from '../../lib/plans'
@@ -108,6 +108,17 @@ export default function Onboarding() {
     if (segments.length === 0) return setError('Marque o que você faz.')
     if (segments.includes(OTHER_SEGMENT.id) && otherLabel.trim().length < 2) return setError('Conte qual é a outra área.')
 
+    setBusy(true)
+    const message = await create(name.trim(), slug, starterServices(segments), person)
+    setBusy(false)
+    if (message) {
+      if (message.includes('endereço')) setEditingSlug(true)
+      setError(message.replace('Este endereço', 'Este link').replace('Esse endereço', 'Esse link'))
+    }
+  }
+
+  /** plano escolhido no cadastro (ou o mais escolhido) e fim do rascunho */
+  const create = async (bizName: string, bizSlug: string, services: ReturnType<typeof starterServices>, person: string) => {
     let plan: 'solo' | 'studio' | 'salao' = 'studio'
     try {
       const fromSite = localStorage.getItem(CHOSEN_PLAN_KEY)
@@ -115,31 +126,53 @@ export default function Onboarding() {
     } catch {
       // sem armazenamento: vale o plano mais escolhido
     }
+    const message = await createSalon(bizName, bizSlug, { services, professionalName: person, plan })
+    if (!message) {
+      try {
+        localStorage.removeItem(DRAFT_KEY)
+        localStorage.removeItem(CHOSEN_PLAN_KEY)
+      } catch {
+        // nada a limpar
+      }
+    }
+    return message
+  }
 
+  /**
+   * "Pular etapa": cria o negócio com nome e link provisórios (a partir do nome da pessoa) e sem serviços.
+   * Nome do negócio, link e serviços se ajustam depois, em Meu negócio e Meu site.
+   */
+  const onSkip = async () => {
+    setError(null)
+    const person = (accountName || ownerName).trim()
+    if (person.length < 2) return setError('Conte como você se chama.')
+    const first = person.split(/\s+/)[0]
+    const bizName = `Studio ${first}`
     setBusy(true)
-    const message = await createSalon(name.trim(), slug, { services: starterServices(segments), professionalName: person, plan })
+    let message: string | null = null
+    for (let i = 0; i < 3; i++) {
+      const suffix = String(Math.floor(1000 + Math.random() * 9000))
+      message = await create(bizName, `${slugify(bizName) || 'studio'}-${suffix}`, [], person)
+      if (!message || !message.includes('endereço')) break
+    }
     setBusy(false)
-    if (message) {
-      if (message.includes('endereço')) setEditingSlug(true)
-      setError(message.replace('Este endereço', 'Este link').replace('Esse endereço', 'Esse link'))
-      return
-    }
-    try {
-      localStorage.removeItem(DRAFT_KEY)
-      localStorage.removeItem(CHOSEN_PLAN_KEY)
-    } catch {
-      // nada a limpar
-    }
+    if (message) setError(message)
   }
 
   return (
-    <AuthLayout>
+    <AuthLayout
+      topAction={
+        <button type="button" className="auth__close" aria-label="Fechar e sair desta conta" title="Fechar e sair desta conta" onClick={() => void signOut()}>
+          <X size={22} aria-hidden="true" />
+        </button>
+      }
+    >
       <form className="wiz" onSubmit={onSubmit}>
         <p className="wiz__eyebrow">Último passo</p>
         <h1 className="auth__title">
           <Em>Seu</Em> negócio
         </h1>
-        <p className="card__sub">O resto você ajusta depois, já com a agenda na frente.</p>
+        <p className="card__sub">Pode pular: o resto você ajusta depois, já com a agenda na frente.</p>
 
         {!accountName && (
           <AuthField
@@ -203,8 +236,8 @@ export default function Onboarding() {
         <FormMessages error={error} />
 
         <div className="auth__foot">
-          <button type="button" className="textlink" onClick={() => void signOut()}>
-            Sair desta conta
+          <button type="button" className="textlink" onClick={() => void onSkip()} disabled={busy}>
+            Pular etapa
           </button>
           <button type="submit" className="auth__go" disabled={busy} aria-label={busy ? 'Criando…' : 'Criar meu negócio'} title="Criar meu negócio">
             <Check size={22} aria-hidden="true" />

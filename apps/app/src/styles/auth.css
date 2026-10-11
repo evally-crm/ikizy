@@ -100,6 +100,18 @@
   font-size: 16px;
   color: var(--ink-700);
 }
+.auth__close {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  margin-right: -8px;
+  border-radius: 50%;
+  color: var(--ink-700);
+}
+.auth__close:hover {
+  background: rgba(14, 13, 13, 0.07);
+}
 .auth__toplink:hover {
   color: var(--brand-700);
 }
