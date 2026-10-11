@@ -193,7 +193,7 @@ Cada regra tem um código (R-xx) para ser citada em tarefas e testes.
 |---|---|
 | R-100 | Planos: Solo R$ 9,90, Studio R$ 29,90, Salão R$ 59,90 por mês (fonte única: `lib/plans.ts`). Os textos dos planos só citam o que existe. |
 | R-101 | Todo negócio novo começa com 30 dias grátis, **sem cartão**, no plano que combina com a resposta da equipe (ou o que veio do site). |
-| R-102 | Cartão: assinatura mensal que renova sozinha (Stripe). Pix: paga 1, 3 (15% off) ou 12 meses (5% off) adiantado; não renova sozinho. **[decidir]**: 12 meses com 5% e 3 meses com 15% parece invertido; normalmente o desconto cresce com o prazo. |
+| R-102 | Cartão: assinatura mensal que renova sozinha (Stripe). Pix: paga 1 mês ou 3 meses (15% off) adiantado; não renova sozinho. A landing e o app só têm mensal e trimestral (o Pix de 12 meses foi retirado). |
 | R-103 | Avisos: 7, 3 e 1 dia antes do fim do teste ou do período Pix (na tela e por e-mail); cartão recusado (na tela e por e-mail). |
 | R-104 | Sem acesso (teste ou período vencido): o sistema fica **só leitura** (vê tudo, não altera), o site continua no ar por mais 7 dias e depois sai do ar; o agendamento online desliga na hora. **[decidir]** os 7 dias. |
 | R-105 | Só a dona vê e mexe na assinatura. |
