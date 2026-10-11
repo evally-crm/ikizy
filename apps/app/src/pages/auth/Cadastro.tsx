@@ -86,7 +86,7 @@ export default function Cadastro() {
       <AuthCard
         title={
           <>
-            Criar <Em>conta</Em>
+            <Em>Criar</Em> sua conta
           </>
         }
         subtitle="30 dias grátis, sem cartão. Leva um minuto."

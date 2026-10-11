@@ -99,7 +99,7 @@ function PlanStep() {
       <div className="wiz">
         <p className="wiz__eyebrow">Último passo</p>
         <h1 className="auth__title">
-          Escolha o seu <Em>plano</Em>
+          <Em>Escolha</Em> o seu plano
         </h1>
         <p className="card__sub">
           Os primeiros {TRIAL_DAYS} dias são grátis em qualquer plano

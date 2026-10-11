@@ -78,7 +78,7 @@ export default function VerificarEmail() {
       <AuthCard
         title={
           <>
-            Confirme seu <Em>e-mail</Em>
+            <Em>Confirme</Em> seu e-mail
           </>
         }
         subtitle={`Enviamos um código de 6 números para ${email}. Ele vale por alguns minutos.`}

@@ -137,7 +137,7 @@ export default function Onboarding() {
       <form className="wiz" onSubmit={onSubmit}>
         <p className="wiz__eyebrow">Último passo</p>
         <h1 className="auth__title">
-          Seu <Em>negócio</Em>
+          <Em>Seu</Em> negócio
         </h1>
         <p className="card__sub">O resto você ajusta depois, já com a agenda na frente.</p>
 

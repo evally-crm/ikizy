@@ -132,13 +132,14 @@
   letter-spacing: -0.035em;
   text-wrap: balance;
 }
-/* palavra de destaque dos títulos: a fonte pixelada do site, em vinho */
+/* títulos como o "Escolha seu plano" do site: a primeira palavra em cinza, numa linha só dela, e o resto em preto */
 .auth__title .em {
-  font-family: 'Geist Pixel', ui-monospace, 'SFMono-Regular', monospace;
+  display: block;
+  font-family: inherit;
   font-style: normal;
-  font-weight: 400;
-  letter-spacing: -0.03em;
-  color: #800513;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  color: #a3a3a8;
 }
 .auth__switch {
   margin-top: 8px;

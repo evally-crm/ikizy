@@ -25,7 +25,7 @@ export default function RedefinirSenha() {
         <AuthCard
           title={
             <>
-              Link <Em>expirado</Em>
+              <Em>Link</Em> expirado
             </>
           }
           subtitle="Esse link de recuperação é inválido ou já foi usado. Peça um novo para continuar."
@@ -61,7 +61,7 @@ export default function RedefinirSenha() {
       <AuthCard
         title={
           <>
-            Nova <Em>senha</Em>
+            <Em>Nova</Em> senha
           </>
         }
         subtitle="Escolha uma senha forte, com pelo menos 8 caracteres."

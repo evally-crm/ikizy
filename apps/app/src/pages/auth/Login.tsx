@@ -74,7 +74,11 @@ export default function Login() {
       }
     >
       <AuthCard
-        title={<Em>Entrar</Em>}
+        title={
+          <>
+            <Em>Entrar</Em> no IKIZY
+          </>
+        }
         subtitle="Entre para ver a agenda do seu negócio."
         aside={<GoogleButton onClick={onGoogle} disabled={busy} />}
       >
