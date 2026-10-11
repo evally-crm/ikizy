@@ -46,7 +46,7 @@ import { MessageDialog } from '../components/MessageDialog'
 import { BulkMessageDialog } from '../components/BulkMessageDialog'
 import { useSalonInfo } from '../hooks/useSalonInfo'
 import { formatBRL, formatPhone } from '../lib/format'
-import { dash } from '../lib/routes'
+import { agenda, dash } from '../lib/routes'
 import { useMediaQuery } from '../hooks/useMediaQuery'
 import { Avatar, Button, Card, Em, Money } from '../components/ui'
 
@@ -355,7 +355,7 @@ function ClientDetail({
               variant="accent"
               icon
               aria-label={`Agendar ${firstName}`}
-              onClick={() => navigate(dash(`/agenda?nova=1&cliente=${encodeURIComponent(client.name)}`))}
+              onClick={() => navigate(agenda(`nova=1&cliente=${encodeURIComponent(client.name)}`))}
             >
               <CalendarPlus size={18} />
             </Button>

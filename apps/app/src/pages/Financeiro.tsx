@@ -1,13 +1,15 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { ArrowDownRight, ArrowUpRight, Download, Lock, Plus, Send, Trash2, X } from 'lucide-react'
 import { useAuth } from '../auth/AuthProvider'
 import { type MonthClosing } from '../data/finance'
 import { CARD_FEE_PCT, useFinance, type Expense } from '../data/useFinance'
-import { formatBRL } from '../lib/format'
-import { dash } from '../lib/routes'
-import { Link } from 'react-router-dom'
+import { formatBRL, formatTime } from '../lib/format'
+import { useAgenda } from '../data/AgendaProvider'
+import { PAYMENT_LABEL, type PaymentMethod } from '../types'
+import { agenda } from '../lib/routes'
+import { Link, useSearchParams } from 'react-router-dom'
 import { Avatar, Button, Em, Money } from '../components/ui'
 
 const cap = (s: string) => s[0].toUpperCase() + s.slice(1)
@@ -405,7 +407,148 @@ function DotWaffle({ parts, total }: { parts: { label: string; value: number; cl
   )
 }
 
+/** "Hoje" (caixa do dia) ou "Mês" (fechamento): a aba fica no endereço (?mes=1) para o voltar do navegador funcionar */
+function FinTabs({ view, onView }: { view: 'hoje' | 'mes'; onView: (v: 'hoje' | 'mes') => void }) {
+  return (
+    <div className="seg fin__tabs" role="tablist" aria-label="Período">
+      <button type="button" role="tab" aria-selected={view === 'hoje'} onClick={() => onView('hoje')}>
+        Hoje
+      </button>
+      <button type="button" role="tab" aria-selected={view === 'mes'} onClick={() => onView('mes')}>
+        Mês
+      </button>
+    </div>
+  )
+}
+
+const METHOD_ORDER: (PaymentMethod | 'nao')[] = ['pix', 'credito', 'debito', 'dinheiro', 'nao']
+const methodLabel = (m: PaymentMethod | 'nao') => (m === 'nao' ? 'Não informado' : PAYMENT_LABEL[m])
+
+/** caixa do dia: o que entrou (por forma de pagamento), o que falta receber e as saídas de hoje */
+function TodayCash({ tabs }: { tabs: ReactNode }) {
+  const { appointments, professionals } = useAgenda()
+  const fin = useFinance()
+  const [adding, setAdding] = useState(false)
+  const now = new Date()
+  const today = format(now, 'yyyy-MM-dd')
+  const ofToday = appointments.filter((a) => a.date === today).sort((a, b) => a.start - b.start)
+  const received = ofToday.filter((a) => a.status === 'concluido')
+  const toReceive = ofToday.filter((a) => a.status === 'pendente' || a.status === 'confirmado' || a.status === 'atendimento')
+  const total = received.reduce((sum, a) => sum + a.price, 0)
+  const expected = toReceive.reduce((sum, a) => sum + a.price, 0)
+  const byMethod = METHOD_ORDER.map((m) => ({
+    method: m,
+    total: received.filter((a) => (a.paymentMethod ?? 'nao') === m).reduce((sum, a) => sum + a.price, 0),
+  })).filter((x) => x.total > 0)
+  const expensesToday = fin.expenses.filter((e) => e.date === today)
+  const outToday = expensesToday.reduce((sum, e) => sum + e.amount, 0)
+  const currentMonth = fin.months[fin.months.length - 1]
+  const proName = (id: string) => (professionals.length > 1 ? (professionals.find((p) => p.id === id)?.name ?? '') : '')
+
+  return (
+    <div className="page">
+      <header className="fhead">
+        <div className="fhead__text">
+          <h1 className="fhead__title">
+            Caixa de <Em>hoje</Em>
+          </h1>
+          <p className="fhead__crumb">{cap(format(now, "EEEE, d 'de' MMMM", { locale: ptBR }))}</p>
+        </div>
+        <div className="fhead__tools">
+          {tabs}
+          {fin.expensesAvailable && currentMonth && !currentMonth.closedAt && (
+            <Button size="sm" onClick={() => setAdding(true)}>
+              <Plus size={15} aria-hidden="true" /> Saída
+            </Button>
+          )}
+        </div>
+      </header>
+
+      <div className="cash">
+        <section className="ftile ftile--dark cash__hero" aria-label="Recebido hoje">
+          <p className="ftile__label">Recebido hoje</p>
+          <Money value={total} size="xl" />
+          <p className="ftile__hint">
+            {received.length} {received.length === 1 ? 'atendimento concluído' : 'atendimentos concluídos'}
+            {outToday > 0 && ` · saídas ${formatBRL(outToday)}`}
+          </p>
+          {byMethod.length > 0 && (
+            <ul className="cash__methods">
+              {byMethod.map((m) => (
+                <li key={m.method}>
+                  <span>{methodLabel(m.method)}</span>
+                  <strong>{formatBRL(m.total).replace(',00', '')}</strong>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <section className="ftile cash__todo">
+          <p className="ftile__label">A receber hoje</p>
+          <p className="cash__value">{formatBRL(expected)}</p>
+          <p className="ftile__hint">
+            {toReceive.length === 0
+              ? 'Nada mais previsto para hoje.'
+              : `${toReceive.length} ${toReceive.length === 1 ? 'atendimento' : 'atendimentos'} ainda por concluir. Ao concluir na agenda, informe como a cliente pagou.`}
+          </p>
+          {toReceive.length > 0 && (
+            <Link to={agenda()} className="textlink">
+              Abrir a agenda
+            </Link>
+          )}
+        </section>
+
+        <section className="ftile cash__list">
+          <p className="ftile__label">Recebimentos de hoje</p>
+          {received.length === 0 ? (
+            <p className="ftile__hint">Os recebimentos aparecem quando você conclui atendimentos na agenda.</p>
+          ) : (
+            <ul className="list">
+              {received.map((a) => (
+                <li key={a.id} className="list__item">
+                  <span className="fexp__date">{formatTime(a.start)}</span>
+                  <span className="list__text">
+                    {a.client}
+                    <small className="list__small">
+                      {a.service}
+                      {proName(a.professionalId) && ` · ${proName(a.professionalId)}`} · {methodLabel(a.paymentMethod ?? 'nao')}
+                    </small>
+                  </span>
+                  <strong className="list__value">{formatBRL(a.price)}</strong>
+                </li>
+              ))}
+            </ul>
+          )}
+          {expensesToday.length > 0 && (
+            <>
+              <p className="ftile__label cash__sub">Saídas de hoje</p>
+              <ul className="list">
+                {expensesToday.map((e) => (
+                  <li key={e.id} className="list__item">
+                    <span className="list__text">{e.description}</span>
+                    <strong className="list__value">− {formatBRL(e.amount)}</strong>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </section>
+      </div>
+
+      {adding && currentMonth && <ExpenseDialog month={currentMonth} onSave={fin.addExpense} onClose={() => setAdding(false)} />}
+    </div>
+  )
+}
+
 export default function Financeiro() {
+  const [params, setParams] = useSearchParams()
+  const view = params.get('mes') ? 'mes' : 'hoje'
+  const tabs = <FinTabs view={view} onView={(v) => setParams(v === 'mes' ? { mes: '1' } : {}, { replace: true })} />
+  return view === 'hoje' ? <TodayCash tabs={tabs} /> : <MonthView tabs={tabs} />
+}
+
+function MonthView({ tabs }: { tabs: ReactNode }) {
   const { salon } = useAuth()
   const fin = useFinance()
   const { months, professionals } = fin
@@ -483,6 +626,7 @@ export default function Financeiro() {
           </p>
         </div>
         <div className="fhead__tools">
+          {tabs}
           <div className="mseg" role="tablist" aria-label="Mês">
             {months.map((m) => (
               <button
@@ -553,7 +697,7 @@ export default function Financeiro() {
               ) : (
                 <p className="fhero__line">
                   Entra aqui conforme você conclui atendimentos.{' '}
-                  <Link to={dash('/agenda')} className="fhero__link">
+                  <Link to={agenda()} className="fhero__link">
                     Abrir agenda
                   </Link>
                 </p>

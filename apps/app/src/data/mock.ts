@@ -25,25 +25,3 @@ export const appointments: MockAppointment[] = [
   { id: '11', professionalId: 'carla', client: 'Sofia Martins', service: 'Hidratação profunda', start: t(15), duration: 60, price: 130, status: 'confirmado' },
   { id: '12', professionalId: 'carla', client: 'Débora Freitas', service: 'Escova modelada', start: t(16, 30), duration: 60, price: 90, status: 'confirmado' },
 ]
-
-export const weekRevenue = [
-  { day: 'Seg', value: 1480 },
-  { day: 'Ter', value: 1920 },
-  { day: 'Qua', value: 1310 },
-  { day: 'Qui', value: 2240 },
-  { day: 'Sex', value: 2760 },
-  { day: 'Sáb', value: 3180 },
-  { day: 'Dom', value: 0 },
-]
-
-export const birthdays = [
-  { name: 'Marina Costa', when: 'Hoje' },
-  { name: 'Camila Duarte', when: 'Amanhã' },
-  { name: 'Larissa Nunes', when: 'Sex, 09' },
-]
-
-export const alerts = [
-  { id: 'a', text: 'Esmalte nude 12ml está acabando', kind: 'Estoque' },
-  { id: 'b', text: '2 confirmações pendentes para amanhã', kind: 'Agenda' },
-  { id: 'c', text: 'Horário livre hoje às 14h com a Carla', kind: 'Encaixe' },
-]

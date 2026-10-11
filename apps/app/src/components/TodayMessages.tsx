@@ -31,8 +31,11 @@ interface Item {
   context: Omit<MessageContext, 'salonName' | 'siteUrl'>
 }
 
-/** lista do dia de quem vale uma mensagem: lembretes, pós-atendimento, aniversários e sumidas */
-export function TodayMessages() {
+/**
+ * lista do dia de quem vale uma mensagem: lembretes, pós-atendimento, aniversários e sumidas.
+ * `clientsOnly`: só aniversário e sumidas ("Chamar hoje"), para quando cada atendimento já tem o próprio botão de mensagem.
+ */
+export function TodayMessages({ clientsOnly = false }: { clientsOnly?: boolean }) {
   const { appointments } = useAgenda()
   const { clients } = useClientBook()
   const salon = useSalonInfo()
@@ -49,7 +52,7 @@ export function TodayMessages() {
     const ofAppointments = [...appointments].sort((a, b) => a.date.localeCompare(b.date) || a.start - b.start)
     const push = (kind: MessageKind, id: string, item: Omit<Item, 'key' | 'kind'>) => list.push({ key: sentKey(kind, id, today), kind, ...item })
 
-    for (const a of ofAppointments) {
+    for (const a of clientsOnly ? [] : ofAppointments) {
       const ctx = { clientName: a.client, service: a.service, date: a.date, start: a.start }
       const base = { kinds: APPOINTMENT_KINDS, name: a.client, phone: a.phone, context: ctx }
       const open = a.status === 'pendente' || a.status === 'confirmado'
@@ -73,15 +76,16 @@ export function TodayMessages() {
       }
     }
     return list
-  }, [appointments, clients, today, tomorrow, nowMinutes, now])
+  }, [appointments, clients, today, tomorrow, nowMinutes, now, clientsOnly])
 
   const pending = items.filter((i) => !wasSent(i.key)).length
+  if (clientsOnly && items.length === 0) return null
 
   return (
     <Card className="dash__people">
       <div className="card__head">
         <div>
-          <h2 className="card__title">Mensagens de hoje</h2>
+          <h2 className="card__title">{clientsOnly ? 'Chamar hoje' : 'Mensagens de hoje'}</h2>
           <p className="card__sub">
             {items.length === 0 ? 'Nada pendente por enquanto.' : pending === 0 ? 'Tudo enviado. 💕' : `${pending} para enviar pelo seu WhatsApp`}
           </p>

@@ -14,6 +14,7 @@ Sumário:
 6. Todos os fluxos
 7. O que fazer antes de ir para o ar (ordem)
 8. Decisões que precisam de você
+9. Acesso e cadastro: análise e proposta
 
 ---
 
@@ -170,6 +171,11 @@ Esconder na tela não basta: a Data API é aberta ao navegador.
 Legenda: **Manter** · **Mudar** · **Tirar** · **Novo**
 
 ### 5.1 Agenda (vira a tela inicial)
+
+> **A agenda de hoje não perde nada.** Tudo o que existe continua igual: grade por profissional com as cores de status,
+> calendário do mês, lista do dia, linha do "agora", horário fechado hachurado, menu do botão direito, clicar no horário
+> vago para marcar, janela do atendimento e horário de atendimento. As mudanças abaixo só **acrescentam** (lista no celular,
+> visão de semana, bloqueios, ações rápidas) ou ajustam o que hoje atrapalha (grade fixa 8h–20h, chips no celular).
 
 **Celular — proposta (o 1º atendimento aparece sem rolar):**
 
@@ -342,10 +348,9 @@ CELULAR
 
 ### 5.8 Acesso (login, cadastro, questionário, plano)
 
-- **Manter:** tudo.
-- **Mudar:** ligar a confirmação de e-mail (G6).
-- **Novo:** tela de aceitar convite (`/convite/:token`): mostra "Ana Clara te convidou para o Studio Maria Beauty como profissional", cria a conta ou entra, e cai direto em "Minha agenda".
-- **Mudar:** depois do cadastro, a primeira tela é a Agenda vazia com **"Primeiros passos"** (horário → serviços com preço → site → agendamento online), que hoje é só o checklist do Meu site.
+Análise completa e proposta na **seção 9**. Em resumo: o cadastro passa de 8 a 9 telas para 3
+(criar conta com nome · código · seu negócio), sai a escolha de serviços, preços e plano do cadastro,
+e a pessoa cai na Agenda com os Primeiros passos. Também entra a tela de aceitar convite (`/convite/:token`, fase 2).
 
 ---
 
@@ -353,21 +358,18 @@ CELULAR
 
 ### 6.1 Chegada: do site até o primeiro dia
 
+Detalhado na **seção 9** (análise do cadastro e proposta de 3 telas). Resumo:
+
 ```mermaid
 flowchart TD
-    L[ikizy.com] -->|Criar conta| C[/cadastro<br/>e-mail+senha ou Google/]
-    C -->|e-mail| V[/verificar-email<br/>código de 6 números/]
-    C -->|Google| Q
-    V --> Q[/cadastro/salao<br/>segmentos, equipe, serviços, preços, nome e endereço/]
-    Q --> P[/cadastro/plano<br/>plano + cartão ou Pix/]
-    P --> A[Agenda vazia + Primeiros passos]
-    A --> H[1. Horário de atendimento]
-    A --> S[2. Serviços com preço e duração]
-    A --> W[3. Publicar o site]
-    A --> O[4. Ligar agendamento online]
+    L[ikizy.com] --> C[1 Criar conta<br/>nome, e-mail, senha · ou Google]
+    C --> V[2 Código, quando ligado]
+    V --> N[3 Seu negócio<br/>nome + link, áreas, só eu / equipe]
+    C -->|Google| N
+    N --> A[Agenda + Primeiros passos<br/>horário, preços, site, agendamento online]
 ```
 
-O que muda: hoje cai no Início com números de exemplo; passa a cair na Agenda com o roteiro.
+O que muda: hoje são 8 a 9 telas e cai no Início com números de exemplo; passam a ser 3 telas e cai na Agenda com o roteiro.
 
 ### 6.2 Dia a dia da dona (Solo), no celular
 
@@ -527,7 +529,7 @@ Agenda de todas, Clientes (sem valores gastos), Caixa de hoje, [+]. Sem mês, co
 6. **Grade com o horário real** do salão (P5).
 7. **Busca do topo funcionando** (P1) ou retirada até funcionar.
 8. **Planos sem promessas falsas** (G5) e **confirmação de e-mail** (G6).
-9. **Primeiros passos** na Agenda vazia.
+9. **Novo cadastro em 3 telas + Primeiros passos** na Agenda vazia (seção 9.6, itens 1 a 7).
 10. Atualizar `CONTEXTO.md` e apagar/arquivar `fluxos-do-sistema.md` (P12).
 
 ### Fase 2 — Para vender Studio e Salão (equipe)
@@ -556,3 +558,218 @@ Agenda de todas, Clientes (sem valores gastos), Caixa de hoje, [+]. Sem mês, co
 | D5 | Limite de profissionais por plano | Studio até 3, Salão ilimitado · outro | Studio até 3, Salão ilimitado. |
 | D6 | Botão [+] central no celular | sim · não | **Sim**: é a ação mais repetida do dia. |
 | D7 | Recusar pedido manda mensagem? | sempre oferece · não | **Sempre oferece** (a cliente precisa saber). |
+| D8 | Plano e pagamento no cadastro? | tirar do cadastro (teste começa sozinho) · manter a tela do plano no fim | **Tirar**: o site promete "sem cartão" e pedir cartão no 1º minuto afasta. |
+| D9 | Serviços no cadastro? | nenhum (catálogo inicial automático, preços nos Primeiros passos) · lista curta para marcar | **Automático**: a pessoa só ajusta preço depois, já dentro do sistema. |
+| D10 | "Quem atende" no cadastro | Só eu / Eu e equipe · as 3 opções de hoje | **2 opções**. |
+| D11 | Horário padrão criado sozinho | seg–sáb 9h–19h · deixar vazio | **Seg–sáb 9h–19h**, confirmado no 1º passo. |
+
+---
+
+## 9. Acesso e cadastro: análise e proposta
+
+Revisado em 10/10/2026: código de todas as telas de acesso (`pages/auth/*`, `AuthProvider`, `RequireSalon`, cobrança)
+e capturas no computador e no celular. **Não testei um cadastro real de ponta a ponta**, porque o app local usa o banco
+de produção e isso criaria contas e salões de verdade. O que está abaixo vem da leitura do código e das telas.
+
+### 9.1 Como é hoje (do site até a agenda)
+
+| # | Tela | O que pede | Observação |
+|---|---|---|---|
+| 1 | `/cadastro` | e-mail e senha (ou Google) | não pede o nome |
+| 2 | `/verificar-email` | código de 6 números | só quando a confirmação estiver ligada (hoje está desligada) |
+| 3 | Questionário 1 | O que você oferece? (7 áreas) | |
+| 4 | Questionário 2 | Como é a sua equipe? (Só eu / 2 a 5 / 6 ou mais) | avança sozinho ao tocar, sem botão |
+| 5 | Questionário 3 | Como você se chama? | **só** para quem atende sozinha |
+| 6 | Questionário 4 | Quais serviços você faz? | tudo vem marcado; com 3 áreas são **16 pílulas para desmarcar** e 3 campos "Outro serviço"; no celular são 2 telas de rolagem |
+| 7 | Questionário 5 | Quanto você cobra? | **um campo de preço para cada serviço** (16 campos); a duração aparece e não dá para mudar |
+| 8 | Questionário 6 | Nome do negócio e endereço da página | |
+| 9 | `/cadastro/plano` | plano (3 cartões) + "Cartão de crédito" (vai para o Stripe) ou "Pix, sem cartão" | |
+| 10 | Início | | cai nos números de exemplo (G1) |
+
+São **8 a 9 telas** até começar a usar, e duas delas (serviços e preços) são listas longas.
+
+### 9.2 Funciona? Problemas encontrados
+
+**Funciona e está bem amarrado:**
+- Entrar, criar conta, Google, esqueci a senha, link de redefinir (inclusive link vencido), código de e-mail com reenvio e espera de 60 s.
+- Criar conta com um e-mail que já existe e a senha certa: entra e segue de onde parou (boa decisão).
+- Senha certa com e-mail não confirmado: vai para a tela do código, em vez de dizer "senha incorreta".
+- Quem fecha o navegador no meio volta para o passo certo: sem negócio → questionário; sem plano escolhido → tela do plano.
+- Voltar do Stripe (pago ou cancelado) é tratado.
+- Sair da conta limpa a sessão e volta para o login.
+
+**Problemas (do mais grave para o menos):**
+
+| # | Problema | Efeito para a pessoa |
+|---|---|---|
+| A1 | **Quem escolhe "equipe" não informa o próprio nome e não entra como profissional.** O nome só é pedido para quem atende sozinha. | O topo mostra "Olá, mariae.duardad3216" (pedaço do e-mail). A agenda abre pedindo "Cadastre quem atende", e depois não há como cadastrar a segunda (G2). |
+| A2 | **A tela do plano ignora a resposta da equipe.** Sempre começa marcado o Solo. | Quem disse "6 pessoas ou mais" pode seguir no Solo sem perceber. |
+| A3 | **Pede cartão no primeiro minuto.** "Cartão de crédito" é o primeiro botão e leva ao Stripe antes de ver o sistema. O site promete **"30 dias grátis, sem cartão"**. | Muita gente desiste aqui. A promessa do site e a tela não combinam. |
+| A4 | **"Pix, sem cartão" na verdade significa "decidir depois".** Ninguém paga nada nessa hora. | Confunde: parece que vai gerar um Pix. |
+| A5 | **Serviços: marcar tudo e pedir para desmarcar.** | É o passo que você sentiu como ruim: trabalho ao contrário, lista longa, no celular cansa. |
+| A6 | **Preços: um campo por serviço, e "Pular" deixa todos a R$ 0.** | Agenda e site mostram R$ 0,00; o agendamento online não liga enquanto não houver preço. |
+| A7 | **A barra de progresso muda de tamanho no meio.** Começa com 4 tracinhos e vira 5 ou 6 conforme as respostas. | Passa a sensação de que "não acaba nunca". |
+| A8 | **Os rótulos somem quando o campo é preenchido** (o nome do campo é só o texto de dentro). Na tela do negócio, "Studio Maria Beauty" e "studio-maria-beauty" ficam um embaixo do outro sem dizer o que é cada um. | Dúvida sobre o que é "endereço" (rua? link?). |
+| A9 | **O endereço da página só é conferido no fim.** Se já existir, o erro aparece depois de tudo preenchido. | Frustração no último passo. |
+| A10 | **Recarregar a página no questionário apaga todas as respostas.** | Quem sai para ver uma mensagem no WhatsApp volta e recomeça. |
+| A11 | **Se salvar os serviços ou a profissional falhar, ninguém é avisado** (o negócio é criado, o resto some em silêncio). | Agenda e site vazios sem explicação. |
+| A12 | **O plano escolhido no site (ikizy.com) se perde.** Os botões dos cartões de plano levam para `/cadastro` sem dizer qual plano. | Escolhe Studio no site e tem de escolher de novo. |
+| A13 | **E-mails do código e da senha saem como "Neon Auth"** (`auth@mail.myneon.app`), provavelmente com o texto padrão do Neon. | Parece golpe; cai no spam (seção 5b do `CONTEXTO.md`). |
+| A14 | **Entrar não devolve para onde a pessoa ia.** Quem abre um link do sistema (ex.: um pedido) sem estar logada vai para o login e, depois, para a tela inicial, não para o pedido. | Quebra os avisos de pedido e os futuros links de notificação. |
+| A15 | **No celular, o fundo de pontinhos passa por trás dos textos pequenos** (subtítulo, termos de uso) e o conteúdo fica no meio da tela com um espaço vazio grande em cima. | Leitura difícil; o teclado cobre o botão em telas pequenas. |
+| A16 | **O botão do Google é uma pílula pequena ao lado do título.** | Mais da metade das pessoas prefere Google; o botão principal parece secundário. |
+
+### 9.3 Proposta: do site à agenda em 3 telas
+
+Ideia central: **não fazer a pessoa escolher nada que o sistema pode adivinhar**, e deixar o que é detalhe
+(preço de cada serviço, horário, site) para os **Primeiros passos dentro do sistema**, já com a agenda na frente.
+
+```
+ANTES (8 a 9 telas)                        DEPOIS (3 telas + código quando ligado)
+──────────────────────────────────         ──────────────────────────────────────────
+1 Cadastro (e-mail, senha)                 1 Criar conta: nome, e-mail, senha  (ou Google)
+2 Código                                   2 Código (quando ligado)
+3 Áreas                              ┐
+4 Equipe                             │
+5 Seu nome (só solo)                 ├──►  3 Seu negócio: nome do negócio, áreas, equipe
+6 Serviços (desmarcar)               │       (uma tela só, sem lista de serviços)
+7 Preços (16 campos)                 │
+8 Nome e endereço                    ┘
+9 Plano + cartão/Pix                 ──►   (sai do cadastro: teste começa sozinho)
+10 Início (números falsos)           ──►   Agenda + Primeiros passos
+```
+
+**Tela 1 — Criar conta**
+
+```
+CELULAR
+┌─────────────────────────────────┐
+│ IKIZY.                  Entrar  │
+│                                 │
+│ Crie sua conta                  │
+│ 30 dias grátis, sem cartão.     │
+│                                 │
+│ [ G  Continuar com Google     ] │  ← botão grande, primeiro
+│ ─────────── ou ───────────      │
+│ Seu nome                        │  ← rótulo fixo em cima
+│ [ Maria Eduarda               ] │
+│ E-mail                          │
+│ [ maria@email.com             ] │
+│ Senha                           │
+│ [ ••••••••               👁   ] │
+│ Mínimo de 8 caracteres.         │
+│                                 │
+│ [        Criar conta     →    ] │
+│ Ao continuar, você concorda...  │
+└─────────────────────────────────┘
+```
+
+- **Novo:** o nome é pedido aqui (resolve A1 para todo mundo, inclusive equipe).
+- **Mudar:** Google vira o botão grande do topo (A16); rótulos fixos em cima dos campos (A8).
+- **Mudar:** o texto "30 dias grátis, sem cartão" aparece aqui, igual ao site.
+- **Mudar:** se a pessoa veio de um cartão de plano do site (`/cadastro?plano=studio`), o plano já fica guardado (A12).
+
+**Tela 2 — Código** (quando a confirmação estiver ligada): igual à de hoje, com os 6 números em caixinhas separadas e colar automático.
+
+**Tela 3 — Seu negócio (uma tela só)**
+
+```
+CELULAR
+┌─────────────────────────────────┐
+│ IKIZY.                          │
+│ Seu negócio                     │
+│                                 │
+│ Nome do negócio                 │
+│ [ Studio Maria Beauty         ] │
+│ Seu link: studiomaria.ikizy.com │  ← ✓ disponível (confere ao digitar)
+│           Trocar link           │
+│                                 │
+│ O que você faz?                 │
+│ (Unhas)(Cílios)(Sobrancelha)    │  ← toca para marcar, nada pré-marcado
+│ (Cabelo)(Barbearia)(Estética)   │
+│ (Outro)                         │
+│                                 │
+│ Quem atende?                    │
+│ [ Só eu | Eu e equipe ]         │  ← 2 opções, não 3
+│                                 │
+│ [    Criar meu negócio   →    ] │
+└─────────────────────────────────┘
+```
+
+- **Mudar:** nome do negócio, áreas e equipe numa tela só, sem barra de progresso que cresce (A7).
+- **Mudar:** o link (`studiomaria.ikizy.com`) é criado sozinho a partir do nome e conferido enquanto digita ("✓ disponível"); "Trocar link" só para quem quiser (A8, A9).
+- **Mudar:** "Quem atende" com 2 opções (Só eu / Eu e equipe). O número exato não serve para nada no cadastro.
+- **Tirar:** passos de serviços e preços do cadastro (A5, A6).
+- **Novo:** guardar o que já foi digitado no navegador, para não perder ao recarregar (A10).
+
+**O que o sistema faz sozinho ao criar o negócio:**
+- Cria a dona como profissional da agenda, com o nome da tela 1, nos dois casos (só eu ou com equipe) (A1).
+  Se a dona não atende, ela mesma desativa depois em Equipe.
+- Cria um **catálogo inicial curto**: os 3 ou 4 serviços mais comuns de cada área marcada (não 7), com a duração sugerida
+  e **sem preço**. Os preços entram no Primeiro passo 2.
+- Cria o horário padrão **seg a sáb, 9h às 19h**, que a pessoa confirma ou ajusta no Primeiro passo 1.
+- Inicia o teste de 30 dias no plano que combina com a resposta (Só eu → Solo; Eu e equipe → Studio), ou no plano que veio do site (A2).
+- Se alguma parte falhar, mostra o aviso no Primeiros passos ("Não conseguimos criar seus serviços, crie aqui") (A11).
+
+**Plano e pagamento saem do cadastro (A3, A4).** O teste começa sem perguntar nada, como o site promete.
+A escolha de plano e a forma de pagamento aparecem:
+- numa linha discreta no menu (Mais / avatar): "Teste grátis · 21 dias · Ver planos";
+- no aviso amarelo nos últimos 7 dias (já existe);
+- em Assinatura, a qualquer momento.
+
+**Primeiros passos (no topo da Agenda vazia, some quando tudo estiver feito)**
+
+```
+┌─────────────────────────────────┐
+│ Deixe seu negócio pronto   1/4  │
+│ ✓ Conta criada                  │
+│ ○ Confirme seu horário      ›   │  seg–sáb 9h–19h já preenchido
+│ ○ Coloque os preços         ›   │  uma lista curta: serviço · R$ · duração
+│ ○ Publique seu site         ›   │  abre o guia de 2 passos do Meu site
+│ ○ Receba agendamentos       ›   │  liga o agendamento online
+│                    [Depois]     │
+└─────────────────────────────────┘
+```
+
+- Cada item abre uma tela curta e volta para a agenda.
+- "Coloque os preços" mostra só os serviços criados (3 ou 4 por área), com preço e duração editáveis,
+  "+ outro serviço" e "remover". É aqui que a pessoa ajusta, já vendo para que serve.
+- Quem tem equipe ganha um 5º item: "Cadastre sua equipe".
+
+### 9.4 Entrar (login) e recuperar senha
+
+- **Manter:** e-mail e senha, "Esqueci", Google, mensagem que não revela se o e-mail existe.
+- **Mudar:** mesmo visual da Tela 1 (Google grande em cima, rótulos fixos) (A16, A8).
+- **Mudar:** depois de entrar, voltar para a página que a pessoa tentou abrir (ex.: o pedido) (A14).
+- **Mudar:** lembrar o último e-mail usado neste aparelho.
+- **Mudar no celular:** conteúdo começa no alto (não centralizado), fundo de pontinhos só nas bordas, nunca atrás de texto (A15).
+- **Mudar:** e-mails do código e da senha com remetente e texto do IKIZY, em português (A13; depende do SMTP próprio, seção 5b do `CONTEXTO.md`).
+
+### 9.5 Novo fluxo completo
+
+```mermaid
+flowchart TD
+    L[ikizy.com<br/>botão geral ou cartão de plano] -->|/cadastro?plano=...| C[1 Criar conta<br/>nome, e-mail, senha · ou Google]
+    C -->|e-mail, com confirmação ligada| V[2 Código]
+    C -->|Google ou confirmação desligada| N
+    V --> N[3 Seu negócio<br/>nome + link, áreas, só eu / equipe]
+    N --> Auto[(Sistema cria: negócio, dona como profissional,<br/>3-4 serviços por área sem preço, horário 9h-19h,<br/>teste de 30 dias no plano certo)]
+    Auto --> A[Agenda + Primeiros passos]
+    A --> P1[Confirmar horário]
+    A --> P2[Preços dos serviços]
+    A --> P3[Publicar o site]
+    A --> P4[Agendamento online]
+    A -.->|últimos 7 dias do teste| Pay[Assinatura: cartão ou Pix]
+    LG[Entrar] -->|volta para onde ia| A
+```
+
+### 9.6 Ordem de execução do acesso
+
+Entra na **Fase 1** (seção 7):
+1. Nome no cadastro e dona sempre como profissional (A1).
+2. "Seu negócio" em uma tela, link conferido ao digitar, rascunho guardado (A7 a A10).
+3. Catálogo inicial curto sem preço + horário padrão + Primeiros passos com preços (A5, A6, A11).
+4. Tirar o plano do cadastro; teste começa no plano certo; `?plano=` vindo do site (A2, A3, A4, A12).
+5. Visual de entrar/criar conta: Google grande, rótulos fixos, celular sem fundo atrás do texto (A8, A15, A16).
+6. Voltar para a página pedida depois do login (A14).
+7. SMTP próprio + ligar a confirmação de e-mail (A13, G6).

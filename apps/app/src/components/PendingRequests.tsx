@@ -2,12 +2,14 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { format, isToday, isTomorrow, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { Bell, ChevronRight, Globe } from 'lucide-react'
+import { Bell, ChevronDown, ChevronRight, Globe } from 'lucide-react'
 import { useAgenda } from '../data/AgendaProvider'
 import { formatTime } from '../lib/format'
 import { requestLink } from '../lib/routes'
 import type { Appointment } from '../types'
 import { Avatar, Button } from './ui'
+import { ConfirmDialog } from './Modal'
+import { AppointmentMessageDialog } from './MessageDialog'
 
 const plural = (n: number) => (n === 1 ? '1 pedido' : `${n} pedidos`)
 
@@ -18,10 +20,21 @@ function when(a: Appointment) {
   return `${label.charAt(0).toUpperCase()}${label.slice(1)}, ${formatTime(a.start)}`
 }
 
-function RequestRow({ a, onOpen }: { a: Appointment; onOpen: (id: string) => void }) {
+function RequestRow({
+  a,
+  onOpen,
+  onConfirm,
+  onDecline,
+}: {
+  a: Appointment
+  onOpen: (id: string) => void
+  /** com as ações, o pedido é respondido ali mesmo; sem elas, a linha só abre o pedido */
+  onConfirm?: (a: Appointment) => void
+  onDecline?: (a: Appointment) => void
+}) {
   const { professionals } = useAgenda()
   const pro = professionals.find((p) => p.id === a.professionalId)?.name
-  return (
+  const main = (
     <button type="button" className="pendrow" onClick={() => onOpen(a.id)}>
       <Avatar name={a.client} size="sm" soft />
       <span className="pendrow__text">
@@ -31,9 +44,61 @@ function RequestRow({ a, onOpen }: { a: Appointment; onOpen: (id: string) => voi
           {pro && professionals.length > 1 ? ` · ${pro}` : ''}
         </span>
       </span>
-      <ChevronRight size={16} aria-hidden="true" />
+      {!onConfirm && <ChevronRight size={16} aria-hidden="true" />}
     </button>
   )
+  if (!onConfirm || !onDecline) return main
+  return (
+    <div className="pendrow-wrap">
+      {main}
+      <div className="pendrow__actions">
+        <button type="button" className="pendrow__no" onClick={() => onDecline(a)}>
+          Recusar
+        </button>
+        <button type="button" className="pendrow__yes" onClick={() => onConfirm(a)}>
+          Confirmar
+        </button>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * responder pedidos: confirmar é direto; recusar pede confirmação (libera a vaga).
+ * Depois de responder, já abre a mensagem pronta para a cliente saber.
+ */
+function useRespond(notify?: (message: string) => void) {
+  const { update } = useAgenda()
+  const [declining, setDeclining] = useState<Appointment | null>(null)
+  const [messaging, setMessaging] = useState<Appointment | null>(null)
+
+  const answer = async (a: Appointment, status: 'confirmado' | 'cancelado') => {
+    const error = await update(a.id, { status })
+    if (error) return notify?.(error)
+    notify?.(status === 'confirmado' ? `${a.client}: confirmado` : `Pedido de ${a.client} recusado`)
+    if (a.phone.replace(/\D/g, '')) setMessaging({ ...a, status })
+  }
+
+  const dialogs = (
+    <>
+      {declining && (
+        <ConfirmDialog
+          title="Recusar este pedido?"
+          text={`O horário de ${declining.client} (${when(declining).toLowerCase()}) volta a ficar livre. Em seguida você pode avisar a cliente pelo WhatsApp.`}
+          confirmLabel="Recusar pedido"
+          onClose={() => setDeclining(null)}
+          onConfirm={() => {
+            const a = declining
+            setDeclining(null)
+            void answer(a, 'cancelado')
+          }}
+        />
+      )}
+      {messaging && <AppointmentMessageDialog appointment={messaging} onClose={() => setMessaging(null)} />}
+    </>
+  )
+
+  return { confirm: (a: Appointment) => void answer(a, 'confirmado'), decline: setDeclining, dialogs }
 }
 
 /** sininho do topo: contagem de pedidos do site e a lista ao clicar; também põe a contagem no título da aba */
@@ -104,30 +169,47 @@ export function PendingBell() {
   )
 }
 
-/** faixa de destaque no Início e na Agenda: some quando não há pedidos */
-export function PendingBanner({ onOpen }: { onOpen: (id: string) => void }) {
+/**
+ * faixa de pedidos do site na Agenda: confirmar ou recusar ali mesmo.
+ * `collapsed`: no celular começa recolhida numa linha (os pedidos de hoje já aparecem na lista do dia).
+ */
+export function PendingBanner({
+  onOpen,
+  notify,
+  collapsed = false,
+}: {
+  onOpen: (id: string) => void
+  notify?: (message: string) => void
+  collapsed?: boolean
+}) {
   const { pending } = useAgenda()
-  if (!pending?.length) return null
+  const { confirm, decline, dialogs } = useRespond(notify)
+  const [open, setOpen] = useState(!collapsed)
+  if (!pending?.length) return dialogs
   const shown = pending.slice(0, 3)
   return (
-    <section className="pendbanner" aria-label="Pedidos do site para confirmar">
-      <div className="pendbanner__head">
+    <section className={`pendbanner ${open ? '' : 'pendbanner--closed'}`} aria-label="Pedidos do site para confirmar">
+      <button type="button" className="pendbanner__head" aria-expanded={open} onClick={() => setOpen((v) => !v)} disabled={!collapsed}>
         <span className="pendbanner__icon">
           <Globe size={18} aria-hidden="true" />
         </span>
-        <div>
-          <h2 className="pendbanner__title">
-            {plural(pending.length)} do site para confirmar
-          </h2>
-          <p className="pendbanner__sub">A cliente espera sua resposta. Abra o pedido para confirmar ou recusar.</p>
-        </div>
-      </div>
-      <div className="pendbanner__list">
-        {shown.map((a) => (
-          <RequestRow key={a.id} a={a} onOpen={onOpen} />
-        ))}
-      </div>
-      {pending.length > shown.length && <p className="pendbanner__more">e mais {plural(pending.length - shown.length)} no sininho lá em cima</p>}
+        <span className="pendbanner__headtext">
+          <span className="pendbanner__title">{plural(pending.length)} do site para confirmar</span>
+          {open && <span className="pendbanner__sub">A cliente espera sua resposta.</span>}
+        </span>
+        {collapsed && <ChevronDown size={18} aria-hidden="true" className="pendbanner__chev" />}
+      </button>
+      {open && (
+        <>
+          <div className="pendbanner__list">
+            {shown.map((a) => (
+              <RequestRow key={a.id} a={a} onOpen={onOpen} onConfirm={confirm} onDecline={decline} />
+            ))}
+          </div>
+          {pending.length > shown.length && <p className="pendbanner__more">e mais {plural(pending.length - shown.length)} no sininho lá em cima</p>}
+        </>
+      )}
+      {dialogs}
     </section>
   )
 }

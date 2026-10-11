@@ -1,15 +1,13 @@
 import { useEffect, useId, useRef, useState, type ChangeEvent, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
+import { Link } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, Check, ChevronDown, ExternalLink, ImagePlus, Maximize2, Plus, Rocket, Trash2, Undo2, X } from 'lucide-react'
 import {
   PALETTES,
   CATEGORIES,
-  computeMath,
   newId,
   useStudio,
   type PaletteId,
-  type Category,
-  type Product,
   type Service,
   type SiteConfig,
   photoUrl,
@@ -17,6 +15,8 @@ import {
   type ClientPlan,
 } from '../data/catalog'
 import { formatBRL } from '../lib/format'
+import { formatDuration } from '../lib/agendaTime'
+import { dash } from '../lib/routes'
 import { resizeToDataUrl } from '../lib/imageResize'
 import { FONTS, type FontId } from '../lib/siteTheme'
 import { isReservedSlug, SITE_DOMAIN, siteHost } from '../lib/slug'
@@ -26,17 +26,15 @@ import OnlineBookingChecklist from '../components/OnlineBookingChecklist'
 import PhotoPick from '../components/PhotoPick'
 import { Button, Card, Em } from '../components/ui'
 
-type Tab = 'pagina' | 'servicos' | 'vitrine' | 'produtos' | 'previa'
+type Tab = 'pagina' | 'servicos' | 'vitrine' | 'previa'
 
 const TABS: { id: Tab; label: string; narrowOnly?: boolean }[] = [
   { id: 'pagina', label: 'Página' },
   { id: 'servicos', label: 'Serviços e planos' },
   { id: 'vitrine', label: 'Produtos à venda' },
-  { id: 'produtos', label: 'Produtos e custos' },
   { id: 'previa', label: 'Prévia', narrowOnly: true },
 ]
 
-const short = (v: number) => formatBRL(v).replace(',00', '')
 const num = (v: string) => Math.max(0, Number(v.replace(',', '.')) || 0)
 
 function Field({ label, hint, children }: { label: string; hint?: string; children: (id: string) => ReactNode }) {
@@ -161,26 +159,13 @@ export default function MeuSite() {
     bodyRef.current?.scrollTo({ top: 0 })
     window.scrollTo({ top: 0 })
   }
-  const { site, services, products, showcase, plans } = draft
+  const { site, services, showcase, plans } = draft
   const slugReserved = isReservedSlug(site.slug)
 
   const setSite = <K extends keyof SiteConfig>(key: K, value: SiteConfig[K]) =>
     setDraft((d) => ({ ...d, site: { ...d.site, [key]: value } }))
   const patchService = (id: string, patch: Partial<Service>) =>
     setDraft((d) => ({ ...d, services: d.services.map((s) => (s.id === id ? { ...s, ...patch } : s)) }))
-  const patchProduct = (id: string, patch: Partial<Product>) =>
-    setDraft((d) => ({ ...d, products: d.products.map((p) => (p.id === id ? { ...p, ...patch } : p)) }))
-  const addService = () => {
-    openGroup('Unhas')
-    setDraft((d) => ({
-      ...d,
-      services: [
-        ...d.services,
-        { id: newId('s'), name: '', category: 'Unhas', price: 0, duration: 60, monthlyVolume: 10, productId: null, visible: true, photo: '', photoId: null },
-      ],
-    }))
-  }
-  const removeService = (id: string) => setDraft((d) => ({ ...d, services: d.services.filter((s) => s.id !== id) }))
   const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set())
   const toggleGroup = (key: string) =>
     setOpenGroups((g) => {
@@ -208,14 +193,6 @@ export default function MeuSite() {
       showcase: [...d.showcase, { id: newId('v'), name: '', description: '', price: 0, visible: true, photo: '', photoId: null }],
     }))
   const removeShowcase = (id: string) => setDraft((d) => ({ ...d, showcase: d.showcase.filter((x) => x.id !== id) }))
-  const addProduct = () =>
-    setDraft((d) => ({ ...d, products: [...d.products, { id: newId('p'), name: '', monthlySpend: 0 }] }))
-  const removeProduct = (id: string) =>
-    setDraft((d) => ({
-      ...d,
-      products: d.products.filter((p) => p.id !== id),
-      services: d.services.map((s) => (s.productId === id ? { ...s, productId: null } : s)),
-    }))
 
   const onImage = async (e: ChangeEvent<HTMLInputElement>, kind: 'logo' | 'cover') => {
     const file = e.target.files?.[0]
@@ -243,9 +220,6 @@ export default function MeuSite() {
   }
 
   // resumo financeiro
-  const totalSpend = products.reduce((s, p) => s + p.monthlySpend, 0)
-  const revenue = services.reduce((s, sv) => s + sv.price * sv.monthlyVolume, 0)
-  const avgMargin = revenue > 0 ? Math.round(((revenue - totalSpend) / revenue) * 100) : 0
 
   const fieldsIdentity = (
     <>
@@ -429,8 +403,8 @@ export default function MeuSite() {
   const servicesEditor = (
     <div className="catalog">
       <p className="catalog__intro">
-        Defina o valor, o produto usado e quantos atendimentos faz por mês. O custo de produto e a sobra de cada serviço são
-        calculados sozinhos (sem contar comissão).
+        Aqui você escolhe a foto e quais serviços aparecem no site. Nome, preço e duração ficam em{' '}
+        <Link to={dash('/negocio#servicos')}>Meu negócio</Link>, valendo para a agenda e para o site.
       </p>
       {CATEGORIES.filter((cat) => services.some((x) => x.category === cat)).map((cat) => {
         const list = services.filter((x) => x.category === cat)
@@ -443,9 +417,7 @@ export default function MeuSite() {
             onToggle={() => toggleGroup(cat)}
           >
       <ul className="rows">
-        {list.map((s) => {
-          const m = computeMath(s, services, products)
-          return (
+        {list.map((s) => (
             <li key={s.id} className={`row ${s.visible ? '' : 'is-hidden'}`}>
               <div className="row__top">
                 <PhotoPick
@@ -454,73 +426,28 @@ export default function MeuSite() {
                   onPick={(photo) => patchService(s.id, { photo })}
                   onClear={() => patchService(s.id, { photo: '', photoId: null })}
                 />
-                <span className="input row__name">
-                  <input aria-label="Nome do serviço" placeholder="Nome do serviço" value={s.name} maxLength={50} onChange={(e) => patchService(s.id, { name: e.target.value })} />
+                <span className="row__label">
+                  <strong>{s.name}</strong>
+                  <small>
+                    {formatDuration(s.duration)} · {s.price > 0 ? formatBRL(s.price) : 'sem preço (não aparece no agendamento online)'}
+                  </small>
                 </span>
                 <Switch checked={s.visible} onChange={(v) => patchService(s.id, { visible: v })} label="No site" />
-                <button type="button" className="chevbtn" aria-label={`Remover ${s.name || 'serviço'}`} onClick={() => removeService(s.id)}>
-                  <Trash2 size={15} />
-                </button>
               </div>
-              <div className="row__grid">
-                <label className="mini-field">
-                  <span>Categoria</span>
-                  <span className="input input--select">
-                    <select value={s.category} onChange={(e) => patchService(s.id, { category: e.target.value as Category })}>
-                      {CATEGORIES.map((c) => (
-                        <option key={c}>{c}</option>
-                      ))}
-                    </select>
-                  </span>
-                </label>
-                <label className="mini-field">
-                  <span>Valor</span>
-                  <Money label="Valor" value={s.price} onChange={(v) => patchService(s.id, { price: v })} />
-                </label>
-                <label className="mini-field">
-                  <span>Duração (min)</span>
-                  <span className="input">
-                    <input type="number" inputMode="numeric" min={5} step={5} value={s.duration} onChange={(e) => patchService(s.id, { duration: Math.round(num(e.target.value)) })} />
-                  </span>
-                </label>
-                <label className="mini-field">
-                  <span>Atend./mês</span>
-                  <span className="input">
-                    <input type="number" inputMode="numeric" min={0} value={s.monthlyVolume} onChange={(e) => patchService(s.id, { monthlyVolume: Math.round(num(e.target.value)) })} />
-                  </span>
-                </label>
-                <label className="mini-field mini-field--wide">
-                  <span>Produto usado</span>
-                  <span className="input input--select">
-                    <select value={s.productId ?? ''} onChange={(e) => patchService(s.id, { productId: e.target.value || null })}>
-                      <option value="">Nenhum</option>
-                      {products
-                        .filter((p) => p.name.trim())
-                        .map((p) => (
-                          <option key={p.id} value={p.id}>
-                            {p.name}
-                          </option>
-                        ))}
-                    </select>
-                  </span>
-                </label>
-              </div>
-              <p className="row__math">
-                <span>Custo de produto <strong>{formatBRL(m.cost)}</strong></span>
-                <span>Sobra <strong>{formatBRL(m.margin)}</strong></span>
-                <span className={`margin ${m.marginPct < 60 ? 'margin--low' : ''}`}>{m.marginPct}% de margem</span>
-              </p>
             </li>
-          )
-        })}
+        ))}
       </ul>
           </Group>
         )
       })}
-      {services.length === 0 && <p className="catalog__empty">Nenhum serviço ainda.</p>}
-      <Button variant="ghost" onClick={addService} className="catalog__add">
-        <Plus size={16} aria-hidden="true" /> Novo serviço
-      </Button>
+      {services.length === 0 && (
+        <p className="catalog__empty">
+          Nenhum serviço ainda. Cadastre em <Link to={dash('/negocio#servicos')}>Meu negócio</Link>.
+        </p>
+      )}
+      <Link to={dash('/negocio#servicos')} className="btn btn--ghost catalog__add">
+        <Plus size={16} aria-hidden="true" /> Cadastrar ou editar serviços
+      </Link>
 
       <Group
         title="Planos por assinatura"
@@ -1020,66 +947,6 @@ export default function MeuSite() {
               </div>
             )}
 
-            {active === 'produtos' && (
-              <div className="catalog">
-                <p className="catalog__intro">
-                  Aqui ficam seus gastos com material, só para calcular a margem de cada serviço. Isso não aparece no site. Para vender produtos, use a etapa{' '}
-                  <strong>Produtos à venda</strong>.
-                </p>
-                <div className="sumrow">
-                  <div>
-                    <p className="card__sub">Gasto com produtos / mês</p>
-                    <p className="sumrow__value">{short(totalSpend)}</p>
-                  </div>
-                  <div>
-                    <p className="card__sub">Faturamento estimado / mês</p>
-                    <p className="sumrow__value">{short(revenue)}</p>
-                  </div>
-                  <div>
-                    <p className="card__sub">Margem média</p>
-                    <p className="sumrow__value">{avgMargin}%</p>
-                  </div>
-                </div>
-                <ul className="rows">
-                  {products.map((p) => {
-                    const users = services.filter((s) => s.productId === p.id)
-                    const volume = users.reduce((sum, s) => sum + s.monthlyVolume, 0)
-                    const share = totalSpend > 0 ? Math.round((p.monthlySpend / totalSpend) * 100) : 0
-                    return (
-                      <li key={p.id} className="row">
-                        <div className="row__top">
-                          <span className="input row__name">
-                            <input aria-label="Nome do produto" placeholder="Nome do produto" value={p.name} maxLength={50} onChange={(e) => patchProduct(p.id, { name: e.target.value })} />
-                          </span>
-                          <label className="mini-field mini-field--inline">
-                            <span className="sr-only">Gasto médio por mês</span>
-                            <Money label="Gasto médio por mês" value={p.monthlySpend} onChange={(v) => patchProduct(p.id, { monthlySpend: v })} />
-                          </label>
-                          <button type="button" className="chevbtn" aria-label={`Remover ${p.name || 'produto'}`} onClick={() => removeProduct(p.id)}>
-                            <Trash2 size={15} />
-                          </button>
-                        </div>
-                        <div className="meter" role="img" aria-label={`${share}% do gasto total`}>
-                          <span style={{ width: `${share}%` }} />
-                        </div>
-                        <p className="row__math">
-                          <span>{share}% do gasto</span>
-                          <span>
-                            Usado em <strong>{users.length}</strong> {users.length === 1 ? 'serviço' : 'serviços'}
-                          </span>
-                          <span>
-                            <strong>{volume > 0 ? formatBRL(p.monthlySpend / volume) : '—'}</strong> por atendimento
-                          </span>
-                        </p>
-                      </li>
-                    )
-                  })}
-                </ul>
-                <Button variant="ghost" onClick={addProduct} className="catalog__add">
-                  <Plus size={16} aria-hidden="true" /> Novo produto
-                </Button>
-              </div>
-            )}
 
             {active === 'previa' && (
               <SiteFrame studio={draft} device="mobile" height={600} />

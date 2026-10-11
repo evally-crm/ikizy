@@ -1,26 +1,19 @@
-import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
-import { Navigate, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { ChevronDown, Ellipsis, LogOut, Search, X } from 'lucide-react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { CalendarPlus, Ellipsis, LogOut, Plus, Search, UserRound, X } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
 import { SubscriptionProvider, useSubscription } from '../../billing/SubscriptionProvider'
 import { AgendaProvider } from '../../data/AgendaProvider'
 import BillingBanner from '../BillingBanner'
 import { PendingBell, PendingToast } from '../PendingRequests'
-import { navItems } from './nav'
-import { describeSubscription } from '../../lib/plans'
-import { dash, ROUTES } from '../../lib/routes'
+import { isActive, moreItems, navItems, type NavItem } from './nav'
+import { daysLeft, describeSubscription, isCardTrial, periodEnd } from '../../lib/plans'
+import { agenda, dash, ROUTES } from '../../lib/routes'
 import { Avatar, Button } from '../ui'
-
-// topo (desktop): as seções principais; o resto vai em 'Mais'
-const topItems = navItems.filter((i) => i.core)
-const topMore = navItems.filter((i) => !i.core)
-// barra inferior (celular)
-const barItems = navItems.filter((i) => i.primary)
-const barMore = navItems.filter((i) => !i.primary)
 
 function Logo() {
   return (
-    <NavLink to={ROUTES.dashboard} className="logo" aria-label="IKIZY — início">
+    <NavLink to={ROUTES.dashboard} className="logo" aria-label="IKIZY — agenda">
       IKIZY<span className="logo__dot">.</span>
     </NavLink>
   )
@@ -37,110 +30,175 @@ function useCloseOn(open: boolean, close: () => void) {
   }, [open, close])
 }
 
+/** itens do "Mais" que a pessoa pode ver (assinatura só para a dona) */
+function useMoreItems() {
+  const { salon } = useAuth()
+  const isOwner = !salon || salon.role === 'owner'
+  return moreItems.filter((i) => !i.ownerOnly || isOwner)
+}
+
+/** linha discreta do teste grátis, no menu do avatar e no "Mais" */
+function TrialLine() {
+  const { sub } = useSubscription()
+  if (!sub || sub.status !== 'trialing') return null
+  const days = daysLeft(isCardTrial(sub) ? periodEnd(sub) : sub.accessUntil)
+  if (days <= 0) return null
+  return (
+    <NavLink to={dash('/assinatura')} className="trialline">
+      Teste grátis · {days === 1 ? 'último dia' : `${days} dias`} <span>Ver planos</span>
+    </NavLink>
+  )
+}
+
 /** navegação em pílula (desktop) */
 function PillNav() {
+  return (
+    <nav className="pillnav" aria-label="Navegação principal">
+      {navItems.map(({ to, label }) => (
+        <NavLink key={to} to={to} end={to === ROUTES.dashboard} className="pillnav__link">
+          {label}
+        </NavLink>
+      ))}
+    </nav>
+  )
+}
+
+/** avatar do topo (desktop): abre o menu da conta */
+function UserMenu({ onAccount }: { onAccount: () => void }) {
+  const { salon, displayName, signOut, status } = useAuth()
+  const items = useMoreItems()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
-  const { pathname } = useLocation()
   const close = useRef(() => setOpen(false)).current
   useCloseOn(open, close)
 
   useEffect(() => {
     if (!open) return
-    const onClick = (e: MouseEvent) => !ref.current?.contains(e.target as Node) && setOpen(false)
-    document.addEventListener('mousedown', onClick)
-    return () => document.removeEventListener('mousedown', onClick)
+    const away = (e: MouseEvent) => !ref.current?.contains(e.target as Node) && setOpen(false)
+    document.addEventListener('mousedown', away)
+    return () => document.removeEventListener('mousedown', away)
   }, [open])
 
-  const moreActive = topMore.some((i) => pathname.startsWith(i.to))
-
   return (
-    <nav className="pillnav" aria-label="Navegação principal">
-      {topItems.map(({ to, label }) => (
-        <NavLink key={to} to={to} end={to === ROUTES.dashboard} className="pillnav__link">
-          {label}
-        </NavLink>
-      ))}
-      {topMore.length > 0 && (
-      <div className="pillnav__more" ref={ref}>
-        <button
-          type="button"
-          className={`pillnav__link ${moreActive ? 'active' : ''}`}
-          aria-expanded={open}
-          aria-haspopup="menu"
-          onClick={() => setOpen((o) => !o)}
-        >
-          Mais <ChevronDown size={14} aria-hidden="true" />
-        </button>
-        {open && (
-          <div className="popover" role="menu">
-            {topMore.map(({ to, label, icon: Icon }) => (
-              <NavLink key={to} to={to} className="popover__item" role="menuitem">
-                <Icon size={18} aria-hidden="true" />
-                {label}
-              </NavLink>
-            ))}
-          </div>
-        )}
-      </div>
+    <div className="usermenu" ref={ref}>
+      <button type="button" className="user" aria-label="Menu da conta" aria-expanded={open} aria-haspopup="menu" onClick={() => setOpen((o) => !o)}>
+        <Avatar name={displayName} />
+        <div className="user__text">
+          <p className="user__name">{displayName}</p>
+          <p className="user__role">{salon?.name ?? 'Studio Maria Beauty'}</p>
+        </div>
+      </button>
+      {open && (
+        <div className="popover popover--list" role="menu">
+          <TrialLine />
+          {items.map(({ to, label, icon: Icon }) => (
+            <NavLink key={to} to={to} className="popover__item" role="menuitem">
+              <Icon size={18} aria-hidden="true" />
+              {label}
+            </NavLink>
+          ))}
+          <button
+            type="button"
+            className="popover__item"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false)
+              onAccount()
+            }}
+          >
+            <UserRound size={18} aria-hidden="true" />
+            Minha conta
+          </button>
+          {status !== 'demo' && (
+            <button type="button" className="popover__item popover__item--muted" role="menuitem" onClick={() => void signOut()}>
+              <LogOut size={18} aria-hidden="true" />
+              Sair
+            </button>
+          )}
+        </div>
       )}
-    </nav>
+    </div>
   )
 }
 
-/** barra flutuante (mobile/tablet) */
-function BottomNav() {
+/** barra flutuante (celular): Agenda, Clientes, [+], Caixa, Mais */
+function BottomNav({ onAccount }: { onAccount: () => void }) {
+  const { signOut, status } = useAuth()
+  const items = useMoreItems()
+  const navigate = useNavigate()
+  const { pathname } = useLocation()
   const [open, setOpen] = useState(false)
   const close = useRef(() => setOpen(false)).current
   useCloseOn(open, close)
 
+  const [agendaItem, clientsItem, moneyItem, ...rest] = navItems
+  const sheet = [...rest, ...items]
+  const moreActive = sheet.some((i) => isActive(i.to, pathname))
+
+  const link = ({ to, label, short, icon: Icon }: NavItem) => (
+    <NavLink key={to} to={to} end={to === ROUTES.dashboard} className="bottomnav__link">
+      <Icon size={20} aria-hidden="true" />
+      <span>{short ?? label}</span>
+    </NavLink>
+  )
+
   return (
     <>
-      <nav className="bottomnav" aria-label="Navegação principal" style={{ gridTemplateColumns: `repeat(${barItems.length + (barMore.length > 0 ? 1 : 0)}, 1fr)` }}>
-        {barItems.map(({ to, label, icon: Icon }) => (
-          <NavLink key={to} to={to} end={to === ROUTES.dashboard} className="bottomnav__link" aria-label={label} title={label}>
-            <Icon size={20} aria-hidden="true" />
-          </NavLink>
-        ))}
-        {barMore.length > 0 && (
+      <nav className="bottomnav" aria-label="Navegação principal">
+        {link(agendaItem)}
+        {link(clientsItem)}
+        <button type="button" className="bottomnav__add" aria-label="Novo agendamento" onClick={() => navigate(agenda('nova=1'))}>
+          <Plus size={24} aria-hidden="true" />
+        </button>
+        {link(moneyItem)}
         <button
           type="button"
-          className="bottomnav__link"
-          aria-label="Mais seções"
+          className={`bottomnav__link ${moreActive ? 'active' : ''}`}
           aria-expanded={open}
           aria-haspopup="dialog"
           onClick={() => setOpen(true)}
         >
           <Ellipsis size={20} aria-hidden="true" />
+          <span>Mais</span>
         </button>
-        )}
       </nav>
 
       {open && (
         <div className="overlay" onClick={close}>
-          <div
-            className="dialog"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Mais seções"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="dialog" role="dialog" aria-modal="true" aria-label="Mais" onClick={(e) => e.stopPropagation()}>
             <div className="dialog__head">
               <h2>
-                Mais <span className="em">seções</span>
+                Mais <span className="em">opções</span>
               </h2>
               <Button variant="ghost" size="sm" icon aria-label="Fechar" onClick={close}>
                 <X size={18} />
               </Button>
             </div>
+            <TrialLine />
             <div className="more-grid">
-              {barMore.map(({ to, label, icon: Icon }) => (
+              {sheet.map(({ to, label, icon: Icon }) => (
                 <NavLink key={to} to={to} className="more-grid__item">
                   <Icon size={20} aria-hidden="true" />
                   {label}
                 </NavLink>
               ))}
+              <button
+                type="button"
+                className="more-grid__item"
+                onClick={() => {
+                  close()
+                  onAccount()
+                }}
+              >
+                <UserRound size={20} aria-hidden="true" />
+                Minha conta
+              </button>
             </div>
+            {status !== 'demo' && (
+              <button type="button" className="dialog__signout" onClick={() => void signOut()}>
+                <LogOut size={16} aria-hidden="true" /> Sair da conta
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -279,17 +337,8 @@ function ProfileDialog({ onClose }: { onClose: () => void }) {
   )
 }
 
-/** a dona que ainda não passou pela escolha de plano do cadastro volta para ela antes de usar o sistema */
-function RequirePlan({ children }: { children: ReactNode }) {
-  const { salon } = useAuth()
-  const { sub, loading } = useSubscription()
-  if (loading) return null
-  if (sub && !sub.planChosen && salon?.role === 'owner') return <Navigate to={ROUTES.choosePlan} replace />
-  return <>{children}</>
-}
-
 export default function AppShell() {
-  const { salon, displayName } = useAuth()
+  const navigate = useNavigate()
   const [editing, setEditing] = useState(false)
   const closeEdit = useRef(() => setEditing(false)).current
 
@@ -307,23 +356,18 @@ export default function AppShell() {
               <input type="search" placeholder="Buscar cliente ou serviço" aria-label="Buscar" />
             </label>
             <PendingBell />
-            <button type="button" className="user" aria-label="Editar cadastro" title="Editar cadastro" onClick={() => setEditing(true)}>
-              <Avatar name={displayName} />
-              <div className="user__text">
-                <p className="user__name">{displayName}</p>
-                <p className="user__role">{salon?.name ?? 'Studio Maria Beauty'}</p>
-              </div>
-            </button>
+            <Button className="topbar__add" onClick={() => navigate(agenda('nova=1'))}>
+              <CalendarPlus size={16} aria-hidden="true" /> Agendar
+            </Button>
+            <UserMenu onAccount={() => setEditing(true)} />
           </div>
         </div>
       </header>
       <main className="content">
-        <RequirePlan>
-          <BillingBanner />
-          <Outlet />
-        </RequirePlan>
+        <BillingBanner />
+        <Outlet />
       </main>
-      <BottomNav />
+      <BottomNav onAccount={() => setEditing(true)} />
       <PendingToast />
       {editing && <ProfileDialog onClose={closeEdit} />}
     </div>

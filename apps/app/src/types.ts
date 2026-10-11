@@ -33,4 +33,6 @@ export interface Appointment {
   duration: number
   price: number
   status: AppointmentStatus
+  /** como a cliente pagou (informado ao concluir) */
+  paymentMethod?: PaymentMethod | null
 }

@@ -256,15 +256,83 @@
 .bottomnav__link {
   display: grid;
   place-items: center;
+  align-content: center;
+  gap: 2px;
   border: 0;
   border-radius: var(--radius-pill);
   background: transparent;
   color: var(--ink-700);
+  font: inherit;
+  font-size: 10.5px;
+  font-weight: 500;
+  line-height: 1;
   transition: background-color 0.15s, color 0.15s;
 }
 .bottomnav__link.active {
   background: var(--brand-900);
   color: var(--white);
+}
+/* novo agendamento: a ação mais repetida do dia, no meio da barra */
+.bottomnav__add {
+  display: grid;
+  place-items: center;
+  justify-self: center;
+  width: 48px;
+  height: 48px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--brand-500);
+  color: var(--white);
+  box-shadow: 0 8px 18px -8px rgba(191, 12, 34, 0.7);
+  cursor: pointer;
+}
+.bottomnav__add:active {
+  transform: scale(0.96);
+}
+
+/* teste grátis: uma linha discreta no menu, em vez do cartão grande no topo da tela */
+.trialline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  background: var(--brand-tint);
+  color: var(--brand-700);
+  font-size: 13px;
+  font-weight: 500;
+}
+.trialline span {
+  text-decoration: underline;
+}
+
+/* menu do avatar (computador) */
+.usermenu {
+  position: relative;
+}
+.popover--list {
+  grid-template-columns: 1fr;
+  width: 260px;
+}
+.popover--list .trialline {
+  margin-bottom: 4px;
+}
+button.popover__item {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.popover__item--muted {
+  color: var(--ink-500);
+}
+.topbar__add {
+  display: none;
 }
 
 .more-grid {
@@ -282,7 +350,11 @@
   border-radius: var(--radius-md);
   background: var(--bg);
   color: var(--ink-900);
+  border: 0;
+  font: inherit;
   font-weight: 500;
+  text-align: left;
+  cursor: pointer;
 }
 .more-grid__item.active {
   background: var(--brand-900);
@@ -335,6 +407,9 @@
   }
   .bottomnav {
     display: none;
+  }
+  .topbar__add {
+    display: inline-flex;
   }
   .content {
     padding-bottom: var(--content-pb);

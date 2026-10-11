@@ -27,7 +27,7 @@ export const PLANS: Record<PlanId, PlanInfo> = {
     name: 'Solo',
     cents: 990,
     audience: 'Para quem atende sozinha',
-    features: ['Agenda e clientes', 'Financeiro básico', 'Site do negócio'],
+    features: ['Agenda e clientes', 'Caixa e fechamento do mês', 'Site com agendamento online'],
     trialDays: TRIAL_DAYS,
   },
   studio: {
@@ -35,7 +35,7 @@ export const PLANS: Record<PlanId, PlanInfo> = {
     name: 'Studio',
     cents: 2990,
     audience: 'Equipe pequena',
-    features: ['Tudo do Solo', 'Comissões por profissional', 'Fechamento mensal em recibo', 'Relatórios'],
+    features: ['Tudo do Solo', 'Agenda com várias profissionais', 'Comissões por profissional'],
     trialDays: TRIAL_DAYS,
   },
   salao: {
@@ -43,12 +43,15 @@ export const PLANS: Record<PlanId, PlanInfo> = {
     name: 'Salão',
     cents: 5990,
     audience: 'Equipe maior',
-    features: ['Tudo do Studio', 'Mais profissionais e permissões', 'Atendimento prioritário'],
+    features: ['Tudo do Studio', 'Para equipes maiores'],
     trialDays: TRIAL_DAYS,
   },
 }
 
 export const PLAN_IDS = Object.keys(PLANS) as PlanId[]
+
+/** plano escolhido num cartão do site (app.ikizy.com/cadastro?plano=studio): vale para o teste que começa ao criar o negócio */
+export const CHOSEN_PLAN_KEY = 'ikizy:plano-escolhido'
 export const isPlanId = (v: unknown): v is PlanId => typeof v === 'string' && v in PLANS
 
 /** quantos meses a pessoa pode pagar adiantado no Pix (o Pix não renova sozinho nas contas Stripe do Brasil) */

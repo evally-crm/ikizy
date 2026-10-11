@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { isNeonConfigured, neon, type NeonSession as Session } from '../lib/neon'
 import { dash, ROUTES } from '../lib/routes'
-import type { SalonSetup } from '../lib/segments'
+import { STARTER_HOURS, type SalonSetup } from '../lib/segments'
 
 export type MemberRole = 'owner' | 'manager' | 'reception' | 'professional'
 
@@ -22,7 +22,7 @@ interface AuthState {
   /** `unverified`: senha certa, mas o e-mail ainda não foi confirmado (o Neon Auth já mandou um código) */
   signIn: (email: string, password: string) => Promise<{ error: string | null; unverified: boolean }>
   /** `needsConfirmation`: conta criada, falta confirmar o e-mail com o código que chegou */
-  signUp: (email: string, password: string) => Promise<{ error: string | null; needsConfirmation: boolean }>
+  signUp: (email: string, password: string, name: string) => Promise<{ error: string | null; needsConfirmation: boolean }>
   /** confere o código de 6 dígitos do e-mail; com o código certo a sessão já abre */
   verifyEmailCode: (email: string, code: string) => Promise<{ error: string | null; signedIn: boolean }>
   /** manda um novo código de confirmação para o e-mail */
@@ -32,9 +32,9 @@ interface AuthState {
   /** token vem do link do e-mail (?token=...); o Neon Auth não abre sessão no link de recuperação */
   updatePassword: (password: string, token: string) => Promise<string | null>
   /** abre o login do Google; ao voltar, a sessão é restaurada e o dashboard decide entre salão ou onboarding */
-  signInWithGoogle: () => Promise<string | null>
+  signInWithGoogle: (next?: string) => Promise<string | null>
   signOut: () => Promise<void>
-  /** cria o negócio e, se houver `setup`, já cadastra serviços e a profissional sugeridos pelo questionário */
+  /** cria o negócio e já monta o começo: a dona como profissional, serviços sem preço, horário padrão e o plano do teste */
   createSalon: (name: string, slug: string, setup?: SalonSetup) => Promise<string | null>
   /** nome de exibição de quem está logada (cadastro > e-mail > padrão) */
   displayName: string
@@ -77,10 +77,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // sessão
   useEffect(() => {
     if (!neon) return
-    neon.auth.getSession().then(({ data }) => {
-      setSession(data.session)
-      setSessionReady(true)
-    })
+    neon.auth
+      .getSession()
+      .then(({ data }) => setSession(data.session))
+      // sem conexão com o login: segue como "sem sessão" (vai para o login) em vez de ficar carregando para sempre
+      .catch(() => setSession(null))
+      .finally(() => setSessionReady(true))
     // o callback só atualiza estado: chamar o cliente aqui dentro pode travar.
     // ele só dispara por mudanças vindas de OUTRAS abas (evento storage); nesta aba, entrar/sair atualiza a sessão direto
     const { data } = neon.auth.onAuthStateChange((_event, next) => setSession(next))
@@ -163,12 +165,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(data.session)
         return { error: null, unverified: false }
       },
-      async signUp(email, password) {
+      async signUp(email, password, name) {
         if (!neon) return { error: 'Neon não configurado.', needsConfirmation: false }
         const { data, error } = await neon.auth.signUp({
           email: email.trim(),
           password,
-          options: { emailRedirectTo: `${window.location.origin}${dash()}` },
+          // o adaptador grava `displayName` como o nome da conta
+          options: { emailRedirectTo: `${window.location.origin}${dash()}`, data: { displayName: name.trim() } },
         })
         if (error) {
           // com a confirmação de e-mail ligada, o Neon Auth cria a conta sem abrir sessão e o adaptador
@@ -222,11 +225,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const error = await authCall(() => neon!.auth.getBetterAuthInstance().resetPassword({ newPassword: password, token }))
         return error ? 'Não foi possível atualizar a senha. Peça um novo link e tente de novo.' : null
       },
-      async signInWithGoogle() {
+      async signInWithGoogle(next) {
         if (!neon) return 'Neon não configurado.'
+        // só caminhos do próprio sistema (nunca um endereço de fora vindo da URL)
+        const back = next && next.startsWith('/dashboard') ? next : dash()
         const { error } = await neon.auth.signInWithOAuth({
           provider: 'google',
-          options: { redirectTo: `${window.location.origin}${dash()}` },
+          options: { redirectTo: `${window.location.origin}${back}` },
         })
         return error ? 'Não foi possível entrar com o Google agora. Tente novamente.' : null
       },
@@ -253,20 +258,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (error.code === '23514') return 'Use de 3 a 40 letras minúsculas, números e hífen.'
           return 'Não foi possível criar o salão agora. Tente novamente.'
         }
-        // monta o que o questionário coletou; se falhar, o negócio já existe e a pessoa completa no painel
+        // monta o começo do negócio; se algo falhar, o negócio já existe e os primeiros passos mostram o que falta
         if (setup && typeof salonId === 'string') {
+          // conta sem nome (cadastro antigo): o nome digitado aqui vira o nome da conta
+          if (!sessionName && setup.professionalName.length >= 2) {
+            await authCall(() => neon!.auth.getBetterAuthInstance().updateUser({ name: setup.professionalName }))
+            setProfile((p) => ({ ...p, userName: setup.professionalName }))
+          }
           if (setup.services.length > 0) {
             await neon.from('services').insert(setup.services.map((s) => ({ ...s, salon_id: salonId })))
           }
-          if (setup.professionalName) {
-            await neon.from('professionals').insert({ salon_id: salonId, user_id: userId, name: setup.professionalName })
+          const pro = await neon
+            .from('professionals')
+            .insert({ salon_id: salonId, user_id: userId, name: setup.professionalName })
+            .select('id')
+            .single()
+          if (!pro.error && pro.data) {
+            await neon.rpc('set_working_hours', { p_professional: pro.data.id, p_intervals: STARTER_HOURS })
           }
+          // o teste começa sem cartão, no plano que combina com a resposta da equipe
+          await neon.rpc('choose_trial_plan', { p_plan: setup.plan })
         }
         await loadSalon(userId)
         return null
       },
     }),
-    [status, session, salon, shownSalon, displayName, userId, loadSalon],
+    [status, session, salon, shownSalon, displayName, userId, loadSalon, sessionName],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
