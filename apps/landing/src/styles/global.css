@@ -420,14 +420,14 @@ em {
   background: var(--wine);
 }
 
-/* ---------- hero (cartão claro com esfera de pontos) ---------- */
+/* ---------- hero (cartão claro com a boca de pontos) ---------- */
 .hero2 {
   position: relative;
   display: flex;
   flex-direction: column;
   min-height: calc(100vh - 2 * var(--frame));
   min-height: calc(100svh - 2 * var(--frame));
-  padding: var(--header-h) clamp(20px, 3vw, 44px) 0;
+  padding: var(--header-h) clamp(20px, 3vw, 44px) clamp(20px, 3vw, 36px);
   border-radius: var(--radius-lg);
   background: var(--gray-100);
   color: var(--ink-900);
@@ -438,7 +438,6 @@ em {
   display: grid;
   flex: 1;
   gap: 8px;
-  align-items: center;
 }
 @media (min-width: 900px) {
   .hero2__grid {
@@ -452,21 +451,38 @@ em {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: clamp(12px, 2vh, 20px);
-  padding-bottom: 24px;
+  gap: 20px;
 }
-.display {
+.hero2__body {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  gap: 20px;
+}
+/* etiquetas no canto de cima, no estilo das legendas da boca */
+.hero2__tags {
+  display: flex;
+  flex-wrap: wrap;
   gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.hero2__tags li {
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: var(--white);
+  font-size: 11px;
+  color: var(--ink-700);
+}
+.display {
   color: var(--ink-900);
   font-weight: 300;
 }
 .display__main {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
-  gap: 0.22em;
+  column-gap: 0.22em;
   font-size: clamp(50px, min(7vw, 13vh), 130px);
   line-height: 0.95;
   letter-spacing: -0.06em;
@@ -476,10 +492,9 @@ em {
   color: var(--ink-900);
   letter-spacing: -0.04em;
 }
-.display__sub {
-  font-size: clamp(15px, 1.5vw, 19px);
-  letter-spacing: 0;
-  color: var(--ink-500);
+.hero2__label {
+  font-size: 15px;
+  color: var(--ink-900);
 }
 .hero2__note {
   max-width: 40ch;
@@ -491,30 +506,61 @@ em {
   flex-direction: column;
   align-items: flex-start;
   gap: 14px;
-  margin-top: 4px;
 }
 .hero2__hint {
   font-size: 13px;
   color: var(--ink-500);
 }
-/* desktop: o cadastro fica no ticket, perto da boca */
+/* desktop, como numa capa: etiquetas no topo, título grande empilhado no meio,
+   legenda + descrição lado a lado e o link no pé; o cadastro fica no ticket, na frente da boca */
 @media (min-width: 900px) {
+  .hero2__text {
+    justify-content: space-between;
+    padding-top: clamp(12px, 3vh, 32px);
+  }
+  .display__main {
+    flex-direction: column;
+    font-size: clamp(64px, min(8vw, 15vh), 150px);
+    line-height: 0.92;
+  }
+  .hero2__row {
+    display: grid;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    gap: 24px;
+    max-width: 560px;
+  }
+  .hero2__note {
+    font-size: 14px;
+  }
   .hero2__signup,
   .hero2__hint {
     display: none;
   }
 }
-/* celular: como uma tela de app — boca em cima (sem o nome), texto centralizado e botão largo embaixo */
+/* celular: como uma tela de app — boca em cima, texto centralizado e botão largo embaixo */
 @media (max-width: 899px) {
+  .hero2__tags {
+    display: none;
+  }
   .hero2__text {
     align-items: center;
     text-align: center;
   }
-  .display {
-    align-items: center;
+  .display__main {
+    justify-content: center;
   }
-  .hero2__note {
-    margin-inline: auto;
+  .hero2__body {
+    align-items: center;
+    gap: 12px;
+  }
+  .hero2__row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  .hero2__label {
+    color: var(--ink-500);
   }
   .hero2__actions {
     align-self: stretch;
@@ -527,7 +573,7 @@ em {
   }
 }
 
-/* esfera de pontos (a mesma arte da tela de acesso), cortada em faixas */
+/* boca de pontos (canvas animado no script do fim da página) */
 .art {
   position: relative;
   align-self: stretch;
@@ -539,39 +585,11 @@ em {
   width: 100%;
   height: 100%;
 }
-.art__mark {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  font-size: clamp(34px, 5vw, 76px);
-  font-weight: 500;
-  letter-spacing: -0.06em;
-  color: var(--ink-900);
-  pointer-events: none;
-}
-.art__cap {
-  position: absolute;
-  left: var(--x);
-  top: var(--y);
-  max-width: 96px;
-  padding: 3px 8px;
-  border-radius: 8px;
-  background: rgba(245, 245, 247, 0.92);
-  font-size: 11px;
-  line-height: 1.25;
-  color: var(--ink-700);
-  pointer-events: none;
-}
-/* celular: a boca sobe para cima do texto, sem o nome e sem as legendas */
+/* celular: a boca sobe para cima do texto */
 @media (max-width: 899px) {
   .art {
     order: -1;
     min-height: 240px;
-  }
-  .art__mark,
-  .art__cap {
-    display: none;
   }
 }
 
@@ -627,48 +645,6 @@ em {
   line-height: 1.05;
   letter-spacing: -0.03em;
   color: var(--ink-900);
-}
-
-/* faixa com recursos passando, dentro do cartão */
-.marquee {
-  position: relative;
-  display: flex;
-  margin: 0 calc(-1 * clamp(20px, 3vw, 44px));
-  overflow: hidden;
-  padding: 14px 0;
-  border-top: 1px solid var(--line);
-  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
-}
-.marquee__track {
-  display: flex;
-  flex: none;
-  align-items: center;
-  gap: 40px;
-  padding-right: 40px;
-  font-size: clamp(16px, 1.6vw, 20px);
-  letter-spacing: -0.02em;
-  white-space: nowrap;
-  color: var(--ink-700);
-  animation: marquee 34s linear infinite;
-}
-.marquee__track i {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--gray-300);
-}
-.marquee__track i:nth-of-type(3n) {
-  background: var(--wine);
-}
-@keyframes marquee {
-  to {
-    transform: translateX(-100%);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .marquee__track {
-    animation: none;
-  }
 }
 
 /* telinhas do sistema desenhadas em HTML, chapadas */

@@ -5,7 +5,8 @@ import PixelFlower from '../components/PixelFlower.astro'
 import { CONTACT_EMAIL, CTA, LINKS } from '../lib/site'
 import { PIX_DISCOUNT_PCT, PLANS, TRIAL_DAYS, brlNumber } from '../lib/pricing'
 
-const ticker = ['Agenda online', 'Clientes que voltam', 'Financeiro descomplicado', 'Site do seu negócio', 'Comissões da equipe', 'Mensagens prontas no WhatsApp', 'Fechamento do mês']
+/** etiquetas no canto de cima da coluna do texto (no estilo das legendas que ficavam na boca) */
+const heroTags = ['Agenda online', 'Clientes que voltam', 'Financeiro simples', 'Site do seu negócio']
 
 /** especialidades que passam sem parar abaixo do título do "Para quem é", com "você." a cada volta */
 const crafts = ['lash designers', 'brow designers', 'cabeleireiros(as)', 'nail designers', 'esteticistas', 'maquiadoras']
@@ -53,14 +54,24 @@ const faqSchema = {
   <!-- HERO -->
   <section class="hero2" aria-label="Apresentação">
     <div class="hero2__grid">
+      <!-- texto à esquerda como numa capa: etiquetas em cima, título grande, linha com legenda + descrição e o link embaixo -->
       <div class="hero2__text">
-        <h1 class="display">
-          <span class="display__main"><span>Gestão</span> <em>simples</em></span>
-          <span class="display__sub">para negócios de beleza</span>
-        </h1>
-        <p class="hero2__note">
-          Agenda, clientes, financeiro e o site do seu negócio em um só lugar. Menos tempo organizando, mais tempo atendendo.
-        </p>
+        <ul class="hero2__tags" aria-label="O que a IKIZY faz">
+          {heroTags.map((t) => <li>{t}</li>)}
+        </ul>
+        <div class="hero2__body">
+          <h1 class="display">
+            <span class="display__main"><span>Gestão</span> <em>simples</em></span>
+            <span class="sr-only">para negócios de beleza</span>
+          </h1>
+          <!-- linha de baixo do título: legenda curta à esquerda e a descrição ao lado -->
+          <div class="hero2__row">
+            <p class="hero2__label" aria-hidden="true">para negócios de beleza</p>
+            <p class="hero2__note">
+              Agenda, clientes, financeiro e o site do seu negócio em um só lugar. Menos tempo organizando, mais tempo atendendo.
+            </p>
+          </div>
+        </div>
         <!-- no celular: botão largo de cadastro + link; no desktop só o link (o cadastro fica no ticket) -->
         <div class="hero2__actions">
           <a class="btn btn--primary hero2__signup" href={LINKS.signup}>{CTA.main}</a>
@@ -81,27 +92,7 @@ const faqSchema = {
 
       <div class="art" aria-hidden="true">
         <canvas id="halftone"></canvas>
-        <span class="art__mark">ikizy</span>
-        <span class="art__cap" style="--x: 14%; --y: 30%">Agenda online</span>
-        <span class="art__cap" style="--x: 32%; --y: 70%">Clientes que voltam</span>
-        <span class="art__cap" style="--x: 50%; --y: 24%">Financeiro simples</span>
-        <span class="art__cap" style="--x: 68%; --y: 62%">Site do seu negócio</span>
       </div>
-    </div>
-
-    <div class="marquee" aria-hidden="true">
-      {
-        [0, 1].map(() => (
-          <div class="marquee__track">
-            {ticker.map((t) => (
-              <>
-                <span>{t}</span>
-                <i />
-              </>
-            ))}
-          </div>
-        ))
-      }
     </div>
   </section>
 
