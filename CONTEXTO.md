@@ -40,7 +40,7 @@ Planos do IKIZY: Solo R$ 9,90, Studio R$ 29,90, Salão R$ 59,90 (fonte única: `
 | Item | Valor |
 |---|---|
 | Repositório | `https://github.com/evally-crm/ikizy` (o remoto antigo `evally-crm/evally` redireciona) |
-| Neon | projeto **`lingering-base-71670281` ("ikizy")**, org `org-winter-waterfall-22088107` (Maria Eduarda), região São Paulo (`aws-sa-east-1`), branch `production` (`br-ancient-sunset-b6oxgwr8`). Criado do zero em 11/10/2026 com todas as migrations. O projeto antigo `gentle-glade-92407636` ("evally", org do Daniel) fica parado até a troca na Vercel ser confirmada |
+| Neon | projeto **`lingering-base-71670281` ("ikizy")**, org `org-winter-waterfall-22088107` (Maria Eduarda), região São Paulo (`aws-sa-east-1`), branch `production` (`br-ancient-sunset-b6oxgwr8`). Criado do zero em 11/10/2026 com todas as migrations. Desde 11/10/2026 a Vercel (`ikizy-app`, Production) aponta para ele (`DATABASE_URL`, `NEON_AUTH_BASE_URL`, `VITE_NEON_AUTH_URL`, `VITE_NEON_DATA_API_URL`). O projeto antigo `gentle-glade-92407636` ("evally", org do Daniel) ficou parado; só apagar com aprovação |
 | Neon Auth / Data API | `https://ep-twilight-heart-b66hba33.neonauth.c-2.sa-east-1.aws.neon.tech/neondb/auth` · `https://ep-twilight-heart-b66hba33.apirest.c-2.sa-east-1.aws.neon.tech/neondb/rest/v1` |
 | Vercel | time `dfdudas-projects`: projetos `ikizy-app` (app.ikizy.com e `*.ikizy.com`) e `ikizy-landing` (ikizy.com, www) |
 | DNS | `ikizy.com` registrado e com nameservers na Vercel; curinga `*.ikizy.com` no `ikizy-app` |
