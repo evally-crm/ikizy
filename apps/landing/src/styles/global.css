@@ -824,7 +824,7 @@ em {
       'agenda client message'
       'agenda money money'
       'site money money';
-    grid-auto-rows: minmax(250px, auto);
+    grid-auto-rows: minmax(170px, auto);
     gap: 14px;
   }
 }
@@ -896,8 +896,8 @@ em {
 }
 @media (min-width: 1024px) {
   .feat__visual {
-    margin-top: 18px;
-    zoom: 1;
+    margin-top: 10px;
+    zoom: 0.85;
   }
 }
 
