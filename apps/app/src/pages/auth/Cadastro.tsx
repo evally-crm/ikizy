@@ -2,8 +2,9 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { Lock, Mail, User } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
-import { CHOSEN_PLAN_KEY, isPlanId } from '../../lib/plans'
+import { CHOSEN_PLAN_KEY, PLAN_IDS, PLANS, isPlanId, type PlanId } from '../../lib/plans'
 import { ROUTES } from '../../lib/routes'
+import { formatBRL } from '../../lib/format'
 import { Em } from '../../components/ui'
 import { AuthCard, AuthField, AuthLayout, AuthSubmit, FormMessages, GoogleButton } from './AuthLayout'
 
@@ -17,16 +18,26 @@ export default function Cadastro() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // guarda o plano do site para depois do cadastro (inclusive passando pelo Google)
+  // plano: o do link do site (?plano=), o já escolhido neste aparelho ou o mais escolhido (Studio)
+  const [plan, setPlan] = useState<PlanId>(() => {
+    const fromLink = params.get('plano')
+    if (isPlanId(fromLink)) return fromLink
+    try {
+      const saved = localStorage.getItem(CHOSEN_PLAN_KEY)
+      if (isPlanId(saved)) return saved
+    } catch {
+      // sem armazenamento: vale o padrão
+    }
+    return DEFAULT_PLAN
+  })
+  // guardado já na escolha: vale também para quem segue pelo Google
   useEffect(() => {
-    const plan = params.get('plano')
-    if (!isPlanId(plan)) return
     try {
       localStorage.setItem(CHOSEN_PLAN_KEY, plan)
     } catch {
-      // sem armazenamento: o teste começa no plano que combina com a equipe
+      // sem armazenamento: o teste começa no plano padrão
     }
-  }, [params])
+  }, [plan])
 
   if (status === 'ready' || status === 'demo') return <Navigate to={ROUTES.dashboard} replace />
   if (status === 'no-salon') return <Navigate to={ROUTES.createSalon} replace />
@@ -114,10 +125,45 @@ export default function Cadastro() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
+          <PlanChoice value={plan} onChange={setPlan} />
           <FormMessages error={error} />
           <AuthSubmit label="Criar conta" disabled={busy} />
         </form>
       </AuthCard>
     </AuthLayout>
+  )
+}
+
+/** plano mais escolhido: já vem marcado, como na página de preços do site */
+const DEFAULT_PLAN: PlanId = 'studio'
+
+const PLAN_LINE: Record<PlanId, string> = {
+  solo: 'Para quem atende sozinha',
+  studio: 'Equipe pequena, com comissões',
+  salao: 'Equipe maior',
+}
+
+/** lista de escolha igual à do site: o marcado fica branco e os outros ficam cinza e apagados; 30 dias grátis em todos */
+function PlanChoice({ value, onChange }: { value: PlanId; onChange: (plan: PlanId) => void }) {
+  return (
+    <fieldset className="plans">
+      <legend className="plans__legend">Escolha seu plano</legend>
+      {PLAN_IDS.map((id) => (
+        <label key={id} className="plan">
+          <input type="radio" name="plano" value={id} checked={value === id} onChange={() => onChange(id)} />
+          <span className="plan__radio" aria-hidden="true" />
+          <span className="plan__info">
+            <b>{PLANS[id].name}</b>
+            <small>{PLAN_LINE[id]}</small>
+          </span>
+          <span className="plan__price">
+            <b>{formatBRL(PLANS[id].cents / 100)}</b>
+            <small>/mês</small>
+          </span>
+          {id === DEFAULT_PLAN && <span className="plan__tag">Mais escolhido</span>}
+        </label>
+      ))}
+      <p className="plans__note">30 dias grátis em qualquer plano, sem cartão.</p>
+    </fieldset>
   )
 }

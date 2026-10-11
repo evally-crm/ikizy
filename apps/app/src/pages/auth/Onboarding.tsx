@@ -6,7 +6,7 @@ import { neon } from '../../lib/neon'
 import { CHOSEN_PLAN_KEY, isPlanId } from '../../lib/plans'
 import { ROUTES } from '../../lib/routes'
 import { isReservedSlug, SITE_DOMAIN, SLUG_PATTERN, slugify } from '../../lib/slug'
-import { OTHER_SEGMENT, SEGMENTS, TEAM_SIZES, starterServices, type TeamSize } from '../../lib/segments'
+import { OTHER_SEGMENT, SEGMENTS, starterServices } from '../../lib/segments'
 import { Em } from '../../components/ui'
 import { AuthField, AuthLayout, FormMessages } from './AuthLayout'
 
@@ -19,7 +19,6 @@ interface Draft {
   slugTouched: boolean
   segments: string[]
   otherLabel: string
-  team: TeamSize | null
   ownerName: string
 }
 
@@ -48,7 +47,6 @@ export default function Onboarding() {
   const [editingSlug, setEditingSlug] = useState(false)
   const [segments, setSegments] = useState<string[]>(saved.segments ?? [])
   const [otherLabel, setOtherLabel] = useState(saved.otherLabel ?? '')
-  const [team, setTeam] = useState<TeamSize | null>(saved.team ?? null)
   const [ownerName, setOwnerName] = useState(saved.ownerName ?? '')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -57,11 +55,11 @@ export default function Onboarding() {
 
   useEffect(() => {
     try {
-      localStorage.setItem(DRAFT_KEY, JSON.stringify({ name, slug, slugTouched, segments, otherLabel, team, ownerName } satisfies Draft))
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({ name, slug, slugTouched, segments, otherLabel, ownerName } satisfies Draft))
     } catch {
       // sem armazenamento: o rascunho vale só nesta visita
     }
-  }, [name, slug, slugTouched, segments, otherLabel, team, ownerName])
+  }, [name, slug, slugTouched, segments, otherLabel, ownerName])
 
   // confere o link enquanto a pessoa digita (meio segundo depois de parar)
   useEffect(() => {
@@ -109,14 +107,13 @@ export default function Onboarding() {
     }
     if (segments.length === 0) return setError('Marque o que você faz.')
     if (segments.includes(OTHER_SEGMENT.id) && otherLabel.trim().length < 2) return setError('Conte qual é a outra área.')
-    if (!team) return setError('Conte quem atende no seu negócio.')
 
-    let plan: 'solo' | 'studio' | 'salao' = team === 'team' ? 'studio' : 'solo'
+    let plan: 'solo' | 'studio' | 'salao' = 'studio'
     try {
       const fromSite = localStorage.getItem(CHOSEN_PLAN_KEY)
       if (isPlanId(fromSite)) plan = fromSite
     } catch {
-      // sem armazenamento: vale o plano da resposta da equipe
+      // sem armazenamento: vale o plano mais escolhido
     }
 
     setBusy(true)
@@ -202,16 +199,6 @@ export default function Onboarding() {
         {segments.includes(OTHER_SEGMENT.id) && (
           <AuthField label="Qual?" maxLength={40} placeholder="Ex.: Maquiagem, Depilação a laser" value={otherLabel} onChange={(e) => setOtherLabel(e.target.value)} />
         )}
-
-        <p className="wiz__q">Quem atende?</p>
-        <div className="wiz__options">
-          {TEAM_SIZES.map((t) => (
-            <button key={t.id} type="button" className="wiz__opt" aria-pressed={team === t.id} onClick={() => setTeam(t.id)}>
-              {team === t.id && <Check size={16} aria-hidden="true" />}
-              {t.label}
-            </button>
-          ))}
-        </div>
 
         <FormMessages error={error} />
 
