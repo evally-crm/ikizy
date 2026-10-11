@@ -26,7 +26,7 @@ export const PLANS: LandingPlan[] = [
     cents: 990,
     hot: false,
     cta: 'Começar com o Solo',
-    items: ['Para quem atende sozinha', 'Agenda e clientes', 'Financeiro básico', 'Site do negócio'],
+    items: ['Para quem atende sozinha', 'Agenda e clientes', 'Caixa e fechamento do mês', 'Site com agendamento online'],
   },
   {
     id: 'studio',
@@ -34,7 +34,7 @@ export const PLANS: LandingPlan[] = [
     cents: 2990,
     hot: true,
     cta: 'Começar com o Studio',
-    items: ['Equipe pequena', 'Tudo do Solo', 'Comissões por profissional', 'Fechamento mensal em recibo', 'Relatórios'],
+    items: ['Equipe pequena', 'Tudo do Solo', 'Agenda com várias profissionais', 'Comissões por profissional'],
   },
   {
     id: 'salao',
@@ -42,7 +42,7 @@ export const PLANS: LandingPlan[] = [
     cents: 5990,
     hot: false,
     cta: 'Começar com o Salão',
-    items: ['Equipe maior', 'Tudo do Studio', 'Mais profissionais e permissões', 'Atendimento prioritário'],
+    items: ['Equipe maior', 'Tudo do Studio', 'Para equipes maiores'],
   },
 ]
 

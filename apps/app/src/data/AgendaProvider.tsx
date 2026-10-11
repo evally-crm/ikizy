@@ -108,6 +108,7 @@ interface Row {
   duration: number
   price: number | string
   status: AppointmentStatus
+  payment_method: PaymentMethod | null
   clients: { name: string; phone: string } | null
 }
 
@@ -115,7 +116,7 @@ interface Row {
 const PENDING_POLL_MS = 60_000
 
 const SELECT =
-  'id, client_id, professional_id, service_id, service_name, starts_at, duration, price, status, clients ( name, phone )'
+  'id, client_id, professional_id, service_id, service_name, starts_at, duration, price, status, payment_method, clients ( name, phone )'
 
 function fromRow(r: Row): Appointment {
   const at = new Date(r.starts_at)
@@ -132,6 +133,7 @@ function fromRow(r: Row): Appointment {
     duration: r.duration,
     price: Number(r.price),
     status: r.status,
+    paymentMethod: r.payment_method,
   }
 }
 
@@ -400,7 +402,7 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
         // coluna criada pela migration do financeiro; se ainda não existir, o atendimento segue salvo sem a forma de pagamento
         if (paymentMethod) await neon.from('appointments').update({ payment_method: paymentMethod }).eq('id', id)
       }
-      setAppointments((list) => list.map((a) => (a.id === id ? { ...a, ...patch } : a)))
+      setAppointments((list) => list.map((a) => (a.id === id ? { ...a, ...patch, ...(paymentMethod ? { paymentMethod } : {}) } : a)))
       // confirmado, recusado etc. sai na hora da lista de pedidos
       setLivePending((list) =>
         list && (patch.status && patch.status !== 'pendente' ? list.filter((a) => a.id !== id) : list.map((a) => (a.id === id ? { ...a, ...patch } : a))),

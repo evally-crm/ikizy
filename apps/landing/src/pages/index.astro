@@ -30,7 +30,7 @@ const faq = [
   { q: 'Posso testar a IKIZY antes de assinar?', a: `Sim. Todo negócio novo tem ${TRIAL_DAYS} dias grátis, em qualquer plano, e dá para testar sem cadastrar cartão.` },
   { q: 'Posso cancelar minha assinatura quando quiser?', a: 'Sim. No cartão, você cancela quando quiser e o acesso continua até o fim do período já pago. No Pix não há renovação automática: o acesso vale pelo período que você pagou.' },
   { q: 'Meus dados ficam seguros na IKIZY?', a: 'Cada negócio enxerga apenas os próprios dados, e a equipe acessa por papéis: dona, gerente, recepção e profissional. Os pagamentos são feitos pela Stripe, e a IKIZY não guarda os dados do seu cartão.' },
-  { q: 'Consigo incluir quantas pessoas na minha equipe?', a: 'O Solo é para quem atende sozinha. Para trabalhar com equipe, escolha o Studio, pensado para equipes pequenas, ou o Salão, para equipes maiores, com mais profissionais e permissões.' },
+  { q: 'Consigo incluir quantas pessoas na minha equipe?', a: 'O Solo é para quem atende sozinha. Para trabalhar com equipe, escolha o Studio, pensado para equipes pequenas, ou o Salão, para equipes maiores.' },
 ]
 
 const faqSchema = {
@@ -255,7 +255,7 @@ const faqSchema = {
                     {list.map((it) => <li>{it}</li>)}
                   </ul>
                 </div>
-                <a class="btn btn--primary" href={LINKS.signup}>{p.cta}</a>
+                <a class="btn btn--primary" href={`${LINKS.signup}?plano=${p.id}`}>{p.cta}</a>
               </article>
             )
           })

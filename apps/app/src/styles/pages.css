@@ -1484,3 +1484,55 @@ button.biz__item:not(:disabled):hover {
 .biz__more .form__pair {
   margin-top: 10px;
 }
+
+/* ---------- Caixa de hoje ---------- */
+.fin__tabs {
+  flex: none;
+}
+.cash {
+  display: grid;
+  gap: 14px;
+}
+@media (min-width: 900px) {
+  .cash {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    align-items: start;
+  }
+  .cash__list {
+    grid-column: 1 / -1;
+  }
+}
+.cash__hero .money {
+  color: var(--white);
+}
+.cash__methods {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.cash__methods li {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.7);
+}
+.cash__methods strong {
+  color: var(--white);
+  font-weight: 500;
+}
+.cash__value {
+  font-size: 30px;
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  color: var(--ink-900);
+}
+.cash__sub {
+  margin-top: 8px;
+}

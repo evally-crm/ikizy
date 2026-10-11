@@ -27,7 +27,7 @@ export const PLANS: Record<PlanId, PlanInfo> = {
     name: 'Solo',
     cents: 990,
     audience: 'Para quem atende sozinha',
-    features: ['Agenda e clientes', 'Financeiro básico', 'Site do negócio'],
+    features: ['Agenda e clientes', 'Caixa e fechamento do mês', 'Site com agendamento online'],
     trialDays: TRIAL_DAYS,
   },
   studio: {
@@ -35,7 +35,7 @@ export const PLANS: Record<PlanId, PlanInfo> = {
     name: 'Studio',
     cents: 2990,
     audience: 'Equipe pequena',
-    features: ['Tudo do Solo', 'Comissões por profissional', 'Fechamento mensal em recibo', 'Relatórios'],
+    features: ['Tudo do Solo', 'Agenda com várias profissionais', 'Comissões por profissional'],
     trialDays: TRIAL_DAYS,
   },
   salao: {
@@ -43,7 +43,7 @@ export const PLANS: Record<PlanId, PlanInfo> = {
     name: 'Salão',
     cents: 5990,
     audience: 'Equipe maior',
-    features: ['Tudo do Studio', 'Mais profissionais e permissões', 'Atendimento prioritário'],
+    features: ['Tudo do Studio', 'Para equipes maiores'],
     trialDays: TRIAL_DAYS,
   },
 }
