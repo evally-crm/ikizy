@@ -497,7 +497,7 @@ em {
   font-size: 13px;
   color: var(--ink-500);
 }
-/* desktop: o cadastro fica no ticket da seção seguinte */
+/* desktop: o cadastro fica no ticket, perto da boca */
 @media (min-width: 900px) {
   .hero2__signup,
   .hero2__hint {
@@ -573,6 +573,61 @@ em {
   .art__cap {
     display: none;
   }
+}
+
+/* ticket de cadastro: duas peças lado a lado (logo em fundo cinza + convite).
+   só no desktop, no canto inferior direito do início, por cima da boca */
+.ticket {
+  display: none;
+}
+@media (min-width: 900px) {
+  .ticket {
+    position: absolute;
+    right: 0;
+    bottom: 20px;
+    z-index: 2;
+    display: flex;
+    gap: 4px;
+    width: 360px;
+  }
+}
+.ticket__stub,
+.ticket__body {
+  border-radius: 18px;
+  background: var(--white);
+}
+.ticket__stub {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 112px;
+  background: var(--gray-200);
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: -0.06em;
+  color: var(--ink-900);
+}
+.ticket__stub span {
+  color: var(--wine);
+}
+.ticket__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 16px 18px 18px;
+}
+.ticket__meta {
+  font-size: 11px;
+  color: var(--ink-500);
+}
+.ticket__title {
+  margin: 8px 0 16px;
+  font-size: 22px;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  color: var(--ink-900);
 }
 
 /* faixa com recursos passando, dentro do cartão */
@@ -685,62 +740,6 @@ em {
 .ui--phone .is-busy {
   background: var(--ink-900);
   color: var(--white);
-}
-
-/* ---------- ticket de cadastro (seção logo abaixo do início, só no desktop) ---------- */
-.ticket-section {
-  display: none;
-}
-@media (min-width: 900px) {
-  .ticket-section {
-    display: flex;
-    justify-content: center;
-    padding-bottom: 0;
-  }
-}
-/* duas peças lado a lado: logo em fundo cinza + convite */
-.ticket {
-  display: flex;
-  gap: 4px;
-  width: 460px;
-}
-.ticket__stub,
-.ticket__body {
-  border-radius: 20px;
-  background: var(--gray-100);
-}
-.ticket__stub {
-  display: flex;
-  flex: none;
-  align-items: center;
-  justify-content: center;
-  width: 150px;
-  background: var(--gray-200);
-  font-size: 30px;
-  font-weight: 500;
-  letter-spacing: -0.06em;
-  color: var(--ink-900);
-}
-.ticket__stub span {
-  color: var(--wine);
-}
-.ticket__body {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  align-items: flex-start;
-  padding: 22px 24px 24px;
-}
-.ticket__meta {
-  font-size: 12px;
-  color: var(--ink-500);
-}
-.ticket__title {
-  margin: 10px 0 20px;
-  font-size: 26px;
-  line-height: 1.05;
-  letter-spacing: -0.03em;
-  color: var(--ink-900);
 }
 
 /* ---------- para quem é: frase, texto e uma linha de especialidades ---------- */
