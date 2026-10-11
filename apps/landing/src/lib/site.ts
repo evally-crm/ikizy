@@ -8,7 +8,7 @@ export const LINKS = {
 
 /** textos dos botões de cadastro: deixam claro que é gestão de negócio de beleza, simples e grátis para testar */
 export const CTA = {
-  main: 'Organizar meu salão grátis',
+  main: 'Começar grátis',
   short: 'Teste grátis',
   hint: '30 dias grátis, sem cartão.',
 } as const

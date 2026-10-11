@@ -1,0 +1,32 @@
+---
+/**
+ * florzinha de bitmap (9 x 9 pixels): quatro pétalas em vinho e o miolo rosado.
+ * pixels nítidos em qualquer tamanho; usada como ícone pequeno nas listas.
+ */
+interface Props {
+  class?: string
+}
+
+const { class: className } = Astro.props
+
+// X = pétala, O = miolo
+const ART = [
+  '.XX...XX.',
+  'XXXX.XXXX',
+  'XXXX.XXXX',
+  '.XXX.XXX.',
+  '....O....',
+  '.XXX.XXX.',
+  'XXXX.XXXX',
+  'XXXX.XXXX',
+  '.XX...XX.',
+]
+
+const path = (ch: string) =>
+  ART.flatMap((row, y) => [...row].map((c, x) => (c === ch ? `M${x} ${y}h1v1h-1z` : ''))).join('')
+---
+
+<svg class:list={['bitmap-flower', className]} viewBox="0 0 9 9" shape-rendering="crispEdges" aria-hidden="true">
+  <path d={path('X')} fill="var(--wine)" />
+  <path d={path('O')} fill="#e6b4be" />
+</svg>

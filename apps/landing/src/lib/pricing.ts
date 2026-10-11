@@ -16,6 +16,8 @@ export interface LandingPlan {
   cents: number
   hot: boolean
   cta: string
+  /** linha curta embaixo do nome, na lista de escolha da landing */
+  line: string
   items: string[]
 }
 
@@ -26,6 +28,7 @@ export const PLANS: LandingPlan[] = [
     cents: 990,
     hot: false,
     cta: 'Começar com o Solo',
+    line: 'Para quem atende sozinha',
     items: ['Para quem atende sozinha', 'Agenda e clientes', 'Caixa e fechamento do mês', 'Site com agendamento online'],
   },
   {
@@ -34,6 +37,7 @@ export const PLANS: LandingPlan[] = [
     cents: 2990,
     hot: true,
     cta: 'Começar com o Studio',
+    line: 'Equipe pequena, com comissões',
     items: ['Equipe pequena', 'Tudo do Solo', 'Agenda com várias profissionais', 'Comissões por profissional'],
   },
   {
@@ -42,6 +46,7 @@ export const PLANS: LandingPlan[] = [
     cents: 5990,
     hot: false,
     cta: 'Começar com o Salão',
+    line: 'Equipe maior',
     items: ['Equipe maior', 'Tudo do Studio', 'Para equipes maiores'],
   },
 ]
