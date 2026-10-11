@@ -1,7 +1,7 @@
 ---
 /**
  * flor em símbolos, no mesmo estilo da boca do início: ponto · + · x · quadradinho · quadrado
- * conforme a densidade, cheia no miolo e nas pétalas, esfumando nas bordas, com pó solto em volta.
+ * conforme a densidade, bem esfumada (quase sem quadrados cheios), com pó solto em volta.
  * se mexe de leve como a boca (ondas na textura, pétalas respirando e girando bem devagar).
  */
 interface Props {
@@ -34,8 +34,8 @@ const { class: className } = Astro.props
     const a = Math.atan2(dy, dx) + 0.3 + 0.35 * r + t * 0.05
     const lobe = Math.abs(Math.cos((PETALS / 2) * a))
     const petal = (0.15 + 0.85 * Math.pow(lobe, 1.3)) * (1 + Math.sin(t * 0.7) * 0.04)
-    const body = smooth(1.35, 0.25, r / petal)
-    const core = smooth(0.2, 0.04, r) * 0.9
+    const body = smooth(1.7, 0.1, r / petal) * 0.78
+    const core = smooth(0.24, 0.02, r) * 0.7
     // nervura mais clara no meio de cada pétala
     const vein = Math.pow(lobe, 40) * smooth(0.15, 0.4, r) * 0.25
     return Math.min(1, Math.max(body - vein, core))
@@ -103,12 +103,12 @@ const { class: className } = Astro.props
           if (d <= 0.03) {
             // pó solto em volta
             const r = Math.hypot(dx, dy)
-            if (r < 1.4 && n < smooth(1.4, 0.6, r) * 0.45 * (0.6 + wave * 0.6)) d = 0.12 + n * 0.35
+            if (r < 1.7 && n < smooth(1.7, 0.5, r) * 0.55 * (0.6 + wave * 0.6)) d = 0.12 + n * 0.3
             else continue
           } else {
-            d = d * (0.84 + 0.16 * wave)
+            d = d * (0.7 + 0.3 * wave)
           }
-          glyph(ctx, x, y, d + (n - 0.5) * 0.3, hash(col, row))
+          glyph(ctx, x, y, d + (n - 0.5) * 0.4, hash(col, row))
         }
       }
     }
