@@ -10,13 +10,13 @@ const ticker = ['Agenda online', 'Clientes que voltam', 'Financeiro descomplicad
 /** especialidades que passam sem parar abaixo do título do "Para quem é", com "você." a cada volta */
 const crafts = ['lash designers', 'brow designers', 'cabeleireiros(as)', 'nail designers', 'esteticistas', 'maquiadoras']
 
-/** recursos reais do sistema, contados pelo que mudam na rotina (o "antes" vem da antiga seção "Do caderno ao sistema") */
+/** recursos reais do sistema em cartões de tamanhos diferentes; o "antes" vem da antiga seção "Do caderno ao sistema" e o financeiro é o cartão preto de destaque */
 const features = [
-  { was: 'Agenda no caderno', title: 'Agenda online', text: 'O dia de cada profissional na tela, no celular ou no computador, sem instalar nada.', ui: 'agenda' },
-  { was: 'Cliente que sumiu', title: 'Clientes que voltam', text: 'Ficha com histórico, preferências e alergias, e aviso de quem passou da hora de voltar.', ui: 'client' },
-  { was: 'Mensagem digitada uma a uma', title: 'Mensagens prontas', text: 'Confirmação, lembrete e pós-atendimento abrem prontos no seu WhatsApp. É só conferir e enviar.', ui: 'message' },
-  { was: 'Caixa e comissão na calculadora', title: 'Financeiro e comissões', text: 'Entradas, saídas e a comissão de cada profissional, com o fechamento do mês em recibo.', ui: 'money' },
-  { was: 'Horário marcado por direct', title: 'Site do seu negócio', text: 'Uma página sua para a cliente ver os serviços e pedir um horário.', ui: 'site' },
+  { was: 'Agenda no caderno', title: 'Agenda online', ui: 'agenda' },
+  { was: 'Cliente que sumiu', title: 'Clientes que voltam', ui: 'client' },
+  { was: 'Mensagem digitada uma a uma', title: 'Mensagens prontas', ui: 'message' },
+  { was: 'Caixa e comissão na calculadora', title: 'Financeiro e comissões', ui: 'money' },
+  { was: 'Horário marcado por direct', title: 'Site do seu negócio', ui: 'site' },
 ]
 
 /** passo a passo com telas reais do sistema (modo demonstração, com dados de exemplo) */
@@ -134,7 +134,9 @@ const faqSchema = {
     <ul class="feats__grid">
       {
         features.map((f) => (
-          <li class="feat">
+          <li class={`feat feat--${f.ui}`}>
+            <p class="feat__was"><span>Antes</span><s>{f.was}</s></p>
+            <h3>{f.title}</h3>
             <div class="feat__visual" aria-hidden="true">
               {f.ui === 'agenda' && (
                 <div class="ui ui--phone">
@@ -166,18 +168,15 @@ const faqSchema = {
               )}
               {f.ui === 'site' && <span class="ui ui--url">seu-negocio.ikizy.com</span>}
             </div>
-            <p class="feat__was"><span>Antes</span><s>{f.was}</s></p>
-            <h3>{f.title}</h3>
-            <p class="feat__text">{f.text}</p>
+            {f.ui === 'money' && (
+              <a class="feat__plus" href="#como-funciona">
+                <span class="feat__circle" aria-hidden="true">+</span>
+                <span>Veja a IKIZY por dentro</span>
+              </a>
+            )}
           </li>
         ))
       }
-      <li class="feat feat--more">
-        <a class="feat__plus" href="#como-funciona">
-          <span class="feat__circle" aria-hidden="true">+</span>
-          <span>Veja a IKIZY por dentro</span>
-        </a>
-      </li>
     </ul>
   </section>
 
