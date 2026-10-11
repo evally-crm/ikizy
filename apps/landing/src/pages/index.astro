@@ -2,8 +2,10 @@
 import Base from '../layouts/Base.astro'
 import Field from '../components/Field.astro'
 import PixelFlower from '../components/PixelFlower.astro'
+import Perk from '../components/Perk.astro'
+import PlanOption from '../components/PlanOption.astro'
 import { CONTACT_EMAIL, CTA, LINKS } from '../lib/site'
-import { PIX_DISCOUNT_PCT, PLANS, TRIAL_DAYS, brlNumber } from '../lib/pricing'
+import { PIX_DISCOUNT_PCT, PLANS, TRIAL_DAYS } from '../lib/pricing'
 
 /** especialidades que passam sem parar abaixo do título do "Para quem é", com "você." a cada volta */
 const crafts = ['lash designers', 'brow designers', 'cabeleireiros(as)', 'nail designers', 'esteticistas', 'maquiadoras']
@@ -214,42 +216,16 @@ const faqSchema = {
           <button type="button" class="toggle__label" tabindex="-1" data-period="3">Trimestral</button>
         </div>
         <ul class="perks">
-          <li>
-            <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="4" width="14" height="13" rx="3" /><path d="M3 8h14M7 2v4M13 2v4" /></svg>
-            Agenda, clientes e financeiro num lugar só
-          </li>
-          <li>
-            <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7" /><path d="M3 10h14M10 3c2 2.2 2 11.8 0 14M10 3c-2 2.2-2 11.8 0 14" /></svg>
-            Site com agendamento online
-          </li>
-          <li>
-            <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="8" width="14" height="9" rx="2" /><path d="M2 8h16M10 8v9M10 8c-1-3-5-4-5-1.5S10 8 10 8zm0 0c1-3 5-4 5-1.5S10 8 10 8z" /></svg>
-            {TRIAL_DAYS} dias grátis, sem cartão
-          </li>
+          <Perk>Agenda, clientes e financeiro num lugar só</Perk>
+          <Perk>Site com agendamento online</Perk>
+          <Perk>{TRIAL_DAYS} dias grátis, sem cartão</Perk>
         </ul>
       </div>
 
       <div class="plans" data-plans data-discount={PIX_DISCOUNT_PCT[3]}>
         <fieldset class="plans__list">
           <legend class="sr-only">Plano</legend>
-          {
-            PLANS.map((p) => (
-              <label class="plan" data-cents={p.cents} data-id={p.id} data-cta-text={p.cta}>
-                <input type="radio" name="plano" value={p.id} checked={p.hot} />
-                <span class="plan__radio" aria-hidden="true" />
-                <span class="plan__info">
-                  <b>{p.name}</b>
-                  <small>{p.line}</small>
-                </span>
-                <span class="plan__price">
-                  <b data-price>R$ {brlNumber(p.cents)}</b>
-                  <small data-unit>/mês</small>
-                </span>
-                {p.hot && <span class="plan__tag">Mais escolhido</span>}
-                <span class="plan__save" data-save hidden />
-              </label>
-            ))
-          }
+          {PLANS.map((p) => <PlanOption plan={p} />)}
         </fieldset>
         <a class="btn btn--primary plans__cta" href={`${LINKS.signup}?plano=studio`} data-cta>Começar com o Studio</a>
         <p class="plans__note" data-note>No cartão renova sozinho todo mês, ou no Pix, mês a mês.</p>

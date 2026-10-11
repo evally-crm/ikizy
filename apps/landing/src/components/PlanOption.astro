@@ -1,0 +1,29 @@
+---
+/**
+ * plano na lista de escolha: bolinha, nome + linha curta e o preço à direita.
+ * o escolhido fica em destaque e os outros ficam cinza e meio apagados; o script dos planos troca preço e botão.
+ */
+import type { LandingPlan } from '../lib/pricing'
+import { brlNumber } from '../lib/pricing'
+
+interface Props {
+  plan: LandingPlan
+}
+
+const { plan } = Astro.props
+---
+
+<label class="plan" data-cents={plan.cents} data-id={plan.id} data-cta-text={plan.cta}>
+  <input type="radio" name="plano" value={plan.id} checked={plan.hot} />
+  <span class="plan__radio" aria-hidden="true"></span>
+  <span class="plan__info">
+    <b>{plan.name}</b>
+    <small>{plan.line}</small>
+  </span>
+  <span class="plan__price">
+    <b data-price>R$ {brlNumber(plan.cents)}</b>
+    <small data-unit>/mês</small>
+  </span>
+  {plan.hot && <span class="plan__tag">Mais escolhido</span>}
+  <span class="plan__save" data-save hidden></span>
+</label>

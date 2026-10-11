@@ -1276,7 +1276,7 @@ em {
   outline: 2px solid var(--wine);
   outline-offset: 3px;
 }
-/* três vantagens com ícone de traço */
+/* três vantagens, cada uma com a florzinha de bitmap (componente Perk) */
 .perks {
   display: flex;
   flex-direction: column;
@@ -1285,25 +1285,21 @@ em {
   padding: 0;
   list-style: none;
 }
-.perks li {
+.perk {
   display: flex;
   align-items: center;
   gap: 10px;
   font-size: 15px;
   color: var(--ink-700);
 }
-.perks svg {
+.perk .bitmap-flower {
   flex: none;
-  width: 18px;
-  height: 18px;
-  fill: none;
-  stroke: var(--ink-900);
-  stroke-width: 1.5;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  width: 14px;
+  height: 14px;
 }
 
-/* lista de escolha: cartões brancos com bolinha, nome + linha à esquerda e preço à direita */
+/* lista de escolha (componente PlanOption): bolinha, nome + linha à esquerda e preço à direita;
+   o escolhido fica branco e os outros cinza e meio apagados, sem borda */
 .plans {
   display: flex;
   flex-direction: column;
@@ -1324,14 +1320,19 @@ em {
   align-items: center;
   gap: 14px;
   padding: 18px 20px;
-  border: 1.5px solid transparent;
   border-radius: 20px;
-  background: var(--white);
+  background: var(--gray-200);
+  opacity: 0.55;
   cursor: pointer;
-  transition: border-color 0.2s, transform 0.2s;
+  transition: background-color 0.25s, opacity 0.25s, transform 0.2s, box-shadow 0.25s;
 }
 .plan:hover {
-  transform: translateY(-1px);
+  opacity: 0.8;
+}
+.plan:has(input:checked) {
+  background: var(--white);
+  opacity: 1;
+  box-shadow: 0 12px 30px -18px rgba(14, 13, 13, 0.25);
 }
 .plan input {
   position: absolute;
@@ -1381,10 +1382,7 @@ em {
 .plans.is-swapping .plan__save {
   opacity: 0;
 }
-/* escolhido: borda preta e bolinha preta com o check */
-.plan:has(input:checked) {
-  border-color: var(--ink-900);
-}
+/* escolhido: bolinha preta com o check */
 .plan:has(input:checked) .plan__radio {
   border-color: var(--ink-900);
   background: var(--ink-900);
