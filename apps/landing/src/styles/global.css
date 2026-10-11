@@ -607,7 +607,7 @@ em {
   color: var(--white);
 }
 .ticket__stub svg {
-  width: 130%;
+  width: 115%;
   max-width: none;
   height: auto;
   transform: rotate(-12deg);
