@@ -163,7 +163,7 @@ export default function Onboarding() {
     <AuthLayout
       topAction={
         <button type="button" className="auth__close" aria-label="Fechar e sair desta conta" title="Fechar e sair desta conta" onClick={() => void signOut()}>
-          <X size={22} aria-hidden="true" />
+          <X size={24} strokeWidth={1.5} aria-hidden="true" />
         </button>
       }
     >

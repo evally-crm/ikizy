@@ -100,17 +100,27 @@
   font-size: 16px;
   color: var(--ink-700);
 }
+/* X de fechar: só o traço, sem círculo nem borda, na mesma cor do link "Entrar" das outras telas */
 .auth__close {
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
-  margin-right: -8px;
-  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  margin-right: -4px;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
   color: var(--ink-700);
+  cursor: pointer;
 }
 .auth__close:hover {
-  background: rgba(14, 13, 13, 0.07);
+  color: var(--brand-700);
+}
+.auth__close:focus-visible {
+  outline: 2px solid var(--brand-700);
+  outline-offset: 2px;
+  border-radius: 6px;
 }
 .auth__toplink:hover {
   color: var(--brand-700);
