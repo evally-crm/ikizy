@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
-import { Navigate, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { CalendarPlus, Ellipsis, LogOut, Plus, Search, UserRound, X } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
 import { SubscriptionProvider, useSubscription } from '../../billing/SubscriptionProvider'
@@ -337,15 +337,6 @@ function ProfileDialog({ onClose }: { onClose: () => void }) {
   )
 }
 
-/** a dona que ainda não passou pela escolha de plano do cadastro volta para ela antes de usar o sistema */
-function RequirePlan({ children }: { children: ReactNode }) {
-  const { salon } = useAuth()
-  const { sub, loading } = useSubscription()
-  if (loading) return null
-  if (sub && !sub.planChosen && salon?.role === 'owner') return <Navigate to={ROUTES.choosePlan} replace />
-  return <>{children}</>
-}
-
 export default function AppShell() {
   const navigate = useNavigate()
   const [editing, setEditing] = useState(false)
@@ -373,10 +364,8 @@ export default function AppShell() {
         </div>
       </header>
       <main className="content">
-        <RequirePlan>
-          <BillingBanner />
-          <Outlet />
-        </RequirePlan>
+        <BillingBanner />
+        <Outlet />
       </main>
       <BottomNav onAccount={() => setEditing(true)} />
       <PendingToast />

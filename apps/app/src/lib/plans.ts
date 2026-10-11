@@ -49,6 +49,9 @@ export const PLANS: Record<PlanId, PlanInfo> = {
 }
 
 export const PLAN_IDS = Object.keys(PLANS) as PlanId[]
+
+/** plano escolhido num cartão do site (app.ikizy.com/cadastro?plano=studio): vale para o teste que começa ao criar o negócio */
+export const CHOSEN_PLAN_KEY = 'ikizy:plano-escolhido'
 export const isPlanId = (v: unknown): v is PlanId => typeof v === 'string' && v in PLANS
 
 /** quantos meses a pessoa pode pagar adiantado no Pix (o Pix não renova sozinho nas contas Stripe do Brasil) */
