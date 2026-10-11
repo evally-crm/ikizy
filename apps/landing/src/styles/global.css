@@ -486,11 +486,73 @@ em {
   font-size: 15px;
   color: var(--ink-500);
 }
-.hero2__hint {
-  margin-top: 12px;
-  max-width: 44ch;
-  font-size: 13px;
+.hero2__text .btn--ghost {
+  margin-top: 4px;
+}
+
+/* ticket de cadastro: duas peças brancas lado a lado (logo + convite) */
+.ticket {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  gap: 4px;
+  width: min(100%, 360px);
+  margin-bottom: 20px;
+}
+.ticket__stub,
+.ticket__body {
+  border-radius: 18px;
+  background: var(--white);
+}
+.ticket__stub {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 112px;
+  background: var(--gray-200);
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: -0.06em;
+  color: var(--ink-900);
+}
+.ticket__stub span {
+  color: var(--wine);
+}
+.ticket__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 16px 18px 18px;
+}
+.ticket__meta {
+  font-size: 11px;
+  line-height: 1.35;
   color: var(--ink-500);
+}
+.ticket__title {
+  margin: 8px 0 16px;
+  font-size: 22px;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  color: var(--ink-900);
+}
+/* celular: logo abaixo do texto; desktop: canto inferior direito, por cima da esfera */
+@media (max-width: 899px) {
+  .ticket {
+    order: 1;
+  }
+  .art {
+    order: 2;
+  }
+}
+@media (min-width: 900px) {
+  .ticket {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+  }
 }
 
 /* esfera de pontos (a mesma arte da tela de acesso), cortada em faixas */

@@ -60,12 +60,18 @@ const faqSchema = {
         <p class="hero2__note">
           Agenda, clientes, financeiro e o site do seu negócio em um só lugar. Menos tempo organizando, mais tempo atendendo.
         </p>
-        <div class="btn-row">
-          <a class="btn btn--primary" href={LINKS.signup}>{CTA.main}</a>
-          <a class="btn btn--ghost" href="#como-funciona">Ver como funciona</a>
-        </div>
-        <p class="hero2__hint">{CTA.hint}</p>
+        <a class="btn btn--ghost" href="#como-funciona">Ver como funciona</a>
       </div>
+
+      <!-- ticket de cadastro: logo à esquerda e o convite à direita (no desktop, canto inferior direito) -->
+      <aside class="ticket" aria-label="Teste grátis">
+        <div class="ticket__stub" aria-hidden="true">ikizy<span>.</span></div>
+        <div class="ticket__body">
+          <p class="ticket__meta">{CTA.hint}</p>
+          <p class="ticket__title">Organize seu salão</p>
+          <a class="btn btn--primary btn--sm" href={LINKS.signup}>{CTA.main}</a>
+        </div>
+      </aside>
 
       <div class="art" aria-hidden="true">
         <canvas id="halftone"></canvas>
