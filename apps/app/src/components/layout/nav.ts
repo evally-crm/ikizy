@@ -9,17 +9,17 @@ export interface NavItem {
   icon: LucideIcon
 }
 
-/** seções principais: topo no computador; as duas primeiras e o Caixa também na barra do celular */
+/** seções principais: topo no computador; no celular, Agenda, Clientes e Caixa ficam na barra e o resto vai para o "Mais" */
 export const navItems: NavItem[] = [
   { to: ROUTES.dashboard, label: 'Agenda', icon: CalendarDays },
   { to: dash('/clientes'), label: 'Clientes', icon: Users },
   { to: dash('/financeiro'), label: 'Financeiro', short: 'Caixa', icon: Wallet },
   { to: dash('/site'), label: 'Meu site', icon: Globe },
+  { to: dash('/negocio'), label: 'Meu negócio', icon: Store },
 ]
 
-/** o que fica no menu "Mais" (celular) e no menu do avatar (computador) */
+/** o que fica no menu "Mais" (celular) e no menu do avatar (computador), além do que já está no topo */
 export const moreItems: (NavItem & { ownerOnly?: boolean })[] = [
-  { to: dash('/negocio'), label: 'Meu negócio', icon: Store },
   { to: dash('/assinatura'), label: 'Assinatura', icon: CreditCard, ownerOnly: true },
 ]
 

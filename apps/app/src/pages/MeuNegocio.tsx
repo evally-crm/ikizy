@@ -1,6 +1,6 @@
-import { useEffect, useState, type FormEvent } from 'react'
-import { useLocation } from 'react-router-dom'
-import { ChevronRight, Clock, Package, Plus, Scissors, Store, Trash2, X } from 'lucide-react'
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { ChevronRight, Plus, Trash2, X } from 'lucide-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAgenda } from '../data/AgendaProvider'
 import { CATEGORIES, computeMath, type Category, type Product, type Service } from '../data/catalog'
@@ -54,17 +54,8 @@ function DetailsCard({ details, canManage, onSave }: { details: BusinessDetails;
   }
 
   return (
-    <Card className="biz__card" >
+    <Panel title="Dados do negócio" sub="Aparecem no seu site e nas mensagens para as clientes.">
       <form onSubmit={submit}>
-        <div className="biz__head" id="dados">
-          <span className="iconcircle" aria-hidden="true">
-            <Store size={18} />
-          </span>
-          <div>
-            <h2 className="card__title">Dados do negócio</h2>
-            <p className="card__sub">Aparecem no seu site e nas mensagens para as clientes.</p>
-          </div>
-        </div>
         <div className="form biz__form">
           <label className="field">
             <span className="field__label">Nome do negócio</span>
@@ -104,6 +95,22 @@ function DetailsCard({ details, canManage, onSave }: { details: BusinessDetails;
           </div>
         )}
       </form>
+    </Panel>
+  )
+}
+
+/** uma seção por vez: título, explicação e (se houver) o botão principal à direita */
+function Panel({ title, sub, action, children }: { title: string; sub?: string; action?: ReactNode; children: ReactNode }) {
+  return (
+    <Card className="biz__panel">
+      <div className="biz__panelhead">
+        <div>
+          <h2 className="card__title">{title}</h2>
+          {sub && <p className="card__sub">{sub}</p>}
+        </div>
+        {action}
+      </div>
+      {children}
     </Card>
   )
 }
@@ -281,12 +288,23 @@ function ProductDialog({
   )
 }
 
-/** /dashboard/negocio: tudo que é do negócio (dados, horário, serviços, custos), num lugar só */
+const TABS = [
+  { id: 'dados', label: 'Dados' },
+  { id: 'horario', label: 'Horário' },
+  { id: 'servicos', label: 'Serviços' },
+  { id: 'custos', label: 'Materiais' },
+] as const
+type TabId = (typeof TABS)[number]['id']
+
+/** /dashboard/negocio: tudo que é do negócio (dados, horário, serviços, custos), uma seção por vez em abas */
 export default function MeuNegocio() {
   const { salon } = useAuth()
   const { professionals, workingHours, reload: reloadAgenda } = useAgenda()
   const biz = useBusiness()
-  const { hash } = useLocation()
+  const { hash, state } = useLocation()
+  const navigate = useNavigate()
+  // a aba fica no endereço (#servicos): os atalhos dos primeiros passos e o voltar do navegador funcionam
+  const tab: TabId = TABS.find((t) => hash === '#' + t.id)?.id ?? 'dados'
   const canManage = !salon || salon.role === 'owner' || salon.role === 'manager'
   const [editingHours, setEditingHours] = useState(false)
   const [service, setService] = useState<Service | 'new' | null>(null)
@@ -300,12 +318,11 @@ export default function MeuNegocio() {
     return () => clearTimeout(t)
   }, [toast])
 
-  // atalhos (#horario, #servicos, #custos) levam direto à seção, inclusive a partir dos primeiros passos
+  // vindo dos primeiros passos (#horario), já abre a edição do horário; trocar de aba pelo menu não abre
   useEffect(() => {
-    if (!hash || biz.loading) return
-    document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    if (hash === '#horario' && canManage) setEditingHours(true)
-  }, [hash, biz.loading, canManage])
+    if (biz.loading || hash !== '#horario' || !canManage) return
+    if (!(state as { tab?: boolean } | null)?.tab) setEditingHours(true)
+  }, [hash, state, biz.loading, canManage])
 
   // a agenda guarda a lista de serviços para marcar horário: atualiza depois de mexer aqui
   const afterServices = (message: string | null, ok: string) => {
@@ -342,136 +359,141 @@ export default function MeuNegocio() {
           Carregando…
         </p>
       ) : (
-        <div className="biz__grid">
-          <DetailsCard details={biz.details} canManage={canManage} onSave={biz.saveDetails} />
-
-          {/* horário de atendimento */}
-          <Card className="biz__card">
-            <div className="biz__head" id="horario">
-              <span className="iconcircle" aria-hidden="true">
-                <Clock size={18} />
-              </span>
-              <div>
-                <h2 className="card__title">Horário de atendimento</h2>
-                <p className="card__sub">O site só oferece horários dentro dele; a agenda mostra o resto hachurado.</p>
-              </div>
+        <>
+          <div className="biz__tabs">
+            <div className="seg" role="tablist" aria-label="Seções do negócio">
+              {TABS.map((t) => {
+                const count = t.id === 'servicos' ? biz.services.length : t.id === 'custos' ? biz.products.length : null
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={tab === t.id}
+                    onClick={() => navigate({ hash: '#' + t.id }, { replace: true, state: { tab: true } })}
+                  >
+                    {t.label}
+                    {count ? <small className="biz__count">{count}</small> : null}
+                  </button>
+                )
+              })}
             </div>
-            {professionals.length === 0 ? (
-              <p className="card__sub">Cadastre quem atende na agenda para definir o horário.</p>
-            ) : (
-              <ul className="biz__list">
-                {professionals.map((p) => {
-                  const lines = summarizeHours(workingHours[p.id])
-                  return (
-                    <li key={p.id} className="biz__item biz__item--static">
-                      <span className="biz__item-text">
-                        <strong>{p.name}</strong>
-                        <small>{lines.length ? lines.join(' · ') : 'Ainda não definido'}</small>
-                      </span>
-                    </li>
-                  )
-                })}
-              </ul>
-            )}
-            {canManage && professionals.length > 0 && (
-              <div className="biz__actions">
-                <Button variant="light" onClick={() => setEditingHours(true)}>
-                  Editar horário
-                </Button>
-              </div>
-            )}
-          </Card>
+          </div>
 
-          {/* serviços */}
-          <Card className="biz__card biz__card--wide">
-            <div className="biz__head" id="servicos">
-              <span className="iconcircle" aria-hidden="true">
-                <Scissors size={18} />
-              </span>
-              <div>
-                <h2 className="card__title">Serviços</h2>
-                <p className="card__sub">
-                  {biz.services.length === 0
-                    ? 'Nenhum serviço ainda.'
-                    : `${biz.services.length} ${biz.services.length === 1 ? 'serviço' : 'serviços'}${unpriced ? ` · ${unpriced} sem preço` : ''}`}
-                  . Foto e o que aparece no site ficam no Meu site.
-                </p>
-              </div>
-              {canManage && (
-                <Button size="sm" onClick={() => setService('new')} className="biz__add">
-                  <Plus size={16} aria-hidden="true" /> Novo
-                </Button>
-              )}
-            </div>
-            {CATEGORIES.filter((c) => biz.services.some((s) => s.category === c)).map((cat) => (
-              <div key={cat} className="biz__group">
-                <p className="biz__group-title">{cat}</p>
+          {tab === 'dados' && <DetailsCard details={biz.details} canManage={canManage} onSave={biz.saveDetails} />}
+
+          {tab === 'horario' && (
+            <Panel
+              title="Horário de atendimento"
+              sub="O site só oferece horários dentro dele; a agenda mostra o resto hachurado."
+              action={
+                canManage && professionals.length > 0 ? (
+                  <Button size="sm" onClick={() => setEditingHours(true)}>
+                    Editar horário
+                  </Button>
+                ) : null
+              }
+            >
+              {professionals.length === 0 ? (
+                <p className="card__sub">Cadastre quem atende na agenda para definir o horário.</p>
+              ) : (
                 <ul className="biz__list">
-                  {biz.services
-                    .filter((s) => s.category === cat)
-                    .map((s) => {
-                      const m = computeMath(s, biz.services, biz.products)
-                      return (
-                        <li key={s.id}>
-                          <button type="button" className="biz__item" disabled={!canManage} onClick={() => setService(s)}>
-                            <span className="biz__item-text">
-                              <strong>{s.name}</strong>
-                              <small>
-                                {formatDuration(s.duration)}
-                                {s.productId && s.price > 0 ? ` · sobra ${short(m.margin)} (${m.marginPct}%)` : ''}
-                              </small>
-                            </span>
-                            {s.price > 0 ? <span className="biz__price">{short(s.price)}</span> : <span className="badge badge--pendente">Sem preço</span>}
-                            {canManage && <ChevronRight size={16} aria-hidden="true" />}
-                          </button>
-                        </li>
-                      )
-                    })}
+                  {professionals.map((p) => {
+                    const lines = summarizeHours(workingHours[p.id])
+                    return (
+                      <li key={p.id} className="biz__item biz__item--static">
+                        <span className="biz__item-text">
+                          <strong>{p.name}</strong>
+                          <small>{lines.length ? lines.join(' · ') : 'Ainda não definido'}</small>
+                        </span>
+                      </li>
+                    )
+                  })}
                 </ul>
-              </div>
-            ))}
-          </Card>
-
-          {/* custos de material */}
-          <Card className="biz__card">
-            <div className="biz__head" id="custos">
-              <span className="iconcircle" aria-hidden="true">
-                <Package size={18} />
-              </span>
-              <div>
-                <h2 className="card__title">Custos de material</h2>
-                <p className="card__sub">
-                  Só para você: entram no lucro do Financeiro e na sobra de cada serviço. {totalSpend > 0 && `Total ${short(totalSpend)} por mês.`}
-                </p>
-              </div>
-              {canManage && (
-                <Button size="sm" variant="light" onClick={() => setProduct('new')} className="biz__add">
-                  <Plus size={16} aria-hidden="true" /> Novo
-                </Button>
               )}
-            </div>
-            {biz.products.length === 0 ? (
-              <p className="card__sub">Nenhum material cadastrado.</p>
-            ) : (
-              <ul className="biz__list">
-                {biz.products.map((p) => (
-                  <li key={p.id}>
-                    <button type="button" className="biz__item" disabled={!canManage} onClick={() => setProduct(p)}>
-                      <span className="biz__item-text">
-                        <strong>{p.name}</strong>
-                        <small>
-                          Usado em {biz.services.filter((s) => s.productId === p.id).length} serviço(s)
-                        </small>
-                      </span>
-                      <span className="biz__price">{short(p.monthlySpend)}/mês</span>
-                      {canManage && <ChevronRight size={16} aria-hidden="true" />}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Card>
-        </div>
+            </Panel>
+          )}
+
+          {tab === 'servicos' && (
+            <Panel
+              title="Serviços"
+              sub={
+                (biz.services.length === 0
+                  ? 'Nenhum serviço ainda'
+                  : `${biz.services.length} ${biz.services.length === 1 ? 'serviço' : 'serviços'}${unpriced ? ` · ${unpriced} sem preço` : ''}`) +
+                '. Foto e o que aparece no site ficam no Meu site.'
+              }
+              action={
+                canManage ? (
+                  <Button size="sm" onClick={() => setService('new')}>
+                    <Plus size={16} aria-hidden="true" /> Novo serviço
+                  </Button>
+                ) : null
+              }
+            >
+              {CATEGORIES.filter((c) => biz.services.some((s) => s.category === c)).map((cat) => (
+                <div key={cat} className="biz__group">
+                  <p className="biz__group-title">{cat}</p>
+                  <ul className="biz__list">
+                    {biz.services
+                      .filter((s) => s.category === cat)
+                      .map((s) => {
+                        const m = computeMath(s, biz.services, biz.products)
+                        return (
+                          <li key={s.id}>
+                            <button type="button" className="biz__item" disabled={!canManage} onClick={() => setService(s)}>
+                              <span className="biz__item-text">
+                                <strong>{s.name}</strong>
+                                <small>
+                                  {formatDuration(s.duration)}
+                                  {s.productId && s.price > 0 ? ` · sobra ${short(m.margin)} (${m.marginPct}%)` : ''}
+                                </small>
+                              </span>
+                              {s.price > 0 ? <span className="biz__price">{short(s.price)}</span> : <span className="badge badge--pendente">Sem preço</span>}
+                              {canManage && <ChevronRight size={16} aria-hidden="true" />}
+                            </button>
+                          </li>
+                        )
+                      })}
+                  </ul>
+                </div>
+              ))}
+            </Panel>
+          )}
+
+          {tab === 'custos' && (
+            <Panel
+              title="Custos de material"
+              sub={`Só para você: entram no lucro do Financeiro e na sobra de cada serviço.${totalSpend > 0 ? ` Total ${short(totalSpend)} por mês.` : ''}`}
+              action={
+                canManage ? (
+                  <Button size="sm" onClick={() => setProduct('new')}>
+                    <Plus size={16} aria-hidden="true" /> Novo material
+                  </Button>
+                ) : null
+              }
+            >
+              {biz.products.length === 0 ? (
+                <p className="card__sub">Nenhum material cadastrado.</p>
+              ) : (
+                <ul className="biz__list">
+                  {biz.products.map((p) => (
+                    <li key={p.id}>
+                      <button type="button" className="biz__item" disabled={!canManage} onClick={() => setProduct(p)}>
+                        <span className="biz__item-text">
+                          <strong>{p.name}</strong>
+                          <small>Usado em {biz.services.filter((s) => s.productId === p.id).length} serviço(s)</small>
+                        </span>
+                        <span className="biz__price">{short(p.monthlySpend)}/mês</span>
+                        {canManage && <ChevronRight size={16} aria-hidden="true" />}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Panel>
+          )}
+        </>
       )}
 
       {editingHours && <WorkingHoursDialog onClose={() => setEditingHours(false)} notify={setToast} />}

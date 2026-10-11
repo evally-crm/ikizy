@@ -1358,36 +1358,65 @@
 }
 
 /* ---------- Meu negócio ---------- */
-.biz__grid {
-  display: grid;
-  gap: 16px;
+/* abas no topo e uma seção por vez, num painel só */
+.biz__tabs {
   margin-top: 18px;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
-@media (min-width: 1024px) {
-  .biz__grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    align-items: start;
+.biz__tabs::-webkit-scrollbar {
+  display: none;
+}
+.biz__tabs .seg {
+  width: max-content;
+}
+.biz__count {
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: var(--radius-pill);
+  background: rgba(14, 13, 13, 0.07);
+  font-size: 11px;
+  font-weight: 500;
+}
+.seg button[aria-selected='true'] .biz__count {
+  background: rgba(255, 255, 255, 0.2);
+}
+@media (max-width: 480px) {
+  .biz__tabs .seg button {
+    padding-inline: 10px;
+    font-size: 14px;
   }
-  .biz__card--wide {
-    grid-row: span 2;
+  .biz__count {
+    margin-left: 4px;
+    padding: 0 6px;
   }
 }
-.biz__card {
+.biz__panel {
   display: grid;
-  gap: 14px;
+  gap: 20px;
+  max-width: 760px;
+  margin-top: 16px;
 }
-.biz__head {
+.biz__panelhead {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  scroll-margin-top: 90px;
+  justify-content: space-between;
+  gap: 16px;
 }
-.biz__head > div {
+.biz__panelhead > div {
   flex: 1;
   min-width: 0;
 }
-.biz__add {
+.biz__panelhead .btn {
   flex: none;
+}
+@media (max-width: 520px) {
+  .biz__panelhead {
+    flex-direction: column;
+  }
+  .biz__panelhead .btn {
+    align-self: stretch;
+  }
 }
 .biz__form {
   display: grid;
@@ -1404,7 +1433,7 @@
 }
 .biz__actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
   margin-top: 4px;
 }
 .biz__group {
