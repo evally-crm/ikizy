@@ -202,61 +202,57 @@ const faqSchema = {
 
   <!-- PLANOS -->
   <section id="precos" class="section container" aria-labelledby="price-title">
+    <!-- planos: título curto e chave à esquerda; lista de escolha (como num app) e um botão só à direita -->
     <div class="pricing">
       <div class="pricing__head">
-        <p class="eyebrow">Planos</p>
-        <h2 id="price-title" class="h2">Um plano para o <em>tamanho</em> do seu negócio</h2>
-        <p class="lead">Todos os planos começam com {TRIAL_DAYS} dias grátis.</p>
+        <h2 id="price-title" class="pricing__title"><span>Escolha</span> seu plano</h2>
         <div class="toggle" data-toggle>
           <button type="button" class="toggle__label is-active" tabindex="-1" data-period="1">Mensal</button>
           <button type="button" role="switch" aria-checked="false" aria-label="Ver preços do plano trimestral" class="toggle__switch" data-switch>
             <span aria-hidden="true"></span>
           </button>
           <button type="button" class="toggle__label" tabindex="-1" data-period="3">Trimestral</button>
-          <span class="toggle__off">Economize {PIX_DISCOUNT_PCT[3]}%</span>
         </div>
+        <ul class="perks">
+          <li>
+            <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="4" width="14" height="13" rx="3" /><path d="M3 8h14M7 2v4M13 2v4" /></svg>
+            Agenda, clientes e financeiro num lugar só
+          </li>
+          <li>
+            <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7" /><path d="M3 10h14M10 3c2 2.2 2 11.8 0 14M10 3c-2 2.2-2 11.8 0 14" /></svg>
+            Site com agendamento online
+          </li>
+          <li>
+            <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="8" width="14" height="9" rx="2" /><path d="M2 8h16M10 8v9M10 8c-1-3-5-4-5-1.5S10 8 10 8zm0 0c1-3 5-4 5-1.5S10 8 10 8z" /></svg>
+            {TRIAL_DAYS} dias grátis, sem cartão
+          </li>
+        </ul>
       </div>
 
       <div class="plans" data-plans data-discount={PIX_DISCOUNT_PCT[3]}>
-        {
-          PLANS.map((p, i) => {
-            // o 1º item é o público do plano; "Tudo do X" vira o título da lista
-            const [audience, ...rest] = p.items
-            const base = rest.find((it) => it.startsWith('Tudo do'))
-            const list = rest.filter((it) => it !== base)
-            const [int, dec] = brlNumber(p.cents).split(',')
-            return (
-              <article class={`plan ${p.hot ? 'plan--hot' : ''}`} data-cents={p.cents}>
-                <div class="plan__top">
-                  <span class="plan__icon" aria-hidden="true">
-                    {Array.from({ length: i + 1 }, () => <i />)}
-                  </span>
-                  {p.hot && <span class="plan__tag">Mais escolhido</span>}
-                </div>
-                <div>
-                  <h3>{p.name}</h3>
-                  <p class="plan__aud">{audience}</p>
-                </div>
-                <div class="plan__swap">
-                  <p class="plan__price">
-                    <small>R$</small>
-                    <span><span data-int>{int}</span><span class="plan__dec" data-dec>,{dec}</span></span>
-                    <small data-unit>/mês</small>
-                  </p>
-                  <p class="plan__equiv" data-equiv>Cobrança mensal: no cartão, renova sozinha todo mês, ou no Pix, mês a mês.</p>
-                  <span class="plan__save" data-save hidden />
-                </div>
-                <div class="plan__inc">
-                  <p class="plan__inc-title">{base ? `${base}, mais:` : 'O que está incluído:'}</p>
-                  <ul class="plan__list">
-                    {list.map((it) => <li>{it}</li>)}
-                  </ul>
-                </div>
-                <a class="btn btn--primary" href={`${LINKS.signup}?plano=${p.id}`}>{p.cta}</a>
-              </article>
-            )
-          })
-        }
+        <fieldset class="plans__list">
+          <legend class="sr-only">Plano</legend>
+          {
+            PLANS.map((p) => (
+              <label class="plan" data-cents={p.cents} data-id={p.id} data-cta-text={p.cta}>
+                <input type="radio" name="plano" value={p.id} checked={p.hot} />
+                <span class="plan__radio" aria-hidden="true" />
+                <span class="plan__info">
+                  <b>{p.name}</b>
+                  <small>{p.line}</small>
+                </span>
+                <span class="plan__price">
+                  <b data-price>R$ {brlNumber(p.cents)}</b>
+                  <small data-unit>/mês</small>
+                </span>
+                {p.hot && <span class="plan__tag">Mais escolhido</span>}
+                <span class="plan__save" data-save hidden />
+              </label>
+            ))
+          }
+        </fieldset>
+        <a class="btn btn--primary plans__cta" href={`${LINKS.signup}?plano=studio`} data-cta>Começar com o Studio</a>
+        <p class="plans__note" data-note>No cartão renova sozinho todo mês, ou no Pix, mês a mês.</p>
       </div>
     </div>
   </section>
@@ -437,7 +433,7 @@ const faqSchema = {
 </script>
 
 <script is:inline id="pricing-script">
-  // interruptor Mensal/Trimestral: troca preço, textos e o destaque de economia de cada plano, com um fade curto
+  // planos: escolher na lista troca o botão; o interruptor Mensal/Trimestral troca preços e o selo de economia
   (() => {
     const toggle = document.querySelector('[data-toggle]')
     const plans = document.querySelector('[data-plans]')
@@ -445,12 +441,18 @@ const faqSchema = {
     const pct = Number(plans.dataset.discount)
     const num = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     const brl = (c) => 'R$ ' + num.format(c / 100)
-    // preço grande: inteiro em preto e os centavos em cinza
-    const setPrice = (plan, c) => {
-      const [int, dec] = num.format(c / 100).split(',')
-      plan.querySelector('[data-int]').textContent = int
-      plan.querySelector('[data-dec]').textContent = ',' + dec
+    const cta = plans.querySelector('[data-cta]')
+    const note = plans.querySelector('[data-note]')
+    const signup = cta.getAttribute('href').split('?')[0]
+
+    function select() {
+      const checked = plans.querySelector('input:checked')
+      const plan = checked.closest('[data-id]')
+      cta.textContent = plan.dataset.ctaText
+      cta.href = signup + '?plano=' + plan.dataset.id
     }
+    plans.addEventListener('change', select)
+    select()
 
     function render(months) {
       plans.querySelectorAll('[data-cents]').forEach((plan) => {
@@ -459,23 +461,15 @@ const faqSchema = {
         // mesmo cálculo da cobrança (pixAmountCents): arredonda o total do período para o centavo
         const total = Math.round((full * (100 - pct)) / 100)
         const save = plan.querySelector('[data-save]')
-        const eq = plan.querySelector('[data-equiv]')
-        if (months === 1) {
-          setPrice(plan, cents)
-          plan.querySelector('[data-unit]').textContent = '/mês'
-          eq.textContent = 'Cobrança mensal: no cartão, renova sozinha todo mês, ou no Pix, mês a mês.'
-          save.hidden = true
-          return
-        }
-        setPrice(plan, total)
-        plan.querySelector('[data-unit]').textContent = '/3 meses'
-        eq.textContent = ''
-        const old = document.createElement('s')
-        old.textContent = brl(full)
-        eq.append(old, ' Equivale a ' + brl(Math.round(total / 3)) + '/mês. Pago no Pix, de uma vez, pelos 3 meses; não renova sozinho.')
+        plan.querySelector('[data-price]').textContent = brl(months === 1 ? cents : total)
+        plan.querySelector('[data-unit]').textContent = months === 1 ? '/mês' : '/3 meses'
         save.textContent = 'Economize ' + brl(full - total)
-        save.hidden = false
+        save.hidden = months === 1
       })
+      note.textContent =
+        months === 1
+          ? 'No cartão renova sozinho todo mês, ou no Pix, mês a mês.'
+          : 'Pago no Pix, de uma vez, pelos 3 meses, com ' + pct + '% de desconto. Não renova sozinho.'
     }
 
     const sw = toggle.querySelector('[data-switch]')
@@ -485,7 +479,6 @@ const faqSchema = {
       period = months
       sw.setAttribute('aria-checked', months === 3 ? 'true' : 'false')
       toggle.querySelectorAll('[data-period]').forEach((b) => b.classList.toggle('is-active', Number(b.dataset.period) === months))
-      plans.classList.toggle('is-quarterly', months === 3)
       plans.classList.add('is-swapping')
       setTimeout(() => {
         render(months)

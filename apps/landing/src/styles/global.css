@@ -203,6 +203,31 @@ em {
 .section {
   padding: clamp(40px, 6vw, 84px) 0;
 }
+/* seções aparecem subindo de leve ao entrar na tela (a classe reveal só é posta pelo script, então sem JS tudo aparece) */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+/* celular: cada seção tem pelo menos a altura da tela, com o conteúdo no meio, e a rolagem encaixa no começo delas */
+@media (max-width: 899px) {
+  html:has(body.is-home) {
+    scroll-snap-type: y proximity;
+    scroll-padding-top: 0;
+  }
+  main > section {
+    min-height: 100svh;
+    align-content: center;
+    scroll-snap-align: start;
+  }
+  .you {
+    justify-content: center;
+  }
+}
 .h1 {
   font-size: clamp(40px, 7vw, 84px);
 }
@@ -345,17 +370,53 @@ em {
   color: var(--ink-900);
   cursor: pointer;
   list-style: none;
-  transition: background-color 0.15s, transform 0.2s;
+  transition: background-color 0.2s, color 0.2s;
 }
 .menu summary:hover {
   background: rgba(14, 13, 13, 0.06);
 }
-.menu[open] summary {
-  transform: rotate(45deg);
+.menu.is-open summary {
+  background: var(--ink-900);
+  color: var(--white);
 }
 .menu summary::-webkit-details-marker {
   display: none;
 }
+/* ícone: os pontinhos encolhem indo para o meio e o ✕ se desenha no lugar */
+.menu__icon circle {
+  fill: currentColor;
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 0.3s cubic-bezier(0.65, 0, 0.35, 1), opacity 0.2s;
+}
+.menu__icon path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-dasharray: 16;
+  stroke-dashoffset: 16;
+  transition: stroke-dashoffset 0.3s cubic-bezier(0.65, 0, 0.35, 1) 0.08s;
+}
+.menu.is-open .menu__icon circle {
+  opacity: 0;
+}
+.menu.is-open .menu__icon circle:nth-of-type(1) {
+  transform: translate(4.5px, 4.5px) scale(0.2);
+}
+.menu.is-open .menu__icon circle:nth-of-type(2) {
+  transform: translate(-4.5px, 4.5px) scale(0.2);
+}
+.menu.is-open .menu__icon circle:nth-of-type(3) {
+  transform: translate(4.5px, -4.5px) scale(0.2);
+}
+.menu.is-open .menu__icon circle:nth-of-type(4) {
+  transform: translate(-4.5px, -4.5px) scale(0.2);
+}
+.menu.is-open .menu__icon path {
+  stroke-dashoffset: 0;
+}
+/* caixinha: cresce em círculo a partir do botão, e os links entram um de cada vez */
 .menu__panel {
   position: absolute;
   top: calc(100% + 10px);
@@ -368,6 +429,12 @@ em {
   border-radius: 24px;
   background: var(--white);
   box-shadow: 0 24px 50px -20px rgba(0, 0, 0, 0.3);
+  clip-path: circle(0 at calc(100% - 22px) -32px);
+  transition: clip-path 0.22s cubic-bezier(0.65, 0, 0.35, 1);
+}
+.menu.is-open .menu__panel {
+  clip-path: circle(150% at calc(100% - 22px) -32px);
+  transition-duration: 0.45s;
 }
 .menu__panel a {
   display: flex;
@@ -375,6 +442,14 @@ em {
   min-height: 48px;
   padding: 0 16px;
   border-radius: var(--radius-md);
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.15s, transform 0.15s, background-color 0.15s;
+}
+.menu.is-open .menu__panel a {
+  opacity: 1;
+  transform: none;
+  transition: opacity 0.3s ease calc(0.1s + var(--i) * 0.04s), transform 0.3s ease calc(0.1s + var(--i) * 0.04s), background-color 0.15s;
 }
 .menu__panel a:hover {
   background: var(--gray-100);
@@ -387,6 +462,15 @@ em {
 }
 .menu__panel .btn:hover {
   background: var(--ink-700);
+}
+@media (prefers-reduced-motion: reduce) {
+  .menu__icon circle,
+  .menu__icon path,
+  .menu__panel,
+  .menu__panel a,
+  .menu.is-open .menu__panel a {
+    transition: none;
+  }
 }
 .header__cta {
   display: none;
@@ -1109,36 +1193,53 @@ em {
   color: var(--ink-500);
 }
 
-/* ---------- planos: faixa cinza-clara, cartões brancos e toggle mensal/trimestral ---------- */
+/* ---------- planos: título curto e chave à esquerda, lista de escolha e um botão só à direita ---------- */
 .pricing {
-  padding: clamp(28px, 5vw, 64px) clamp(14px, 4vw, 56px);
+  display: grid;
+  gap: 28px;
+  padding: clamp(24px, 5vw, 64px) clamp(16px, 4vw, 56px);
   border-radius: var(--radius-lg);
   background: var(--gray-100);
 }
-/* título e interruptor centralizados acima dos cartões */
+@media (min-width: 900px) {
+  .pricing {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    align-items: center;
+    gap: 56px;
+  }
+}
 .pricing__head {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: clamp(24px, 4vw, 44px);
-  text-align: center;
+  align-items: flex-start;
+  gap: 22px;
 }
-.pricing__head .toggle {
-  margin-top: 14px;
+/* título em duas linhas: a primeira cinza, a segunda preta */
+.pricing__title {
+  font-size: clamp(40px, 6vw, 76px);
+  font-weight: 400;
+  line-height: 0.98;
+  letter-spacing: -0.05em;
+  color: var(--ink-900);
+}
+.pricing__title span {
+  display: block;
+  color: var(--gray-400);
 }
 .toggle {
   display: inline-flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  background: var(--white);
 }
 .toggle__label {
-  padding: 4px 2px;
+  padding: 2px;
   border: 0;
   background: none;
   font: inherit;
-  font-size: 15px;
+  font-size: 13px;
   color: var(--ink-500);
   cursor: pointer;
   transition: color 0.2s;
@@ -1146,12 +1247,12 @@ em {
 .toggle__label.is-active {
   color: var(--ink-900);
 }
-/* interruptor: trilho preto e bolinha branca que desliza para o trimestral */
+/* interruptor pequeno: trilho preto e bolinha branca que desliza para o trimestral */
 .toggle__switch {
   position: relative;
   flex: none;
-  width: 52px;
-  height: 30px;
+  width: 34px;
+  height: 20px;
   padding: 0;
   border: 0;
   border-radius: var(--radius-pill);
@@ -1160,186 +1261,185 @@ em {
 }
 .toggle__switch span {
   position: absolute;
-  top: 4px;
-  left: 4px;
-  width: 22px;
-  height: 22px;
+  top: 3px;
+  left: 3px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   background: var(--white);
   transition: transform 0.25s ease;
 }
 .toggle__switch[aria-checked='true'] span {
-  transform: translateX(22px);
+  transform: translateX(14px);
 }
 .toggle__switch:focus-visible {
   outline: 2px solid var(--wine);
   outline-offset: 3px;
 }
-.toggle__off {
-  padding: 5px 12px;
-  border-radius: 8px;
-  background: rgba(128, 5, 19, 0.1);
-  color: var(--wine);
-  font-size: 13px;
-  font-weight: 500;
+/* três vantagens com ícone de traço */
+.perks {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
+.perks li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  color: var(--ink-700);
+}
+.perks svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: var(--ink-900);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* lista de escolha: cartões brancos com bolinha, nome + linha à esquerda e preço à direita */
 .plans {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 14px;
 }
-@media (min-width: 900px) {
-  .plans {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-/* cartão branco, sem borda: ícone, nome, preço, linha, o que inclui e o botão */
-.plan {
+.plans__list {
   display: flex;
   flex-direction: column;
-  gap: 22px;
-  padding: 28px;
-  border-radius: var(--radius-lg);
-  background: var(--white);
-  box-shadow: 0 1px 2px rgba(14, 13, 13, 0.04), 0 12px 32px -18px rgba(14, 13, 13, 0.18);
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  border: 0;
 }
-.plan__top {
+.plan {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 20px;
+  border: 1.5px solid transparent;
+  border-radius: 20px;
+  background: var(--white);
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.2s;
+}
+.plan:hover {
+  transform: translateY(-1px);
+}
+.plan input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.plan__radio {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1.5px solid var(--gray-300);
+  border-radius: 50%;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+.plan__info {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 8px;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
-/* ícone: um quadradinho escuro com 1, 2 ou 3 pontos (Solo, Studio, Salão) */
-.plan__icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  width: 40px;
-  height: 40px;
-  border-radius: 11px;
-  background: var(--ink-900);
-}
-.plan__icon i {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--white);
-}
-.plan--hot .plan__icon i:last-child {
-  background: var(--red);
-}
-.plan__tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 12px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-pill);
-  font-size: 12px;
-  color: var(--ink-900);
-}
-.plan__tag::before {
-  content: '';
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--wine);
-}
-.plan h3 {
-  font-size: 20px;
+.plan__info b {
+  font-size: 18px;
   font-weight: 500;
   letter-spacing: -0.02em;
+  color: var(--ink-900);
 }
-.plan__aud {
-  margin-top: 4px;
-  font-size: 14px;
+.plan__info small,
+.plan__price small {
+  font-size: 12px;
   color: var(--ink-500);
-}
-.plan__swap {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 10px;
-  padding-bottom: 22px;
-  border-bottom: 1px solid var(--line);
-  transition: opacity 0.16s, transform 0.16s;
-}
-.plans.is-swapping .plan__swap {
-  opacity: 0;
-  transform: translateY(4px);
 }
 .plan__price {
   display: flex;
-  align-items: baseline;
-  gap: 6px;
-  font-size: clamp(44px, 4.6vw, 58px);
-  font-weight: 500;
-  letter-spacing: -0.05em;
-  line-height: 1;
-  color: var(--ink-900);
-}
-.plan__dec {
-  color: var(--gray-300);
-}
-.plan__price small {
-  font-size: 15px;
-  font-weight: 400;
-  letter-spacing: 0;
-  color: var(--ink-500);
-}
-.plan__equiv {
-  min-height: 3em;
-  font-size: 13px;
-  color: var(--ink-500);
-}
-.plan__equiv s {
-  margin-right: 2px;
-  opacity: 0.7;
-}
-.plan__save {
-  padding: 3px 12px;
-  border-radius: var(--radius-pill);
-  background: rgba(128, 5, 19, 0.08);
-  font-size: 12px;
-  color: var(--wine);
-}
-.plan__inc {
-  margin-bottom: auto;
-}
-.plan__inc-title {
-  margin-bottom: 12px;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--ink-900);
-}
-.plan__list {
-  display: flex;
   flex-direction: column;
-  gap: 10px;
+  align-items: flex-end;
+  transition: opacity 0.16s;
 }
-.plan__list li {
-  display: flex;
-  gap: 10px;
-  font-size: 14px;
-  color: var(--ink-700);
+.plan__price b {
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  color: var(--ink-900);
 }
-/* marca de "incluído": um visto fino */
-.plan__list li::before {
+.plans.is-swapping .plan__price,
+.plans.is-swapping .plan__save {
+  opacity: 0;
+}
+/* escolhido: borda preta e bolinha preta com o check */
+.plan:has(input:checked) {
+  border-color: var(--ink-900);
+}
+.plan:has(input:checked) .plan__radio {
+  border-color: var(--ink-900);
+  background: var(--ink-900);
+}
+.plan:has(input:checked) .plan__radio::after {
   content: '';
-  flex: none;
-  width: 10px;
+  width: 9px;
   height: 5px;
-  margin-top: 6px;
-  border-left: 1.5px solid var(--ink-900);
-  border-bottom: 1.5px solid var(--ink-900);
+  margin-top: -2px;
+  border-left: 1.5px solid var(--white);
+  border-bottom: 1.5px solid var(--white);
   transform: rotate(-45deg);
 }
-.plan .btn {
+.plan:has(input:focus-visible) {
+  outline: 2px solid var(--wine);
+  outline-offset: 3px;
+}
+/* selos: "Mais escolhido" pendurado em cima, "Economize" ao lado do nome no trimestral */
+.plan__tag {
+  position: absolute;
+  top: -11px;
+  right: 18px;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--wine);
+  font-size: 11px;
+  color: var(--white);
+}
+.plan__save {
+  grid-column: 2 / -1;
+  justify-self: start;
+  margin-top: -6px;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: rgba(128, 5, 19, 0.08);
+  font-size: 11px;
+  color: var(--wine);
+  transition: opacity 0.16s;
+}
+.plan__save[hidden] {
+  display: none;
+}
+.plans__cta {
   width: 100%;
-  min-height: 48px;
+  min-height: 52px;
+  margin-top: 4px;
+}
+.plans__note {
+  font-size: 12px;
+  text-align: center;
+  color: var(--ink-500);
 }
 @media (prefers-reduced-motion: reduce) {
-  .plan__swap,
+  .plan,
+  .plan__price,
   .toggle__switch span {
     transition: none;
   }
