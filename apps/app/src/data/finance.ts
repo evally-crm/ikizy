@@ -46,8 +46,6 @@ export interface MonthClosing {
   daily: (number | null)[]
 }
 
-export const MONTHLY_GOAL = 30000
-
 const CATEGORIES = [
   { name: 'Unhas', qty: 96, avg: 118 },
   { name: 'Cílios', qty: 48, avg: 176 },
@@ -149,17 +147,3 @@ export function getMonths(today = new Date()): MonthClosing[] {
     }),
   )
 }
-
-/** ocupação média por horário (linhas, 9h–18h) x dia da semana (colunas, seg–sáb), de 0 a 3 */
-export const occupancyHeat: number[][] = [
-  [0, 0, 1, 1, 2, 3],
-  [0, 1, 1, 1, 2, 3],
-  [1, 1, 2, 2, 3, 3],
-  [1, 1, 1, 2, 2, 3],
-  [0, 0, 1, 1, 1, 2],
-  [0, 1, 1, 2, 2, 3],
-  [1, 1, 2, 2, 3, 3],
-  [1, 2, 2, 3, 3, 3],
-  [2, 2, 2, 3, 3, 2],
-  [1, 1, 1, 2, 3, 1],
-]

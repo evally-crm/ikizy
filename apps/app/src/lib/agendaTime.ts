@@ -44,11 +44,34 @@ export function withinHours(list: HourInterval[] | undefined, weekday: number, s
   return list.some((i) => i.weekday === weekday && start >= i.start && start + duration <= i.end)
 }
 
-/** trechos da grade (START_HOUR..END_HOUR) fora do expediente naquele dia; vazio quando não há horário cadastrado */
-export function closedRanges(list: HourInterval[] | undefined, weekday: number): [number, number][] {
+/**
+ * janela da grade, em horas cheias: do primeiro início ao último fim do horário de atendimento cadastrado
+ * (de qualquer dia, para a grade não mudar de tamanho a cada dia), alargada para caber os atendimentos do dia.
+ * Sem nenhum horário cadastrado, vale a grade padrão (START_HOUR..END_HOUR).
+ */
+export function gridWindow(hours: HourInterval[][], dayStarts: { start: number; duration: number }[]) {
+  const all = hours.flat()
+  let from = all.length ? Math.min(...all.map((i) => i.start)) : START_HOUR * 60
+  let to = all.length ? Math.max(...all.map((i) => i.end)) : END_HOUR * 60
+  for (const a of dayStarts) {
+    from = Math.min(from, a.start)
+    to = Math.max(to, a.start + a.duration)
+  }
+  const startHour = Math.max(0, Math.floor(from / 60))
+  const endHour = Math.min(24, Math.max(startHour + 1, Math.ceil(to / 60)))
+  return { startHour, endHour }
+}
+
+/** trechos da grade (de `fromHour` a `toHour`) fora do expediente naquele dia; vazio quando não há horário cadastrado */
+export function closedRanges(
+  list: HourInterval[] | undefined,
+  weekday: number,
+  fromHour: number = START_HOUR,
+  toHour: number = END_HOUR,
+): [number, number][] {
   if (!list || list.length === 0) return []
-  const from = START_HOUR * 60
-  const to = END_HOUR * 60
+  const from = fromHour * 60
+  const to = toHour * 60
   const open = list
     .filter((i) => i.weekday === weekday)
     .sort((a, b) => a.start - b.start)

@@ -3,9 +3,9 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { CalendarPlus, Copy, ExternalLink, Globe, KeyRound, Link2, LogIn, LogOut, RotateCw, Sparkles, UserPlus, UserRoundPlus } from 'lucide-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useSalonInfo } from '../hooks/useSalonInfo'
-import { dash, ROUTES } from '../lib/routes'
+import { agenda, dash, ROUTES } from '../lib/routes'
 import { ContextMenu, type MenuEntry } from './ContextMenu'
-import { navItems } from './layout/nav'
+import { isActive, navItems } from './layout/nav'
 
 const copy = (text: string) => void navigator.clipboard?.writeText(text).catch(() => {})
 const open = (url: string) => window.open(url, '_blank', 'noopener,noreferrer')
@@ -49,7 +49,7 @@ export function AppContextMenu() {
 
       if (pathname.startsWith(ROUTES.dashboard)) {
         entries.push(
-          { kind: 'item', label: 'Novo agendamento', hint: 'N', icon: CalendarPlus, onSelect: () => navigate(dash('/agenda?nova=1')) },
+          { kind: 'item', label: 'Novo agendamento', hint: 'N', icon: CalendarPlus, onSelect: () => navigate(agenda('nova=1')) },
           { kind: 'item', label: 'Nova cliente', hint: 'K', icon: UserRoundPlus, onSelect: () => navigate(dash('/clientes?nova=1')) },
           { kind: 'sep' },
         )
@@ -59,7 +59,7 @@ export function AppContextMenu() {
             label: item.label,
             hint: String(i + 1),
             icon: item.icon,
-            checked: item.to === ROUTES.dashboard ? pathname === item.to : pathname.startsWith(item.to),
+            checked: isActive(item.to, pathname),
             onSelect: () => navigate(item.to),
           }),
         )

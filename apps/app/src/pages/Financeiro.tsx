@@ -6,7 +6,7 @@ import { useAuth } from '../auth/AuthProvider'
 import { type MonthClosing } from '../data/finance'
 import { CARD_FEE_PCT, useFinance, type Expense } from '../data/useFinance'
 import { formatBRL } from '../lib/format'
-import { dash } from '../lib/routes'
+import { agenda } from '../lib/routes'
 import { Link } from 'react-router-dom'
 import { Avatar, Button, Em, Money } from '../components/ui'
 
@@ -553,7 +553,7 @@ export default function Financeiro() {
               ) : (
                 <p className="fhero__line">
                   Entra aqui conforme você conclui atendimentos.{' '}
-                  <Link to={dash('/agenda')} className="fhero__link">
+                  <Link to={agenda()} className="fhero__link">
                     Abrir agenda
                   </Link>
                 </p>
