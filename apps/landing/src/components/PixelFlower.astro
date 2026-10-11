@@ -1,78 +1,133 @@
 ---
 /**
- * flor em símbolos, no mesmo nível de detalhe da boca do início: ponto · + · x · quadradinho · quadrado
+ * flor em símbolos, no mesmo estilo da boca do início: ponto · + · x · quadradinho · quadrado
  * conforme a densidade, cheia no miolo e nas pétalas, esfumando nas bordas, com pó solto em volta.
- * gerada no build (sem animação), então sai sempre igual e fica nítida em qualquer tela.
+ * se mexe de leve como a boca (ondas na textura, pétalas respirando e girando bem devagar).
  */
 interface Props {
   class?: string
 }
 
 const { class: className } = Astro.props
-
-const N = 36 // células por lado
-const STEP = 7 // tamanho da célula, igual ao da boca
-const PETALS = 5
-const c = (N - 1) / 2
-
-const smooth = (a: number, b: number, x: number) => {
-  const k = Math.min(1, Math.max(0, (x - a) / (b - a)))
-  return k * k * (3 - 2 * k)
-}
-const hash = (a: number, b: number) => {
-  const s = Math.sin(a * 12.9898 + b * 78.233) * 43758.5453
-  return s - Math.floor(s)
-}
-
-/** densidade (0..1) da flor: cinco pétalas arredondadas com uma leve curva, cheias no meio e esfumadas na borda */
-function density(dx: number, dy: number) {
-  const r = Math.hypot(dx, dy)
-  const a = Math.atan2(dy, dx) + 0.3 + 0.35 * r
-  const petal = 0.15 + 0.85 * Math.pow(Math.abs(Math.cos((PETALS / 2) * a)), 1.3)
-  const edge = r / petal
-  const body = smooth(1.35, 0.25, edge)
-  const core = smooth(0.2, 0.04, r) * 0.9
-  // nervura mais clara no meio de cada pétala
-  const vein = Math.pow(Math.abs(Math.cos((PETALS / 2) * a)), 40) * smooth(0.15, 0.4, r) * 0.25
-  return Math.min(1, Math.max(body - vein, core))
-}
-
-const m = STEP / 2
-const g = STEP * 0.3
-const squares: string[] = []
-const strokes: string[] = []
-
-for (let row = 0; row < N; row++) {
-  for (let col = 0; col < N; col++) {
-    const x = col * STEP
-    const y = row * STEP
-    const dx = (col - c) / c
-    const dy = (row - c) / c
-    const n = hash(row, col)
-    let d = density(dx, dy)
-    if (d <= 0.03) {
-      // pó solto em volta, como na boca
-      const r = Math.hypot(dx, dy)
-      if (r < 1.4 && n < smooth(1.4, 0.6, r) * 0.45) d = 0.12 + n * 0.35
-      else continue
-    }
-    d += (n - 0.5) * 0.3
-    if (d >= 0.56 && hash(col, row) < 0.45) d = 0.5
-    if (d < 0.1) continue
-    if (d < 0.24) squares.push(`M${x + m - 0.9} ${y + m - 0.9}h1.8v1.8h-1.8z`)
-    else if (d < 0.4) strokes.push(`M${x + m} ${y + m - g}v${2 * g}M${x + m - g} ${y + m}h${2 * g}`)
-    else if (d < 0.56) {
-      const k = g * 0.9
-      strokes.push(`M${x + m - k} ${y + m - k}l${2 * k} ${2 * k}M${x + m + k} ${y + m - k}l${-2 * k} ${2 * k}`)
-    } else if (d < 0.72) squares.push(`M${x + m - g} ${y + m - g}h${2 * g}v${2 * g}h${-2 * g}z`)
-    else squares.push(`M${x + 1} ${y + 1}h${STEP - 2}v${STEP - 2}h${-(STEP - 2)}z`)
-  }
-}
-
-const size = N * STEP
 ---
 
-<svg class={className} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
-  <path d={squares.join('')} fill="currentColor" />
-  <path d={strokes.join('')} fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="square" />
-</svg>
+<canvas class:list={['pixel-flower', className]} aria-hidden="true" data-pixel-flower></canvas>
+
+<script>
+  const STEP = 4 // tamanho da célula em px
+  const PETALS = 5
+
+  const smooth = (a: number, b: number, x: number) => {
+    const k = Math.min(1, Math.max(0, (x - a) / (b - a)))
+    return k * k * (3 - 2 * k)
+  }
+  const hash = (a: number, b: number) => {
+    const s = Math.sin(a * 12.9898 + b * 78.233) * 43758.5453
+    return s - Math.floor(s)
+  }
+  const waveAt = (x: number, y: number, t: number) =>
+    (Math.sin(x * 0.05 + Math.sin(y * 0.04 + t * 0.6) * 2.4 + t) + Math.sin(y * 0.06 - x * 0.03 + 1.7 - t * 0.8) * 0.8 + 1.8) / 3.6
+
+  /** densidade (0..1): cinco pétalas arredondadas com uma leve curva, cheias no meio e esfumadas na borda */
+  function density(dx: number, dy: number, t: number) {
+    const r = Math.hypot(dx, dy)
+    const a = Math.atan2(dy, dx) + 0.3 + 0.35 * r + t * 0.05
+    const lobe = Math.abs(Math.cos((PETALS / 2) * a))
+    const petal = (0.15 + 0.85 * Math.pow(lobe, 1.3)) * (1 + Math.sin(t * 0.7) * 0.04)
+    const body = smooth(1.35, 0.25, r / petal)
+    const core = smooth(0.2, 0.04, r) * 0.9
+    // nervura mais clara no meio de cada pétala
+    const vein = Math.pow(lobe, 40) * smooth(0.15, 0.4, r) * 0.25
+    return Math.min(1, Math.max(body - vein, core))
+  }
+
+  function glyph(ctx: CanvasRenderingContext2D, x: number, y: number, d: number, mix: number) {
+    const m = STEP / 2
+    const g = STEP * 0.3
+    if (d < 0.1) return
+    if (d >= 0.56 && mix < 0.45) d = 0.5
+    if (d < 0.24) return ctx.fillRect(x + m - 0.5, y + m - 0.5, 1, 1)
+    ctx.beginPath()
+    if (d < 0.4) {
+      ctx.moveTo(x + m, y + m - g)
+      ctx.lineTo(x + m, y + m + g)
+      ctx.moveTo(x + m - g, y + m)
+      ctx.lineTo(x + m + g, y + m)
+      return ctx.stroke()
+    }
+    if (d < 0.56) {
+      const k = g * 0.9
+      ctx.moveTo(x + m - k, y + m - k)
+      ctx.lineTo(x + m + k, y + m + k)
+      ctx.moveTo(x + m + k, y + m - k)
+      ctx.lineTo(x + m - k, y + m + k)
+      return ctx.stroke()
+    }
+    if (d < 0.72) return ctx.fillRect(x + m - g, y + m - g, g * 2, g * 2)
+    ctx.fillRect(x + 0.5, y + 0.5, STEP - 1, STEP - 1)
+  }
+
+  function start(canvas: HTMLCanvasElement) {
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    const still = matchMedia('(prefers-reduced-motion: reduce)').matches
+    let visible = true
+    let last = 0
+
+    const draw = (t: number) => {
+      const dpr = Math.min(devicePixelRatio || 1, 2)
+      const { width, height } = canvas.getBoundingClientRect()
+      if (!width || !height) return
+      const w = Math.round(width * dpr)
+      const h = Math.round(height * dpr)
+      if (canvas.width !== w || canvas.height !== h) {
+        canvas.width = w
+        canvas.height = h
+      }
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      ctx.clearRect(0, 0, width, height)
+      ctx.lineWidth = 0.9
+      ctx.fillStyle = ctx.strokeStyle = getComputedStyle(canvas).color
+
+      // a flor passa um pouco das bordas, como na referência
+      const S = Math.min(width, height) * 0.46
+      const cx = width / 2
+      const cy = height / 2
+      for (let row = 0, y = 0; y < height; row++, y += STEP) {
+        for (let col = 0, x = 0; x < width; col++, x += STEP) {
+          const dx = (x + STEP / 2 - cx) / S + Math.sin(y * 0.08 + t * 0.8) * 0.01
+          const dy = (y + STEP / 2 - cy) / S + Math.sin(x * 0.07 - t * 0.6) * 0.01
+          const n = hash(row, col)
+          const wave = waveAt(x, y, t)
+          let d = density(dx, dy, t)
+          if (d <= 0.03) {
+            // pó solto em volta
+            const r = Math.hypot(dx, dy)
+            if (r < 1.4 && n < smooth(1.4, 0.6, r) * 0.45 * (0.6 + wave * 0.6)) d = 0.12 + n * 0.35
+            else continue
+          } else {
+            d = d * (0.84 + 0.16 * wave)
+          }
+          glyph(ctx, x, y, d + (n - 0.5) * 0.3, hash(col, row))
+        }
+      }
+    }
+
+    if (still) {
+      draw(0)
+      new ResizeObserver(() => draw(0)).observe(canvas)
+      return
+    }
+    new IntersectionObserver((e) => (visible = e[0].isIntersecting)).observe(canvas)
+    const tick = (now: number) => {
+      if (visible && now - last >= 1000 / 30) {
+        last = now
+        draw(now / 1000)
+      }
+      requestAnimationFrame(tick)
+    }
+    requestAnimationFrame(tick)
+  }
+
+  document.querySelectorAll<HTMLCanvasElement>('[data-pixel-flower]').forEach(start)
+</script>
