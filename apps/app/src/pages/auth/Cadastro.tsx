@@ -89,7 +89,6 @@ export default function Cadastro() {
             required
             minLength={2}
             maxLength={80}
-            placeholder="Como as clientes te chamam"
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
@@ -99,7 +98,6 @@ export default function Cadastro() {
             type="email"
             autoComplete="email"
             required
-            placeholder="voce@email.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
