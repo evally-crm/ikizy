@@ -19,7 +19,6 @@ import { WorkingHoursDialog } from '../components/WorkingHoursDialog'
 import { PendingBanner } from '../components/PendingRequests'
 import { DayAgenda } from '../components/DayAgenda'
 import { TodayMessages } from '../components/TodayMessages'
-import { FirstSteps } from '../components/FirstSteps'
 import type { Appointment, AppointmentStatus } from '../types'
 
 const HOUR_H = 72
@@ -582,7 +581,6 @@ export default function Agenda() {
           subLoading ? null : sub && sub.plan !== 'solo' ? <FirstProfessional /> : <SoloProfessional />
         ) : (
           <>
-            <FirstSteps />
             <PendingBanner
               onOpen={(id) => {
                 const a = pending?.find((x) => x.id === id)

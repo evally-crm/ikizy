@@ -5,6 +5,7 @@ import { useAuth } from '../../auth/AuthProvider'
 import { SubscriptionProvider, useSubscription } from '../../billing/SubscriptionProvider'
 import { AgendaProvider } from '../../data/AgendaProvider'
 import BillingBanner from '../BillingBanner'
+import { FirstSteps } from '../FirstSteps'
 import { PendingBell, PendingToast } from '../PendingRequests'
 import { isActive, moreItems, navItems, type NavItem } from './nav'
 import { daysLeft, describeSubscription, isCardTrial, periodEnd } from '../../lib/plans'
@@ -369,6 +370,7 @@ export default function AppShell() {
       </main>
       <BottomNav onAccount={() => setEditing(true)} />
       <PendingToast />
+      <FirstSteps />
       {editing && <ProfileDialog onClose={closeEdit} />}
     </div>
     </AgendaProvider>
