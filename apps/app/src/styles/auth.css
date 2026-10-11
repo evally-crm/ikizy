@@ -146,48 +146,6 @@
   color: var(--brand-700);
 }
 
-/* Google: botão grande antes do formulário (a maioria prefere entrar assim) */
-.auth__google {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  width: 100%;
-  min-height: 56px;
-  margin-top: 6px;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-pill);
-  background: var(--white);
-  color: var(--ink-900);
-  font: inherit;
-  font-size: 15px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: border-color 0.15s;
-}
-.auth__google:hover:not(:disabled) {
-  border-color: var(--ink-900);
-}
-.auth__google:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-.auth__or {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 4px 0 -4px;
-  font-size: 13px;
-  color: var(--ink-500);
-}
-.auth__or::before,
-.auth__or::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--line-strong);
-}
-
 /* pílula social compacta, ao lado do título */
 .auth__social {
   display: inline-flex;
@@ -672,10 +630,6 @@
   .auth__ico {
     background: var(--white);
   }
-}
-.auth__google svg {
-  width: 18px;
-  height: 18px;
 }
 /* cadastro em uma tela: link do site, perguntas curtas */
 .wiz__link {

@@ -75,12 +75,12 @@ export default function Cadastro() {
       <AuthCard
         title={
           <>
-            Crie sua <Em>conta</Em>
+            Criar <Em>conta</Em>
           </>
         }
         subtitle="30 dias grátis, sem cartão. Leva um minuto."
+        aside={<GoogleButton onClick={onGoogle} disabled={busy} />}
       >
-        <GoogleButton wide onClick={onGoogle} disabled={busy} />
         <form className="form" onSubmit={onSubmit}>
           <AuthField
             label="Seu nome"

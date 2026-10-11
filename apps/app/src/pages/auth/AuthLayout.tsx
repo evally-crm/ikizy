@@ -131,19 +131,8 @@ export function AuthSubmit({ label, disabled }: { label: string; disabled?: bool
   )
 }
 
-/** "Continuar com Google": `wide` é o botão grande antes do formulário; sem ele, a pílula pequena ao lado do título */
-export function GoogleButton({ onClick, disabled, wide }: { onClick: () => void; disabled?: boolean; wide?: boolean }) {
-  if (wide) {
-    return (
-      <>
-        <button type="button" className="auth__google" onClick={onClick} disabled={disabled}>
-          <GoogleIcon />
-          Continuar com Google
-        </button>
-        <p className="auth__or">ou com e-mail</p>
-      </>
-    )
-  }
+/** pílula pequena ao lado do título */
+export function GoogleButton({ onClick, disabled }: { onClick: () => void; disabled?: boolean }) {
   return (
     <button type="button" className="auth__social" onClick={onClick} disabled={disabled} aria-label="Continuar com Google">
       <span className="auth__social-ico" aria-hidden="true">
