@@ -172,6 +172,11 @@ Legenda: **Manter** · **Mudar** · **Tirar** · **Novo**
 
 ### 5.1 Agenda (vira a tela inicial)
 
+> **A agenda de hoje não perde nada.** Tudo o que existe continua igual: grade por profissional com as cores de status,
+> calendário do mês, lista do dia, linha do "agora", horário fechado hachurado, menu do botão direito, clicar no horário
+> vago para marcar, janela do atendimento e horário de atendimento. As mudanças abaixo só **acrescentam** (lista no celular,
+> visão de semana, bloqueios, ações rápidas) ou ajustam o que hoje atrapalha (grade fixa 8h–20h, chips no celular).
+
 **Celular — proposta (o 1º atendimento aparece sem rolar):**
 
 ```
