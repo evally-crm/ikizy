@@ -28,7 +28,7 @@ const Badge = ({ children }: { children: ReactNode }) => <span className="badge 
 const longDate = new Intl.DateTimeFormat('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })
 
 export default function Assinatura() {
-  const { sub, state, loading, refresh } = useSubscription()
+  const { sub, state, loading, failed, refresh } = useSubscription()
   const { salon } = useAuth()
   const [params] = useSearchParams()
   const [months, setMonths] = useState<PixMonths>(1)
@@ -37,6 +37,11 @@ export default function Assinatura() {
 
   const isOwner = !salon || salon.role === 'owner'
   const returned = params.get('retorno')
+
+  // ao abrir a tela, relê a assinatura: se a primeira leitura veio vazia, aqui ela se corrige sozinha
+  useEffect(() => {
+    void refresh()
+  }, [refresh])
 
   // ao voltar do Stripe o webhook pode levar alguns segundos: consulta de novo algumas vezes
   useEffect(() => {
@@ -142,7 +147,12 @@ export default function Assinatura() {
 
       {!loading && !sub && (
         <p className="billing-note" role="status">
-          A assinatura ainda não está disponível para o seu negócio. Quando for ativada, você poderá escolher o plano por aqui.
+          {failed
+            ? 'Não conseguimos carregar a sua assinatura agora.'
+            : 'Não encontramos a assinatura do seu negócio.'}{' '}
+          <button type="button" className="textlink" onClick={() => void refresh()}>
+            Tentar de novo
+          </button>
         </p>
       )}
 
