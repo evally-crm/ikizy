@@ -5,9 +5,6 @@ import PixelFlower from '../components/PixelFlower.astro'
 import { CONTACT_EMAIL, CTA, LINKS } from '../lib/site'
 import { PIX_DISCOUNT_PCT, PLANS, TRIAL_DAYS, brlNumber } from '../lib/pricing'
 
-/** etiquetas no canto de cima da coluna do texto (no estilo das legendas que ficavam na boca) */
-const heroTags = ['Agenda online', 'Clientes que voltam', 'Financeiro simples', 'Site do seu negócio']
-
 /** especialidades que passam sem parar abaixo do título do "Para quem é", com "você." a cada volta */
 const crafts = ['lash designers', 'brow designers', 'cabeleireiros(as)', 'nail designers', 'esteticistas', 'maquiadoras']
 
@@ -54,11 +51,8 @@ const faqSchema = {
   <!-- HERO -->
   <section class="hero2" aria-label="Apresentação">
     <div class="hero2__grid">
-      <!-- texto à esquerda como numa capa: etiquetas em cima, título grande, linha com legenda + descrição e o link embaixo -->
+      <!-- texto à esquerda como numa capa: título grande, linha com legenda + descrição e o link embaixo -->
       <div class="hero2__text">
-        <ul class="hero2__tags" aria-label="O que a IKIZY faz">
-          {heroTags.map((t) => <li>{t}</li>)}
-        </ul>
         <div class="hero2__body">
           <h1 class="display">
             <span class="display__main"><span>Gestão</span> <em>simples</em></span>

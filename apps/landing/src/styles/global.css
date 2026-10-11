@@ -458,22 +458,6 @@ em {
   flex-direction: column;
   gap: 20px;
 }
-/* etiquetas no canto de cima, no estilo das legendas da boca */
-.hero2__tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.hero2__tags li {
-  padding: 4px 10px;
-  border-radius: 8px;
-  background: var(--white);
-  font-size: 11px;
-  color: var(--ink-700);
-}
 .display {
   color: var(--ink-900);
   font-weight: 300;
@@ -511,12 +495,15 @@ em {
   font-size: 13px;
   color: var(--ink-500);
 }
-/* desktop, como numa capa: etiquetas no topo, título grande empilhado no meio,
+/* desktop, como numa capa: título grande empilhado no meio,
    legenda + descrição lado a lado e o link no pé; o cadastro fica no ticket, na frente da boca */
 @media (min-width: 900px) {
   .hero2__text {
-    justify-content: space-between;
     padding-top: clamp(12px, 3vh, 32px);
+  }
+  /* título no meio da altura, link no pé */
+  .hero2__body {
+    margin-block: auto;
   }
   .display__main {
     flex-direction: column;
@@ -539,9 +526,6 @@ em {
 }
 /* celular: como uma tela de app — boca em cima, texto centralizado e botão largo embaixo */
 @media (max-width: 899px) {
-  .hero2__tags {
-    display: none;
-  }
   .hero2__text {
     align-items: center;
     text-align: center;
