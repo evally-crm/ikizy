@@ -486,72 +486,44 @@ em {
   font-size: 15px;
   color: var(--ink-500);
 }
-.hero2__text .btn--ghost {
-  margin-top: 4px;
-}
-
-/* ticket de cadastro: duas peças brancas lado a lado (logo + convite) */
-.ticket {
-  position: relative;
-  z-index: 2;
+.hero2__actions {
   display: flex;
-  gap: 4px;
-  width: min(100%, 360px);
-  margin-bottom: 20px;
-}
-.ticket__stub,
-.ticket__body {
-  border-radius: 18px;
-  background: var(--white);
-}
-.ticket__stub {
-  display: flex;
-  flex: none;
-  align-items: center;
-  justify-content: center;
-  width: 112px;
-  background: var(--gray-200);
-  font-size: 24px;
-  font-weight: 500;
-  letter-spacing: -0.06em;
-  color: var(--ink-900);
-}
-.ticket__stub span {
-  color: var(--wine);
-}
-.ticket__body {
-  display: flex;
-  flex: 1;
   flex-direction: column;
   align-items: flex-start;
-  padding: 16px 18px 18px;
+  gap: 14px;
+  margin-top: 4px;
 }
-.ticket__meta {
-  font-size: 11px;
-  line-height: 1.35;
+.hero2__hint {
+  font-size: 13px;
   color: var(--ink-500);
 }
-.ticket__title {
-  margin: 8px 0 16px;
-  font-size: 22px;
-  line-height: 1.05;
-  letter-spacing: -0.03em;
-  color: var(--ink-900);
-}
-/* celular: logo abaixo do texto; desktop: canto inferior direito, por cima da esfera */
-@media (max-width: 899px) {
-  .ticket {
-    order: 1;
-  }
-  .art {
-    order: 2;
-  }
-}
+/* desktop: o cadastro fica no ticket da seção seguinte */
 @media (min-width: 900px) {
-  .ticket {
-    position: absolute;
-    right: 0;
-    bottom: 0;
+  .hero2__signup,
+  .hero2__hint {
+    display: none;
+  }
+}
+/* celular: como uma tela de app — boca em cima (sem o nome), texto centralizado e botão largo embaixo */
+@media (max-width: 899px) {
+  .hero2__text {
+    align-items: center;
+    text-align: center;
+  }
+  .display {
+    align-items: center;
+  }
+  .hero2__note {
+    margin-inline: auto;
+  }
+  .hero2__actions {
+    align-self: stretch;
+    align-items: center;
+    margin-top: 12px;
+  }
+  .hero2__signup {
+    width: 100%;
+    min-height: 52px;
   }
 }
 
@@ -591,10 +563,13 @@ em {
   color: var(--ink-700);
   pointer-events: none;
 }
+/* celular: a boca sobe para cima do texto, sem o nome e sem as legendas */
 @media (max-width: 899px) {
   .art {
-    min-height: 300px;
+    order: -1;
+    min-height: 240px;
   }
+  .art__mark,
   .art__cap {
     display: none;
   }
@@ -710,6 +685,62 @@ em {
 .ui--phone .is-busy {
   background: var(--ink-900);
   color: var(--white);
+}
+
+/* ---------- ticket de cadastro (seção logo abaixo do início, só no desktop) ---------- */
+.ticket-section {
+  display: none;
+}
+@media (min-width: 900px) {
+  .ticket-section {
+    display: flex;
+    justify-content: center;
+    padding-bottom: 0;
+  }
+}
+/* duas peças lado a lado: logo em fundo cinza + convite */
+.ticket {
+  display: flex;
+  gap: 4px;
+  width: 460px;
+}
+.ticket__stub,
+.ticket__body {
+  border-radius: 20px;
+  background: var(--gray-100);
+}
+.ticket__stub {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 150px;
+  background: var(--gray-200);
+  font-size: 30px;
+  font-weight: 500;
+  letter-spacing: -0.06em;
+  color: var(--ink-900);
+}
+.ticket__stub span {
+  color: var(--wine);
+}
+.ticket__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 22px 24px 24px;
+}
+.ticket__meta {
+  font-size: 12px;
+  color: var(--ink-500);
+}
+.ticket__title {
+  margin: 10px 0 20px;
+  font-size: 26px;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  color: var(--ink-900);
 }
 
 /* ---------- para quem é: frase, texto e uma linha de especialidades ---------- */

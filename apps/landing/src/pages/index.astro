@@ -60,18 +60,13 @@ const faqSchema = {
         <p class="hero2__note">
           Agenda, clientes, financeiro e o site do seu negócio em um só lugar. Menos tempo organizando, mais tempo atendendo.
         </p>
-        <a class="btn btn--ghost" href="#como-funciona">Ver como funciona</a>
-      </div>
-
-      <!-- ticket de cadastro: logo à esquerda e o convite à direita (no desktop, canto inferior direito) -->
-      <aside class="ticket" aria-label="Teste grátis">
-        <div class="ticket__stub" aria-hidden="true">ikizy<span>.</span></div>
-        <div class="ticket__body">
-          <p class="ticket__meta">{CTA.hint}</p>
-          <p class="ticket__title">Organize seu salão</p>
-          <a class="btn btn--primary btn--sm" href={LINKS.signup}>{CTA.main}</a>
+        <!-- no celular: botão largo de cadastro + link; no desktop só o link (o cadastro fica no ticket abaixo) -->
+        <div class="hero2__actions">
+          <a class="btn btn--primary hero2__signup" href={LINKS.signup}>{CTA.main}</a>
+          <a class="btn btn--ghost" href="#como-funciona">Ver como funciona</a>
+          <p class="hero2__hint">{CTA.hint}</p>
         </div>
-      </aside>
+      </div>
 
       <div class="art" aria-hidden="true">
         <canvas id="halftone"></canvas>
@@ -96,6 +91,18 @@ const faqSchema = {
           </div>
         ))
       }
+    </div>
+  </section>
+
+  <!-- TICKET DE CADASTRO (só no desktop; no celular o cadastro é o botão largo do início) -->
+  <section class="section container ticket-section" aria-label="Teste grátis">
+    <div class="ticket">
+      <div class="ticket__stub" aria-hidden="true">ikizy<span>.</span></div>
+      <div class="ticket__body">
+        <p class="ticket__meta">{CTA.hint}</p>
+        <p class="ticket__title">Organize seu salão</p>
+        <a class="btn btn--primary btn--sm" href={LINKS.signup}>{CTA.main}</a>
+      </div>
     </div>
   </section>
 
