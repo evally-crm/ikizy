@@ -1,14 +1,15 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { Navigate } from 'react-router-dom'
-import { Check, User, X } from 'lucide-react'
+import { Navigate, useSearchParams } from 'react-router-dom'
+import { ArrowRight, Check, User, X } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
 import { neon } from '../../lib/neon'
-import { CHOSEN_PLAN_KEY, isPlanId } from '../../lib/plans'
+import { CHOSEN_PLAN_KEY, isPlanId, type PlanId } from '../../lib/plans'
 import { ROUTES } from '../../lib/routes'
 import { isReservedSlug, SITE_DOMAIN, SLUG_PATTERN, slugify } from '../../lib/slug'
 import { OTHER_SEGMENT, SEGMENTS, starterServices } from '../../lib/segments'
 import { Em } from '../../components/ui'
 import { AuthField, AuthLayout, FormMessages } from './AuthLayout'
+import { DEFAULT_PLAN, PlanChoice } from './PlanChoice'
 
 /** rascunho guardado no aparelho: sair para responder um WhatsApp e voltar não apaga o que já foi preenchido */
 const DRAFT_KEY = 'ikizy:cadastro-negocio'
@@ -48,6 +49,18 @@ export default function Onboarding() {
   const [segments, setSegments] = useState<string[]>(saved.segments ?? [])
   const [otherLabel, setOtherLabel] = useState(saved.otherLabel ?? '')
   const [ownerName, setOwnerName] = useState(saved.ownerName ?? '')
+  const [params, setParams] = useSearchParams()
+  const step = params.get('passo') === 'negocio' ? 'negocio' : 'plano'
+  // plano: o do link do site (guardado no cadastro) ou o mais escolhido; vale para quem entrou pelo Google também
+  const [plan, setPlan] = useState<PlanId>(() => {
+    try {
+      const stored = localStorage.getItem(CHOSEN_PLAN_KEY)
+      if (isPlanId(stored)) return stored
+    } catch {
+      // sem armazenamento: vale o padrão
+    }
+    return DEFAULT_PLAN
+  })
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   // null = ainda não conferido (ou o banco ainda não tem a função): o erro aparece ao criar, como antes
@@ -60,6 +73,14 @@ export default function Onboarding() {
       // sem armazenamento: o rascunho vale só nesta visita
     }
   }, [name, slug, slugTouched, segments, otherLabel, ownerName])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(CHOSEN_PLAN_KEY, plan)
+    } catch {
+      // sem armazenamento: vale só nesta visita
+    }
+  }, [plan])
 
   // confere o link enquanto a pessoa digita (meio segundo depois de parar)
   useEffect(() => {
@@ -117,15 +138,8 @@ export default function Onboarding() {
     }
   }
 
-  /** plano escolhido no cadastro (ou o mais escolhido) e fim do rascunho */
+  /** cria o negócio no plano escolhido no passo 1 e limpa o rascunho */
   const create = async (bizName: string, bizSlug: string, services: ReturnType<typeof starterServices>, person: string) => {
-    let plan: 'solo' | 'studio' | 'salao' = 'studio'
-    try {
-      const fromSite = localStorage.getItem(CHOSEN_PLAN_KEY)
-      if (isPlanId(fromSite)) plan = fromSite
-    } catch {
-      // sem armazenamento: vale o plano mais escolhido
-    }
     const message = await createSalon(bizName, bizSlug, { services, professionalName: person, plan })
     if (!message) {
       try {
@@ -159,16 +173,45 @@ export default function Onboarding() {
     if (message) setError(message)
   }
 
+  const close = (
+    <button type="button" className="auth__close" aria-label="Fechar e sair desta conta" title="Fechar e sair desta conta" onClick={() => void signOut()}>
+      <X size={24} strokeWidth={1.5} aria-hidden="true" />
+    </button>
+  )
+
+  if (step === 'plano') {
+    return (
+      <AuthLayout topAction={close}>
+        <form
+          className="wiz"
+          onSubmit={(e) => {
+            e.preventDefault()
+            setParams({ passo: 'negocio' })
+          }}
+        >
+          <p className="wiz__eyebrow">Passo 1 de 2</p>
+          <h1 className="auth__title">
+            <Em>Escolha</Em> seu plano
+          </h1>
+          <p className="card__sub">30 dias grátis, sem cartão. Você pode trocar de plano quando quiser.</p>
+          <PlanChoice value={plan} onChange={setPlan} />
+          <div className="auth__foot">
+            <span />
+            <button type="submit" className="auth__go" aria-label="Continuar" title="Continuar">
+              <ArrowRight size={22} aria-hidden="true" />
+            </button>
+          </div>
+        </form>
+      </AuthLayout>
+    )
+  }
+
   return (
     <AuthLayout
-      topAction={
-        <button type="button" className="auth__close" aria-label="Fechar e sair desta conta" title="Fechar e sair desta conta" onClick={() => void signOut()}>
-          <X size={24} strokeWidth={1.5} aria-hidden="true" />
-        </button>
-      }
+      topAction={close}
     >
       <form className="wiz" onSubmit={onSubmit}>
-        <p className="wiz__eyebrow">Último passo</p>
+        <p className="wiz__eyebrow">Passo 2 de 2</p>
         <h1 className="auth__title">
           <Em>Seu</Em> negócio
         </h1>
