@@ -75,7 +75,7 @@ function DetailsCard({ details, canManage, onSave }: { details: BusinessDetails;
               <input value={form.instagram} onChange={set('instagram')} placeholder="@seunegocio" maxLength={40} disabled={!canManage} />
             </span>
           </label>
-          <label className="field biz__wide">
+          <label className="field">
             <span className="field__label">Endereço</span>
             <span className="input">
               <input value={form.address} onChange={set('address')} placeholder="Rua, número, bairro, cidade" maxLength={120} disabled={!canManage} />

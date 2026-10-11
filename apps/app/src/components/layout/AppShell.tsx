@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { CalendarPlus, Ellipsis, LogOut, Plus, Search, UserRound, X } from 'lucide-react'
+import { CalendarPlus, Ellipsis, LogOut, Plus, UserRound, X } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
 import { SubscriptionProvider, useSubscription } from '../../billing/SubscriptionProvider'
 import { AgendaProvider } from '../../data/AgendaProvider'
@@ -84,13 +84,13 @@ function UserMenu({ onAccount }: { onAccount: () => void }) {
     <div className="usermenu" ref={ref}>
       <button type="button" className="user" aria-label="Menu da conta" aria-expanded={open} aria-haspopup="menu" onClick={() => setOpen((o) => !o)}>
         <Avatar name={displayName} />
-        <div className="user__text">
-          <p className="user__name">{displayName}</p>
-          <p className="user__role">{salon?.name ?? 'Studio Maria Beauty'}</p>
-        </div>
       </button>
       {open && (
         <div className="popover popover--list" role="menu">
+          <div className="popover__who">
+            <p className="user__name">{displayName}</p>
+            <p className="user__role">{salon?.name ?? 'Studio Maria Beauty'}</p>
+          </div>
           <TrialLine />
           {items.map(({ to, label, icon: Icon }) => (
             <NavLink key={to} to={to} className="popover__item" role="menuitem">
@@ -352,10 +352,6 @@ export default function AppShell() {
           <Logo />
           <PillNav />
           <div className="topbar__actions">
-            <label className="topsearch">
-              <Search size={16} aria-hidden="true" />
-              <input type="search" placeholder="Buscar cliente ou serviço" aria-label="Buscar" />
-            </label>
             <PendingBell />
             <Button className="topbar__add" onClick={() => navigate(agenda('nova=1'))}>
               <CalendarPlus size={16} aria-hidden="true" /> Agendar

@@ -1394,8 +1394,13 @@
 .biz__panel {
   display: grid;
   gap: 20px;
-  max-width: 760px;
   margin-top: 16px;
+}
+/* no computador as listas usam duas colunas, para não sobrar um vazio ao lado */
+@media (min-width: 900px) {
+  .biz__panel .biz__list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 .biz__panelhead {
   display: flex;
@@ -1418,13 +1423,13 @@
     align-self: stretch;
   }
 }
-.biz__form {
+.form.biz__form {
   display: grid;
   gap: 12px;
   margin-top: 14px;
 }
 @media (min-width: 768px) {
-  .biz__form {
+  .form.biz__form {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .biz__wide {
