@@ -1,0 +1,82 @@
+import assert from 'node:assert/strict'
+import { describe, it } from 'node:test'
+import { blankPlan, blankShowcaseItem, patchById, removeById } from './lists'
+import { addressReady, cleanSlug, clampIndex, depositPercent, noticeHours, parseAmount, publishButton, splitIncludes, windowDays, type PublishState } from './rules'
+
+describe('campos do site', () => {
+  it('valor digitado vira número não negativo', () => {
+    assert.equal(parseAmount('12,5'), 12.5)
+    assert.equal(parseAmount('12.5'), 12.5)
+    assert.equal(parseAmount('-3'), 0)
+    assert.equal(parseAmount('abc'), 0)
+  })
+
+  it('endereço da página só aceita minúsculas, números e hífen', () => {
+    assert.equal(cleanSlug('Studio Ana_2!'), 'studioana2')
+    assert.equal(cleanSlug('meu-salao'), 'meu-salao')
+  })
+
+  it('antecedência, janela e sinal respeitam os limites', () => {
+    assert.equal(noticeHours('500'), 168)
+    assert.equal(noticeHours('2,6'), 3)
+    assert.equal(windowDays('0'), 1)
+    assert.equal(windowDays('200'), 90)
+    assert.equal(depositPercent('150'), 100)
+    assert.equal(depositPercent('30'), 30)
+  })
+
+  it('o que o plano inclui: uma linha por item, até 8', () => {
+    assert.deepEqual(splitIncludes('a\nb'), ['a', 'b'])
+    assert.equal(splitIncludes(Array.from({ length: 12 }, (_, i) => `i${i}`).join('\n')).length, 8)
+  })
+
+  it('índice de etapa fica sempre dentro da lista', () => {
+    assert.deepEqual([-1, 0, 2, 9].map((i) => clampIndex(i, 3)), [0, 0, 2, 2])
+  })
+
+  it('guia exige nome com 2+ letras e endereço livre com 3+', () => {
+    assert.equal(addressReady({ salonName: 'Ana', slug: 'ana' }, false), true)
+    assert.equal(addressReady({ salonName: 'A', slug: 'ana' }, false), false)
+    assert.equal(addressReady({ salonName: 'Ana', slug: 'an' }, false), false)
+    assert.equal(addressReady({ salonName: 'Ana', slug: 'ana' }, true), false)
+  })
+})
+
+describe('botão de publicar', () => {
+  const base: PublishState = { isLive: true, dirty: false, justPublished: false, publishing: false, loading: false, reserved: false }
+
+  it('topo: tudo publicado fica desligado; alterações liberam; recém-publicado mostra confirmação', () => {
+    assert.deepEqual(publishButton(base, 'header'), { label: 'Tudo publicado', disabled: true })
+    assert.deepEqual(publishButton({ ...base, dirty: true }, 'header'), { label: 'Publicar alterações', disabled: false })
+    assert.deepEqual(publishButton({ ...base, justPublished: true }, 'header'), { label: 'Publicado!', disabled: false })
+    assert.deepEqual(publishButton({ ...base, isLive: false }, 'header'), { label: 'Publicar site', disabled: false })
+  })
+
+  it('endereço reservado, publicando ou carregando desligam o botão', () => {
+    assert.equal(publishButton({ ...base, dirty: true, reserved: true }, 'header').disabled, true)
+    assert.equal(publishButton({ ...base, dirty: true, loading: true }, 'header').disabled, true)
+    assert.deepEqual(publishButton({ ...base, dirty: true, publishing: true }, 'header'), { label: 'Publicando…', disabled: true })
+  })
+
+  it('barra do celular: sempre "Publicar alterações" se já está no ar', () => {
+    assert.deepEqual(publishButton({ ...base, dirty: true }, 'bar'), { label: 'Publicar alterações', disabled: false })
+    assert.deepEqual(publishButton({ ...base, isLive: false }, 'bar'), { label: 'Publicar site', disabled: false })
+  })
+})
+
+describe('listas do site', () => {
+  it('atualiza e remove por id sem mexer nos outros', () => {
+    const list = [
+      { id: 'a', name: 'A' },
+      { id: 'b', name: 'B' },
+    ]
+    assert.deepEqual(patchById(list, 'b', { name: 'X' }), [list[0], { id: 'b', name: 'X' }])
+    assert.deepEqual(removeById(list, 'a'), [list[1]])
+  })
+
+  it('plano e produto novos nascem vazios e visíveis', () => {
+    assert.deepEqual(blankPlan('p1'), { id: 'p1', name: '', description: '', price: 0, includes: [], isNew: true, visible: true })
+    assert.equal(blankShowcaseItem('v1').visible, true)
+    assert.equal(blankShowcaseItem('v1').photoId, null)
+  })
+})

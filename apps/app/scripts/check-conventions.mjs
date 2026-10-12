@@ -38,6 +38,12 @@ const SCOPES = [
   'pages/meu-negocio',
   'pages/agenda',
   'pages/clientes',
+  'pages/meu-site',
+  'components/ui/Field.tsx',
+  'components/ui/Section.tsx',
+  'components/ui/Collapse.tsx',
+  'components/ui/MoneyInput.tsx',
+  'hooks/useScrollLock.ts',
   'components/ui/Tag.tsx',
   'components/ui/Tag.css',
 ]

@@ -1,0 +1,628 @@
+/* MeuSite: estilo ao lado do componente */
+
+.studio {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+}
+
+.studio__editor {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+  padding: 16px;
+}
+
+.studio__body {
+  min-height: 0;
+}
+
+.studio__preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  min-height: 0;
+  padding: 16px;
+}
+
+.studio__label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  font-size: 13px;
+  color: var(--ink-500);
+}
+
+@media (min-width: 1100px) {
+  .studio {
+      grid-template-columns: minmax(0, 7fr) minmax(340px, 5fr);
+    }
+}
+
+@media (min-width: 1100px) and (min-height: 700px) {
+  .page--fit > .studio {
+      flex: 1;
+      min-height: 0;
+    }
+  .studio__body {
+      overflow-y: auto;
+      padding-right: 6px;
+    }
+}
+
+/* cores */
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.swatch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 16px 0 10px;
+  border-radius: var(--radius-pill);
+  background: var(--bg);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.swatch input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.swatch__dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+}
+
+.swatch:has(input:checked) {
+  background: var(--white);
+  box-shadow: inset 0 0 0 2px var(--brand-900);
+}
+
+.swatch:has(input:focus-visible) {
+  outline: 2px solid var(--brand-500);
+  outline-offset: 2px;
+}
+
+/* catálogo (serviços e produtos) */
+.catalog {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.catalog__intro {
+  font-size: 13px;
+  color: var(--ink-500);
+}
+
+.catalog__add {
+  align-self: flex-start;
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+}
+
+.row.is-hidden {
+  background: var(--bg);
+  border-style: dashed;
+}
+
+.row__top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.row__name {
+  flex: 1;
+}
+
+/* serviço no Meu site: nome e preço só para conferir (editam em Meu negócio) */
+.row__label {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+
+.row__label strong {
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-900);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.row__label small {
+  font-size: 12px;
+  color: var(--ink-500);
+}
+
+.row__top .switch {
+  flex: none;
+}
+
+.row__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.mini-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.mini-field > span:first-child {
+  font-size: 12px;
+  color: var(--ink-500);
+}
+
+.mini-field--wide {
+  grid-column: span 2;
+}
+
+.mini-field--inline {
+  flex: none;
+  width: 140px;
+}
+
+.row__math {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 16px;
+  font-size: 12px;
+  color: var(--ink-500);
+}
+
+.row__math strong {
+  font-weight: 500;
+  color: var(--ink-900);
+}
+
+.row .meter {
+  height: 6px;
+}
+
+@media (min-width: 640px) {
+  .row__grid {
+      grid-template-columns: 1.2fr 0.9fr 0.9fr 0.9fr;
+    }
+  .mini-field--wide {
+      grid-column: span 4;
+    }
+}
+
+@media (min-width: 1280px) {
+  .mini-field--wide {
+      grid-column: span 4;
+    }
+}
+
+@media (max-width: 479px) {
+  .row__top {
+      flex-wrap: wrap;
+    }
+  .row__name {
+      flex-basis: 100%;
+      order: -1;
+    }
+  .mini-field--inline {
+      flex: 1;
+      width: auto;
+    }
+}
+
+/* editor da página: seções recolhíveis, uma por assunto */
+.sects {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fold > summary {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 18px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-700);
+}
+
+.fold[open] > summary {
+  margin-bottom: 4px;
+}
+
+/* logo */
+.logofield {
+  flex-wrap: wrap;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 16px;
+  background: var(--white);
+}
+
+.logofield__thumb {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  overflow: hidden;
+  border-radius: 14px;
+  background: var(--bg);
+  color: var(--ink-500);
+}
+
+.logofield__thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.logofield__text {
+  flex: 1 1 120px;
+  min-width: 0;
+}
+
+.logofield__text p {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ink-900);
+}
+
+.logofield__text small {
+  font-size: 12px;
+  color: var(--ink-500);
+}
+
+.swatch--custom input {
+  width: 100%;
+  height: 100%;
+}
+
+.bar__publish.is-off {
+  display: none !important;
+}
+
+.logofield .btn {
+  flex: 1 1 140px;
+}
+
+.logofield .chevbtn {
+  margin-left: auto;
+}
+
+/* paleta e fonte: botões pequenos em linha */
+.swatch__dot--duo {
+  border: 1px solid color-mix(in srgb, var(--ink-900) 18%, transparent);
+}
+
+.swatch--font {
+  padding: 0 16px;
+}
+
+.guidecard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px 14px 18px;
+  border-radius: 20px;
+  background: var(--white);
+  box-shadow: inset 0 0 0 1px var(--line-strong, var(--line));
+}
+
+.guidecard span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.guidecard strong {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ink-900);
+}
+
+.guidecard small {
+  font-size: 13px;
+  color: var(--ink-500);
+}
+
+.studio__previewbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.studio__preview > .studio__previewbar {
+  align-self: stretch;
+}
+
+.studio__preview > .siteframe {
+  flex: 1;
+  min-height: 0;
+}
+
+/* passos do editor: tracinhos, como no cadastro */
+.stepbar {
+  flex: none;
+}
+
+.stepbar__bars {
+  display: flex;
+  gap: 4px;
+}
+
+.stepbar__bars button {
+  flex: 1;
+  min-height: 28px;
+  padding: 12px 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.stepbar__bars i {
+  display: block;
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--ink-900) 14%, transparent);
+  transition: background-color 0.25s;
+}
+
+.stepbar__bars button.is-done i {
+  background: var(--ink-900);
+}
+
+.stepbar__bars button:hover i {
+  background: var(--ink-700);
+}
+
+.stepbar__bars button:focus-visible {
+  outline: 2px solid var(--brand-500);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.stepbar__label {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-500);
+}
+
+/* Meu site em tela cheia: sem o menu do app, a página inteira vira editor + prévia */
+.sfull {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: auto;
+  max-width: none;
+  padding: 12px 20px 16px;
+  overflow: hidden;
+  background: var(--page-bg);
+}
+
+.sfull .bar__title {
+  font-size: 22px;
+}
+
+.sfull > .studio {
+  flex: 1;
+  min-height: 0;
+}
+
+.sfull .studio__body {
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.catalog__empty {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: var(--white);
+  color: var(--ink-500);
+}
+
+/* setas das etapas do editor (como no cadastro: voltar e seguir ao lado dos tracinhos) */
+.stepbar__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stepbar__row .stepbar__bars {
+  flex: 1;
+}
+
+.stepbar__arrow {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--ink-900);
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.stepbar__arrow:hover:not(:disabled) {
+  background: var(--ink-900);
+  color: var(--white);
+}
+
+.stepbar__arrow:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.stepbar__label span {
+  color: var(--ink-500);
+}
+
+.stepbar__label {
+  color: var(--ink-900);
+  font-weight: 500;
+}
+
+.stepnav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.stepnav__prev,
+.stepnav__next {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 0 20px;
+  border-radius: var(--radius-pill);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.stepnav__prev {
+  border: 1px solid var(--line-strong, var(--line));
+  background: var(--white);
+  color: var(--ink-900);
+}
+
+.stepnav__next {
+  border: 0;
+  background: var(--ink-900);
+  color: var(--white);
+}
+
+.stepnav__next:hover {
+  background: var(--black);
+}
+
+/* publicar */
+/* publicar o site: no celular a ação fica à mão, acima da barra de baixo */
+.publishbar {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--bottomnav-h, 0px) + 28px + env(safe-area-inset-bottom));
+  z-index: 45;
+  display: flex;
+  gap: 8px;
+  width: min(420px, calc(100% - 2 * var(--gutter)));
+  padding: 8px;
+  transform: translateX(-50%);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--white) 94%, transparent);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 12px 34px -12px color-mix(in srgb, var(--ink-900) 30%, transparent), 0 0 0 1px var(--line);
+}
+
+.publishbar .btn {
+  flex: 1;
+  min-height: 44px;
+}
+
+.bar__publish {
+  display: none;
+  align-items: center;
+  gap: 10px;
+}
+
+@media (min-width: 768px) {
+  .publishbar {
+      display: none;
+    }
+  .bar__publish {
+      display: flex;
+    }
+}
+
+/* botão do endereço do site e de "tela cheia" no cabeçalho */
+.sitelink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 38px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--white);
+  box-shadow: var(--shadow-sm);
+  color: var(--ink-900);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+}
+button.sitelink {
+  cursor: pointer;
+}
+.sitelink > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* amostras das opções: as cores e a fonte chegam por variável */
+.swatch__dot--duo {
+  background: linear-gradient(135deg, var(--bg) 50%, var(--accent) 50%);
+}
+.swatch__font {
+  font-family: var(--ff);
+  font-weight: var(--fw);
+  text-transform: var(--tt);
+}

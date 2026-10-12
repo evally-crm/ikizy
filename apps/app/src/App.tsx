@@ -16,7 +16,7 @@ import VerificarEmail from './pages/auth/VerificarEmail'
 import Clientes from './pages/clientes'
 import Financeiro from './pages/financeiro'
 import MeuNegocio from './pages/meu-negocio'
-import MeuSite from './pages/MeuSite'
+import MeuSite from './pages/meu-site'
 
 /**
  * app.ikizy.com: acesso (/login, /cadastro, /recuperar-senha) e sistema (/dashboard/*).

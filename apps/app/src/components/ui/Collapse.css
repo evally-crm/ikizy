@@ -1,0 +1,79 @@
+/* Collapse: estilo ao lado do componente */
+
+/* grupos da etapa de serviços (categorias e planos) */
+.grp {
+  border-radius: 20px;
+  background: var(--bg);
+}
+
+.grp + .grp,
+.catalog > .grp {
+  margin-top: 10px;
+}
+
+.grp__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 62px;
+  padding: 12px 18px;
+  border: 0;
+  border-radius: 20px;
+  background: none;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.grp__head > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.grp__head strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--ink-900);
+}
+
+.grp__head small {
+  font-size: 13px;
+  color: var(--ink-500);
+}
+
+.grp__head svg {
+  flex: none;
+  color: var(--ink-500);
+  transition: transform 0.2s;
+}
+
+.grp.is-open .grp__head svg {
+  transform: rotate(180deg);
+}
+
+.grp__badge {
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--brand-900);
+  color: var(--white);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.grp__body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 12px 14px;
+}
+
+.grp__body .row {
+  background: var(--white);
+}

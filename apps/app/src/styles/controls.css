@@ -1,27 +1,32 @@
 /* ---------- controles próprios do IKIZY (sem widgets do navegador) ---------- */
-
 .dialog--wide {
   max-width: 560px;
 }
+
 .dsec {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
+
 .dsec__title {
   font-size: 13px;
   font-weight: 500;
   color: var(--ink-900);
 }
+
 .chips--tight {
   gap: 6px;
 }
+
 .dialog .chip {
   background: var(--bg);
 }
+
 .dialog .chip:hover {
   background: var(--gray-200);
 }
+
 .dialog .chip[aria-pressed='true'] {
   background: var(--brand-900);
 }
@@ -30,6 +35,7 @@
 .pick {
   position: relative;
 }
+
 .pick__btn {
   width: 100%;
   justify-content: space-between;
@@ -38,15 +44,18 @@
   color: var(--ink-900);
   font-family: inherit;
 }
+
 .pick__btn[aria-expanded='true'] {
   border-color: var(--brand-500);
   background: var(--white);
 }
+
 .pick__value {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
 .pick__list {
   position: absolute;
   top: calc(100% + 6px);
@@ -63,6 +72,7 @@
   background: var(--white);
   box-shadow: var(--shadow-md);
 }
+
 .pick__opt {
   display: flex;
   align-items: center;
@@ -77,6 +87,7 @@
   color: var(--ink-900);
   text-align: left;
 }
+
 .pick__opt > span {
   flex: 1;
   min-width: 0;
@@ -84,13 +95,16 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
 .pick__opt small {
   font-size: 12px;
   color: var(--ink-500);
 }
+
 .pick__opt svg {
   color: var(--brand-500);
 }
+
 .pick__opt.is-hi {
   background: var(--page-bg);
 }
@@ -106,11 +120,13 @@
   border-radius: 16px;
   background: var(--bg);
 }
+
 .stepper output {
   font-size: 14px;
   font-weight: 500;
   color: var(--ink-900);
 }
+
 .stepper button {
   display: grid;
   place-items: center;
@@ -123,13 +139,16 @@
   color: var(--ink-700);
   transition: background-color 0.15s, color 0.15s;
 }
+
 .stepper button:hover:not(:disabled) {
   background: var(--brand-900);
   color: var(--white);
 }
+
 .stepper button:disabled {
   opacity: 0.4;
 }
+
 .input__prefix {
   color: var(--ink-500);
 }
@@ -140,6 +159,7 @@
   border: 1px solid var(--line);
   border-radius: 18px;
 }
+
 .dstrip__head {
   display: flex;
   align-items: center;
@@ -151,6 +171,7 @@
   font-weight: 500;
   color: var(--ink-900);
 }
+
 .dstrip__head button {
   display: grid;
   place-items: center;
@@ -161,16 +182,19 @@
   background: var(--white);
   color: var(--ink-700);
 }
+
 .dstrip__head button:hover {
   background: var(--brand-900);
   color: var(--white);
 }
+
 .dstrip__days {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 6px;
   padding: 10px;
 }
+
 .dstrip__day {
   position: relative;
   display: flex;
@@ -184,19 +208,23 @@
   background: var(--white);
   transition: border-color 0.15s, background-color 0.15s;
 }
+
 .dstrip__day span {
   font-size: 11px;
   text-transform: capitalize;
   color: var(--ink-500);
 }
+
 .dstrip__day strong {
   font-size: 15px;
   font-weight: 500;
   color: var(--ink-900);
 }
+
 .dstrip__day:hover {
   border-color: var(--gray-300);
 }
+
 .dstrip__day.is-today::after {
   content: '';
   position: absolute;
@@ -206,10 +234,12 @@
   border-radius: 50%;
   background: var(--brand-500);
 }
+
 .dstrip__day[aria-pressed='true'] {
   border-color: var(--brand-500);
   background: var(--blush);
 }
+
 .dstrip__day[aria-pressed='true'] strong {
   color: var(--brand-700);
 }
@@ -220,16 +250,19 @@
   flex-direction: column;
   gap: 14px;
 }
+
 .slots__label {
   margin-bottom: 8px;
   font-size: 12px;
   color: var(--ink-500);
 }
+
 .slots__grid {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
+
 .slot {
   min-height: 38px;
   padding: 0 14px;
@@ -241,15 +274,18 @@
   color: var(--ink-900);
   transition: border-color 0.15s, background-color 0.15s;
 }
+
 .slot:hover:not(:disabled) {
   border-color: var(--brand-500);
 }
+
 .slot[aria-pressed='true'] {
   border-color: var(--brand-500);
   background: var(--blush);
   color: var(--brand-700);
   font-weight: 500;
 }
+
 .slot:disabled {
   border-color: transparent;
   background: var(--bg);
@@ -263,6 +299,7 @@
   position: fixed;
   z-index: 80;
 }
+
 .cmenu {
   min-width: 230px;
   padding: 6px;
@@ -272,18 +309,22 @@
   box-shadow: 0 18px 44px -14px rgba(14, 13, 13, 0.28), 0 2px 6px rgba(14, 13, 13, 0.06);
   outline: none;
 }
+
 .cmenu--sub {
   position: absolute;
   top: -7px;
   left: calc(100% + 6px);
 }
+
 .cmenu--sub.cmenu--flip {
   right: calc(100% + 6px);
   left: auto;
 }
+
 .cmenu__row {
   position: relative;
 }
+
 .cmenu__item {
   display: flex;
   align-items: center;
@@ -298,16 +339,20 @@
   color: var(--ink-900);
   text-align: left;
 }
+
 .cmenu__item.is-active:not(:disabled) {
   background: var(--bg);
 }
+
 .cmenu__item.is-danger {
   color: var(--brand-500);
 }
+
 .cmenu__item:disabled {
   opacity: 0.4;
   cursor: default;
 }
+
 .cmenu__icon {
   display: grid;
   place-items: center;
@@ -315,17 +360,21 @@
   width: 16px;
   color: var(--ink-500);
 }
+
 .cmenu__item.is-danger .cmenu__icon {
   color: inherit;
 }
+
 .cmenu__label {
   flex: 1;
   white-space: nowrap;
 }
+
 .cmenu__item > svg {
   flex: none;
   color: var(--ink-500);
 }
+
 .cmenu__hint {
   min-width: 18px;
   padding: 0 5px;
@@ -337,6 +386,7 @@
   text-align: center;
   color: var(--ink-500);
 }
+
 .cmenu__sep {
   height: 1px;
   margin: 5px 4px;
@@ -359,17 +409,20 @@
   transform: translateX(-50%);
   animation: toast-in 0.2s ease-out;
 }
+
 @media (min-width: 1024px) {
   .toast {
-    bottom: 28px;
-  }
+      bottom: 28px;
+    }
 }
+
 .toast--action {
   display: flex;
   align-items: center;
   gap: 14px;
   padding-right: 8px;
 }
+
 .toast--action button {
   flex: none;
   min-height: 30px;
@@ -382,6 +435,7 @@
   font-weight: 600;
   cursor: pointer;
 }
+
 @keyframes toast-in {
   from {
     opacity: 0;
@@ -395,9 +449,11 @@
   box-shadow: inset 0 0 0 1px var(--line-strong);
   color: var(--ink-700);
 }
+
 .chip--ghost:hover {
   background: var(--white);
 }
+
 .hours {
   display: flex;
   flex-direction: column;
@@ -406,6 +462,7 @@
   padding: 0;
   list-style: none;
 }
+
 .hours__row {
   display: grid;
   grid-template-columns: 150px minmax(0, 1fr);
@@ -414,35 +471,43 @@
   padding: 10px 12px;
   border-radius: 16px;
 }
+
 .hours__row.is-open {
   background: var(--page-bg);
 }
+
 .hours__row .switch {
   justify-content: flex-start;
   gap: 12px;
   flex-direction: row-reverse;
 }
+
 .hours__closed {
   font-size: 13px;
   color: var(--ink-500);
 }
+
 .hours__times {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
 }
+
 .hours__times > span {
   font-size: 12px;
   color: var(--ink-500);
 }
+
 .hours__times .field {
   width: 96px;
 }
+
 .hours__times .input {
   min-height: 40px;
   background: var(--white);
 }
+
 .hours__pause {
   min-height: 34px;
   padding: 0 12px;
@@ -454,12 +519,14 @@
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+
 .hours__break {
   display: flex;
   flex: 1 0 100%;
   align-items: center;
   gap: 8px;
 }
+
 .hours__copy {
   display: inline-flex;
   align-items: center;
@@ -473,13 +540,15 @@
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+
 .hours__copy:hover {
   color: var(--brand-700);
 }
+
 @media (max-width: 560px) {
   .hours__row {
-    grid-template-columns: minmax(0, 1fr);
-  }
+      grid-template-columns: minmax(0, 1fr);
+    }
 }
 
 /* checklist do agendamento online */
@@ -489,17 +558,20 @@
   gap: 14px;
   padding: 18px;
 }
+
 .checklist__head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
 }
+
 .checklist__title {
   font-size: 17px;
   font-weight: 500;
   letter-spacing: -0.02em;
 }
+
 .checklist__badge {
   flex: none;
   padding: 4px 12px;
@@ -509,10 +581,12 @@
   font-weight: 500;
   color: var(--ink-700);
 }
+
 .checklist__badge.is-ready {
   background: var(--success-soft);
   color: var(--success);
 }
+
 .checklist__list {
   display: flex;
   flex-direction: column;
@@ -520,6 +594,7 @@
   padding: 0;
   list-style: none;
 }
+
 .checklist__item {
   display: flex;
   align-items: flex-start;
@@ -527,6 +602,7 @@
   padding: 10px 0;
   border-top: 1px solid var(--line);
 }
+
 .checklist__icon {
   display: grid;
   place-items: center;
@@ -538,89 +614,61 @@
   background: var(--bg);
   color: var(--ink-500);
 }
+
 .checklist__item.is-ok .checklist__icon {
   background: var(--success-soft);
   color: var(--success);
 }
+
 .checklist__item.is-todo .checklist__icon {
   background: var(--pink-100);
   color: var(--brand-500);
 }
+
 .checklist__text {
   flex: 1;
   min-width: 0;
 }
+
 .checklist__text p {
   font-size: 14px;
   font-weight: 500;
   color: var(--ink-900);
 }
+
 .checklist__text small {
   font-size: 12px;
   color: var(--ink-500);
 }
+
 .checklist__item.is-soon .checklist__text p {
   color: var(--ink-500);
-}
-
-/* publicar o site: no celular a ação fica à mão, acima da barra de baixo */
-.publishbar {
-  position: fixed;
-  left: 50%;
-  bottom: calc(var(--bottomnav-h, 0px) + 28px + env(safe-area-inset-bottom));
-  z-index: 45;
-  display: flex;
-  gap: 8px;
-  width: min(420px, calc(100% - 2 * var(--gutter)));
-  padding: 8px;
-  transform: translateX(-50%);
-  border-radius: var(--radius-pill);
-  background: rgba(255, 255, 255, 0.94);
-  backdrop-filter: blur(16px);
-  box-shadow: 0 12px 34px -12px rgba(14, 13, 13, 0.3), 0 0 0 1px var(--line);
-}
-.publishbar .btn {
-  flex: 1;
-  min-height: 44px;
-}
-.bar__publish {
-  display: none;
-  align-items: center;
-  gap: 10px;
-}
-@media (min-width: 768px) {
-  .publishbar {
-    display: none;
-  }
-  .bar__publish {
-    display: flex;
-  }
 }
 
 /* mobile primeiro: áreas de toque de pelo menos 40px, sem mudar o desenho */
 @media (max-width: 767px) {
   .textlink {
-    position: relative;
-  }
+      position: relative;
+    }
   .textlink::after {
-    content: '';
-    position: absolute;
-    inset: -12px -8px;
-  }
+      content: '';
+      position: absolute;
+      inset: -12px -8px;
+    }
   .chevbtn {
-    min-width: 40px;
-    min-height: 40px;
-  }
+      min-width: 40px;
+      min-height: 40px;
+    }
   .tabs__item {
-    min-height: 40px;
-  }
+      min-height: 40px;
+    }
 }
 
 /* 16px nos campos: abaixo disso o Safari do iPhone dá zoom ao focar e desloca a tela */
 @media (max-width: 767px) {
   body input:not([type='checkbox']):not([type='radio']),
-  body textarea,
-  body select {
-    font-size: 16px;
-  }
+    body textarea,
+    body select {
+      font-size: 16px;
+    }
 }
