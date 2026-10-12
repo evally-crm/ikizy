@@ -27,10 +27,9 @@ import { Gauge } from '../../components/charts/Gauge'
 import { PaymentColumns } from '../../components/charts/PaymentColumns'
 import { WeeklyBars } from '../../components/charts/WeeklyBars'
 import { DayGrid } from '../../components/finance/DayGrid'
-import { FinPanel } from '../../components/finance/FinPanel'
 import { LedgerList, type LedgerRow } from '../../components/finance/LedgerList'
 import { ReceiptSheet } from '../../components/finance/ReceiptSheet'
-import { Avatar, Button, Em, Money, PageHeader, StatTile, Tabs } from '../../components/ui'
+import { Avatar, Button, Em, Money, PageHeader, Panel, StatTile, Tabs } from '../../components/ui'
 import { formatBRL } from '../../lib/format'
 import { agenda } from '../../lib/routes'
 import { CloseDialog } from './CloseDialog'
@@ -55,7 +54,7 @@ export function MonthView({ tabs }: { tabs: ReactNode }) {
   if (fin.loading) {
     return (
       <div className="page">
-        <p className="finpanel__empty" role="status">
+        <p className="panel__empty" role="status">
           Carregando financeiro…
         </p>
       </div>
@@ -184,13 +183,13 @@ export function MonthView({ tabs }: { tabs: ReactNode }) {
 
       <div className="finlayout">
         <div className="fincol">
-          <FinPanel
+          <Panel
             eyebrow="Toque num dia para ver o recibo"
             title="Dias do mês"
-            action={month.gross > 0 && <span className="finpanel__aside">Média de {short(weeklyAverage(month))} por semana</span>}
+            action={month.gross > 0 && <span className="panel__aside">Média de {short(weeklyAverage(month))} por semana</span>}
           >
             {month.gross === 0 && (
-              <p className="finpanel__empty">
+              <p className="panel__empty">
                 Entra aqui conforme você conclui atendimentos. <Link to={agenda()}>Abrir agenda</Link>
               </p>
             )}
@@ -200,28 +199,28 @@ export function MonthView({ tabs }: { tabs: ReactNode }) {
               onSelect={(date) => setReceipt(buildDayReceipt(fin.statementFor(date), { salonName, now }))}
             />
             <WeeklyBars weeks={weeks} bestIndex={bestWeekIndex(weeks)} label={`Faturamento por semana em ${month.label}`} />
-          </FinPanel>
+          </Panel>
 
-          <FinPanel eyebrow="Recebimentos" title="Formas de pagamento">
+          <Panel eyebrow="Recebimentos" title="Formas de pagamento">
             {shares.length === 0 ? (
-              <p className="finpanel__empty">Os recebimentos aparecem quando você conclui atendimentos na agenda.</p>
+              <p className="panel__empty">Os recebimentos aparecem quando você conclui atendimentos na agenda.</p>
             ) : (
               <PaymentColumns shares={shares} />
             )}
-          </FinPanel>
+          </Panel>
 
           {showsTeam(month, professionals.length) && (
-            <FinPanel
+            <Panel
               eyebrow="Equipe"
               title="Comissões"
               action={month.commissionsTotal > 0 && <strong>{formatBRL(month.commissionsTotal)}</strong>}
             >
               {commissionRows.length === 0 ? (
-                <p className="finpanel__empty">Nenhuma profissional com comissão definida. Defina o percentual de cada uma para calcular.</p>
+                <p className="panel__empty">Nenhuma profissional com comissão definida. Defina o percentual de cada uma para calcular.</p>
               ) : (
                 <LedgerList rows={commissionRows} />
               )}
-            </FinPanel>
+            </Panel>
           )}
         </div>
 
@@ -250,7 +249,7 @@ export function MonthView({ tabs }: { tabs: ReactNode }) {
             </StatTile>
           )}
 
-          <FinPanel eyebrow="Para onde foi o dinheiro" title="Composição do faturamento">
+          <Panel eyebrow="Para onde foi o dinheiro" title="Composição do faturamento">
             <DotWaffle parts={parts.map((p, i) => ({ tone: p.tone, count: counts[i] }))} />
             <ul className="finlegend">
               {parts.map((p) => (
@@ -263,13 +262,13 @@ export function MonthView({ tabs }: { tabs: ReactNode }) {
               ))}
             </ul>
             <Gauge value={marginPct(month)} label={`Margem de lucro: ${marginPct(month)}%`} />
-            <p className="finpanel__note">
+            <p className="panel__note">
               Cada ponto vale 2% do faturamento. Taxas de cartão estimadas em {cardFeeLabel()}% do crédito e do débito; produtos vêm do gasto mensal cadastrado em
               Meu site.
             </p>
-          </FinPanel>
+          </Panel>
 
-          <FinPanel
+          <Panel
             eyebrow="Caixa"
             title="Saídas do mês"
             action={
@@ -281,13 +280,13 @@ export function MonthView({ tabs }: { tabs: ReactNode }) {
             }
           >
             {!fin.expensesAvailable ? (
-              <p className="finpanel__empty">As saídas ficam disponíveis assim que a atualização do banco for aplicada.</p>
+              <p className="panel__empty">As saídas ficam disponíveis assim que a atualização do banco for aplicada.</p>
             ) : expenseRows.length === 0 ? (
-              <p className="finpanel__empty">Nenhuma saída lançada em {month.label}. Aluguel, luz e material entram aqui.</p>
+              <p className="panel__empty">Nenhuma saída lançada em {month.label}. Aluguel, luz e material entram aqui.</p>
             ) : (
               <LedgerList rows={expenseRows} />
             )}
-          </FinPanel>
+          </Panel>
         </div>
       </div>
 

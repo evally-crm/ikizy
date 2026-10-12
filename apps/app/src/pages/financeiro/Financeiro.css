@@ -39,16 +39,6 @@
   min-width: 0;
 }
 
-.finpanel__empty,
-.finpanel__aside,
-.finpanel__note {
-  font-size: 13px;
-  color: var(--ink-500);
-}
-.finpanel__note {
-  font-size: 12px;
-}
-
 /* formas de pagamento dentro do cartão escuro do caixa */
 .fintoday__methods {
   display: flex;

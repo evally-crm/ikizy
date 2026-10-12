@@ -7,10 +7,9 @@ import { useAuth } from '../../auth/AuthProvider'
 import { useAgenda } from '../../data/AgendaProvider'
 import { useFinance } from '../../data/useFinance'
 import { buildDayCash, buildDayReceipt, methodLabel, type ReceiptModel } from '../../domain/finance'
-import { FinPanel } from '../../components/finance/FinPanel'
 import { LedgerList, type LedgerRow } from '../../components/finance/LedgerList'
 import { ReceiptSheet } from '../../components/finance/ReceiptSheet'
-import { Button, Em, Money, PageHeader, StatTile } from '../../components/ui'
+import { Button, Em, Money, PageHeader, Panel, StatTile } from '../../components/ui'
 import { formatBRL, formatTime } from '../../lib/format'
 import { agenda } from '../../lib/routes'
 import { ExpenseDialog } from './ExpenseDialog'
@@ -108,16 +107,16 @@ export function TodayView({ tabs }: { tabs: ReactNode }) {
       </div>
 
       <div className="finlayout">
-        <FinPanel eyebrow="Entradas" title="Recebimentos de hoje">
+        <Panel eyebrow="Entradas" title="Recebimentos de hoje">
           {receivedRows.length === 0 ? (
-            <p className="finpanel__empty">Os recebimentos aparecem quando você conclui atendimentos na agenda.</p>
+            <p className="panel__empty">Os recebimentos aparecem quando você conclui atendimentos na agenda.</p>
           ) : (
             <LedgerList rows={receivedRows} />
           )}
-        </FinPanel>
-        <FinPanel eyebrow="Saídas" title="Saídas de hoje">
-          {expenseRows.length === 0 ? <p className="finpanel__empty">Nenhuma saída lançada hoje.</p> : <LedgerList rows={expenseRows} />}
-        </FinPanel>
+        </Panel>
+        <Panel eyebrow="Saídas" title="Saídas de hoje">
+          {expenseRows.length === 0 ? <p className="panel__empty">Nenhuma saída lançada hoje.</p> : <LedgerList rows={expenseRows} />}
+        </Panel>
       </div>
 
       {adding && currentMonth && <ExpenseDialog month={currentMonth} onSave={fin.addExpense} onClose={() => setAdding(false)} />}
