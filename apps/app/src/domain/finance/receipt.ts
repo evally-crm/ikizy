@@ -1,4 +1,4 @@
-import { format } from 'date-fns'
+import { addDays, format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { bestDay, dailyRange } from './metrics'
 import { formatBRL, formatTime } from '../../lib/format'
@@ -19,7 +19,7 @@ export function buildMonthReceipt(month: MonthClosing, closedAt: Date | null, { 
   const sums: ReceiptSum[] = [
     { label: 'Faturamento bruto', value: month.gross },
     ...(month.commissionsTotal > 0 ? [{ label: '(-) Comissões', value: month.commissionsTotal }] : []),
-    { label: '(-) Produtos', value: month.products },
+    ...(!month.partial ? [{ label: '(-) Produtos', value: month.products }] : []),
     ...(month.expenses > 0 ? [{ label: '(-) Despesas', value: month.expenses }] : []),
     { label: '(-) Taxas de cartão', value: month.cardFees },
     { label: 'Lucro líquido', value: month.net, total: true },
@@ -34,12 +34,13 @@ export function buildMonthReceipt(month: MonthClosing, closedAt: Date | null, { 
   return {
     kind: 'month',
     number: month.id.replace('-', ''),
-    title: 'Recibo do mês',
-    period: format(month.date, 'MMMM yyyy', { locale: ptBR }).toUpperCase(),
+    title: month.partial ? 'Recibo do período' : 'Recibo do mês',
+    period: (month.partial ? (month.rangeLabel ?? '') : format(month.date, 'MMMM yyyy', { locale: ptBR })).toUpperCase(),
     salonName,
-    closed: closedAt !== null,
-    closedAt,
-    preview: closedAt === null,
+    closed: closedAt !== null && !month.partial,
+    closedAt: month.partial ? null : closedAt,
+    preview: month.partial ? true : closedAt === null,
+    previewLabel: month.partial ? 'período parcial' : 'mês em aberto',
     itemsHeading: 'Item',
     lines: month.categories.map((c) => ({ label: c.name, qty: c.qty, total: c.total })),
     sums,
@@ -48,10 +49,10 @@ export function buildMonthReceipt(month: MonthClosing, closedAt: Date | null, { 
       title: 'Faturamento diário',
       values: month.daily,
       range: dailyRange(month),
-      best: best ? { label: weekdayDay(new Date(month.date.getFullYear(), month.date.getMonth(), best.day)), value: best.value } : null,
+      best: best ? { label: weekdayDay(addDays(month.date, best.day - 1)), value: best.value } : null,
     },
-    note: null,
-    footer: closedAt ? `Fechado em ${format(closedAt, "dd/MM/yyyy 'às' HH:mm")}` : `Valores parciais até ${format(now, 'dd/MM')}`,
+    note: month.partial ? 'Produtos e custos fixos entram no fechamento do mês.' : null,
+    footer: month.partial ? 'Período parcial, sem fechamento' : closedAt ? `Fechado em ${format(closedAt, "dd/MM/yyyy 'às' HH:mm")}` : `Valores parciais até ${format(now, 'dd/MM')}`,
   }
 }
 
@@ -81,6 +82,7 @@ export function buildDayReceipt(day: DayStatement, { salonName, now }: Context):
     closed: false,
     closedAt: null,
     preview: isToday,
+    previewLabel: 'dia em andamento',
     itemsHeading: 'Atendimento',
     lines: day.items.map((i) => ({ label: `${formatTime(i.time)} ${i.clientName} · ${i.serviceName}`, total: i.price })),
     sums,

@@ -1,6 +1,6 @@
-import { useState, type ReactNode } from 'react'
+import { useState, type CSSProperties, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { format } from 'date-fns'
+import { endOfMonth, format, isSameDay, startOfDay } from 'date-fns'
 import { CalendarDays, CreditCard, FileText, Lock, PieChart, Plus, Trash2, Users, Wallet } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
 import { useFinance } from '../../data/useFinance'
@@ -10,36 +10,39 @@ import {
   buildMonthReceipt,
   cardFeeLabel,
   composition,
-  dayTiles,
   growthPct,
+  isWholeMonth,
   marginPct,
+  monthRange,
   paymentShares,
   showsTeam,
+  weekBars,
   weeklyAverage,
   weeksOf,
+  type DateRange,
   type Expense,
   type ReceiptModel,
 } from '../../domain/finance'
-import { DayGrid } from '../../components/finance/DayGrid'
+import { DailyLine } from '../../components/charts/DailyLine'
 import { LedgerList, type LedgerRow } from '../../components/finance/LedgerList'
 import { Receipt } from '../../components/finance/Receipt'
+import { PeriodPicker, periodLabel } from '../../components/finance/PeriodPicker'
 import { ReceiptSheet } from '../../components/finance/ReceiptSheet'
-import { Avatar, Button, PageHeader, Tabs } from '../../components/ui'
+import { Avatar, Button, PageHeader } from '../../components/ui'
 import { formatBRL } from '../../lib/format'
 import { agenda } from '../../lib/routes'
 import { CloseDialog } from './CloseDialog'
 import { ExpenseDialog } from './ExpenseDialog'
 import './Financeiro.css'
 
-const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 const short = (v: number) => formatBRL(v).replace(',00', '')
 
-/** fechamento do mês: números, detalhes à esquerda (cada dia abre o recibo dele) e a prévia do recibo do mês à direita */
+/** fechamento do mês (ou de qualquer período do filtro de datas): números, detalhes à esquerda e a prévia do recibo à direita */
 export function MonthView({ tabs }: { tabs: ReactNode }) {
   const { salon } = useAuth()
   const fin = useFinance()
   const { months, professionals } = fin
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [range, setRange] = useState<DateRange>(() => monthRange(new Date()))
   const [closedNow, setClosedNow] = useState<Record<string, Date>>({})
   const [confirming, setConfirming] = useState(false)
   const [addingExpense, setAddingExpense] = useState(false)
@@ -68,28 +71,39 @@ export function MonthView({ tabs }: { tabs: ReactNode }) {
     )
   }
 
-  const month = months.find((m) => m.id === selectedId) ?? months[months.length - 1]
-  const previous = months[months.indexOf(month) - 1]
-  const closedAt = month.closedAt ?? closedNow[month.id] ?? null
   const salonName = salon?.name ?? 'Studio Maria Beauty'
   const now = new Date()
 
-  const growth = growthPct(month, previous)
-  const weeks = weeksOf(month)
+  // mês inteiro: o fechamento de verdade (com o retrato travado); qualquer outro período é calculado na hora, sem produtos
+  const whole = isWholeMonth(range)
+  const picked = whole ? months.find((m) => m.id === format(range.from, 'yyyy-MM')) : undefined
+  const month = picked ?? fin.periodFor(range.from, range.to)
+  const partial = !picked
+  const previous = picked ? months[months.indexOf(picked) - 1] : undefined
+  const closedAt = picked ? (picked.closedAt ?? closedNow[picked.id] ?? null) : null
+  const singleDay = isSameDay(range.from, range.to)
+  // as saídas entram no mês que contém o início do período, enquanto ele não está fechado
+  const launchMonth = months.find((m) => m.id === format(range.from, 'yyyy-MM'))
+  const launchClosed = launchMonth ? Boolean(launchMonth.closedAt || closedNow[launchMonth.id]) : true
+
+  const growth = partial ? null : growthPct(month, previous)
+  const weeks = weekBars(weeksOf(month))
   const bestWeek = bestWeekIndex(weeks)
-  const weekMax = Math.max(0, ...weeks.map((w) => w.total))
   const parts = composition(month)
   const shares = paymentShares(month.payments)
-  const { leading, days } = dayTiles(month)
-  const monthExpenses = fin.expenses.filter((e) => e.date.startsWith(month.id))
+  const fromKey = format(range.from, 'yyyy-MM-dd')
+  const toKey = format(range.to, 'yyyy-MM-dd')
+  const periodExpenses = fin.expenses.filter((e) => e.date >= fromKey && e.date <= toKey)
   const professionalName = (id: string) => professionals.find((p) => p.id === id)?.name ?? 'Profissional'
-  const canLaunch = !closedAt && fin.expensesAvailable
+  const canLaunch = Boolean(launchMonth) && !launchClosed && fin.expensesAvailable
+  const canClose = whole && Boolean(picked) && !closedAt
 
   const closeMonth = async () => {
+    if (!picked) return
     setActionError(null)
-    const message = await fin.closeMonth(month)
+    const message = await fin.closeMonth(picked)
     if (message) setActionError(message)
-    else if (!fin.live) setClosedNow((c) => ({ ...c, [month.id]: new Date() }))
+    else if (!fin.live) setClosedNow((c) => ({ ...c, [picked.id]: new Date() }))
     setConfirming(false)
     setReceipt(null)
   }
@@ -100,12 +114,12 @@ export function MonthView({ tabs }: { tabs: ReactNode }) {
     if (message) setActionError(message)
   }
 
-  const expenseRows: LedgerRow[] = monthExpenses.map((e) => ({
+  const expenseRows: LedgerRow[] = periodExpenses.map((e) => ({
     id: e.id,
     lead: format(new Date(`${e.date}T12:00:00`), 'dd/MM'),
     title: e.description,
     value: formatBRL(e.amount),
-    action: !closedAt && (
+    action: !launchClosed && (
       <button type="button" className="finaction" aria-label={`Apagar ${e.description}`} onClick={() => void removeExpense(e)}>
         <Trash2 size={16} aria-hidden="true" />
       </button>
@@ -120,8 +134,9 @@ export function MonthView({ tabs }: { tabs: ReactNode }) {
     value: formatBRL(c.total),
   }))
 
-  const trendHint =
-    growth !== null && !month.isCurrent
+  const trendHint = partial
+    ? periodLabel(range)
+    : growth !== null && !month.isCurrent
       ? `${growth >= 0 ? '+' : ''}${growth}% vs ${previous?.label ?? ''}`
       : closedAt
         ? 'Mês fechado'
@@ -129,30 +144,33 @@ export function MonthView({ tabs }: { tabs: ReactNode }) {
           ? 'Mês em aberto'
           : 'Aguardando fechamento'
 
+  // um dia só mostra o recibo do dia; qualquer outro período, o do mês (ou do período)
+  const receiptModel: ReceiptModel = singleDay
+    ? buildDayReceipt(fin.statementFor(fromKey), { salonName, now })
+    : buildMonthReceipt(month, closedAt, { salonName, now })
+  const receiptLabel = singleDay ? 'Recibo do dia' : partial ? 'Recibo do período' : 'Recibo do mês'
+
   return (
     <div className="page finpage">
       <PageHeader
-        title="Fechamento mensal"
+        title={whole ? 'Fechamento mensal' : 'Resultado do período'}
         crumb={
           <>
-            Financeiro <span aria-hidden="true">/</span> {capitalize(month.label)} {format(month.date, 'yyyy')}
+            Financeiro <span aria-hidden="true">/</span> {periodLabel(range)}
           </>
         }
         actions={
           <>
             {tabs}
-            <Tabs
-              label="Mês"
-              value={month.id}
-              onChange={setSelectedId}
-              items={months.map((m) => ({
-                id: m.id,
-                label: capitalize(m.label),
-                badge: m.closedAt || closedNow[m.id] ? <Lock size={12} aria-label="fechado" /> : null,
-              }))}
+            <PeriodPicker
+              value={range}
+              onChange={setRange}
+              today={fin.today}
+              min={fin.firstDay}
+              max={startOfDay(endOfMonth(fin.today))}
             />
-            <Button variant="soft" size="sm" onClick={() => setReceipt(buildMonthReceipt(month, closedAt, { salonName, now }))}>
-              <FileText size={15} aria-hidden="true" /> Recibo do mês
+            <Button variant="soft" size="sm" onClick={() => setReceipt(receiptModel)}>
+              <FileText size={15} aria-hidden="true" /> {receiptLabel}
             </Button>
             {canLaunch && (
               <Button size="sm" onClick={() => setAddingExpense(true)}>
@@ -190,7 +208,7 @@ export function MonthView({ tabs }: { tabs: ReactNode }) {
         <div className="fm-stat">
           <span className="fm-stat__label">Atendimentos</span>
           <strong className="fm-stat__value">{month.appointments}</strong>
-          <span className="fm-stat__hint">{month.noShows > 0 ? `${month.noShows} faltas` : 'Nenhuma falta'}</span>
+          <span className="fm-stat__hint">{month.noShows === 0 ? 'Nenhuma falta' : `${month.noShows} ${month.noShows === 1 ? 'falta' : 'faltas'}`}</span>
         </div>
       </div>
 
@@ -198,7 +216,7 @@ export function MonthView({ tabs }: { tabs: ReactNode }) {
         <div className="fm-details">
           <section className="fm-card">
             <h2 className="fm-card__title">
-              <CalendarDays size={16} aria-hidden="true" /> Dias do mês
+              <CalendarDays size={16} aria-hidden="true" /> {partial ? 'Dias do período' : 'Dias do mês'}
               {month.gross > 0 && <span className="fm-card__aside">Média de {short(weeklyAverage(month))} por semana</span>}
             </h2>
             {month.gross === 0 && (
@@ -206,20 +224,16 @@ export function MonthView({ tabs }: { tabs: ReactNode }) {
                 Entra aqui conforme você conclui atendimentos. <Link to={agenda()}>Abrir agenda</Link>
               </p>
             )}
-            <DayGrid
-              leading={leading}
-              days={days}
-              onSelect={(date) => setReceipt(buildDayReceipt(fin.statementFor(date), { salonName, now }))}
-            />
+            {month.daily.length > 1 && <DailyLine values={month.daily} />}
             <ul className="fm-rows">
-              {weeks.map((w, i) => (
+              {(month.daily.length > 7 ? weeks : []).map((w, i) => (
                 <li key={w.label} className={w.future ? 'is-future' : undefined}>
                   <span className="fm-rows__label">
                     {w.label}
                     {i === bestWeek && w.total > 0 && <em className="fm-pill">melhor</em>}
                   </span>
                   <span className="fm-bar" aria-hidden="true">
-                    <span style={{ width: `${weekMax > 0 ? Math.round((w.total / weekMax) * 100) : 0}%` }} />
+                    <span style={{ '--w': `${w.width}%` } as CSSProperties} />
                   </span>
                   <strong>{w.future ? '—' : formatBRL(w.total)}</strong>
                 </li>
@@ -236,7 +250,7 @@ export function MonthView({ tabs }: { tabs: ReactNode }) {
                 <li key={p.tone}>
                   <span className="fm-rows__label">{p.label}</span>
                   <span className="fm-bar" aria-hidden="true">
-                    <span style={{ width: `${p.share}%` }} />
+                    <span style={{ '--w': `${p.share}%` } as CSSProperties} />
                   </span>
                   <span className="fm-rows__pct">{p.share}%</span>
                   <strong>{formatBRL(p.value)}</strong>
@@ -244,7 +258,8 @@ export function MonthView({ tabs }: { tabs: ReactNode }) {
               ))}
             </ul>
             <p className="fm-note">
-              Taxas de cartão estimadas em {cardFeeLabel()}% do crédito e do débito; produtos vêm do gasto mensal cadastrado em Meu site.
+              Taxas de cartão estimadas em {cardFeeLabel()}% do crédito e do débito;{' '}
+              {partial ? 'produtos e custos fixos entram só no fechamento do mês.' : 'produtos vêm do gasto mensal cadastrado em Meu site.'}
             </p>
           </section>
 
@@ -260,7 +275,7 @@ export function MonthView({ tabs }: { tabs: ReactNode }) {
                   <li key={p.method}>
                     <span className="fm-rows__label">{p.method}</span>
                     <span className="fm-bar" aria-hidden="true">
-                      <span style={{ width: `${p.share}%` }} />
+                      <span style={{ '--w': `${p.share}%` } as CSSProperties} />
                     </span>
                     <span className="fm-rows__pct">{p.share}%</span>
                     <strong>{formatBRL(p.total)}</strong>
@@ -286,7 +301,7 @@ export function MonthView({ tabs }: { tabs: ReactNode }) {
 
           <section className="fm-card">
             <h2 className="fm-card__title">
-              <Wallet size={16} aria-hidden="true" /> Saídas do mês
+              <Wallet size={16} aria-hidden="true" /> {partial ? 'Saídas do período' : 'Saídas do mês'}
               {canLaunch && (
                 <Button variant="soft" size="sm" className="fm-card__action" onClick={() => setAddingExpense(true)}>
                   <Plus size={15} aria-hidden="true" /> Lançar
@@ -296,19 +311,21 @@ export function MonthView({ tabs }: { tabs: ReactNode }) {
             {!fin.expensesAvailable ? (
               <p className="fm-empty">As saídas ficam disponíveis assim que a atualização do banco for aplicada.</p>
             ) : expenseRows.length === 0 ? (
-              <p className="fm-empty">Nenhuma saída lançada em {month.label}. Aluguel, luz e material entram aqui.</p>
+              <p className="fm-empty">Nenhuma saída lançada {partial ? 'neste período' : `em ${month.label}`}. Aluguel, luz e material entram aqui.</p>
             ) : (
               <LedgerList rows={expenseRows} />
             )}
           </section>
         </div>
 
-        <aside className="fm-preview" aria-label="Prévia do recibo do mês">
+        <aside className="fm-preview" aria-label="Prévia do recibo">
           <div className="fm-preview__bar">
             <h2 className="fm-card__title">
               <FileText size={16} aria-hidden="true" /> Prévia do recibo
             </h2>
-            {closedAt ? (
+            {!whole ? (
+              <span className="fm-pill">Só o mês inteiro fecha</span>
+            ) : closedAt ? (
               <span className="fm-pill fm-pill--ok">
                 <Lock size={12} aria-hidden="true" /> Fechado em {format(closedAt, 'dd/MM')}
               </span>
@@ -318,19 +335,19 @@ export function MonthView({ tabs }: { tabs: ReactNode }) {
               </Button>
             )}
           </div>
-          <Receipt model={buildMonthReceipt(month, closedAt, { salonName, now })} />
+          <Receipt model={receiptModel} />
         </aside>
       </div>
 
-      {addingExpense && <ExpenseDialog month={month} onSave={fin.addExpense} onClose={() => setAddingExpense(false)} />}
-      {confirming && <CloseDialog month={month} onCancel={() => setConfirming(false)} onConfirm={() => void closeMonth()} />}
+      {addingExpense && launchMonth && <ExpenseDialog month={launchMonth} onSave={fin.addExpense} onClose={() => setAddingExpense(false)} />}
+      {confirming && picked && <CloseDialog month={picked} onCancel={() => setConfirming(false)} onConfirm={() => void closeMonth()} />}
       {receipt && (
         <ReceiptSheet
           model={receipt}
           onClose={() => setReceipt(null)}
           extra={
             receipt.kind === 'month' &&
-            !closedAt && (
+            canClose && (
               <Button size="sm" onClick={() => setConfirming(true)}>
                 <Lock size={15} aria-hidden="true" /> Fechar {month.label}
               </Button>

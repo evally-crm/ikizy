@@ -103,3 +103,66 @@ export function getDemoMonths(today = new Date()): MonthClosing[] {
     }),
   )
 }
+
+/** período de exemplo (sem banco): cada mês entra na proporção dos dias escolhidos, sem produtos */
+export function demoPeriod(months: MonthClosing[], from: Date, to: Date): MonthClosing {
+  const day = 24 * 60 * 60 * 1000
+  const span = Math.round((to.getTime() - from.getTime()) / day) + 1
+  const daily: (number | null)[] = Array.from({ length: span }, () => 0)
+  let gross = 0
+  let fees = 0
+  let count = 0
+  let noShows = 0
+  let newClients = 0
+  let returning = 0
+  const categories = new Map<string, { qty: number; total: number }>()
+  const payments = new Map<string, number>()
+  const commissions = new Map<string, { qty: number; total: number }>()
+
+  for (const m of months) {
+    const inRange = m.daily.map((v, i) => ({ v, at: new Date(m.date.getFullYear(), m.date.getMonth(), i + 1) })).filter((d) => d.at >= from && d.at <= to)
+    const part = inRange.reduce((s, d) => s + (d.v ?? 0), 0)
+    if (!part || !m.gross) continue
+    const r = part / m.gross
+    for (const d of inRange) daily[Math.round((d.at.getTime() - from.getTime()) / day)] = d.v
+    gross += part
+    fees += Math.round(m.cardFees * r)
+    count += Math.round(m.appointments * r)
+    noShows += Math.round(m.noShows * r)
+    newClients += Math.round(m.newClients * r)
+    returning += m.returnRate * r
+    for (const c of m.categories) categories.set(c.name, { qty: (categories.get(c.name)?.qty ?? 0) + Math.round(c.qty * r), total: (categories.get(c.name)?.total ?? 0) + Math.round(c.total * r) })
+    for (const p of m.payments) payments.set(p.method, (payments.get(p.method) ?? 0) + Math.round(p.total * r))
+    for (const c of m.commissions) commissions.set(c.professionalId, { qty: (commissions.get(c.professionalId)?.qty ?? 0) + Math.round(c.qty * r), total: (commissions.get(c.professionalId)?.total ?? 0) + Math.round(c.total * r) })
+  }
+
+  const commissionList = [...commissions.entries()].map(([professionalId, c]) => ({ professionalId, ...c }))
+  const commissionsTotal = commissionList.reduce((s, c) => s + c.total, 0)
+  const label = `${format(from, "d 'de' MMM", { locale: ptBR })} a ${format(to, "d 'de' MMM yyyy", { locale: ptBR })}`
+  return {
+    id: `${format(from, 'yyyyMMdd')}-${format(to, 'yyyyMMdd')}`,
+    date: from,
+    label,
+    isCurrent: false,
+    closedAt: null,
+    daysInMonth: span,
+    elapsedDays: span,
+    categories: [...categories.entries()].map(([name, c]) => ({ name, ...c })).sort((a, b) => b.total - a.total),
+    gross,
+    cardFees: fees,
+    products: 0,
+    expenses: 0,
+    commissions: commissionList,
+    commissionsTotal,
+    net: gross - fees - commissionsTotal,
+    payments: [...payments.entries()].map(([method, total]) => ({ method, total })),
+    appointments: count,
+    ticket: count ? Math.round(gross / count) : 0,
+    newClients,
+    returnRate: gross ? Math.round(returning / Math.max(1, months.filter((m) => m.gross).length)) : 0,
+    noShows,
+    daily,
+    partial: true,
+    rangeLabel: label,
+  }
+}

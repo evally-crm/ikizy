@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { buildMonth } from './month'
+import { buildMonth, buildPeriod } from './month'
 import { appt, expense, pro } from './fixtures.test-helpers'
 
 const OCT = new Date(2026, 9, 1)
@@ -89,5 +89,47 @@ describe('buildMonth', () => {
     })
     assert.equal(m.newClients, 1)
     assert.equal(m.returnRate, 50)
+  })
+})
+
+describe('buildPeriod', () => {
+  const period = { today: TODAY, clientsCreated: {}, expenses: [], professionals: [] }
+
+  it('soma só os dias do período, inclusive o último, e não cobra produtos', () => {
+    const p = buildPeriod({
+      ...period,
+      from: new Date(2026, 9, 3),
+      to: new Date(2026, 9, 5),
+      appointments: [
+        appt({ id: '1', price: 10, startsAt: new Date(2026, 9, 2, 23, 0) }),
+        appt({ id: '2', price: 20, startsAt: new Date(2026, 9, 3, 8, 0) }),
+        appt({ id: '3', price: 30, startsAt: new Date(2026, 9, 5, 20, 0) }),
+        appt({ id: '4', price: 40, startsAt: new Date(2026, 9, 6, 8, 0) }),
+      ],
+    })
+    assert.equal(p.gross, 50)
+    assert.equal(p.products, 0)
+    assert.equal(p.partial, true)
+    assert.equal(p.daysInMonth, 3)
+    assert.deepEqual(p.daily, [20, 0, 30])
+  })
+
+  it('atravessa meses e só soma as saídas lançadas dentro das datas', () => {
+    const p = buildPeriod({
+      ...period,
+      from: new Date(2026, 8, 28),
+      to: new Date(2026, 9, 2),
+      expenses: [expense('a', '2026-09-27', 5), expense('b', '2026-09-30', 7), expense('c', '2026-10-02', 11), expense('d', '2026-10-03', 13)],
+      appointments: [appt({ id: '1', price: 100, startsAt: new Date(2026, 9, 1, 9, 0) })],
+    })
+    assert.equal(p.expenses, 18)
+    assert.equal(p.daily.length, 5)
+    assert.equal(p.daily[3], 100)
+    assert.equal(p.net, 82)
+  })
+
+  it('um dia só vira um período de um dia e os dias futuros ficam nulos', () => {
+    const p = buildPeriod({ ...period, from: new Date(2026, 9, 12), to: new Date(2026, 9, 14), appointments: [] })
+    assert.deepEqual(p.daily, [0, null, null])
   })
 })

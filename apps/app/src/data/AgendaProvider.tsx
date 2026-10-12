@@ -121,6 +121,11 @@ function fromRow(r: Row): Appointment {
 }
 
 function friendly(error: { code?: string; message: string }) {
+  // regras do banco: concluir pede a forma de pagamento, concluído não se apaga, WhatsApp não se repete
+  if (error.message.includes('payment_required')) return 'Escolha a forma de pagamento para concluir o atendimento.'
+  if (error.message.includes('settled_appointment')) return 'Atendimento concluído não pode ser apagado.'
+  if (error.message.includes('reference_other_salon')) return 'Cliente, profissional ou serviço não pertence a este negócio.'
+  if (error.code === '23505' && error.message.includes('clients_salon_phone_unique')) return 'Já existe uma cliente com esse WhatsApp.'
   if (error.code === '23514' || error.message.includes('já está fechado')) return 'O mês desse atendimento já está fechado.'
   // trava do banco: a mesma profissional não tem dois atendimentos ativos no mesmo horário
   if (error.code === '23P01' || error.message.includes('appointments_no_overlap')) return 'Essa profissional já tem um atendimento nesse horário.'
@@ -382,14 +387,14 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
         if (patch.professionalId) cols.professional_id = patch.professionalId
         if (patch.duration !== undefined) cols.duration = patch.duration
         if (patch.price !== undefined) cols.price = patch.price
+        // a forma de pagamento vai junto com o status: concluir sem ela é recusado pelo banco
+        if (paymentMethod) cols.payment_method = paymentMethod
         if (current && (patch.date || patch.start !== undefined)) {
           cols.starts_at = toIso(patch.date ?? current.date, patch.start ?? current.start)
         }
         const { data, error: err } = await neon.from('appointments').update(cols).eq('id', id).select('id')
         if (err) return friendly(err)
         if (!data?.length) return 'Você não tem permissão para alterar este atendimento.'
-        // coluna criada pela migration do financeiro; se ainda não existir, o atendimento segue salvo sem a forma de pagamento
-        if (paymentMethod) await neon.from('appointments').update({ payment_method: paymentMethod }).eq('id', id)
       }
       setAppointments((list) => list.map((a) => (a.id === id ? { ...a, ...patch, ...(paymentMethod ? { paymentMethod } : {}) } : a)))
       // confirmado, recusado etc. sai na hora da lista de pedidos

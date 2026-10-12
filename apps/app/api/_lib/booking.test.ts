@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import { HttpError } from './billing.js'
-import { createBooking, listSlots, parseBookingInput, parseSlotsQuery, tooManyFromIp, translateDbError, type BookingDb } from './booking.js'
+import { checkBookingLimits, createBooking, listSlots, shortHash, parseBookingInput, parseSlotsQuery, tooManyFromIp, translateDbError, type BookingDb } from './booking.js'
 
 const SVC = '11111111-1111-4111-8111-111111111111'
 const PRO = '22222222-2222-4222-8222-222222222222'
@@ -85,6 +85,7 @@ describe('erros do banco', () => {
     const ok: BookingDb = {
       slots: async () => [{ professional_id: PRO, professional: 'Ana', minute: 600 }],
       book: async () => ({ id: 'x', starts_at: '2026-10-19T13:00:00Z', service: 'Gel', professional: 'Ana', price: 100, duration: 60 }),
+      limited: async () => false,
     }
     const input = parseBookingInput(body())
     assert.equal((await listSlots(ok, input)).length, 1)
@@ -102,5 +103,44 @@ describe('tooManyFromIp', () => {
     for (let i = 0; i < 12; i++) assert.equal(tooManyFromIp(ip, t0 + i), false)
     assert.equal(tooManyFromIp(ip, t0 + 13), true)
     assert.equal(tooManyFromIp(ip, t0 + 11 * 60_000), false)
+  })
+})
+
+describe('limites do pedido (no banco)', () => {
+  const dbWith = (limited: BookingDb['limited']): BookingDb => ({
+    slots: async () => [],
+    book: async () => Promise.reject(new Error('não deveria reservar')),
+    limited,
+  })
+
+  it('deixa passar quando nenhum limite foi atingido e guarda só o resumo do IP e do telefone', async () => {
+    const buckets: string[] = []
+    await checkBookingLimits(dbWith(async (b) => (buckets.push(b), false)), '203.0.113.9', '11987650000')
+    assert.equal(buckets.length, 2)
+    assert.ok(buckets.every((b) => /^booking:(ip|phone):[0-9a-f]{24}$/.test(b)))
+    assert.ok(!buckets.join().includes('203.0.113.9') && !buckets.join().includes('11987650000'))
+  })
+
+  it('bloqueia com 429 quando o IP ou o WhatsApp passou do limite', async () => {
+    const byIp = dbWith(async (b) => b.startsWith('booking:ip:'))
+    const byPhone = dbWith(async (b) => b.startsWith('booking:phone:'))
+    for (const db of [byIp, byPhone]) {
+      await assert.rejects(checkBookingLimits(db, '203.0.113.9', '11987650000'), (e) => e instanceof HttpError && e.status === 429)
+    }
+  })
+
+  it('segue sem o limitador se ele falhar (a trava do salão continua no banco)', async () => {
+    const quiet = console.error
+    console.error = () => {}
+    try {
+      await checkBookingLimits(dbWith(async () => Promise.reject(new Error('function hit_rate_limit does not exist'))), '203.0.113.9', '11987650000')
+    } finally {
+      console.error = quiet
+    }
+  })
+
+  it('o resumo é estável e diferente para entradas diferentes', async () => {
+    assert.equal(await shortHash('a'), await shortHash('a'))
+    assert.notEqual(await shortHash('a'), await shortHash('b'))
   })
 })

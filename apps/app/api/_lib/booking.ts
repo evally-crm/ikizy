@@ -19,6 +19,8 @@ export interface BookingResult {
 export interface BookingDb {
   slots(q: SlotsQuery): Promise<Slot[]>
   book(input: BookingInput): Promise<BookingResult>
+  /** registra uma tentativa no limitador do banco (vale entre instâncias); true = passou do limite */
+  limited(bucket: string, max: number, windowSeconds: number): Promise<boolean>
 }
 
 export interface SlotsQuery {
@@ -109,4 +111,32 @@ export function tooManyFromIp(ip: string, now = Date.now(), max = 12, windowMs =
   hits.set(ip, recent)
   if (hits.size > 5000) for (const [k, v] of hits) if (v.every((t) => now - t >= windowMs)) hits.delete(k)
   return recent.length > max
+}
+
+/** limites por tentativa de pedido: por IP (anônimo, só o resumo) e por WhatsApp */
+export const BOOKING_LIMITS = { perIp: { max: 10, windowSeconds: 3600 }, perPhone: { max: 5, windowSeconds: 3600 } } as const
+
+/** resumo curto e irreversível do dado, para não guardar IP nem telefone puros no limitador */
+export async function shortHash(value: string): Promise<string> {
+  const bytes = new TextEncoder().encode(value)
+  const digest = await crypto.subtle.digest('SHA-256', bytes)
+  return Array.from(new Uint8Array(digest).slice(0, 12), (b) => b.toString(16).padStart(2, '0')).join('')
+}
+
+/**
+ * confere os limites do pedido no banco (R-65). Se o limitador falhar (ex.: migration ainda não aplicada),
+ * segue sem ele: a trava por salão e por cliente dentro de book_appointment() continua valendo.
+ */
+export async function checkBookingLimits(db: BookingDb, ip: string, phone: string): Promise<void> {
+  try {
+    const [ipKey, phoneKey] = await Promise.all([shortHash(ip), shortHash(phone)])
+    const [byIp, byPhone] = await Promise.all([
+      db.limited(`booking:ip:${ipKey}`, BOOKING_LIMITS.perIp.max, BOOKING_LIMITS.perIp.windowSeconds),
+      db.limited(`booking:phone:${phoneKey}`, BOOKING_LIMITS.perPhone.max, BOOKING_LIMITS.perPhone.windowSeconds),
+    ])
+    if (byIp || byPhone) throw new HttpError(429, 'too_many', 'Muitas tentativas. Aguarde alguns minutos.')
+  } catch (error) {
+    if (error instanceof HttpError) throw error
+    console.error('limitador de pedidos indisponível', error)
+  }
 }

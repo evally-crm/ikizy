@@ -71,6 +71,7 @@ interface AppointmentRow {
 
 function friendly(error: { code?: string; message: string }) {
   if (error.code === '42501' || error.message.includes('row-level security')) return 'Seu acesso não permite alterar isso agora.'
+  if (error.code === '23505' && error.message.includes('clients_salon_phone_unique')) return 'Já existe uma cliente com esse WhatsApp.'
   return 'Não foi possível salvar agora. Tente novamente.'
 }
 

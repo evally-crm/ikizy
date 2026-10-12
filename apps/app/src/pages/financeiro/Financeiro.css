@@ -289,6 +289,7 @@
 }
 .fm-bar > span {
   display: block;
+  width: var(--w, 0);
   height: 100%;
   border-radius: inherit;
   background: var(--ink-900);

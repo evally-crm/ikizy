@@ -222,6 +222,12 @@ Pontos de atenção:
 
 ## 8. Estado atual
 
+- 12/10/2026 (endurecimento, **migration ainda NÃO aplicada**): `neon/migrations/20261025000000_hardening.sql` (mês fechado no fuso de Brasília,
+  `close_month` confere faturamento, atendimentos e saídas com o banco e exige assinatura ativa, concluir exige forma de pagamento e concluído
+  não se apaga, atendimento só aponta para cliente/profissional/serviço do próprio negócio, `hit_rate_limit`, WhatsApp único por negócio).
+  **Testar antes numa branch do Neon** e só então aplicar (`npm run db:migrate -- --aplicar`). O app e a API já tratam as mensagens novas e
+  seguem funcionando sem a migration (o limitador falha aberto). Financeiro: filtro de datas (`PeriodPicker`, `domain/finance/period.ts`,
+  `buildPeriod`) no lugar do seletor de mês e do mapa de dias; só o mês inteiro fecha. Cabeçalhos de segurança em `apps/app/vercel.json`.
 - 12/10/2026, organização do código (fases 1 a 3, ver [docs/CONVENCOES.md](docs/CONVENCOES.md)): regras da casa em três camadas
   (`src/domain` puro e testado, `src/data` só busca, telas só apresentam), verificador `npm run check:conventions` e `npm test`
   (API + domínio). Financeiro refeito: `pages/financeiro/`, `components/finance|charts|ui`, recibo do dia e do mês em folha, mapa de dias.
