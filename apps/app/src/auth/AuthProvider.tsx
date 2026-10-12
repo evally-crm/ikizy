@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { isNeonConfigured, neon, type NeonSession as Session } from '../lib/neon'
+import { syncNotifyEmail } from '../lib/billingApi'
 import { dash, ROUTES } from '../lib/routes'
 import { STARTER_HOURS, type SalonSetup } from '../lib/segments'
 
@@ -114,6 +115,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     void loadSalon(userId)
   }, [userId, sessionReady, loadSalon])
+
+  // a dona deixa o e-mail guardado no servidor para os avisos de teste e de cobrança
+  const ownedSalonId = salon?.role === 'owner' ? salon.id : null
+  useEffect(() => {
+    if (ownedSalonId) void syncNotifyEmail(ownedSalonId)
+  }, [ownedSalonId])
 
   // pede o código de confirmação ao Neon Auth. O envio automático do cadastro (`verify_email_on_sign_up`)
   // não tem controle no console e está desligado em produção, então o app pede o código ele mesmo

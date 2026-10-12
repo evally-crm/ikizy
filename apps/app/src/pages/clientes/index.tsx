@@ -9,6 +9,7 @@ import { Button, Card, Em, PageHeader, StatTile } from '../../components/ui'
 import { useMediaQuery } from '../../hooks/useMediaQuery'
 import { dash } from '../../lib/routes'
 import { ClientDetail } from './ClientDetail'
+import { ForgetClientDialog } from './ForgetClientDialog'
 import { ClientList } from './ClientList'
 import './Clientes.css'
 
@@ -21,7 +22,7 @@ export default function Clientes() {
   const { id } = useParams()
   const navigate = useNavigate()
   const isWide = useMediaQuery('(min-width: 1100px)')
-  const [dialog, setDialog] = useState<'new' | 'edit' | null>(null)
+  const [dialog, setDialog] = useState<'new' | 'edit' | 'forget' | null>(null)
   const [params, setParams] = useSearchParams()
 
   // /dashboard/clientes?nova=1 abre o cadastro de cliente (atalho do botão direito)
@@ -47,6 +48,18 @@ export default function Clientes() {
           }}
         />
       )}
+      {dialog === 'forget' && selected && (
+        <ForgetClientDialog
+          name={selected.name}
+          hasHistory={selected.visits > 0 || selected.appointments.length > 0}
+          onForget={async () => {
+            const message = await book.forget(selected.id)
+            if (!message) navigate(dash('/clientes'))
+            return message
+          }}
+          onClose={() => setDialog(null)}
+        />
+      )}
       {dialog === 'edit' && selected && (
         <ClientDialog client={selected} professionals={professionals} onClose={() => setDialog(null)} onSave={(draft) => book.update(selected.id, draft)} />
       )}
@@ -62,6 +75,7 @@ export default function Clientes() {
         book={book}
         salonName={salon?.name ?? ''}
         onEdit={() => setDialog('edit')}
+        onForget={book.canForget ? () => setDialog('forget') : undefined}
       />
     )
 

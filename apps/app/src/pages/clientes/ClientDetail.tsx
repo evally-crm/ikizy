@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { AlertTriangle, ArrowLeft, AtSign, Briefcase, Cake, CalendarCheck, CalendarPlus, FileSignature, Heart, MessageCircle, Pencil, Phone, Sparkles } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, AtSign, Briefcase, Cake, CalendarCheck, CalendarPlus, FileSignature, Heart, MessageCircle, Pencil, Phone, Sparkles, Trash2 } from 'lucide-react'
 import type { Client } from '../../data/clients'
 import { useClientBook, useClientNotes, useClientPhotos } from '../../data/useClientBook'
 import { TAG_LABEL, awaitsConfirmation, clientProfile, lastVisitLabel, type ReturnState } from '../../domain/clients'
@@ -73,6 +73,7 @@ export function ClientDetail({
   book,
   salonName,
   onEdit,
+  onForget,
 }: {
   client: Client
   today: Date
@@ -80,6 +81,8 @@ export function ClientDetail({
   book: ReturnType<typeof useClientBook>
   salonName: string
   onEdit: () => void
+  /** só a dona: apagar os dados da cliente (LGPD) */
+  onForget?: () => void
 }) {
   const navigate = useNavigate()
   const [tab, setTab] = useState<DetailTab>('resumo')
@@ -160,6 +163,11 @@ export function ClientDetail({
             <button type="button" className="roundbtn" aria-label={`Editar ${firstName}`} onClick={onEdit}>
               <Pencil size={18} />
             </button>
+            {onForget && (
+              <button type="button" className="roundbtn" aria-label={`Apagar dados de ${firstName}`} title="Apagar dados (LGPD)" onClick={onForget}>
+                <Trash2 size={18} />
+              </button>
+            )}
             <Button variant="accent" icon aria-label={`Agendar ${firstName}`} onClick={() => navigate(agenda(`nova=1&cliente=${encodeURIComponent(client.name)}`))}>
               <CalendarPlus size={18} />
             </Button>
