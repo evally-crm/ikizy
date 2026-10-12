@@ -236,8 +236,7 @@
   border-radius: 50%;
   background: var(--brand-900);
   color: var(--blush);
-  font-family: var(--font-serif);
-  font-style: italic;
+  font-family: var(--font-sans);
   font-size: 18px;
 }
 .avatar--sm {
@@ -642,7 +641,6 @@ button.textlink:disabled {
   height: 52px;
   background: linear-gradient(135deg, var(--brand-500), var(--brand-900));
   color: var(--white);
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: 24px;
-  font-style: italic;
 }
