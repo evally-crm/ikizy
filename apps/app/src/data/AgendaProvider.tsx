@@ -182,6 +182,8 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
   const [workingHours, setWorkingHours] = useState<Record<string, HourInterval[]>>({})
   const [hoursAvailable, setHoursAvailable] = useState(true)
   const [loading, setLoading] = useState(live)
+  // salão cujos cadastros (profissionais, clientes, serviços) já chegaram: sem isso a agenda parece "sem profissional" por um instante
+  const [registryFor, setRegistryFor] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [tick, setTick] = useState(0)
   const [livePending, setLivePending] = useState<Appointment[] | null>(null)
@@ -223,6 +225,7 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
       if (pros.error || cls.error || svcs.error) {
         setError('Não foi possível carregar a agenda. Verifique a conexão e tente de novo.')
         setLoading(false)
+        setRegistryFor(salonId)
         return
       }
       // a tabela de horários pode não existir ainda (migration pendente): a agenda segue com a grade padrão
@@ -240,6 +243,7 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
       setProfessionals((pros.data ?? []).map((p) => ({ id: p.id, name: p.name, role: p.title })))
       setClients((cls.data ?? []).map((c) => ({ id: c.id, name: c.name, phone: c.phone })))
       setServices((svcs.data ?? []).map((s) => ({ id: s.id, name: s.name, price: Number(s.price), duration: s.duration })))
+      setRegistryFor(salonId)
     })()
     return () => {
       cancelled = true
@@ -452,9 +456,11 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
     [live, salonId],
   )
 
+  const registryLoading = live && registryFor !== salonId
+
   const value = useMemo<AgendaState>(
     () => ({
-      loading,
+      loading: loading || registryLoading,
       error,
       professionals,
       clients,
@@ -470,7 +476,7 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
       update,
       addProfessional,
     }),
-    [loading, error, professionals, clients, services, appointments, pending, workingHours, hoursAvailable, saveHours, focus, reload, create, update, addProfessional],
+    [loading, registryLoading, error, professionals, clients, services, appointments, pending, workingHours, hoursAvailable, saveHours, focus, reload, create, update, addProfessional],
   )
 
   return <AgendaContext.Provider value={value}>{children}</AgendaContext.Provider>

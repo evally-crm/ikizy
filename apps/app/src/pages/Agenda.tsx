@@ -5,6 +5,7 @@ import { ptBR } from 'date-fns/locale'
 import { CalendarPlus, ChevronLeft, ChevronRight, Clock, LayoutGrid, List, Plus, RotateCcw } from 'lucide-react'
 import { findConflict, useAgenda } from '../data/AgendaProvider'
 import { useAuth } from '../auth/AuthProvider'
+import { neon } from '../lib/neon'
 import { useSubscription } from '../billing/SubscriptionProvider'
 import { closedRanges, dayKey, gridWindow } from '../lib/agendaTime'
 import { formatBRL, formatTime } from '../lib/format'
@@ -34,15 +35,23 @@ const STATUS_NAME: Record<AppointmentStatus, string> = {
 
 /** no Solo quem atende é a própria dona: a agenda já nasce com ela, sem perguntar nada */
 function SoloProfessional() {
-  const { addProfessional } = useAgenda()
-  const { displayName, session } = useAuth()
+  const { addProfessional, reload } = useAgenda()
+  const { displayName, session, salon } = useAuth()
   const [error, setError] = useState<string | null>(null)
   const started = useRef(false)
 
   const create = useCallback(async () => {
     setError(null)
+    // nunca cadastra uma segunda: se o negócio já tem profissional (a lista local pode estar atrasada), só recarrega
+    if (neon && salon?.id) {
+      const { data } = await neon.from('professionals').select('id').eq('salon_id', salon.id).limit(1)
+      if (data && data.length > 0) {
+        reload()
+        return
+      }
+    }
     setError(await addProfessional(displayName, '', session?.user.id))
-  }, [addProfessional, displayName, session])
+  }, [addProfessional, reload, displayName, session, salon?.id])
 
   useEffect(() => {
     if (started.current) return
