@@ -25,9 +25,17 @@ const SCOPES = [
   'components/ui/Tabs.css',
   'components/ui/Sheet.tsx',
   'components/ui/Sheet.css',
+  'components/ui/Panel.tsx',
+  'components/ui/Panel.css',
+  'components/ui/DataTable.tsx',
+  'components/ui/DataTable.css',
+  'components/ui/SearchField.tsx',
+  'components/ui/SearchField.css',
   'components/charts',
   'components/finance',
+  'components/business',
   'pages/financeiro',
+  'pages/meu-negocio',
 ]
 
 /** imports que a camada de domínio nunca pode ter: ela é função pura, sem tela, banco nem sessão */

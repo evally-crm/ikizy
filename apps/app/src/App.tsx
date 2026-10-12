@@ -15,7 +15,7 @@ import RedefinirSenha from './pages/auth/RedefinirSenha'
 import VerificarEmail from './pages/auth/VerificarEmail'
 import Clientes from './pages/Clientes'
 import Financeiro from './pages/financeiro'
-import MeuNegocio from './pages/MeuNegocio'
+import MeuNegocio from './pages/meu-negocio'
 import MeuSite from './pages/MeuSite'
 
 /**

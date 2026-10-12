@@ -16,3 +16,6 @@ export const formatPhone = (phone: string) => {
   if (d.length === 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`
   return phone.trim()
 }
+
+/** valor em reais no formato do campo de dinheiro: 12.5 -> "12,5" (vazio quando zero) */
+export const toMoneyInput = (value: number) => (value ? String(value).replace('.', ',') : '')

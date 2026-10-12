@@ -154,25 +154,6 @@ const normalize = (studio: StudioInput): Studio => ({
 
 export const DEFAULT_STUDIO: Studio = normalize(DEMO_STUDIO)
 
-export interface ServiceMath {
-  /** custo de produto por atendimento */
-  cost: number
-  margin: number
-  marginPct: number
-}
-
-/** o gasto mensal do produto é dividido entre todos os atendimentos que o usam */
-export function computeMath(service: Service, services: Service[], products: Product[]): ServiceMath {
-  const product = products.find((p) => p.id === service.productId)
-  let cost = 0
-  if (product) {
-    const volume = services.filter((s) => s.productId === product.id).reduce((sum, s) => sum + s.monthlyVolume, 0)
-    cost = volume > 0 ? product.monthlySpend / volume : 0
-  }
-  const margin = service.price - cost
-  return { cost, margin, marginPct: service.price > 0 ? Math.round((margin / service.price) * 100) : 0 }
-}
-
 const STORAGE_KEY = 'ikizy:studio:v1'
 
 function load(): Studio {

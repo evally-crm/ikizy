@@ -1,0 +1,81 @@
+/* Meu negócio: layout da página (as peças têm o próprio estilo ao lado do componente) */
+.bizpage {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* faixa de números */
+.biztiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+@media (min-width: 1024px) {
+  .biztiles {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* dados: formulário e prévia lado a lado */
+.bizdetails {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+@media (min-width: 1024px) {
+  .bizdetails {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  }
+}
+.bizdetails__form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.form.bizdetails__fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+}
+@media (min-width: 640px) {
+  .form.bizdetails__fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.bizdetails__actions {
+  display: flex;
+}
+
+/* serviços: busca e filtro */
+.bizfilters {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+}
+@media (min-width: 640px) {
+  .bizfilters {
+    grid-template-columns: minmax(0, 1fr) 240px;
+    align-items: end;
+  }
+}
+
+/* diálogo de serviço: bloco opcional de custo de material */
+.bizdialog__more {
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: var(--page-bg);
+}
+.bizdialog__more summary {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-700);
+  cursor: pointer;
+}
+.bizdialog__more[open] summary {
+  margin-bottom: 8px;
+}
+.bizdialog__more .form__pair {
+  margin-top: 10px;
+}

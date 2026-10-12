@@ -102,6 +102,9 @@ export function Avatar({ name, size, soft }: { name: string; size?: 'sm'; soft?:
 }
 
 export { PageHeader } from './PageHeader'
+export { Panel } from './Panel'
 export { StatTile } from './StatTile'
 export { Tabs, type TabItem } from './Tabs'
 export { Sheet } from './Sheet'
+export { DataTable, type Column } from './DataTable'
+export { SearchField } from './SearchField'

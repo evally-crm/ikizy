@@ -1,0 +1,23 @@
+.searchfield {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 16px;
+  border-radius: var(--radius-pill);
+  background: var(--page-bg);
+  color: var(--ink-500);
+}
+.searchfield input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ink-900);
+  font: inherit;
+  font-size: 14px;
+}
+.searchfield:focus-within {
+  box-shadow: 0 0 0 2px var(--ink-900);
+}
