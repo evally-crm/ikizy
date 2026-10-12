@@ -1,0 +1,20 @@
+/* BulkMessageDialog: estilo ao lado do componente */
+.bulk__list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 46vh;
+  overflow-y: auto;
+}
+
+.bulk__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  border-radius: 16px;
+}
+
+.bulk__item.is-sent {
+  opacity: 0.6;
+}

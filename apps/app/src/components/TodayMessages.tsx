@@ -4,7 +4,7 @@ import { addDays, format, parseISO } from 'date-fns'
 import { Check, Send } from 'lucide-react'
 import { useAgenda } from '../data/AgendaProvider'
 import { useClientBook } from '../data/useClientBook'
-import { MISSING_AFTER, daysSince } from '../data/clients'
+import { MISSING_AFTER, daysSince } from '../domain/clients'
 import {
   APPOINTMENT_KINDS,
   CLIENT_KINDS,
@@ -82,7 +82,7 @@ export function TodayMessages({ clientsOnly = false }: { clientsOnly?: boolean }
   if (clientsOnly && items.length === 0) return null
 
   return (
-    <Card className="dash__people">
+    <Card className="todaymessages">
       <div className="card__head">
         <div>
           <h2 className="card__title">{clientsOnly ? 'Chamar hoje' : 'Mensagens de hoje'}</h2>

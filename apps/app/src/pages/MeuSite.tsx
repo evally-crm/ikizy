@@ -24,7 +24,7 @@ import { useMediaQuery } from '../hooks/useMediaQuery'
 import SiteFrame, { DeviceToggle, type Device } from '../components/SiteFrame'
 import OnlineBookingChecklist from '../components/OnlineBookingChecklist'
 import PhotoPick from '../components/PhotoPick'
-import { Button, Card, Em } from '../components/ui'
+import { Button, Card, Em, Tag } from '../components/ui'
 
 type Tab = 'pagina' | 'servicos' | 'vitrine' | 'previa'
 
@@ -973,7 +973,7 @@ export default function MeuSite() {
             <div className="studio__previewbar">
               <p className="studio__label">
                 Prévia ao vivo
-                {dirty && <span className="tag tag--aniversario">Não publicada</span>}
+                {dirty && <Tag tone="aniversario">Não publicada</Tag>}
               </p>
               <DeviceToggle device={device} onChange={setDevice} />
             </div>

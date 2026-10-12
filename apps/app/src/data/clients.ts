@@ -1,8 +1,6 @@
-import { addDays, differenceInCalendarDays, format, subDays } from 'date-fns'
+import { addDays, format, subDays } from 'date-fns'
 import { emptyAnamnesis, type Anamnesis } from '../lib/anamnesis'
 import type { AppointmentStatus } from '../types'
-
-export type ClientTag = 'vip' | 'nova' | 'sumida' | 'aniversario'
 
 export interface Visit {
   date: Date
@@ -48,9 +46,6 @@ export interface Client {
   /** todos os atendimentos (inclusive futuros, cancelados e faltas), do mais recente para o mais antigo */
   appointments: ClientAppointment[]
 }
-
-/** dias sem aparecer para considerar a cliente "sumida" */
-export const MISSING_AFTER = 45
 
 interface Seed {
   id: string
@@ -124,24 +119,4 @@ function buildClient(s: Seed, today: Date): Client {
 
 export function getClients(today = new Date()): Client[] {
   return seeds.map((s) => buildClient(s, today))
-}
-
-export function daysSince(date: Date, today = new Date()) {
-  return differenceInCalendarDays(today, date)
-}
-
-export function clientTags(c: Client, today = new Date()): ClientTag[] {
-  const tags: ClientTag[] = []
-  if (c.vip) tags.push('vip')
-  if (daysSince(c.since, today) <= 30) tags.push('nova')
-  if (daysSince(c.lastVisit, today) > MISSING_AFTER) tags.push('sumida')
-  if (c.birthday.slice(0, 2) === format(today, 'MM')) tags.push('aniversario')
-  return tags
-}
-
-export const TAG_LABEL: Record<ClientTag, string> = {
-  vip: 'VIP',
-  nova: 'Nova',
-  sumida: 'Sumida',
-  aniversario: 'Aniversário',
 }

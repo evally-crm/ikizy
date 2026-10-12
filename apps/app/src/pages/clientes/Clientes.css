@@ -1,0 +1,469 @@
+/* Clientes: estilo ao lado do componente */
+/* ---------- clientes (master-detail) ---------- */
+.crm {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+}
+
+.crm__list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  padding: 16px;
+}
+
+.roundbtn {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 46px;
+  height: 46px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--ink-700);
+  color: var(--white);
+  transition: background-color 0.15s;
+}
+
+.roundbtn:hover {
+  background: color-mix(in srgb, var(--ink-900) 85%, var(--white));
+}
+
+.crm__count {
+  font-size: 12px;
+  color: var(--ink-500);
+}
+
+.crm__empty {
+  padding: 24px 0;
+  text-align: center;
+  color: var(--ink-500);
+}
+
+.clist {
+  min-height: 0;
+  margin: 0 -6px;
+  padding: 0 6px;
+  overflow-y: auto;
+}
+
+.clist__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border-radius: 18px;
+  transition: background-color 0.15s;
+}
+
+.clist__item:hover {
+  background: var(--bg);
+}
+
+.clist__item.is-active {
+  background: var(--brand-900);
+  color: var(--white);
+}
+
+.clist__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.clist__name {
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.clist__meta {
+  overflow: hidden;
+  font-size: 12px;
+  color: var(--ink-500);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.clist__item.is-active .clist__meta {
+  color: color-mix(in srgb, var(--white) 65%, transparent);
+}
+
+.clist__spent {
+  flex: none;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.crm__detail {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+  min-height: 0;
+}
+
+.backlink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  min-height: 38px;
+  padding: 0 14px 0 10px;
+  border-radius: var(--radius-pill);
+  background: var(--white);
+  font-size: 14px;
+}
+
+.profile {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 20px;
+}
+
+.profile__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.profile__who {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.profile__who > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+
+.profile__name {
+  font-size: clamp(22px, 3vw, 28px);
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  overflow-wrap: anywhere;
+}
+
+.profile__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.profile__stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.profile__stats > div {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.profile__stats .money {
+  color: var(--ink-900);
+}
+
+.profile__num {
+  font-size: clamp(22px, 3vw, 28px);
+  font-weight: 300;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: var(--ink-900);
+  white-space: nowrap;
+}
+
+.profile__num small {
+  font-size: 0.45em;
+  letter-spacing: 0;
+}
+
+.profile__return {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: var(--page-bg);
+  font-size: 13px;
+  color: var(--ink-700);
+}
+
+.profile__return > svg {
+  flex: none;
+  color: var(--brand-500);
+}
+
+.profile__return p {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+
+.profile__return strong {
+  font-weight: 500;
+  color: var(--ink-900);
+}
+
+.profile__return.is-late {
+  background: var(--pink-100);
+  color: var(--brand-700);
+}
+
+.profile__return.is-late strong {
+  color: var(--brand-700);
+}
+
+@media (min-width: 640px) {
+  .profile__stats {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  .profile__stats > div + div {
+      padding-left: 14px;
+      border-left: 1px solid var(--line);
+    }
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+}
+
+.detail-grid > .card {
+  padding: 18px;
+}
+
+.detail-grid .card__head {
+  margin-bottom: 12px;
+}
+
+@media (min-width: 640px) {
+  .detail-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  .detail-grid__wide {
+      grid-column: span 2;
+    }
+}
+
+.detail-grid__wide.card--fixed {
+  max-height: 600px;
+}
+
+@media (min-width: 1100px) {
+  .crm {
+      grid-template-columns: minmax(300px, 4fr) minmax(0, 8fr);
+      align-items: start;
+    }
+  /* a carteira mostra só o que cabe na tela; a lista rola por dentro */
+  .crm__list {
+      position: sticky;
+      top: 16px;
+      max-height: calc(100dvh - 32px);
+    }
+}
+
+@media (min-width: 1100px) and (min-height: 700px) {
+  .crm__detail {
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+}
+
+/* perfil: linha de informações */
+.profile__info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: -4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.profile__info li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  min-height: 30px;
+  padding: 0 12px;
+  border-radius: var(--radius-pill);
+  background: var(--page-bg);
+  font-size: 13px;
+  color: var(--ink-700);
+}
+
+.profile__info li svg {
+  flex: none;
+  color: var(--brand-500);
+}
+
+.profile__info a {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile__info a:hover {
+  text-decoration: underline;
+}
+
+/* chamada para a ficha */
+.filecta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+  background: var(--blush);
+  box-shadow: inset 0 0 0 1px var(--pink-300);
+}
+
+.filecta > svg {
+  flex: none;
+  color: var(--brand-500);
+}
+
+.filecta > div {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.filecta .card__title {
+  margin-bottom: 2px;
+}
+
+/* botões redondos do perfil sobre o card branco */
+.profile .roundbtn {
+  width: 42px;
+  height: 42px;
+  background: var(--page-bg);
+  color: var(--ink-900);
+}
+
+.profile .roundbtn:hover {
+  background: var(--gray-200);
+}
+
+/* seleção de várias clientes (bolinhas) e envio em sequência */
+.crm__pickbar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.crm__pickbar .btn {
+  margin-left: auto;
+}
+
+.crm__pickall {
+  flex: none;
+  align-self: flex-start;
+  font-size: 12px;
+}
+
+.clist__row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.clist__row .clist__item {
+  flex: 1;
+  min-width: 0;
+}
+
+.selbtn {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin-left: 4px;
+  padding: 0;
+  border: 2px solid var(--gray-300);
+  border-radius: 50%;
+  background: var(--white);
+  color: var(--white);
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.selbtn:hover {
+  border-color: var(--brand-500);
+}
+
+.selbtn.is-on {
+  border-color: var(--brand-500);
+  background: var(--brand-500);
+}
+
+.clist__phone {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* telas que cabem na viewport (desktop com altura suficiente) */
+@media (min-width: 1100px) and (min-height: 700px) {
+  .page--fit {
+        gap: 14px;
+        height: var(--fit-h);
+      }
+  .page--fit > .dash,
+      .page--fit > .crm {
+        flex: 1;
+        min-height: 0;
+      }
+}
+
+@media (min-width: 1100px) and (min-height: 700px) {
+  .page--fit > .crm {
+        grid-template-rows: minmax(0, 1fr);
+        align-items: stretch;
+      }
+  .page--fit .crm__list {
+        position: static;
+        max-height: none;
+      }
+}
+
+/* faixa de números no topo */
+.crmtiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+@media (min-width: 1100px) {
+  .crmtiles {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* filtros em linha, com rolagem quando não cabem */
+.crm__filters {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.crm__filters::-webkit-scrollbar {
+  display: none;
+}

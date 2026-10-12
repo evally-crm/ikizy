@@ -537,3 +537,112 @@
     border-bottom: 0;
   }
 }
+
+/* variações pequenas dos componentes base */
+.textlink {
+  flex: none;
+  font-size: 13px;
+  color: var(--ink-500);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.textlink:hover {
+  color: var(--brand-700);
+}
+
+.chevbtn {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--ink-700);
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.chevbtn:hover {
+  background: var(--brand-900);
+  color: var(--white);
+}
+
+.chips--scroll {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.chips--scroll .chip {
+  flex: none;
+  min-height: 34px;
+  padding: 0 14px;
+  background: var(--bg);
+}
+
+.chips--scroll .chip[aria-pressed='true'] {
+  background: var(--brand-900);
+}
+
+.chip--sm {
+  min-height: 32px;
+  gap: 4px;
+  padding: 0 12px;
+  font-size: 12px;
+}
+
+.chip:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.card__cta {
+  align-self: flex-start;
+  margin-top: 14px;
+}
+
+.input--sm {
+  min-height: 40px;
+  padding-right: 4px;
+}
+
+.input__add {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--brand-900);
+  color: var(--white);
+}
+
+.chevbtn.is-done {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+button.textlink {
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+button.textlink:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* avatar grande do perfil da cliente */
+.avatar--lg {
+  width: 52px;
+  height: 52px;
+  background: linear-gradient(135deg, var(--brand-500), var(--brand-900));
+  color: var(--white);
+  font-family: var(--font-serif);
+  font-size: 24px;
+  font-style: italic;
+}

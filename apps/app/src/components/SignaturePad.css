@@ -1,0 +1,89 @@
+/* SignaturePad: estilo ao lado do componente */
+.sigpad {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sigpad__label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-900);
+}
+
+.sigpad__box {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  background: var(--page-bg);
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+}
+
+.sigpad__canvas {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  aspect-ratio: 560 / 200;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.sigpad__clear {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--ink-900);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--white);
+  transition: opacity 0.15s;
+}
+
+.sigpad__clear:disabled {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sigpad__x {
+  position: absolute;
+  bottom: 50px;
+  left: 22px;
+  font-size: 15px;
+  line-height: 1;
+  color: var(--ink-500);
+  pointer-events: none;
+}
+
+.sigpad__line {
+  position: absolute;
+  right: 22px;
+  bottom: 40px;
+  left: 22px;
+  border-top: 1.5px dashed var(--gray-300);
+  pointer-events: none;
+}
+
+.sigpad__hint {
+  position: absolute;
+  right: 0;
+  bottom: 14px;
+  left: 0;
+  font-size: 13px;
+  text-align: center;
+  color: var(--ink-500);
+  pointer-events: none;
+  transition: opacity 0.15s;
+}
+
+.sigpad__box.is-signed .sigpad__hint {
+  opacity: 0;
+}

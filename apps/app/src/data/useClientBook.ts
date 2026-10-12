@@ -4,6 +4,7 @@ import { useAuth } from '../auth/AuthProvider'
 import { isNeonConfigured, neon } from '../lib/neon'
 import { parseAnamnesis, type Anamnesis } from '../lib/anamnesis'
 import type { AppointmentStatus } from '../types'
+import { DEFAULT_INTERVAL, averageInterval } from '../domain/clients'
 import { getClients, type Client, type ClientAppointment } from './clients'
 import { professionals as mockProfessionals } from './mock'
 
@@ -34,8 +35,6 @@ export interface ClientNote {
   date: Date
 }
 
-const DAY = 24 * 60 * 60 * 1000
-const DEFAULT_INTERVAL = 30
 
 const CLIENT_COLUMNS =
   'id, name, phone, birthday, vip, preferred_professional, allergies, preferences, anamnesis_signed_at, created_at, email, instagram, address, occupation, referral, anamnesis, anamnesis_updated_at, anamnesis_signature'
@@ -105,11 +104,7 @@ function buildClient(row: ClientRow, rows: AppointmentRow[], fallbackProfessiona
   const since = new Date(row.created_at)
   const lastVisit = done[0]?.date ?? since
   // intervalo médio entre as visitas; com menos de duas, usamos um padrão
-  let interval = DEFAULT_INTERVAL
-  if (done.length > 1) {
-    const span = done[0].date.getTime() - done[done.length - 1].date.getTime()
-    interval = Math.max(1, Math.round(span / DAY / (done.length - 1)))
-  }
+  const interval = averageInterval(done.map((a) => a.date))
   return {
     id: row.id,
     name: row.name,

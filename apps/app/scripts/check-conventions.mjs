@@ -37,6 +37,9 @@ const SCOPES = [
   'pages/financeiro',
   'pages/meu-negocio',
   'pages/agenda',
+  'pages/clientes',
+  'components/ui/Tag.tsx',
+  'components/ui/Tag.css',
 ]
 
 /** imports que a camada de domínio nunca pode ter: ela é função pura, sem tela, banco nem sessão */
