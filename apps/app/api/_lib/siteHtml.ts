@@ -1,4 +1,4 @@
-import { CATEGORIES, FONTS, fontHref, isFontId, paletteFor } from '../../src/lib/siteTheme.js'
+import { CATEGORIES, FONTS, fontHref, isCoverStyleId, isFontId, paletteFor } from '../../src/lib/siteTheme.js'
 import { BOOKING_CSS, BOOKING_SCRIPT } from './bookingClient.js'
 
 /** formato devolvido por public.get_public_site(): só o que pode ser exibido ao público */
@@ -20,6 +20,8 @@ export interface PublicSite {
     theme?: string
     palette?: string
     font?: string
+    /** estilo da capa sem foto: sobrio, poa, xadrez, editorial ou organico */
+    cover_style?: string
     booking_window_days?: number
     show_prices?: boolean
     show_team?: boolean
@@ -190,6 +192,51 @@ footer{padding:18px 0 28px;text-align:center;color:var(--muted);font-size:13px}
 @media(min-width:720px){.float{width:auto;left:auto;right:24px;transform:none}}
 `
 
+/**
+ * estilos da capa sem foto (o sóbrio é o degradê padrão). Entram depois do CSS da paleta escura e usam só as variáveis
+ * da paleta, então valem para qualquer cor.
+ */
+const coverStyleCss = (dark: boolean): string => {
+  // editorial: superfície escura (a cor do título) com o texto na cor do fundo; na paleta escura, o painel com texto claro
+  const surface = dark ? 'var(--panel)' : 'var(--ink)'
+  const fg = dark ? 'var(--ink)' : 'var(--bg)'
+  const onFg = dark ? 'var(--bg)' : 'var(--ink)'
+  const nc = ':not(.hero--cover)'
+  /** texto escuro sobre superfície clara */
+  const onLight = (c: string, bg: string, extra = '') =>
+    `.hero--${c}${nc}{background:${bg};color:var(--ink)}` +
+    `.hero--${c}${nc} h1,.hero--${c}${nc} .hero__lead,.hero--${c}${nc} .hero__name{color:var(--ink)}` +
+    `.hero--${c}${nc} h1 em{color:var(--accent)}` +
+    `.hero--${c}${nc} .btn{background:var(--accent);color:var(--on);border-color:var(--accent)}` +
+    `.hero--${c}${nc} .btn--ghost{background:transparent;color:var(--ink);border-color:var(--line)}` +
+    `.hero--${c}${nc} .chip{background:var(--soft);color:var(--text)}` +
+    extra
+  const dots = 'radial-gradient(circle,color-mix(in srgb,var(--accent) 40%,transparent) 2.2px,transparent 2.8px) 0 0/26px 26px'
+  const check = 'color-mix(in srgb,var(--accent) 24%,transparent)'
+  const gingham = `linear-gradient(90deg,${check} 50%,transparent 50%) 0 0/52px 52px,linear-gradient(${check} 50%,transparent 50%) 0 0/52px 52px,var(--bg)`
+  const blobs =
+    'radial-gradient(60% 70% at 88% 6%,color-mix(in srgb,var(--accent) 30%,transparent) 0%,transparent 70%),' +
+    'radial-gradient(55% 60% at 4% 100%,color-mix(in srgb,var(--accent) 20%,transparent) 0%,transparent 72%),var(--soft)'
+  return (
+    onLight('poa', `${dots},var(--panel)`) +
+    onLight(
+      'xadrez',
+      gingham,
+      `.hero--xadrez{justify-content:center;align-items:center;text-align:center}` +
+        `.hero--xadrez .hero__in{width:100%;max-width:560px;padding:30px 24px;border-radius:28px;background:var(--panel);box-shadow:0 18px 40px -22px color-mix(in srgb,var(--ink) 55%,transparent),inset 0 0 0 1px var(--line)}` +
+        `.hero--xadrez .hero__cta{justify-content:center}` +
+        `.hero--xadrez .hero__lead{margin-inline:auto}`,
+    ) +
+    onLight('organico', blobs, '.hero--organico{border-radius:56px 56px 140px 56px}') +
+    `.hero--editorial${nc}{background:radial-gradient(70% 90% at 100% 0%,color-mix(in srgb,${fg} 18%,transparent) 0%,transparent 60%),${surface};color:${fg}}` +
+    `.hero--editorial${nc} h1,.hero--editorial${nc} h1 em,.hero--editorial${nc} .hero__lead,.hero--editorial${nc} .hero__name{color:${fg}}` +
+    `.hero--editorial${nc} h1{font-size:clamp(44px,12vw,104px)}` +
+    `.hero--editorial${nc} .btn{background:${fg};color:${onFg};border-color:${fg}}` +
+    `.hero--editorial${nc} .btn--ghost{background:transparent;color:${fg};border-color:color-mix(in srgb,${fg} 55%,transparent)}` +
+    `.hero--editorial${nc} .chip{background:color-mix(in srgb,${fg} 16%,transparent);color:${fg}}`
+  )
+}
+
 /** paleta escura: o destaque é branco, então capa sem foto e contato continuam escuros em vez de virar blocos brancos */
 const DARK_CSS = `
 .hero:not(.hero--cover){background:radial-gradient(90% 80% at 88% 8%,#2a2a2a 0%,transparent 60%),var(--panel);color:var(--ink)}
@@ -211,6 +258,7 @@ export function renderSitePage(site: PublicSite, opts: { canonical: string }): s
   const font = FONTS[fontId]
   const logo = safeLogo(s.logo)
   const cover = safeLogo(s.cover)
+  const coverStyle = !cover && isCoverStyleId(s.cover_style) && s.cover_style !== 'sobrio' ? s.cover_style : null
   const name = site.name
   const showPrices = s.show_prices !== false
   const services = (site.services ?? []).filter((x) => x.name?.trim())
@@ -348,7 +396,7 @@ export function renderSitePage(site: PublicSite, opts: { canonical: string }): s
 <meta property="og:url" content="${esc(opts.canonical)}">
 <meta name="twitter:card" content="summary">
 <script type="application/ld+json">${jsonLd}</script>
-<style>:root{--accent:${pal.accent};--soft:${pal.soft};--on:${pal.on};--bg:${pal.bg};--panel:${pal.panel};--ink:${pal.ink};--text:${pal.text};--muted:${pal.muted};--line:${pal.line};--display:${font.family};--dw:${font.weight};--du:${font.upper ? 'uppercase' : 'none'};color-scheme:${pal.dark ? 'dark' : 'light'}}${CSS}${pal.dark ? DARK_CSS : ''}${online ? BOOKING_CSS : ''}</style>
+<style>:root{--accent:${pal.accent};--soft:${pal.soft};--on:${pal.on};--bg:${pal.bg};--panel:${pal.panel};--ink:${pal.ink};--text:${pal.text};--muted:${pal.muted};--line:${pal.line};--display:${font.family};--dw:${font.weight};--du:${font.upper ? 'uppercase' : 'none'};color-scheme:${pal.dark ? 'dark' : 'light'}}${CSS}${pal.dark ? DARK_CSS : ''}${coverStyleCss(pal.dark)}${online ? BOOKING_CSS : ''}</style>
 </head>
 <body>
 <header class="top"><div class="wrap"><div class="bar"><span class="logo">${logo ? `<img src="${logo}" alt="">` : ''}<span>${esc(name)}</span></span><nav aria-label="Seções">${
@@ -363,7 +411,7 @@ export function renderSitePage(site: PublicSite, opts: { canonical: string }): s
         : ''
   }</div></div></header>
 <main class="wrap">
-<section class="panel hero${cover ? ' hero--cover' : ''}">${cover ? `<img class="hero__img" src="${cover}" alt="">` : ''}<div class="hero__in">${ownTagline ? `<p class="hero__name">${esc(name)}</p>` : ''}<h1>${head ? `${esc(head)} ` : ''}<em>${esc(tail)}</em></h1>${
+<section class="panel hero${cover ? ' hero--cover' : coverStyle ? ` hero--${coverStyle}` : ''}">${cover ? `<img class="hero__img" src="${cover}" alt="">` : ''}<div class="hero__in">${ownTagline ? `<p class="hero__name">${esc(name)}</p>` : ''}<h1>${head ? `${esc(head)} ` : ''}<em>${esc(tail)}</em></h1>${
     about && !cover ? `<p class="hero__lead">${esc(about.slice(0, 140))}</p>` : ''
   }<div class="hero__cta">${
     online

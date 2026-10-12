@@ -4,7 +4,7 @@ import { isNeonConfigured, neon } from '../lib/neon'
 
 export { CATEGORIES, PALETTES } from '../lib/siteTheme'
 export type { Category, FontId, PaletteId } from '../lib/siteTheme'
-import { paletteFor, type Category, type FontId, type PaletteId } from '../lib/siteTheme'
+import { isCoverStyleId, paletteFor, type Category, type CoverStyleId, type FontId, type PaletteId } from '../lib/siteTheme'
 
 export interface Product {
   id: string
@@ -73,6 +73,8 @@ export interface SiteConfig {
   palette: PaletteId
   /** fonte dos títulos */
   font: FontId
+  /** estilo da capa sem foto (o que fica atrás do título) */
+  coverStyle: CoverStyleId
   /** logo reduzido, como data URL; vazio = sem logo */
   logo: string
   /** foto de capa do topo do site, como data URL; vazio = sem foto */
@@ -116,6 +118,7 @@ const DEMO_STUDIO: StudioInput = {
     hours: 'Seg a Sáb · 09h às 19h',
     palette: 'vinho-preto',
     font: 'moderna',
+    coverStyle: 'sobrio',
     logo: '',
     cover: '',
     address: '',
@@ -147,6 +150,8 @@ const DEMO_STUDIO: StudioInput = {
 /** completa o que faltar (rascunhos antigos guardados no navegador não tinham foto nem vitrine) */
 const normalize = (studio: StudioInput): Studio => ({
   ...studio,
+  // rascunhos antigos (modo demonstração) não têm o estilo da capa
+  site: { ...studio.site, coverStyle: isCoverStyleId(studio.site.coverStyle) ? studio.site.coverStyle : 'sobrio' },
   services: studio.services.map((sv) => ({ ...sv, photo: sv.photo ?? '', photoId: sv.photoId ?? null })),
   showcase: studio.showcase ?? [],
   plans: studio.plans ?? [],
@@ -191,6 +196,7 @@ interface SettingsRow {
   theme?: string
   palette?: PaletteId
   font?: FontId
+  cover_style?: string
   logo?: string | null
   cover?: string | null
   address?: string
@@ -270,6 +276,7 @@ export function useStudio() {
               hours: row.hours,
               palette: paletteFor(row).id,
               font: row.font ?? 'moderna',
+              coverStyle: isCoverStyleId(row.cover_style) ? row.cover_style : 'sobrio',
               logo: row.logo ?? '',
               cover: row.cover ?? '',
               address: row.address ?? '',
@@ -495,6 +502,7 @@ export function useStudio() {
           palette: site.palette,
           accent_color: null,
           font: site.font,
+          cover_style: site.coverStyle,
           logo: site.logo || null,
           cover: site.cover || null,
           address: site.address.trim(),
