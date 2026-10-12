@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { format } from 'date-fns'
-import { FileText, Lock, Plus, Trash2 } from 'lucide-react'
+import { CalendarDays, CreditCard, FileText, Lock, PieChart, Plus, Trash2, Users, Wallet } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
 import { useFinance } from '../../data/useFinance'
 import {
@@ -13,23 +13,18 @@ import {
   dayTiles,
   growthPct,
   marginPct,
-  outflowOf,
   paymentShares,
   showsTeam,
-  waffleCounts,
   weeklyAverage,
   weeksOf,
   type Expense,
   type ReceiptModel,
 } from '../../domain/finance'
-import { DotWaffle } from '../../components/charts/DotWaffle'
-import { Gauge } from '../../components/charts/Gauge'
-import { PaymentColumns } from '../../components/charts/PaymentColumns'
-import { WeeklyBars } from '../../components/charts/WeeklyBars'
 import { DayGrid } from '../../components/finance/DayGrid'
 import { LedgerList, type LedgerRow } from '../../components/finance/LedgerList'
+import { Receipt } from '../../components/finance/Receipt'
 import { ReceiptSheet } from '../../components/finance/ReceiptSheet'
-import { Avatar, Button, Em, Money, PageHeader, Panel, StatTile, Tabs } from '../../components/ui'
+import { Avatar, Button, PageHeader, Tabs } from '../../components/ui'
 import { formatBRL } from '../../lib/format'
 import { agenda } from '../../lib/routes'
 import { CloseDialog } from './CloseDialog'
@@ -39,7 +34,7 @@ import './Financeiro.css'
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 const short = (v: number) => formatBRL(v).replace(',00', '')
 
-/** fechamento do mês: números, mapa de dias (cada dia abre o recibo dele) e o recibo do mês */
+/** fechamento do mês: números, detalhes à esquerda (cada dia abre o recibo dele) e a prévia do recibo do mês à direita */
 export function MonthView({ tabs }: { tabs: ReactNode }) {
   const { salon } = useAuth()
   const fin = useFinance()
@@ -81,8 +76,9 @@ export function MonthView({ tabs }: { tabs: ReactNode }) {
 
   const growth = growthPct(month, previous)
   const weeks = weeksOf(month)
+  const bestWeek = bestWeekIndex(weeks)
+  const weekMax = Math.max(0, ...weeks.map((w) => w.total))
   const parts = composition(month)
-  const counts = waffleCounts(parts.map((p) => p.value), month.gross)
   const shares = paymentShares(month.payments)
   const { leading, days } = dayTiles(month)
   const monthExpenses = fin.expenses.filter((e) => e.date.startsWith(month.id))
@@ -124,6 +120,15 @@ export function MonthView({ tabs }: { tabs: ReactNode }) {
     value: formatBRL(c.total),
   }))
 
+  const trendHint =
+    growth !== null && !month.isCurrent
+      ? `${growth >= 0 ? '+' : ''}${growth}% vs ${previous?.label ?? ''}`
+      : closedAt
+        ? 'Mês fechado'
+        : month.isCurrent
+          ? 'Mês em aberto'
+          : 'Aguardando fechamento'
+
   return (
     <div className="page finpage">
       <PageHeader
@@ -164,32 +169,40 @@ export function MonthView({ tabs }: { tabs: ReactNode }) {
         </p>
       )}
 
-      <div className="fintiles">
-        <StatTile
-          tone="dark"
-          label="Faturamento bruto"
-          value={<Money value={month.gross} size="lg" />}
-          trend={growth !== null && !month.isCurrent ? { percent: growth, versus: previous?.label ?? '' } : null}
-          hint={`${capitalize(month.label)} ${format(month.date, 'yyyy')} · ${closedAt ? 'fechado' : month.isCurrent ? 'mês em aberto' : 'aguardando fechamento'}`}
-        />
-        <StatTile
-          label="Lucro líquido"
-          value={<Money value={month.net} size="lg" />}
-          hint={`Margem de ${marginPct(month)}% · saídas ${short(outflowOf(month))}`}
-        />
-        <StatTile label="Ticket médio" value={<Money value={month.ticket} size="lg" />} hint={`${month.newClients} novas clientes · retorno ${month.returnRate}%`} />
-        <StatTile label="Atendimentos" value={month.appointments} hint={month.noShows > 0 ? `${month.noShows} faltas` : 'Nenhuma falta'} />
+      <div className="fm-stats">
+        <div className="fm-stat fm-stat--dark">
+          <span className="fm-stat__label">Faturamento bruto</span>
+          <strong className="fm-stat__value">{formatBRL(month.gross)}</strong>
+          <span className="fm-stat__hint">{trendHint}</span>
+        </div>
+        <div className="fm-stat">
+          <span className="fm-stat__label">Lucro líquido</span>
+          <strong className="fm-stat__value">{formatBRL(month.net)}</strong>
+          <span className="fm-stat__hint">Margem de {marginPct(month)}%</span>
+        </div>
+        <div className="fm-stat">
+          <span className="fm-stat__label">Ticket médio</span>
+          <strong className="fm-stat__value">{formatBRL(month.ticket)}</strong>
+          <span className="fm-stat__hint">
+            {month.newClients} novas · retorno {month.returnRate}%
+          </span>
+        </div>
+        <div className="fm-stat">
+          <span className="fm-stat__label">Atendimentos</span>
+          <strong className="fm-stat__value">{month.appointments}</strong>
+          <span className="fm-stat__hint">{month.noShows > 0 ? `${month.noShows} faltas` : 'Nenhuma falta'}</span>
+        </div>
       </div>
 
-      <div className="finlayout">
-        <div className="fincol">
-          <Panel
-            eyebrow="Toque num dia para ver o recibo"
-            title="Dias do mês"
-            action={month.gross > 0 && <span className="panel__aside">Média de {short(weeklyAverage(month))} por semana</span>}
-          >
+      <div className="fm-layout">
+        <div className="fm-details">
+          <section className="fm-card">
+            <h2 className="fm-card__title">
+              <CalendarDays size={16} aria-hidden="true" /> Dias do mês
+              {month.gross > 0 && <span className="fm-card__aside">Média de {short(weeklyAverage(month))} por semana</span>}
+            </h2>
             {month.gross === 0 && (
-              <p className="panel__empty">
+              <p className="fm-empty">
                 Entra aqui conforme você conclui atendimentos. <Link to={agenda()}>Abrir agenda</Link>
               </p>
             )}
@@ -198,96 +211,115 @@ export function MonthView({ tabs }: { tabs: ReactNode }) {
               days={days}
               onSelect={(date) => setReceipt(buildDayReceipt(fin.statementFor(date), { salonName, now }))}
             />
-            <WeeklyBars weeks={weeks} bestIndex={bestWeekIndex(weeks)} label={`Faturamento por semana em ${month.label}`} />
-          </Panel>
+            <ul className="fm-rows">
+              {weeks.map((w, i) => (
+                <li key={w.label} className={w.future ? 'is-future' : undefined}>
+                  <span className="fm-rows__label">
+                    {w.label}
+                    {i === bestWeek && w.total > 0 && <em className="fm-pill">melhor</em>}
+                  </span>
+                  <span className="fm-bar" aria-hidden="true">
+                    <span style={{ width: `${weekMax > 0 ? Math.round((w.total / weekMax) * 100) : 0}%` }} />
+                  </span>
+                  <strong>{w.future ? '—' : formatBRL(w.total)}</strong>
+                </li>
+              ))}
+            </ul>
+          </section>
 
-          <Panel eyebrow="Recebimentos" title="Formas de pagamento">
-            {shares.length === 0 ? (
-              <p className="panel__empty">Os recebimentos aparecem quando você conclui atendimentos na agenda.</p>
-            ) : (
-              <PaymentColumns shares={shares} />
-            )}
-          </Panel>
-
-          {showsTeam(month, professionals.length) && (
-            <Panel
-              eyebrow="Equipe"
-              title="Comissões"
-              action={month.commissionsTotal > 0 && <strong>{formatBRL(month.commissionsTotal)}</strong>}
-            >
-              {commissionRows.length === 0 ? (
-                <p className="panel__empty">Nenhuma profissional com comissão definida. Defina o percentual de cada uma para calcular.</p>
-              ) : (
-                <LedgerList rows={commissionRows} />
-              )}
-            </Panel>
-          )}
-        </div>
-
-        <div className="fincol">
-          {closedAt ? (
-            <StatTile
-              tone="brand"
-              label="Fechamento"
-              value={`${capitalize(month.label)} está fechado`}
-              hint={`Fechado em ${format(closedAt, "dd/MM 'às' HH:mm")}. Os números não mudam mais.`}
-            />
-          ) : (
-            <StatTile
-              tone="brand"
-              label={month.isCurrent ? `${month.daysInMonth - month.elapsedDays} dias para o fim do mês` : 'Mês já terminou'}
-              value={
-                <>
-                  Pronta para fechar <Em>{month.label}</Em>?
-                </>
-              }
-              hint="Confira o recibo e trave os lançamentos do mês."
-            >
-              <Button variant="light" onClick={() => setConfirming(true)}>
-                <Lock size={16} aria-hidden="true" /> Fechar {month.label}
-              </Button>
-            </StatTile>
-          )}
-
-          <Panel eyebrow="Para onde foi o dinheiro" title="Composição do faturamento">
-            <DotWaffle parts={parts.map((p, i) => ({ tone: p.tone, count: counts[i] }))} />
-            <ul className="finlegend">
+          <section className="fm-card">
+            <h2 className="fm-card__title">
+              <PieChart size={16} aria-hidden="true" /> Para onde foi o dinheiro
+            </h2>
+            <ul className="fm-rows">
               {parts.map((p) => (
                 <li key={p.tone}>
-                  <i className={`finlegend__dot finlegend__dot--${p.tone}`} />
-                  <span>{p.label}</span>
-                  <span className="finlegend__pct">{p.share}%</span>
+                  <span className="fm-rows__label">{p.label}</span>
+                  <span className="fm-bar" aria-hidden="true">
+                    <span style={{ width: `${p.share}%` }} />
+                  </span>
+                  <span className="fm-rows__pct">{p.share}%</span>
                   <strong>{formatBRL(p.value)}</strong>
                 </li>
               ))}
             </ul>
-            <Gauge value={marginPct(month)} label={`Margem de lucro: ${marginPct(month)}%`} />
-            <p className="panel__note">
-              Cada ponto vale 2% do faturamento. Taxas de cartão estimadas em {cardFeeLabel()}% do crédito e do débito; produtos vêm do gasto mensal cadastrado em
-              Meu site.
+            <p className="fm-note">
+              Taxas de cartão estimadas em {cardFeeLabel()}% do crédito e do débito; produtos vêm do gasto mensal cadastrado em Meu site.
             </p>
-          </Panel>
+          </section>
 
-          <Panel
-            eyebrow="Caixa"
-            title="Saídas do mês"
-            action={
-              canLaunch && (
-                <Button size="sm" onClick={() => setAddingExpense(true)}>
-                  <Plus size={16} aria-hidden="true" /> Lançar
+          <section className="fm-card">
+            <h2 className="fm-card__title">
+              <CreditCard size={16} aria-hidden="true" /> Formas de pagamento
+            </h2>
+            {shares.length === 0 ? (
+              <p className="fm-empty">Os recebimentos aparecem quando você conclui atendimentos na agenda.</p>
+            ) : (
+              <ul className="fm-rows">
+                {shares.map((p) => (
+                  <li key={p.method}>
+                    <span className="fm-rows__label">{p.method}</span>
+                    <span className="fm-bar" aria-hidden="true">
+                      <span style={{ width: `${p.share}%` }} />
+                    </span>
+                    <span className="fm-rows__pct">{p.share}%</span>
+                    <strong>{formatBRL(p.total)}</strong>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          {showsTeam(month, professionals.length) && (
+            <section className="fm-card">
+              <h2 className="fm-card__title">
+                <Users size={16} aria-hidden="true" /> Comissões
+                {month.commissionsTotal > 0 && <span className="fm-card__aside">{formatBRL(month.commissionsTotal)}</span>}
+              </h2>
+              {commissionRows.length === 0 ? (
+                <p className="fm-empty">Nenhuma profissional com comissão definida. Defina o percentual de cada uma para calcular.</p>
+              ) : (
+                <LedgerList rows={commissionRows} />
+              )}
+            </section>
+          )}
+
+          <section className="fm-card">
+            <h2 className="fm-card__title">
+              <Wallet size={16} aria-hidden="true" /> Saídas do mês
+              {canLaunch && (
+                <Button variant="soft" size="sm" className="fm-card__action" onClick={() => setAddingExpense(true)}>
+                  <Plus size={15} aria-hidden="true" /> Lançar
                 </Button>
-              )
-            }
-          >
+              )}
+            </h2>
             {!fin.expensesAvailable ? (
-              <p className="panel__empty">As saídas ficam disponíveis assim que a atualização do banco for aplicada.</p>
+              <p className="fm-empty">As saídas ficam disponíveis assim que a atualização do banco for aplicada.</p>
             ) : expenseRows.length === 0 ? (
-              <p className="panel__empty">Nenhuma saída lançada em {month.label}. Aluguel, luz e material entram aqui.</p>
+              <p className="fm-empty">Nenhuma saída lançada em {month.label}. Aluguel, luz e material entram aqui.</p>
             ) : (
               <LedgerList rows={expenseRows} />
             )}
-          </Panel>
+          </section>
         </div>
+
+        <aside className="fm-preview" aria-label="Prévia do recibo do mês">
+          <div className="fm-preview__bar">
+            <h2 className="fm-card__title">
+              <FileText size={16} aria-hidden="true" /> Prévia do recibo
+            </h2>
+            {closedAt ? (
+              <span className="fm-pill fm-pill--ok">
+                <Lock size={12} aria-hidden="true" /> Fechado em {format(closedAt, 'dd/MM')}
+              </span>
+            ) : (
+              <Button size="sm" onClick={() => setConfirming(true)}>
+                <Lock size={15} aria-hidden="true" /> Fechar {month.label}
+              </Button>
+            )}
+          </div>
+          <Receipt model={buildMonthReceipt(month, closedAt, { salonName, now })} />
+        </aside>
       </div>
 
       {addingExpense && <ExpenseDialog month={month} onSave={fin.addExpense} onClose={() => setAddingExpense(false)} />}
