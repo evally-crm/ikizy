@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { bestDay, bestWeekIndex, composition, dailyRange, growthPct, marginPct, monthSummaryText, outflowOf, paymentShares, pct, waffleCounts, weeklyAverage, weeksOf } from './metrics'
-import { buildDayReceipt, buildMonthReceipt } from './receipt'
+import { bestDay, bestWeekIndex, composition, dailyRange, dayTiles, growthPct, marginPct, outflowOf, paymentShares, pct, waffleCounts, weeklyAverage, weeksOf } from './metrics'
+import { buildDayReceipt, buildMonthReceipt, receiptSummaryText } from './receipt'
 import { buildDayStatement } from './day'
 import { appt } from './fixtures.test-helpers'
 import type { MonthClosing } from './types'
@@ -91,7 +91,7 @@ describe('indicadores do mês', () => {
   it('formas de pagamento: parte de cada uma e barra relativa à maior', () => {
     const shares = paymentShares(month().payments)
     assert.deepEqual(shares.map((s) => [s.share, s.top]), [[60, true], [40, false]])
-    assert.ok(Math.abs(shares[1].relative - 2 / 3) < 1e-9)
+    assert.deepEqual(shares.map((s) => s.height), [100, 67])
   })
 
   it('grade de pontos reparte exatamente 50 pontos', () => {
@@ -99,11 +99,19 @@ describe('indicadores do mês', () => {
     assert.equal(counts.reduce((a, b) => a + b, 0), 50)
     assert.deepEqual(waffleCounts([0, 0], 0), [0, 0])
   })
+})
 
-  it('resumo para o WhatsApp traz mês, salão, faturamento, lucro e atendimentos', () => {
-    const text = monthSummaryText(month(), 'Studio Aurora')
-    assert.match(text, /Fechamento de outubro - Studio Aurora/)
-    assert.match(text, /Atendimentos: 10/)
+describe('mapa de dias', () => {
+  it('começa na coluna certa da semana, marca hoje e deixa dias futuros vazios', () => {
+    // 1º de outubro de 2026 é quinta-feira: 3 espaços antes (seg, ter, qua)
+    const current = month({ isCurrent: true, elapsedDays: 12, daily: [...Array.from({ length: 12 }, (_, i) => (i === 4 ? 400 : 0)), ...Array.from({ length: 19 }, () => null)] })
+    const { leading, days } = dayTiles(current)
+    assert.equal(leading, 3)
+    assert.equal(days.length, 31)
+    assert.equal(days[4].level, 4)
+    assert.equal(days[11].today, true)
+    assert.equal(days[12].future, true)
+    assert.equal(days[0].date, '2026-10-01')
   })
 })
 
@@ -143,5 +151,12 @@ describe('recibos', () => {
     assert.deepEqual(r.lines.map((l) => l.total), [120])
     assert.equal(r.sums.at(-1)?.value, 120)
     assert.equal(r.chart, null)
+  })
+  it('resumo para o WhatsApp traz título, salão, período, valores e atendimentos', () => {
+    const text = receiptSummaryText(buildMonthReceipt(month(), null, { salonName: 'Studio Aurora', now }))
+    assert.match(text, /Recibo do mês - Studio Aurora/)
+    assert.match(text, /OUTUBRO 2026/)
+    assert.match(text, /Lucro líquido: R\$\s700,00/)
+    assert.match(text, /Atendimentos: 10/)
   })
 })

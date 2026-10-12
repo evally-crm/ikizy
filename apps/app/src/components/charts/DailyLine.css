@@ -1,0 +1,17 @@
+.dailyline {
+  display: block;
+  width: 100%;
+  height: 72px;
+  color: var(--ink-900);
+}
+.dailyline__grid {
+  stroke: var(--line);
+  stroke-dasharray: 2 3;
+  vector-effect: non-scaling-stroke;
+}
+.dailyline__path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}

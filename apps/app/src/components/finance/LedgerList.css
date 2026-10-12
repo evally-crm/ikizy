@@ -1,0 +1,47 @@
+.ledger {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ledger__row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+}
+.ledger__row:first-child {
+  border-top: 0;
+}
+.ledger__lead {
+  flex: none;
+  min-width: 44px;
+  font-size: 12px;
+  color: var(--ink-500);
+}
+.ledger__text {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+.ledger__title {
+  overflow: hidden;
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ledger__subtitle {
+  overflow: hidden;
+  font-size: 12px;
+  color: var(--ink-500);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ledger__value {
+  flex: none;
+  font-size: 14px;
+  font-weight: 500;
+}

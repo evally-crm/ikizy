@@ -1,0 +1,34 @@
+.gauge {
+  position: relative;
+  width: 100%;
+  max-width: 220px;
+  margin-inline: auto;
+}
+.gauge svg {
+  display: block;
+  width: 100%;
+}
+.gauge__track,
+.gauge__fill {
+  fill: none;
+  stroke-width: 16;
+  stroke-linecap: round;
+}
+.gauge__track {
+  stroke: var(--gray-200);
+}
+.gauge__fill {
+  stroke: var(--brand-500);
+}
+.gauge__value {
+  position: absolute;
+  inset: auto 0 6px;
+  font-size: 30px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  text-align: center;
+}
+.gauge__value small {
+  font-size: 16px;
+  color: var(--ink-500);
+}

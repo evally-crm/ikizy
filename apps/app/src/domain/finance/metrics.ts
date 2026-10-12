@@ -1,6 +1,7 @@
+import { format } from 'date-fns'
+import { heatLevel } from '../charts'
 import { WAFFLE_DOTS } from './rates'
-import { formatBRL } from '../../lib/format'
-import type { CompositionPart, MonthClosing, PaymentLine, WeekTotal } from './types'
+import type { CompositionPart, DayTile, MonthClosing, PaymentLine, WeekTotal } from './types'
 
 /** percentual inteiro de uma parte sobre o total (0 quando o total é zero) */
 export const pct = (part: number, total: number) => (total ? Math.round((part / total) * 100) : 0)
@@ -78,8 +79,8 @@ export function dailyRange(month: MonthClosing): [number, number] {
 export interface PaymentShare extends PaymentLine {
   /** percentual inteiro do total recebido */
   share: number
-  /** tamanho da barra: 0–1, relativo à maior forma */
-  relative: number
+  /** altura da coluna em % da trilha, relativa à maior forma (mínimo 8%) */
+  height: number
   top: boolean
 }
 
@@ -87,7 +88,7 @@ export interface PaymentShare extends PaymentLine {
 export function paymentShares(payments: PaymentLine[]): PaymentShare[] {
   const total = payments.reduce((sum, p) => sum + p.total, 0)
   const max = Math.max(...payments.map((p) => p.total), 1)
-  return payments.map((p) => ({ ...p, share: pct(p.total, total), relative: p.total / max, top: p.total === max }))
+  return payments.map((p) => ({ ...p, share: pct(p.total, total), height: Math.max(Math.round((p.total / max) * 100), 8), top: p.total === max }))
 }
 
 /**
@@ -111,12 +112,17 @@ export function waffleCounts(values: number[], total: number, dots = WAFFLE_DOTS
   return counts
 }
 
-/** resumo curto do fechamento para mandar no WhatsApp */
-export function monthSummaryText(month: MonthClosing, salonName: string): string {
-  return [
-    `Fechamento de ${month.label} - ${salonName}`,
-    `Faturamento: ${formatBRL(month.gross)}`,
-    `Lucro líquido: ${formatBRL(month.net)}`,
-    `Atendimentos: ${month.appointments}`,
-  ].join('\n')
+/** mapa de dias do mês: um quadrado por dia, com a intensidade relativa ao melhor dia; `leading` são os vazios antes do dia 1 (semana começa na segunda) */
+export function dayTiles(month: MonthClosing): { leading: number; days: DayTile[] } {
+  const max = Math.max(...month.daily.map((v) => v ?? 0), 0)
+  const todayIndex = month.isCurrent ? month.elapsedDays : -1
+  const days = month.daily.map((value, i) => ({
+    day: i + 1,
+    date: format(new Date(month.date.getFullYear(), month.date.getMonth(), i + 1), 'yyyy-MM-dd'),
+    value,
+    level: heatLevel(value, max),
+    future: value === null,
+    today: i + 1 === todayIndex,
+  }))
+  return { leading: (month.date.getDay() + 6) % 7, days }
 }

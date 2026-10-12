@@ -100,3 +100,8 @@ export function Avatar({ name, size, soft }: { name: string; size?: 'sm'; soft?:
     </span>
   )
 }
+
+export { PageHeader } from './PageHeader'
+export { StatTile } from './StatTile'
+export { Tabs, type TabItem } from './Tabs'
+export { Sheet } from './Sheet'

@@ -1,50 +1,6 @@
 import { addMinutes, addMonths, endOfMonth, format, getDate, getDay, getDaysInMonth, setDate, setHours, startOfMonth } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-
-export interface CategoryLine {
-  name: string
-  qty: number
-  total: number
-}
-
-export interface CommissionLine {
-  professionalId: string
-  qty: number
-  total: number
-}
-
-export interface PaymentLine {
-  method: string
-  total: number
-}
-
-export interface MonthClosing {
-  /** yyyy-MM */
-  id: string
-  date: Date
-  label: string
-  isCurrent: boolean
-  closedAt: Date | null
-  daysInMonth: number
-  elapsedDays: number
-  categories: CategoryLine[]
-  gross: number
-  cardFees: number
-  products: number
-  /** saídas lançadas no mês (aluguel, contas...) */
-  expenses: number
-  commissions: CommissionLine[]
-  commissionsTotal: number
-  net: number
-  payments: PaymentLine[]
-  appointments: number
-  ticket: number
-  newClients: number
-  returnRate: number
-  noShows: number
-  /** faturamento por dia; null = dia que ainda não chegou */
-  daily: (number | null)[]
-}
+import type { MonthClosing } from '../domain/finance'
 
 const CATEGORIES = [
   { name: 'Unhas', qty: 96, avg: 118 },
@@ -81,7 +37,7 @@ function seeded(seed: number) {
   }
 }
 
-function buildMonth(date: Date, opts: { factor: number; seed: number; current: boolean; today: Date }): MonthClosing {
+function buildDemoMonth(date: Date, opts: { factor: number; seed: number; current: boolean; today: Date }): MonthClosing {
   const rand = seeded(opts.seed)
   const daysInMonth = getDaysInMonth(date)
   const elapsedDays = opts.current ? getDate(opts.today) : daysInMonth
@@ -136,10 +92,10 @@ function buildMonth(date: Date, opts: { factor: number; seed: number; current: b
   }
 }
 
-/** dois meses já fechados + o mês atual em aberto */
-export function getMonths(today = new Date()): MonthClosing[] {
+/** dados de exemplo da demonstração (sem banco): dois meses já fechados + o mês atual em aberto */
+export function getDemoMonths(today = new Date()): MonthClosing[] {
   return [-2, -1, 0].map((offset, i) =>
-    buildMonth(startOfMonth(addMonths(today, offset)), {
+    buildDemoMonth(startOfMonth(addMonths(today, offset)), {
       factor: [0.92, 1, 1.06][i],
       seed: 7 + i * 13,
       current: offset === 0,

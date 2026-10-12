@@ -201,3 +201,16 @@ export interface ReceiptModel {
   /** linha de fechamento: quando fechou, ou "valores parciais até..." */
   footer: string
 }
+
+/** um dia no mapa do mês */
+export interface DayTile {
+  day: number
+  /** yyyy-MM-dd */
+  date: string
+  /** faturamento do dia; null = dia que ainda não chegou */
+  value: number | null
+  /** intensidade 0–4 relativa ao melhor dia */
+  level: 0 | 1 | 2 | 3 | 4
+  future: boolean
+  today: boolean
+}

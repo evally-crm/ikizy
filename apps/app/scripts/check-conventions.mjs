@@ -16,10 +16,18 @@ const src = join(root, 'src')
 /** pastas e arquivos (relativos a src/) que já seguem as regras */
 const SCOPES = [
   'domain',
+  'hooks/useOverlay.ts',
+  'components/ui/PageHeader.tsx',
+  'components/ui/PageHeader.css',
+  'components/ui/StatTile.tsx',
+  'components/ui/StatTile.css',
+  'components/ui/Tabs.tsx',
+  'components/ui/Tabs.css',
+  'components/ui/Sheet.tsx',
+  'components/ui/Sheet.css',
   'components/charts',
   'components/finance',
   'pages/financeiro',
-  'styles/finance.css',
 ]
 
 /** imports que a camada de domínio nunca pode ter: ela é função pura, sem tela, banco nem sessão */

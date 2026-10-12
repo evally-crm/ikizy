@@ -1,0 +1,25 @@
+.waffle {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 6px;
+}
+.waffle__dot {
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--gray-200);
+}
+.waffle__dot--net {
+  background: var(--ink-900);
+}
+.waffle__dot--commissions {
+  background: var(--brand-500);
+}
+.waffle__dot--products {
+  background: var(--brand-700);
+}
+.waffle__dot--expenses {
+  background: var(--pink-300);
+}
+.waffle__dot--fees {
+  background: var(--gray-300);
+}

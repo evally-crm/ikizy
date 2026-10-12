@@ -37,21 +37,22 @@ const STATUS_NAME: Record<AppointmentStatus, string> = {
 function SoloProfessional() {
   const { addProfessional, reload } = useAgenda()
   const { displayName, session, salon } = useAuth()
+  const salonId = salon?.id
   const [error, setError] = useState<string | null>(null)
   const started = useRef(false)
 
   const create = useCallback(async () => {
     setError(null)
     // nunca cadastra uma segunda: se o negócio já tem profissional (a lista local pode estar atrasada), só recarrega
-    if (neon && salon?.id) {
-      const { data } = await neon.from('professionals').select('id').eq('salon_id', salon.id).limit(1)
+    if (neon && salonId) {
+      const { data } = await neon.from('professionals').select('id').eq('salon_id', salonId).limit(1)
       if (data && data.length > 0) {
         reload()
         return
       }
     }
     setError(await addProfessional(displayName, '', session?.user.id))
-  }, [addProfessional, reload, displayName, session, salon?.id])
+  }, [addProfessional, reload, displayName, session, salonId])
 
   useEffect(() => {
     if (started.current) return

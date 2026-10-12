@@ -1,7 +1,7 @@
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { bestDay, dailyRange } from './metrics'
-import { formatTime } from '../../lib/format'
+import { formatBRL, formatTime } from '../../lib/format'
 import type { DayStatement, MonthClosing, ReceiptModel, ReceiptStat, ReceiptSum } from './types'
 
 interface Context {
@@ -89,4 +89,14 @@ export function buildDayReceipt(day: DayStatement, { salonName, now }: Context):
     note: 'Produtos e custos fixos entram no fechamento do mês.',
     footer: isToday ? `Valores parciais até ${format(now, 'HH:mm')}` : 'Dia encerrado',
   }
+}
+
+/** resumo do recibo em texto, para mandar no WhatsApp */
+export function receiptSummaryText(model: ReceiptModel): string {
+  return [
+    `${model.title} - ${model.salonName}`,
+    model.period,
+    ...model.sums.map((s) => `${s.label}: ${formatBRL(s.value)}`),
+    ...model.stats.filter((s) => s.kind === 'count').map((s) => `${s.label}: ${s.value}`),
+  ].join('\n')
 }

@@ -1,0 +1,129 @@
+/* Financeiro: layout da página (as peças têm o próprio estilo ao lado do componente) */
+.finpage {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* faixa de números */
+.fintiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+@media (min-width: 1024px) {
+  .fintiles {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .fintiles--three {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* duas colunas no computador */
+.finlayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+@media (min-width: 1024px) {
+  .finlayout {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  }
+}
+.fincol {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.finpanel__empty,
+.finpanel__aside,
+.finpanel__note {
+  font-size: 13px;
+  color: var(--ink-500);
+}
+.finpanel__note {
+  font-size: 12px;
+}
+
+/* formas de pagamento dentro do cartão escuro do caixa */
+.fintoday__methods {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 8px 0 0;
+  padding: 12px 0 0;
+  border-top: 1px solid color-mix(in srgb, var(--white) 16%, transparent);
+  list-style: none;
+}
+.fintoday__methods li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+}
+
+/* legenda da composição */
+.finlegend {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.finlegend li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+.finlegend li > span:nth-of-type(1) {
+  flex: 1;
+}
+.finlegend__pct {
+  color: var(--ink-500);
+}
+.finlegend__dot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--gray-300);
+}
+.finlegend__dot--net {
+  background: var(--ink-900);
+}
+.finlegend__dot--commissions {
+  background: var(--brand-500);
+}
+.finlegend__dot--products {
+  background: var(--brand-700);
+}
+.finlegend__dot--expenses {
+  background: var(--pink-300);
+}
+.finlegend__dot--fees {
+  background: var(--gray-300);
+}
+
+/* botão de ícone nas linhas de saída */
+.finaction {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-500);
+  cursor: pointer;
+}
+.finaction:hover {
+  background: var(--page-bg);
+  color: var(--ink-900);
+}
