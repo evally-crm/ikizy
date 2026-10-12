@@ -11,7 +11,10 @@
     "test:api": "tsx --test api/_lib/*.test.ts",
     "typecheck:api": "tsc -p tsconfig.api.json",
     "stripe:setup": "tsx scripts/stripe-setup.ts",
-    "db:migrate": "tsx scripts/migrate.ts"
+    "db:migrate": "tsx scripts/migrate.ts",
+    "test:domain": "tsx --test \"src/domain/**/*.test.ts\"",
+    "test": "npm run test:api && npm run test:domain",
+    "check:conventions": "node scripts/check-conventions.mjs"
   },
   "dependencies": {
     "@neondatabase/neon-js": "^0.7.0-beta",
