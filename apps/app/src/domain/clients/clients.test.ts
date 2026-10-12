@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import { awaitsConfirmation, filterClients, summarizeBook, type BookClient } from './book'
+import { confirmsClientName } from './forget'
 import { clientProfile, type ProfileClient } from './profile'
 import { DEFAULT_INTERVAL, MISSING_AFTER, averageInterval, clientTags, daysSince, lastVisitLabel } from './tags'
 
@@ -123,5 +124,13 @@ describe('perfil da cliente', () => {
     assert.equal(clientProfile(client({ id: '2', anamnesisSignedAt: daysAgo(3) }), TODAY, 5).fileDone, true)
     assert.equal(clientProfile(client({ id: '3', anamnesisSignedAt: daysAgo(3) }), TODAY, 0).fileDone, false)
     assert.equal(clientProfile(client({ id: '4' }), TODAY, 5).fileDone, false)
+  })
+})
+
+describe('apagar dados da cliente', () => {
+  it('confirma pelo nome, sem diferença de acento, caixa ou espaços', () => {
+    assert.equal(confirmsClientName('  maria   JOSÉ ', 'Maria José'), true)
+    assert.equal(confirmsClientName('Maria', 'Maria José'), false)
+    assert.equal(confirmsClientName('', ''), false)
   })
 })

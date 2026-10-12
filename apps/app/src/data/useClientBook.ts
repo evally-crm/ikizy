@@ -4,7 +4,7 @@ import { useAuth } from '../auth/AuthProvider'
 import { isNeonConfigured, neon } from '../lib/neon'
 import { parseAnamnesis, type Anamnesis } from '../lib/anamnesis'
 import type { AppointmentStatus } from '../types'
-import { DEFAULT_INTERVAL, averageInterval } from '../domain/clients'
+import { DEFAULT_INTERVAL, averageInterval, isForgotten } from '../domain/clients'
 import { getClients, type Client, type ClientAppointment } from './clients'
 import { professionals as mockProfessionals } from './mock'
 
@@ -140,6 +140,8 @@ export function useClientBook() {
   const salonId = salon?.id
   const live = isNeonConfigured && Boolean(neon) && Boolean(salonId)
   const canManage = !live || salon?.role === 'owner' || salon?.role === 'manager'
+  /** só a dona apaga dados de cliente (LGPD) */
+  const canForget = !live || salon?.role === 'owner'
 
   const [clients, setClients] = useState<Client[]>(() => (live ? [] : getClients()))
   const [professionals, setProfessionals] = useState<ProfessionalOption[]>(() => (live ? [] : mockProfessionals))
@@ -175,7 +177,7 @@ export function useClientBook() {
       const proList = (pros.data ?? []).map((p) => ({ id: p.id as string, name: p.name as string }))
       setProfessionals(proList)
       setClients(
-        ((cls.data ?? []) as unknown as ClientRow[]).map((c) =>
+        ((cls.data ?? []) as unknown as ClientRow[]).filter((c) => !isForgotten(c.name)).map((c) =>
           buildClient(c, byClient.get(c.id) ?? [], proList[0]?.id ?? ''),
         ),
       )
@@ -288,9 +290,23 @@ export function useClientBook() {
     [save],
   )
 
+  /** apaga os dados pessoais da cliente (LGPD); com histórico, a ficha fica anônima para não quebrar o financeiro */
+  const forget = useCallback(
+    async (id: string): Promise<string | null> => {
+      if (live && neon) {
+        const { error: err } = await neon.rpc('forget_client', { p_client: id })
+        if (err) return friendly(err)
+      }
+      setClients((list) => list.filter((c) => c.id !== id))
+      return null
+    },
+    [live],
+  )
+
   return {
     live,
     canManage,
+    canForget,
     clients,
     professionals,
     loading,
@@ -300,6 +316,7 @@ export function useClientBook() {
     updateCare,
     saveAnamnesis,
     signAnamnesis,
+    forget,
     reload,
   }
 }

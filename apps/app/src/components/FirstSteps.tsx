@@ -110,7 +110,7 @@ export function FirstSteps() {
       detail: services.length === 0 ? 'Cadastre o que você faz.' : `${unpriced} ${unpriced === 1 ? 'serviço' : 'serviços'} sem preço.`,
       to: dash('/negocio#servicos'),
     },
-    { id: 'site', done: Boolean(site?.published), title: 'Publique seu site', detail: 'Visual e endereço em 2 passos.', to: dash('/site?guia=1') },
+    { id: 'site', done: Boolean(site?.published), title: 'Publique seu site', detail: 'Visual, textos e endereço da sua página.', to: dash('/site') },
     { id: 'online', done: Boolean(site?.online), title: 'Receba agendamentos pelo site', detail: 'As clientes marcam sozinhas.', to: dash('/site') },
   ]
   const doneCount = steps.filter((s) => s.done).length

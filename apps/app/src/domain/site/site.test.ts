@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import { blankPlan, blankShowcaseItem, patchById, removeById } from './lists'
-import { addressReady, cleanSlug, clampIndex, depositPercent, noticeHours, parseAmount, publishButton, splitIncludes, windowDays, type PublishState } from './rules'
+import { cleanSlug, clampIndex, depositPercent, noticeHours, parseAmount, publishButton, splitIncludes, windowDays, type PublishState } from './rules'
 
 describe('campos do site', () => {
   it('valor digitado vira número não negativo', () => {
@@ -32,13 +32,6 @@ describe('campos do site', () => {
 
   it('índice de etapa fica sempre dentro da lista', () => {
     assert.deepEqual([-1, 0, 2, 9].map((i) => clampIndex(i, 3)), [0, 0, 2, 2])
-  })
-
-  it('guia exige nome com 2+ letras e endereço livre com 3+', () => {
-    assert.equal(addressReady({ salonName: 'Ana', slug: 'ana' }, false), true)
-    assert.equal(addressReady({ salonName: 'A', slug: 'ana' }, false), false)
-    assert.equal(addressReady({ salonName: 'Ana', slug: 'an' }, false), false)
-    assert.equal(addressReady({ salonName: 'Ana', slug: 'ana' }, true), false)
   })
 })
 

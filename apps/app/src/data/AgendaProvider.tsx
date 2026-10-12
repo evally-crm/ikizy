@@ -4,6 +4,7 @@ import { useAuth } from '../auth/AuthProvider'
 import { isNeonConfigured, neon } from '../lib/neon'
 import type { Appointment, AppointmentStatus, PaymentMethod, Professional } from '../types'
 import { appointments as mockAppointments, professionals as mockProfessionals } from './mock'
+import { isForgotten } from '../domain/clients'
 import { getClients } from './clients'
 import type { HourInterval } from '../lib/agendaTime'
 
@@ -229,7 +230,7 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
         setWorkingHours(byPro)
       }
       setProfessionals((pros.data ?? []).map((p) => ({ id: p.id, name: p.name, role: p.title })))
-      setClients((cls.data ?? []).map((c) => ({ id: c.id, name: c.name, phone: c.phone })))
+      setClients((cls.data ?? []).filter((c) => !isForgotten(c.name)).map((c) => ({ id: c.id, name: c.name, phone: c.phone })))
       setServices((svcs.data ?? []).map((s) => ({ id: s.id, name: s.name, price: Number(s.price), duration: s.duration })))
       setRegistryFor(salonId)
     })()

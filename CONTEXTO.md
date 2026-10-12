@@ -138,11 +138,7 @@ Regras importantes:
 ### Editor (`apps/app/src/pages/MeuSite.tsx`)
 
 - Abre **sempre em tela cheia** em telas largas (sem o menu do app); o X minimiza só naquela visita.
-- **Guia em 2 passos** (abre sozinho se o site não está publicado; também por "Abrir guia" ou `?guia=1`):
-  segue exatamente o UX da criação de conta (`pages/auth/Onboarding.tsx`): progresso em tracinhos no topo com voltar e "Pular",
-  "Seu site" em cinza, título grande, opções em pílulas (a escolhida fica preta), "Fazer depois" e o disco preto com seta.
-  Passo 1: paleta + fonte. Passo 2: nome + endereço → publicar. Depois: "Seu site está no ar" (Ver meu site / Completar meu site).
-  Ao lado, **prévia fiel** (mesmo gerador da página real, num iframe dentro de uma moldura de navegador; Computador/Celular).
+- **Sem guia:** o guia de 2 passos foi removido; só existe o editor completo, com a **prévia fiel** ao lado (mesmo gerador da página real, num iframe dentro de uma moldura de navegador; Computador/Celular). O primeiro "Publicar" usa a barra de publicar, com o endereço em "Contato e endereço".
 - **Etapas do editor** (tracinhos no topo com setas ← → e "2 de 4"; botões "Próximo: ..." no fim de cada etapa):
   1. **Página:** Aparência (paleta e fonte), Identidade (logo e capa), Textos, Contato e endereço, O que mostrar (preços, equipe, sinal, agendamento online). Seções começam fechadas.
   2. **Serviços e planos:** serviços agrupados por categoria (abre/fecha), com foto opcional; grupo **Planos por assinatura** com selo "Novidade" (nome, preço/mês, descrição, o que inclui, etiqueta Novidade no site). A cobrança dos planos é combinada por WhatsApp.
@@ -222,6 +218,13 @@ Pontos de atenção:
 
 ## 8. Estado atual
 
+- 12/10/2026 (lembretes por e-mail, **migration `20261027000000_email_reminders` ainda NÃO aplicada**): cron diário `/api/cron/trial-reminders` (9h de Brasília) manda
+  aviso de teste/Pix/cancelamento acabando (7, 3 e 1 dia), cartão recusado e acesso terminado (R-103, E8, E10, E11). Um aviso por negócio por rodada, sem repetir
+  (`email_log`). O e-mail da dona vem de `POST /api/account/sync-email` (token verificado), chamado pelo app ao entrar; sem ele o negócio não recebe aviso.
+  Precisa de `CRON_SECRET` e `RESEND_API_KEY` na Vercel. Hobby: 2 crons diários (expire-requests e trial-reminders).
+- 12/10/2026 (LGPD e pedidos sem resposta, **migration `20261026000000_lgpd_requests` ainda NÃO aplicada**): `forget_client()` (só a dona; ficha anônima "Cliente removida"
+  se houver atendimentos, apagada se não houver; botão na ficha, pede o nome) e `expire_stale_requests()` chamada pelo cron diário `/api/cron/expire-requests`
+  (`vercel.json`; exige a variável `CRON_SECRET` na Vercel, sem ela a rota responde 503).
 - 12/10/2026 (endurecimento, **migration ainda NÃO aplicada**): `neon/migrations/20261025000000_hardening.sql` (mês fechado no fuso de Brasília,
   `close_month` confere faturamento, atendimentos e saídas com o banco e exige assinatura ativa, concluir exige forma de pagamento e concluído
   não se apaga, atendimento só aponta para cliente/profissional/serviço do próprio negócio, `hit_rate_limit`, WhatsApp único por negócio).

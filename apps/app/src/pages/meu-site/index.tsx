@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { ArrowLeft, ArrowRight, ExternalLink, Maximize2, Undo2, X } from 'lucide-react'
 import { newId, useStudio, type ClientPlan, type Service, type ShowcaseItem, type SiteConfig } from '../../data/catalog'
-import { addressReady, blankPlan, clampIndex, blankShowcaseItem, patchById, removeById, type PublishState } from '../../domain/site'
+import { blankPlan, clampIndex, blankShowcaseItem, patchById, removeById, type PublishState } from '../../domain/site'
 import { isReservedSlug, siteHost } from '../../lib/slug'
 import { useMediaQuery } from '../../hooks/useMediaQuery'
 import { useScrollLock } from '../../hooks/useScrollLock'
@@ -10,7 +10,6 @@ import SiteFrame, { DeviceToggle, type Device } from '../../components/SiteFrame
 import OnlineBookingChecklist from '../../components/OnlineBookingChecklist'
 import { Button, Card, Em, PageHeader, Section, Tag } from '../../components/ui'
 import { AppearanceFields } from './AppearanceFields'
-import { GuideWizard } from './GuideWizard'
 import { IdentityFields } from './IdentityFields'
 import { PublishButton } from './PublishButton'
 import { ServicesEditor } from './ServicesEditor'
@@ -27,17 +26,14 @@ const TABS: { id: Tab; label: string; narrowOnly?: boolean }[] = [
   { id: 'previa', label: 'Prévia', narrowOnly: true },
 ]
 
-/** Meu site: editor em etapas com a prévia ao vivo, e o guia de criação para quem ainda não publicou */
+/** Meu site: editor em etapas com a prévia ao vivo */
 export default function MeuSite() {
   const { draft, setDraft, dirty, publish, discard, loading, error: loadError, isLive, publishedSlug } = useStudio()
   const isWide = useMediaQuery('(min-width: 1100px)')
-  const splitGuide = useMediaQuery('(min-width: 900px)')
   const [tab, setTab] = useState<Tab>('pagina')
   const [justPublished, setJustPublished] = useState(false)
   const [publishing, setPublishing] = useState(false)
   const [publishError, setPublishError] = useState<string | null>(null)
-  const [step, setStep] = useState(0)
-  const [wizardOn, setWizardOn] = useState<boolean | null>(null)
   const [fullPref, setFullPref] = useState(true)
   const [device, setDevice] = useState<Device>(isWide ? 'desktop' : 'mobile')
   const bodyRef = useRef<HTMLDivElement>(null)
@@ -81,24 +77,15 @@ export default function MeuSite() {
     setJustPublished(true)
     window.setTimeout(() => setJustPublished(false), 2500)
   }
-  const claim = async () => {
-    if (!(await runPublish())) return
-    setWizardOn(true)
-    setStep(2)
-  }
-
-  // guia de criação: abre sozinho para quem ainda não publicou; ?guia=1 abre de novo
-  const forced = new URLSearchParams(window.location.search).has('guia')
-  const wizard = !loading && !loadError && (wizardOn ?? (!isLive || forced))
   // tela cheia: padrão em telas largas; o X minimiza só nesta visita
   const full = fullPref && isWide
-  useScrollLock(full || wizard)
+  useScrollLock(full)
   useEffect(() => {
     if (!full) return
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && !wizard && setFullPref(false)
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setFullPref(false)
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [full, wizard])
+  }, [full])
 
   const publishState: PublishState = { isLive, dirty, justPublished, publishing, loading, reserved: slugReserved }
   const liveUrl = `https://${siteHost(publishedSlug)}`
@@ -123,7 +110,7 @@ export default function MeuSite() {
                 <span>{siteHost(site.slug)} · ainda não publicado</span>
               </span>
             )}
-            <div className={`bar__publish ${wizard ? 'is-off' : ''}`.trim()}>
+            <div className="bar__publish">
               {dirty && (
                 <Button variant="ghost" size="sm" onClick={discard}>
                   <Undo2 size={15} aria-hidden="true" /> Descartar
@@ -146,7 +133,7 @@ export default function MeuSite() {
         }
       />
 
-      {(dirty || !isLive) && !wizard && (
+      {(dirty || !isLive) && (
         <div className="publishbar" role="region" aria-label="Publicar o site">
           {dirty && (
             <Button variant="light" size="sm" onClick={discard}>
@@ -209,22 +196,6 @@ export default function MeuSite() {
           <div className="studio__body" id="studio-panel" role="tabpanel" aria-labelledby={`tab-${active}`} ref={bodyRef}>
             {active === 'pagina' && (
               <div className="sects">
-                <div className="guidecard">
-                  <span>
-                    <strong>Personalizar em 2 passos</strong>
-                    <small>Visual e endereço, com a prévia ao lado.</small>
-                  </span>
-                  <Button
-                    variant="light"
-                    size="sm"
-                    onClick={() => {
-                      setStep(0)
-                      setWizardOn(true)
-                    }}
-                  >
-                    Abrir guia
-                  </Button>
-                </div>
                 <details className="fold">
                   <summary>Agendamento pelo site</summary>
                   <OnlineBookingChecklist whatsapp={site.whatsapp} online={site.onlineBooking} />
@@ -286,33 +257,6 @@ export default function MeuSite() {
           </Card>
         )}
       </div>
-
-      {wizard &&
-        createPortal(
-          <GuideWizard
-            site={site}
-            draft={draft}
-            setSite={setSite}
-            step={step}
-            onStep={setStep}
-            isLive={isLive}
-            publishedSlug={publishedSlug}
-            slugReserved={slugReserved}
-            addressOk={addressReady(site, slugReserved)}
-            publishing={publishing}
-            publishError={publishError}
-            split={splitGuide}
-            device={device}
-            onDevice={setDevice}
-            onClose={() => setWizardOn(false)}
-            onClaim={() => void claim()}
-            onComplete={() => {
-              setWizardOn(false)
-              setTab('pagina')
-            }}
-          />,
-          document.body,
-        )}
     </div>
   )
 
