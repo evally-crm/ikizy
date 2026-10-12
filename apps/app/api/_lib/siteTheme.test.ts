@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { FONTS, PALETTES, isFontId, isPaletteId, paletteFor, type PaletteId } from '../../src/lib/siteTheme.js'
+import { FONTS, PALETTES, isFontId, isPaletteId, paletteFor, type PaletteId, COVER_STYLES, isCoverStyleId } from '../../src/lib/siteTheme.js'
 
 const lum = (hex: string) => {
   const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((x) => (x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4))
@@ -62,5 +62,12 @@ describe('fontes', () => {
   it('só aceita opções conhecidas', () => {
     assert.ok(isFontId('forte') && !isFontId('comic'))
     assert.equal(Object.keys(FONTS).length, 3)
+  })
+})
+
+describe('estilos da capa', () => {
+  it('são cinco e só aceita os conhecidos', () => {
+    assert.equal(Object.keys(COVER_STYLES).length, 5)
+    assert.ok(isCoverStyleId('poa') && !isCoverStyleId('foto') && !isCoverStyleId(undefined))
   })
 })

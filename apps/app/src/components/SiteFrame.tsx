@@ -26,6 +26,7 @@ function toPublicSite(studio: Studio, team: { name: string; role: string }[]): P
       logo: site.logo || null,
       cover: site.cover || null,
       font: site.font,
+      cover_style: site.coverStyle,
       show_prices: site.showPrices,
       show_team: site.showTeam,
       // na prévia o agendamento não roda (não há script), então não mostramos o botão da janela

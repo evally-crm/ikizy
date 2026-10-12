@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react'
 import { PALETTES, type PaletteId, type SiteConfig } from '../../data/catalog'
-import { FONTS, type FontId } from '../../lib/siteTheme'
+import { COVER_STYLES, FONTS, type CoverStyleId, type FontId } from '../../lib/siteTheme'
 import type { SetSite } from './types'
 import './MeuSite.css'
 
@@ -23,6 +23,22 @@ export function PaletteOptions({ site, setSite }: { site: SiteConfig; setSite: S
   )
 }
 
+/** estilo da capa: o que fica atrás do título; a miniatura usa as cores da paleta escolhida */
+export function CoverStyleOptions({ site, setSite }: { site: SiteConfig; setSite: SetSite }) {
+  return (
+    <div className="coverpick" style={paletteVars(site.palette)}>
+      {(Object.keys(COVER_STYLES) as CoverStyleId[]).map((id) => (
+        <label key={id} className="coverpick__opt">
+          <input type="radio" name="coverStyle" checked={site.coverStyle === id} onChange={() => setSite('coverStyle', id)} />
+          <span className={`coverpick__tile coverpick__tile--${id}`} aria-hidden="true" />
+          <strong>{COVER_STYLES[id].label}</strong>
+          <small>{COVER_STYLES[id].hint}</small>
+        </label>
+      ))}
+    </div>
+  )
+}
+
 /** fonte dos títulos, cada opção escrita na própria fonte */
 export function FontOptions({ site, setSite }: { site: SiteConfig; setSite: SetSite }) {
   return (
@@ -39,13 +55,18 @@ export function FontOptions({ site, setSite }: { site: SiteConfig; setSite: SetS
   )
 }
 
-/** aparência: paleta e fonte */
+/** aparência: paleta, estilo da capa e fonte */
 export function AppearanceFields({ site, setSite }: { site: SiteConfig; setSite: SetSite }) {
   return (
     <>
       <fieldset className="field">
         <legend className="field__label">Paleta de cores</legend>
         <PaletteOptions site={site} setSite={setSite} />
+      </fieldset>
+      <fieldset className="field">
+        <legend className="field__label">Estilo da capa</legend>
+        <CoverStyleOptions site={site} setSite={setSite} />
+        <p className="field__hint">Vale quando a capa não tem foto. Se você enviar uma foto, ela passa na frente.</p>
       </fieldset>
       <fieldset className="field">
         <legend className="field__label">Fonte dos títulos</legend>
