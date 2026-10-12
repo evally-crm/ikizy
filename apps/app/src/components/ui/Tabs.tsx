@@ -6,6 +6,8 @@ export interface TabItem<T extends string> {
   label: ReactNode
   /** número ou ícone pequeno ao lado do rótulo */
   badge?: ReactNode
+  /** nome para leitores de tela quando o rótulo é só um ícone */
+  ariaLabel?: string
 }
 
 /** abas em pílula: uma opção ativa por vez (período, mês, seção) */
@@ -27,7 +29,7 @@ export function Tabs<T extends string>({
   return (
     <div className={`tabs ${fill ? 'tabs--fill' : ''}`.trim()} role="tablist" aria-label={label}>
       {items.map((item) => (
-        <button key={item.id} type="button" role="tab" className="tabs__item" aria-selected={item.id === value} onClick={() => onChange(item.id)}>
+        <button key={item.id} type="button" role="tab" className="tabs__item" aria-selected={item.id === value} aria-label={item.ariaLabel} title={item.ariaLabel} onClick={() => onChange(item.id)}>
           {item.label}
           {item.badge !== undefined && item.badge !== null && <span className="tabs__badge">{item.badge}</span>}
         </button>

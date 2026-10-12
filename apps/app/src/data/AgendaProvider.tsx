@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { addMonths, format, startOfMonth } from 'date-fns'
 import { useAuth } from '../auth/AuthProvider'
 import { isNeonConfigured, neon } from '../lib/neon'
-import { ACTIVE_STATUSES, type Appointment, type AppointmentStatus, type PaymentMethod, type Professional } from '../types'
+import type { Appointment, AppointmentStatus, PaymentMethod, Professional } from '../types'
 import { appointments as mockAppointments, professionals as mockProfessionals } from './mock'
 import { getClients } from './clients'
 import type { HourInterval } from '../lib/agendaTime'
@@ -75,23 +75,6 @@ export function useAgenda() {
 }
 
 const dayKey = (d: Date) => format(d, 'yyyy-MM-dd')
-
-/** outro atendimento ativo da mesma profissional que se sobrepõe ao intervalo informado */
-export function findConflict(
-  list: Appointment[],
-  slot: { professionalId: string; date: string; start: number; duration: number },
-  ignoreId?: string,
-) {
-  return list.find(
-    (a) =>
-      a.id !== ignoreId &&
-      a.professionalId === slot.professionalId &&
-      a.date === slot.date &&
-      ACTIVE_STATUSES.includes(a.status) &&
-      a.start < slot.start + slot.duration &&
-      slot.start < a.start + a.duration,
-  )
-}
 
 const toIso = (date: string, start: number) => {
   const [y, m, d] = date.split('-').map(Number)

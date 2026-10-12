@@ -1,0 +1,146 @@
+/* DayList: estilo ao lado do componente */
+/* lista de atendimentos do dia */
+.evcard {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  background: var(--white);
+  box-shadow: var(--shadow-sm);
+}
+
+.evcard__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.evcard__title {
+  font-size: 22px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+
+.evcard__title span {
+  color: var(--ink-500);
+}
+
+.evcard__new {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  min-height: 38px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--brand-900);
+  color: var(--white);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.evcard__new:hover:not(:disabled) {
+  background: var(--brand-700);
+}
+
+.evcard__new:disabled {
+  opacity: 0.5;
+}
+
+.evcard__list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-y: auto;
+}
+
+.ev {
+  display: flex;
+  align-items: stretch;
+  gap: 14px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: transparent;
+  text-align: left;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.ev:hover {
+  background: var(--page-bg);
+  border-color: var(--gray-300);
+}
+
+.ev__time {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  min-width: 54px;
+  padding-right: 14px;
+  border-right: 1px solid var(--line);
+}
+
+.ev__time strong {
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--ink-900);
+}
+
+.ev__time span {
+  font-size: 11px;
+  color: var(--ink-500);
+}
+
+.ev__body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+.ev__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ev__name {
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ink-900);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ev__meta {
+  overflow: hidden;
+  font-size: 12px;
+  color: var(--ink-500);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.evcard__empty {
+  display: grid;
+  flex: 1;
+  place-content: center;
+  gap: 4px;
+  text-align: center;
+  color: var(--ink-500);
+  font-size: 14px;
+}

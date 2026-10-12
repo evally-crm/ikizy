@@ -1,3 +1,4 @@
+import './FirstSteps.css'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { Check, ChevronDown, ChevronRight, Sparkles } from 'lucide-react'

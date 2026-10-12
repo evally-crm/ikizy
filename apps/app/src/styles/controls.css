@@ -398,14 +398,6 @@
 .chip--ghost:hover {
   background: var(--white);
 }
-.agenda__closed {
-  position: absolute;
-  right: 0;
-  left: 0;
-  z-index: 0;
-  background: repeating-linear-gradient(135deg, var(--page-bg) 0 6px, transparent 6px 12px);
-  pointer-events: none;
-}
 .hours {
   display: flex;
   flex-direction: column;
@@ -619,7 +611,7 @@
     min-width: 40px;
     min-height: 40px;
   }
-  .seg__item {
+  .tabs__item {
     min-height: 40px;
   }
 }

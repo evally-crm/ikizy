@@ -36,6 +36,7 @@ const SCOPES = [
   'components/business',
   'pages/financeiro',
   'pages/meu-negocio',
+  'pages/agenda',
 ]
 
 /** imports que a camada de domínio nunca pode ter: ela é função pura, sem tela, banco nem sessão */

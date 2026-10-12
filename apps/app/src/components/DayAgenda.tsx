@@ -1,3 +1,4 @@
+import './DayAgenda.css'
 import { useState } from 'react'
 import { ChevronDown, MessageCircle, Plus } from 'lucide-react'
 import { formatDuration, type HourInterval } from '../lib/agendaTime'
