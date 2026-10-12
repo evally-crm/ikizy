@@ -310,13 +310,23 @@ em {
     grid-template-columns: 1fr auto 1fr;
   }
 }
-/* na home o menu fica transparente, por cima do hero */
+/* na home o menu fica fixo no topo, transparente por cima do hero; ao rolar ganha fundo (.is-scrolled) */
 .is-home .header {
-  position: absolute;
+  position: fixed;
   top: var(--frame);
   left: var(--frame);
   right: var(--frame);
   background: none;
+}
+.header {
+  border-radius: var(--radius-lg);
+  transition: background-color 0.2s, box-shadow 0.2s;
+}
+.header.is-scrolled {
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 8px 28px -16px rgba(14, 13, 13, 0.35);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
 }
 .is-home .header__inner {
   padding: 0 clamp(20px, 3vw, 44px);
@@ -1733,6 +1743,38 @@ em {
 .footer__grid {
   display: grid;
   gap: 32px;
+}
+/* celular: marca em cima e os links em duas colunas, para o rodapé não ficar tão alto */
+@media (max-width: 767px) {
+  .footer {
+    padding-top: 36px;
+  }
+  .footer__grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 24px 16px;
+  }
+  .footer__grid > :first-child,
+  .footer__grid > :last-child {
+    grid-column: 1 / -1;
+  }
+  .footer__grid > :last-child ul {
+    flex-flow: row wrap;
+    gap: 4px 20px;
+  }
+  .footer h4 {
+    margin-bottom: 8px;
+  }
+  .footer ul {
+    gap: 4px;
+    font-size: 16px;
+  }
+  .footer__bottom {
+    margin-top: 28px;
+  }
+  .footer .footer__mark {
+    margin-top: 8px;
+    font-size: 23vw;
+  }
 }
 @media (min-width: 768px) {
   .footer__grid {

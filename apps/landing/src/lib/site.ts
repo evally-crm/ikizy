@@ -29,4 +29,4 @@ export const NAV = [
   { href: '/#contato', label: 'Contato' },
 ] as const
 
-export const TAGLINE = 'Estética, elegância e autenticidade com a gestão mais simples para negócios de beleza.'
+export const TAGLINE = 'Estética, elegância e autenticidade com gestão simples e completa para negócios de beleza.'

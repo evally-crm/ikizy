@@ -38,6 +38,16 @@ const current = (href: string) => (path === href ? 'page' : undefined)
 </header>
 
 <script>
+  // menu fixo: ao rolar, ganha fundo e sombra para não ficar ilegível sobre o conteúdo
+  const header = document.querySelector<HTMLElement>('.header')
+  if (header) {
+    const sync = () => header.classList.toggle('is-scrolled', window.scrollY > 8)
+    addEventListener('scroll', sync, { passive: true })
+    sync()
+  }
+</script>
+
+<script>
   // menu com animação de abrir e fechar: o <details> abre na hora e a classe is-open liga a animação;
   // para fechar, tira a classe, espera a animação e só então fecha o <details>
   const OUT_MS = 220

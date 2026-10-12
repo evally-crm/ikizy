@@ -27,7 +27,7 @@ export function PlanChoice({ value, onChange }: { value: PlanId; onChange: (plan
             <b>{formatBRL(PLANS[id].cents / 100)}</b>
             <small>/mês</small>
           </span>
-          {id === DEFAULT_PLAN && <span className="plan__tag">Mais escolhido</span>}
+          {id === DEFAULT_PLAN && <span className="plan__tag">Ideal para equipes</span>}
         </label>
       ))}
     </fieldset>
