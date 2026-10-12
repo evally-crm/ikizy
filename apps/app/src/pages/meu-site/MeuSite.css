@@ -316,10 +316,6 @@
   height: 100%;
 }
 
-.bar__publish.is-off {
-  display: none !important;
-}
-
 .logofield .btn {
   flex: 1 1 140px;
 }
@@ -335,35 +331,6 @@
 
 .swatch--font {
   padding: 0 16px;
-}
-
-.guidecard {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 14px 16px 14px 18px;
-  border-radius: 20px;
-  background: var(--white);
-  box-shadow: inset 0 0 0 1px var(--line-strong, var(--line));
-}
-
-.guidecard span {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.guidecard strong {
-  font-size: 15px;
-  font-weight: 500;
-  color: var(--ink-900);
-}
-
-.guidecard small {
-  font-size: 13px;
-  color: var(--ink-500);
 }
 
 .studio__previewbar {

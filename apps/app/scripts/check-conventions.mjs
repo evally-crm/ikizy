@@ -7,7 +7,7 @@
  * o arquivo não pode voltar a ter cor solta, estilo inline nem regra de negócio dentro do componente.
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs'
-import { join, relative, sep } from 'node:path'
+import { dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
@@ -98,6 +98,19 @@ for (const file of files) {
       }
     }
   })
+}
+
+// todo .css de src/ precisa ser importado por algum arquivo (import './X.css' ou @import): senão o build sobe sem o estilo
+const allFiles = walk(src)
+const importedCss = new Set()
+for (const file of allFiles.filter((f) => /\.(?:tsx?|css)$/.test(f))) {
+  const text = readFileSync(file, 'utf8')
+  for (const m of text.matchAll(/(?:import\s+(?:[^'"]*?from\s+)?|@import\s+(?:url\()?)['"]([^'"]+\.css)['"]/g)) {
+    if (m[1].startsWith('.')) importedCss.add(resolve(dirname(file), m[1]))
+  }
+}
+for (const file of allFiles.filter((f) => f.endsWith('.css') && !importedCss.has(f))) {
+  report(file, 1, 'CSS não importado: importe em algum componente (import "./X.css") ou em styles/index.css')
 }
 
 if (problems.length) {

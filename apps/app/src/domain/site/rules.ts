@@ -28,10 +28,6 @@ export const depositPercent = (raw: string) => Math.min(SITE_LIMITS.depositPerce
 /** itens "o que inclui" de um plano: uma linha por item, no máximo 8 */
 export const splitIncludes = (text: string) => text.split('\n').slice(0, SITE_LIMITS.planIncludes)
 
-/** o guia só deixa publicar com nome e endereço válidos (3+ caracteres, não reservado) */
-export const addressReady = (site: { salonName: string; slug: string }, reserved: boolean) =>
-  site.salonName.trim().length >= 2 && site.slug.length >= 3 && !reserved
-
 export interface PublishState {
   isLive: boolean
   dirty: boolean
