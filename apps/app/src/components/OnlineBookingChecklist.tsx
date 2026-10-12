@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom'
-import { Check, Circle, Clock } from 'lucide-react'
+import { CalendarCheck, Check, Circle, Clock } from 'lucide-react'
 import { useAgenda } from '../data/AgendaProvider'
 import { agenda, dash } from '../lib/routes'
-import { Card } from './ui'
+import { Section } from './ui'
 
 type State = 'ok' | 'todo' | 'soon'
 
@@ -18,8 +18,9 @@ interface Item {
 /**
  * O que o salão precisa ter pronto antes de abrir o agendamento online.
  * Enquanto algum item estiver pendente, a página pública não mostra o botão de agendar.
+ * Aparece como um bloco do editor (ícone, estado e seta) para ficar claro que abre.
  */
-export default function OnlineBookingChecklist({ whatsapp, online }: { whatsapp: string; online: boolean }) {
+export default function OnlineBookingChecklist({ whatsapp, online, bare = false }: { whatsapp: string; online: boolean; bare?: boolean }) {
   const { professionals, services, workingHours, hoursAvailable } = useAgenda()
 
   const priced = services.filter((s) => s.price > 0 && s.duration > 0)
@@ -76,22 +77,21 @@ export default function OnlineBookingChecklist({ whatsapp, online }: { whatsapp:
   const required = items.filter((i) => i.state !== 'soon')
   const missing = required.filter((i) => i.state === 'todo').length
 
-  return (
-    <Card className="checklist">
-      <div className="checklist__head">
-        <div>
-          <h3 className="checklist__title">Agendamento pelo site</h3>
-          <p className="card__sub">
-            {missing === 0
-              ? 'Tudo pronto: seus clientes já agendam pela página.'
-              : `Faltam ${missing} ${missing === 1 ? 'item' : 'itens'} para o cliente poder pedir horário.`}
-          </p>
-        </div>
-        <span className={`checklist__badge ${missing === 0 ? 'is-ready' : ''}`}>
-          {required.length - missing}/{required.length}
-        </span>
-      </div>
+  const status =
+    missing === 0
+      ? 'Tudo pronto: seus clientes já agendam pela página.'
+      : `Faltam ${missing} ${missing === 1 ? 'item' : 'itens'} para a cliente poder pedir horário.`
 
+  const list = (
+    <>
+      {bare && (
+        <p className="checklist__status">
+          <span className={`checklist__badge ${missing === 0 ? 'is-ready' : ''}`.trim()}>
+            {required.length - missing}/{required.length}
+          </span>
+          {status}
+        </p>
+      )}
       <ol className="checklist__list">
         {items.map((it) => (
           <li key={it.id} className={`checklist__item is-${it.state}`}>
@@ -110,6 +110,23 @@ export default function OnlineBookingChecklist({ whatsapp, online }: { whatsapp:
           </li>
         ))}
       </ol>
-    </Card>
+    </>
+  )
+
+  if (bare) return list
+
+  return (
+    <Section
+      title="Agendamento pelo site"
+      hint={status}
+      icon={<CalendarCheck size={20} />}
+      badge={
+        <span className={`checklist__badge ${missing === 0 ? 'is-ready' : ''}`.trim()}>
+          {required.length - missing}/{required.length}
+        </span>
+      }
+    >
+      {list}
+    </Section>
   )
 }

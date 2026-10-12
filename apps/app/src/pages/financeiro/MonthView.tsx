@@ -17,6 +17,7 @@ import {
   paymentShares,
   showsTeam,
   weekBars,
+  weekRange,
   weeklyAverage,
   weeksOf,
   type DateRange,
@@ -97,6 +98,8 @@ export function MonthView({ tabs }: { tabs: ReactNode }) {
   const professionalName = (id: string) => professionals.find((p) => p.id === id)?.name ?? 'Profissional'
   const canLaunch = Boolean(launchMonth) && !launchClosed && fin.expensesAvailable
   const canClose = whole && Boolean(picked) && !closedAt
+  // mês em andamento e sem nenhum atendimento: nada para fechar ainda
+  const nothingToClose = month.isCurrent && month.gross === 0 && month.appointments === 0
 
   const closeMonth = async () => {
     if (!picked) return
@@ -174,7 +177,7 @@ export function MonthView({ tabs }: { tabs: ReactNode }) {
             </Button>
             {canLaunch && (
               <Button size="sm" onClick={() => setAddingExpense(true)}>
-                <Plus size={15} aria-hidden="true" /> Saída
+                <Plus size={15} aria-hidden="true" /> Nova saída
               </Button>
             )}
           </>
@@ -202,7 +205,7 @@ export function MonthView({ tabs }: { tabs: ReactNode }) {
           <span className="fm-stat__label">Ticket médio</span>
           <strong className="fm-stat__value">{formatBRL(month.ticket)}</strong>
           <span className="fm-stat__hint">
-            {month.newClients} novas · retorno {month.returnRate}%
+            {month.newClients} {month.newClients === 1 ? 'cliente nova' : 'clientes novas'} · retorno {month.returnRate}%
           </span>
         </div>
         <div className="fm-stat">
@@ -221,15 +224,18 @@ export function MonthView({ tabs }: { tabs: ReactNode }) {
             </h2>
             {month.gross === 0 && (
               <p className="fm-empty">
-                Entra aqui conforme você conclui atendimentos. <Link to={agenda()}>Abrir agenda</Link>
+                Entra aqui conforme você conclui atendimentos.{' '}
+                <Link to={agenda()} className="textlink">
+                  Abrir agenda
+                </Link>
               </p>
             )}
-            {month.daily.length > 1 && <DailyLine values={month.daily} />}
+            {month.gross > 0 && month.daily.length > 1 && <DailyLine values={month.daily} />}
             <ul className="fm-rows">
-              {(month.daily.length > 7 ? weeks : []).map((w, i) => (
+              {(month.gross > 0 && month.daily.length > 7 ? weeks : []).map((w, i) => (
                 <li key={w.label} className={w.future ? 'is-future' : undefined}>
                   <span className="fm-rows__label">
-                    {w.label}
+                    {w.label} <small>{weekRange(i, month.daily.length)}</small>
                     {i === bestWeek && w.total > 0 && <em className="fm-pill">melhor</em>}
                   </span>
                   <span className="fm-bar" aria-hidden="true">
@@ -330,7 +336,7 @@ export function MonthView({ tabs }: { tabs: ReactNode }) {
                 <Lock size={12} aria-hidden="true" /> Fechado em {format(closedAt, 'dd/MM')}
               </span>
             ) : (
-              <Button size="sm" onClick={() => setConfirming(true)}>
+              <Button size="sm" disabled={nothingToClose} title={nothingToClose ? 'Disponível depois do primeiro atendimento do mês' : undefined} onClick={() => setConfirming(true)}>
                 <Lock size={15} aria-hidden="true" /> Fechar {month.label}
               </Button>
             )}
@@ -348,7 +354,7 @@ export function MonthView({ tabs }: { tabs: ReactNode }) {
           extra={
             receipt.kind === 'month' &&
             canClose && (
-              <Button size="sm" onClick={() => setConfirming(true)}>
+              <Button size="sm" disabled={nothingToClose} onClick={() => setConfirming(true)}>
                 <Lock size={15} aria-hidden="true" /> Fechar {month.label}
               </Button>
             )

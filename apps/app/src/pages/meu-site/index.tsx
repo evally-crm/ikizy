@@ -1,14 +1,14 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import { ArrowLeft, ArrowRight, ExternalLink, Maximize2, Undo2, X } from 'lucide-react'
+import { CalendarCheck, ExternalLink, Eye, Image as ImageIcon, MapPin, Maximize2, Palette, Type, Undo2, X } from 'lucide-react'
 import { newId, useStudio, type ClientPlan, type Service, type ShowcaseItem, type SiteConfig } from '../../data/catalog'
-import { blankPlan, clampIndex, blankShowcaseItem, patchById, removeById, type PublishState } from '../../domain/site'
+import { blankPlan, blankShowcaseItem, patchById, removeById, type PublishState } from '../../domain/site'
 import { isReservedSlug, siteHost } from '../../lib/slug'
 import { useMediaQuery } from '../../hooks/useMediaQuery'
 import { useScrollLock } from '../../hooks/useScrollLock'
 import SiteFrame, { DeviceToggle, type Device } from '../../components/SiteFrame'
 import OnlineBookingChecklist from '../../components/OnlineBookingChecklist'
-import { Button, Card, Em, PageHeader, Section, Tag } from '../../components/ui'
+import { Button, Card, Em, PageHeader, Tabs, Tag } from '../../components/ui'
 import { AppearanceFields } from './AppearanceFields'
 import { IdentityFields } from './IdentityFields'
 import { PublishButton } from './PublishButton'
@@ -21,9 +21,21 @@ type Tab = 'pagina' | 'servicos' | 'vitrine' | 'previa'
 
 const TABS: { id: Tab; label: string; narrowOnly?: boolean }[] = [
   { id: 'pagina', label: 'Página' },
-  { id: 'servicos', label: 'Serviços e planos' },
-  { id: 'vitrine', label: 'Produtos à venda' },
+  { id: 'servicos', label: 'Serviços' },
+  { id: 'vitrine', label: 'Produtos' },
   { id: 'previa', label: 'Prévia', narrowOnly: true },
+]
+
+type Part = 'agendamento' | 'aparencia' | 'identidade' | 'textos' | 'contato' | 'mostrar'
+
+/** partes da aba Página: uma aberta por vez, escolhida no trilho de ícones */
+const PARTS: { id: Part; label: string; short: string; hint: string; icon: ReactNode }[] = [
+  { id: 'agendamento', label: 'Agendamento pelo site', short: 'Agenda', hint: 'O que falta para a cliente pedir horário.', icon: <CalendarCheck size={20} aria-hidden="true" /> },
+  { id: 'aparencia', label: 'Aparência', short: 'Cores', hint: 'Paleta e fonte.', icon: <Palette size={20} aria-hidden="true" /> },
+  { id: 'identidade', label: 'Identidade', short: 'Logo', hint: 'Logo e foto de capa.', icon: <ImageIcon size={20} aria-hidden="true" /> },
+  { id: 'textos', label: 'Textos', short: 'Textos', hint: 'O que a cliente lê primeiro.', icon: <Type size={20} aria-hidden="true" /> },
+  { id: 'contato', label: 'Contato e endereço', short: 'Contato', hint: 'Como a cliente fala com você e encontra a página.', icon: <MapPin size={20} aria-hidden="true" /> },
+  { id: 'mostrar', label: 'O que mostrar', short: 'Mostrar', hint: 'Preços, equipe e sinal.', icon: <Eye size={20} aria-hidden="true" /> },
 ]
 
 /** Meu site: editor em etapas com a prévia ao vivo */
@@ -31,6 +43,7 @@ export default function MeuSite() {
   const { draft, setDraft, dirty, publish, discard, loading, error: loadError, isLive, publishedSlug } = useStudio()
   const isWide = useMediaQuery('(min-width: 1100px)')
   const [tab, setTab] = useState<Tab>('pagina')
+  const [part, setPart] = useState<Part>('aparencia')
   const [justPublished, setJustPublished] = useState(false)
   const [publishing, setPublishing] = useState(false)
   const [publishError, setPublishError] = useState<string | null>(null)
@@ -43,14 +56,10 @@ export default function MeuSite() {
 
   const active: Tab = isWide && tab === 'previa' ? 'pagina' : tab
   const stepTabs = TABS.filter((t) => !t.narrowOnly || !isWide)
-  const stepAt = clampIndex(stepTabs.findIndex((t) => t.id === active), stepTabs.length)
-  /** troca de etapa e volta ao começo dela */
-  const goTab = (i: number) => {
-    const next = stepTabs[clampIndex(i, stepTabs.length)]
-    if (!next) return
-    setTab(next.id)
+  /** troca de aba e volta ao começo dela */
+  const goTab = (id: Tab) => {
+    setTab(id)
     bodyRef.current?.scrollTo({ top: 0 })
-    window.scrollTo({ top: 0 })
   }
 
   // alterações do rascunho
@@ -152,70 +161,40 @@ export default function MeuSite() {
 
       <div className="studio">
         <Card className="studio__editor">
-          <div className="stepbar">
-            <div className="stepbar__row">
-              <button type="button" className="stepbar__arrow" aria-label="Etapa anterior" disabled={stepAt === 0} onClick={() => goTab(stepAt - 1)}>
-                <ArrowLeft size={18} aria-hidden="true" />
-              </button>
-              <div className="stepbar__bars" role="tablist" aria-label="Etapas do editor">
-                {stepTabs.map((t, i) => (
-                  <button
-                    key={t.id}
-                    type="button"
-                    role="tab"
-                    id={`tab-${t.id}`}
-                    aria-selected={active === t.id}
-                    aria-controls="studio-panel"
-                    aria-label={t.label}
-                    title={t.label}
-                    className={i <= stepAt ? 'is-done' : undefined}
-                    onClick={() => setTab(t.id)}
-                  >
-                    <i />
-                  </button>
-                ))}
-              </div>
-              <button
-                type="button"
-                className="stepbar__arrow"
-                aria-label="Próxima etapa"
-                disabled={stepAt === stepTabs.length - 1}
-                onClick={() => goTab(stepAt + 1)}
-              >
-                <ArrowRight size={18} aria-hidden="true" />
-              </button>
-            </div>
-            <p className="stepbar__label">
-              {stepTabs[stepAt].label}{' '}
-              <span>
-                · {stepAt + 1} de {stepTabs.length}
-              </span>
-            </p>
-          </div>
+          <Tabs
+            label="Partes do site"
+            fill
+            value={active}
+            onChange={goTab}
+            items={stepTabs.map((t) => ({ id: t.id, label: t.label }))}
+          />
 
-          <div className="studio__body" id="studio-panel" role="tabpanel" aria-labelledby={`tab-${active}`} ref={bodyRef}>
+          <div className="studio__body" id="studio-panel" role="tabpanel" ref={bodyRef}>
             {active === 'pagina' && (
-              <div className="sects">
-                <details className="fold">
-                  <summary>Agendamento pelo site</summary>
-                  <OnlineBookingChecklist whatsapp={site.whatsapp} online={site.onlineBooking} />
-                </details>
+              <div className="parts">
+                <section className="sect part" aria-labelledby="part-title">
+                  <header className="part__head">
+                    <h2 id="part-title">{PARTS.find((p) => p.id === part)?.label}</h2>
+                    <p>{PARTS.find((p) => p.id === part)?.hint}</p>
+                  </header>
+                  <div className="form">
+                    {part === 'agendamento' && <OnlineBookingChecklist bare whatsapp={site.whatsapp} online={site.onlineBooking} />}
+                    {part === 'aparencia' && <AppearanceFields site={site} setSite={setSite} />}
+                    {part === 'identidade' && <IdentityFields site={site} setSite={setSite} />}
+                    {part === 'textos' && <TextFields site={site} setSite={setSite} />}
+                    {part === 'contato' && <ContactFields site={site} setSite={setSite} slugReserved={slugReserved} />}
+                    {part === 'mostrar' && <ShowFields site={site} setSite={setSite} />}
+                  </div>
+                </section>
 
-                <Section title="Aparência" hint="Paleta e fonte.">
-                  <AppearanceFields site={site} setSite={setSite} />
-                </Section>
-                <Section title="Identidade" hint="Logo e foto de capa.">
-                  <IdentityFields site={site} setSite={setSite} />
-                </Section>
-                <Section title="Textos" hint="O que a cliente lê primeiro.">
-                  <TextFields site={site} setSite={setSite} />
-                </Section>
-                <Section title="Contato e endereço" hint="Como a cliente fala com você e encontra a página.">
-                  <ContactFields site={site} setSite={setSite} slugReserved={slugReserved} />
-                </Section>
-                <Section title="O que mostrar" hint="Preços, equipe e sinal.">
-                  <ShowFields site={site} setSite={setSite} />
-                </Section>
+                <nav className="rail" aria-label="Partes da página">
+                  {PARTS.map((p) => (
+                    <button key={p.id} type="button" className="rail__btn" aria-current={part === p.id ? 'true' : undefined} onClick={() => setPart(p.id)}>
+                      {p.icon}
+                      <span>{p.short}</span>
+                    </button>
+                  ))}
+                </nav>
               </div>
             )}
 
@@ -226,21 +205,6 @@ export default function MeuSite() {
             {active === 'vitrine' && <ShowcaseEditor items={showcase} onPatch={patchShowcase} onAdd={addShowcase} onRemove={removeShowcase} />}
 
             {active === 'previa' && <SiteFrame studio={draft} device="mobile" height={600} />}
-
-            <div className="stepnav">
-              {stepAt > 0 ? (
-                <button type="button" className="stepnav__prev" onClick={() => goTab(stepAt - 1)}>
-                  <ArrowLeft size={16} aria-hidden="true" /> {stepTabs[stepAt - 1].label}
-                </button>
-              ) : (
-                <span />
-              )}
-              {stepAt < stepTabs.length - 1 && (
-                <button type="button" className="stepnav__next" onClick={() => goTab(stepAt + 1)}>
-                  Próximo: {stepTabs[stepAt + 1].label} <ArrowRight size={16} aria-hidden="true" />
-                </button>
-              )}
-            </div>
           </div>
         </Card>
 

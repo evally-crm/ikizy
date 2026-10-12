@@ -49,6 +49,11 @@ export function weeksOf(month: MonthClosing): WeekTotal[] {
   return weeks
 }
 
+/** dias que a semana cobre dentro do período, ex.: "1–7", "29–31" */
+export function weekRange(index: number, daysInPeriod: number): string {
+  return `${index * 7 + 1}–${Math.min((index + 1) * 7, daysInPeriod)}`
+}
+
 /** semanas com o tamanho da barra (0–100) relativo à melhor semana */
 export function weekBars(weeks: WeekTotal[]): (WeekTotal & { width: number })[] {
   const max = Math.max(0, ...weeks.map((w) => w.total))
