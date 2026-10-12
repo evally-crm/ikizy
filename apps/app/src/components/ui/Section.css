@@ -1,20 +1,28 @@
 /* Section: estilo ao lado do componente */
 
-.sect,
-.fold {
+.sect {
   border-radius: 20px;
   background: var(--bg);
+  transition: box-shadow 0.15s;
 }
 
-.sect > summary,
-.fold > summary {
+.sect > summary {
   list-style: none;
   cursor: pointer;
 }
 
-.sect > summary::-webkit-details-marker,
-.fold > summary::-webkit-details-marker {
+.sect > summary::-webkit-details-marker {
   display: none;
+}
+
+.sect:not([open]):hover {
+  box-shadow: inset 0 0 0 1px var(--line-strong, var(--line));
+}
+
+.sect__head:focus-visible {
+  outline: 2px solid var(--brand-500);
+  outline-offset: 2px;
+  border-radius: 20px;
 }
 
 .sect__head {
@@ -26,10 +34,24 @@
   padding: 14px 18px;
 }
 
-.sect__head span {
+.sect__text {
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: 2px;
+  min-width: 0;
+}
+
+.sect__icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  background: var(--white);
+  box-shadow: var(--shadow-sm);
+  color: var(--ink-900);
 }
 
 .sect__head strong {
@@ -43,13 +65,28 @@
   color: var(--ink-500);
 }
 
-.sect__head svg {
+.sect__chev {
+  display: grid;
   flex: none;
-  color: var(--ink-500);
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--white);
+  color: var(--ink-700);
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.sect__chev svg {
   transition: transform 0.2s;
 }
 
-.sect[open] > .sect__head svg {
+.sect__head:hover .sect__chev {
+  background: var(--ink-900);
+  color: var(--white);
+}
+
+.sect[open] > .sect__head .sect__chev svg {
   transform: rotate(180deg);
 }
 
