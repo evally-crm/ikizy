@@ -222,6 +222,10 @@ Pontos de atenção:
 
 ## 8. Estado atual
 
+- 12/10/2026, organização do código (fases 1 a 3, ver [docs/CONVENCOES.md](docs/CONVENCOES.md)): regras da casa em três camadas
+  (`src/domain` puro e testado, `src/data` só busca, telas só apresentam), verificador `npm run check:conventions` e `npm test`
+  (API + domínio). Financeiro refeito: `pages/financeiro/`, `components/finance|charts|ui`, recibo do dia e do mês em folha, mapa de dias.
+  Fase 4 (mesma receita nas outras telas): Meu negócio, Agenda, Clientes, Meu site.
 - 11/10/2026 (depois), na `main`: confirmação de e-mail **ligada** (seção 5b); primeiros passos virou painel flutuante que recolhe
   e some ao concluir; **Meu negócio** em abas (Dados, Horário, Serviços, Materiais) e no menu do topo; Pix só de 1 e 3 meses (sem 12);
   tela de assinatura relê e tenta de novo se a leitura vier vazia.
