@@ -158,6 +158,10 @@ export function createBookingDb(): BookingDb {
       }[]
       return rows[0].r
     },
+    async limited(bucket, max, windowSeconds) {
+      const rows = (await sql`select public.hit_rate_limit(${bucket}, ${max}, ${windowSeconds}) as blocked`) as { blocked: boolean }[]
+      return rows[0]?.blocked === true
+    },
   }
 }
 

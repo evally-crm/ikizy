@@ -29,7 +29,7 @@ export function Receipt({ model }: { model: ReceiptModel }) {
           <p>Nº {model.number}</p>
           <p>{model.period}</p>
           <p>{model.salonName}</p>
-          {model.preview && <p className="receipt__preview">Prévia · {model.kind === 'month' ? 'mês em aberto' : 'dia em andamento'}</p>}
+          {model.preview && <p className="receipt__preview">Prévia · {model.previewLabel}</p>}
         </header>
 
         <hr />

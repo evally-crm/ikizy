@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { addMonths, format, startOfMonth } from 'date-fns'
 import { useAuth } from '../auth/AuthProvider'
-import { buildDayStatement, buildMonth } from '../domain/finance'
+import { buildDayStatement, buildMonth, buildPeriod } from '../domain/finance'
 import type { DayStatement, Expense, MonthClosing, ProfessionalRate, SettledAppointment } from '../domain/finance'
 import { isNeonConfigured, neon } from '../lib/neon'
 import type { PaymentMethod } from '../types'
-import { getDemoMonths } from './demoFinance'
+import { demoPeriod, getDemoMonths } from './demoFinance'
 import { professionals as mockProfessionals } from './mock'
 
 export interface FinanceProfessional {
@@ -59,6 +59,8 @@ const revive = (snap: SerializedMonth, closedAt: string): MonthClosing => ({
 
 function friendly(error: { code?: string; message: string }) {
   if (error.code === '23514' || error.message.includes('já está fechado')) return 'Esse mês já está fechado.'
+  if (error.message.includes('snapshot_stale')) return 'Os números mudaram desde que você abriu a tela. Recarregamos: confira e feche de novo.'
+  if (error.message.includes('sem acesso ativo')) return 'Renove a assinatura para fechar o mês.'
   if (error.code === '42501' || error.message.includes('sem permissão')) return 'Só a dona ou a gerente pode fazer isso.'
   return 'Não foi possível salvar agora. Tente novamente.'
 }
@@ -74,6 +76,7 @@ export function useFinance() {
   const [appointments, setAppointments] = useState<SettledAppointment[]>([])
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [rates, setRates] = useState<ProfessionalRate[]>([])
+  const [clientsCreated, setClientsCreated] = useState<Record<string, Date>>({})
   const [professionals, setProfessionals] = useState<FinanceProfessional[]>(() => (live ? [] : mockProfessionals))
   const [expensesAvailable, setExpensesAvailable] = useState(true)
   const [loading, setLoading] = useState(live)
@@ -159,6 +162,7 @@ export function useFinance() {
 
       setAppointments(settled)
       setRates(professionalRates)
+      setClientsCreated(clientsCreated)
       setProfessionals(proRows.map((p) => ({ id: p.id, name: p.name })))
       setExpenses(expenseList)
       setMonths(list)
@@ -212,7 +216,11 @@ export function useFinance() {
         p_month: format(month.date, 'yyyy-MM-01'),
         p_snapshot: serialize(month),
       })
-      if (err) return friendly(err)
+      if (err) {
+        // números velhos (outra aba, outra pessoa): relê para a tela mostrar o que está no banco
+        reload()
+        return friendly(err)
+      }
       reload()
       return null
     },
@@ -223,6 +231,13 @@ export function useFinance() {
   const statementFor = useCallback(
     (date: string): DayStatement => buildDayStatement({ date, appointments, professionals: rates, expenses }),
     [appointments, rates, expenses],
+  )
+
+  /** o período escolhido no filtro de datas (de `from` a `to`, inclusive), com os mesmos números do mês */
+  const periodFor = useCallback(
+    (from: Date, to: Date) =>
+      live ? buildPeriod({ from, to, today, appointments, professionals: rates, clientsCreated, expenses }) : demoPeriod(months, from, to),
+    [live, today, appointments, rates, clientsCreated, expenses, months],
   )
 
   // sem banco, o mês exibido pode ter saídas novas ainda não refletidas no resumo de exemplo
@@ -250,5 +265,9 @@ export function useFinance() {
     removeExpense,
     closeMonth,
     statementFor,
+    periodFor,
+    /** primeiro dia com dados carregados (o filtro não vai além) */
+    firstDay: startOfMonth(addMonths(today, -(MONTHS_SHOWN - 1))),
+    today,
   }
 }

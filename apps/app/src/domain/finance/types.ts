@@ -57,6 +57,10 @@ export interface MonthClosing {
   noShows: number
   /** faturamento por dia; null = dia que ainda não chegou */
   daily: (number | null)[]
+  /** período que não é um mês inteiro (filtro de datas): sem produtos e sem fechamento */
+  partial?: boolean
+  /** período por extenso (só em períodos parciais) */
+  rangeLabel?: string
 }
 
 /** atendimento já encerrado (concluído ou falta), na forma que as regras de finanças precisam */
@@ -186,6 +190,8 @@ export interface ReceiptModel {
   closedAt: Date | null
   /** o recibo é só uma prévia (mês em aberto, dia que ainda não acabou) */
   preview: boolean
+  /** o que a prévia é (mês em aberto, período parcial, dia em andamento) */
+  previewLabel: string
   itemsHeading: string
   lines: ReceiptLine[]
   sums: ReceiptSum[]

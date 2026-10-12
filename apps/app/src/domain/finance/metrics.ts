@@ -49,6 +49,12 @@ export function weeksOf(month: MonthClosing): WeekTotal[] {
   return weeks
 }
 
+/** semanas com o tamanho da barra (0–100) relativo à melhor semana */
+export function weekBars(weeks: WeekTotal[]): (WeekTotal & { width: number })[] {
+  const max = Math.max(0, ...weeks.map((w) => w.total))
+  return weeks.map((w) => ({ ...w, width: pct(w.total, max) }))
+}
+
 /** posição da melhor semana (-1 se nenhuma teve faturamento) */
 export function bestWeekIndex(weeks: WeekTotal[]): number {
   const best = weeks.reduce((b, w, i) => (w.total > weeks[b].total ? i : b), 0)

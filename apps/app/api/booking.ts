@@ -1,5 +1,5 @@
 import { HttpError } from './_lib/billing.js'
-import { createBooking, listSlots, parseBookingInput, parseSlotsQuery, tooManyFromIp } from './_lib/booking.js'
+import { checkBookingLimits, createBooking, listSlots, parseBookingInput, parseSlotsQuery, tooManyFromIp } from './_lib/booking.js'
 import { createBookingDb, fail, json } from './_lib/runtime.js'
 
 /** GET /api/booking?slug=&service=&date=YYYY-MM-DD[&professional=] -> { slots: [{ professional_id, professional, minute }] } */
@@ -21,7 +21,9 @@ export async function POST(request: Request) {
     const { honeypot, ...input } = parseBookingInput(await request.json().catch(() => null))
     // robô: responde como se tivesse dado certo, sem gravar nada
     if (honeypot) return json({ booking: { id: 'ok', starts_at: new Date().toISOString(), service: '', professional: '', price: 0, duration: 0 } })
-    const booking = await createBooking(createBookingDb(), input)
+    const db = createBookingDb()
+    await checkBookingLimits(db, ip, input.phone)
+    const booking = await createBooking(db, input)
     return json({ booking }, 201)
   } catch (error) {
     return fail(error)
