@@ -22,6 +22,13 @@ export const COMPANY = {
   updatedAt: '7 de outubro de 2026',
 } as const
 
+/** redes da IKIZY no rodapé: só aparecem as que têm endereço preenchido (ex.: 'https://instagram.com/ikizy') */
+export const SOCIALS = [
+  { id: 'instagram', label: 'Instagram', url: '' },
+  { id: 'tiktok', label: 'TikTok', url: '' },
+  { id: 'whatsapp', label: 'WhatsApp', url: '' },
+] as const
+
 export const NAV = [
   { href: '/#recursos', label: 'Recursos' },
   { href: '/#como-funciona', label: 'Como funciona' },

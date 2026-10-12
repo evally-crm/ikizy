@@ -235,7 +235,7 @@ const faqSchema = {
   </section>
 
   <!-- FAQ -->
-  <section class="section container" aria-labelledby="faq-title">
+  <section class="section container faq" aria-labelledby="faq-title">
     <div class="faqs">
       <div class="faqs__side">
         <p class="eyebrow">Dúvidas</p>
@@ -257,7 +257,7 @@ const faqSchema = {
 
   <!-- CONTATO -->
   <section id="contato" class="section container contact" aria-labelledby="contact-title">
-    <form class="contact__form" action={`mailto:${CONTACT_EMAIL}`} method="post" enctype="text/plain" data-contact>
+    <form class="contact__form" data-to={CONTACT_EMAIL} data-contact>
       <Field label="Nome" name="nome" autocomplete="name" required />
       <Field label="E-mail" name="email" type="email" autocomplete="email" required />
       <Field label="Mensagem" name="mensagem" multiline required />
@@ -538,7 +538,7 @@ const faqSchema = {
     form.addEventListener('submit', (e) => {
       e.preventDefault()
       const d = new FormData(form)
-      const to = form.getAttribute('action').replace('mailto:', '')
+      const to = form.dataset.to
       const subject = 'Contato pelo site · ' + d.get('nome')
       const body = d.get('mensagem') + '\n\n' + d.get('nome') + '\n' + d.get('email')
       location.href = 'mailto:' + to + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body)

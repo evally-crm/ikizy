@@ -213,19 +213,14 @@ em {
   opacity: 1;
   transform: none;
 }
-/* celular: cada seção tem pelo menos a altura da tela, com o conteúdo no meio, e a rolagem encaixa no começo delas */
+/* celular: seções compactas, sem altura de tela cheia nem rolagem que encaixa (o vazio entre elas pesava) */
 @media (max-width: 899px) {
-  html:has(body.is-home) {
-    scroll-snap-type: y proximity;
-    scroll-padding-top: 0;
-  }
-  main > section {
-    min-height: 100svh;
-    align-content: center;
-    scroll-snap-align: start;
+  .section {
+    padding: 28px 0;
   }
   .you {
     justify-content: center;
+    padding-block: 44px;
   }
 }
 .h1 {
@@ -330,6 +325,28 @@ em {
 }
 .is-home .header__inner {
   padding: 0 clamp(20px, 3vw, 44px);
+}
+/* celular: barra baixa e leve, só um fio e o desfoque ao rolar (sem sombra) */
+@media (max-width: 959px) {
+  :root {
+    --header-h: 56px;
+  }
+  .header .logo {
+    font-size: 24px;
+  }
+  .header .menu summary {
+    width: 38px;
+    height: 38px;
+  }
+  .header.is-scrolled {
+    background: rgba(255, 255, 255, 0.72);
+    box-shadow: 0 0 0 1px rgba(14, 13, 13, 0.07);
+    -webkit-backdrop-filter: blur(16px) saturate(1.4);
+    backdrop-filter: blur(16px) saturate(1.4);
+  }
+  .menu__panel {
+    box-shadow: 0 0 0 1px rgba(14, 13, 13, 0.07), 0 18px 40px -22px rgba(0, 0, 0, 0.25);
+  }
 }
 .logo {
   flex: none;
@@ -1731,6 +1748,84 @@ em {
   }
 }
 
+/* ---------- celular: seções como cartões arredondados (o tour escuro e as perguntas em cinza), com tipografia leve ---------- */
+@media (max-width: 899px) {
+  .tour,
+  .faq {
+    margin-block: 6px;
+    padding: 28px 20px;
+    border-radius: var(--radius-lg);
+  }
+  .tour {
+    background: var(--ink-900);
+    color: var(--white);
+  }
+  .tour h2,
+  .tour h3 {
+    color: var(--white);
+  }
+  .tour h2 em {
+    color: rgba(255, 255, 255, 0.5);
+  }
+  .tour .eyebrow,
+  .tour .tour__count,
+  .tour .tour__slide p {
+    color: rgba(255, 255, 255, 0.6);
+  }
+  .tour .tour__n {
+    color: var(--red);
+  }
+  .tour__arrow {
+    width: 40px;
+    height: 40px;
+    border-color: rgba(255, 255, 255, 0.35);
+    color: var(--white);
+  }
+  .tour__arrow:hover:not(:disabled) {
+    background: var(--white);
+    color: var(--ink-900);
+  }
+  .tour__slide img {
+    border-color: rgba(255, 255, 255, 0.14);
+    background: var(--ink-700);
+  }
+  .tour__head {
+    align-items: center;
+  }
+
+  .faq {
+    background: var(--gray-100);
+  }
+  .faqs {
+    gap: 20px;
+  }
+  .faqs__list {
+    border-top: 0;
+  }
+  .faqs details {
+    border-bottom-color: rgba(14, 13, 13, 0.1);
+  }
+  .faqs summary {
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding: 18px 0;
+    font-size: 17px;
+  }
+  .faqs summary::before {
+    display: none;
+  }
+  .faqs summary::after {
+    width: 32px;
+    height: 32px;
+    border-color: transparent;
+    background: var(--white);
+    font-size: 18px;
+  }
+  .faqs details p {
+    padding: 0 0 18px;
+    font-size: 15px;
+  }
+}
+
 /* ---------- footer: preto, texto branco e a marca grande em vermelho ---------- */
 .footer {
   margin-top: clamp(48px, 8vw, 96px);
@@ -1744,41 +1839,9 @@ em {
   display: grid;
   gap: 32px;
 }
-/* celular: marca em cima e os links em duas colunas, para o rodapé não ficar tão alto */
-@media (max-width: 767px) {
-  .footer {
-    padding-top: 36px;
-  }
-  .footer__grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 24px 16px;
-  }
-  .footer__grid > :first-child,
-  .footer__grid > :last-child {
-    grid-column: 1 / -1;
-  }
-  .footer__grid > :last-child ul {
-    flex-flow: row wrap;
-    gap: 4px 20px;
-  }
-  .footer h4 {
-    margin-bottom: 8px;
-  }
-  .footer ul {
-    gap: 4px;
-    font-size: 16px;
-  }
-  .footer__bottom {
-    margin-top: 28px;
-  }
-  .footer .footer__mark {
-    margin-top: 8px;
-    font-size: 23vw;
-  }
-}
 @media (min-width: 768px) {
   .footer__grid {
-    grid-template-columns: 1.4fr 1fr 1fr 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 .footer .logo {
@@ -1824,6 +1887,90 @@ em {
   color: var(--red);
   text-align: center;
   user-select: none;
+}
+.footer .footer__legal {
+  display: none;
+}
+
+.footer .footer__cta {
+  display: none;
+}
+/* redes: só o contorno do ícone, em branco e sem fundo */
+.footer .footer__social ul {
+  flex-direction: row;
+  gap: 18px;
+}
+.footer__social a {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  color: var(--white);
+  background: none;
+}
+
+/* celular: links grandes empilhados em cima, depois Sistema e a tagline em letra pequena,
+   um cartão claro de convite e, embaixo, direitos e Legal. Fica depois das regras base para vencer na cascata */
+@media (max-width: 767px) {
+  .footer {
+    padding-top: 28px;
+  }
+  .footer__grid {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+  .footer__grid > nav h4,
+  .footer__social h4,
+  .footer__col--legal {
+    display: none;
+  }
+  .footer nav ul {
+    gap: 0;
+    font-size: clamp(38px, 12vw, 52px);
+    font-weight: 300;
+    line-height: 1.08;
+    letter-spacing: -0.045em;
+  }
+  .footer .footer__cta {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 32px;
+    padding: 20px;
+    border-radius: var(--radius-md);
+    background: var(--gray-100);
+  }
+  .footer .footer__cta-title {
+    font-size: 22px;
+    font-weight: 300;
+    letter-spacing: -0.03em;
+    color: var(--ink-900);
+  }
+  .footer .footer__cta-hint {
+    margin-bottom: 12px;
+    font-size: 14px;
+    color: var(--ink-500);
+  }
+  .footer__bottom {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 32px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+  }
+  .footer .footer__legal {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.62);
+  }
+  .footer .footer__mark {
+    margin-top: 20px;
+    font-size: 26vw;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
