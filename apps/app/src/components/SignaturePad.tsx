@@ -1,3 +1,4 @@
+import './SignaturePad.css'
 import { useEffect, useRef, useState, type PointerEvent } from 'react'
 import { Eraser } from 'lucide-react'
 

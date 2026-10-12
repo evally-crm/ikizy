@@ -1,3 +1,4 @@
+import './SiteFrame.css'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Monitor, Smartphone } from 'lucide-react'
 import { renderSitePage, type PublicSite } from '../../api/_lib/siteHtml.ts'
