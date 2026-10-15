@@ -128,16 +128,18 @@ describe('renderSitePage', () => {
     assert.doesNotThrow(() => JSON.parse(ld))
   })
 
-  it('cor antiga ou desconhecida cai em vinho e preto', () => {
-    assert.match(page(base({}, { accent: 'neon' })), /--accent:#6e1423/)
-    assert.match(page(base({}, { accent: 'rubi' })), /--accent:#6e1423/)
+  it('cor antiga ou desconhecida cai no vermelho', () => {
+    assert.match(page(base({}, { accent: 'neon' })), /--accent:#930500/)
+    assert.match(page(base({}, { accent: 'rubi' })), /--accent:#930500/)
   })
 
   it('paleta escolhida define as cores da página; sem paleta, vale a cor antiga', () => {
-    assert.match(page(base({}, { palette: 'creme-pinho' })), /--accent:#00371c/)
-    assert.match(page(base({}, { palette: 'marinho-branco', accent: 'rubi' })), /--accent:#1b2a55/)
-    assert.match(page(base({}, { palette: 'creme-pinho' })), /--bg:#fffbda/)
-    assert.match(page(base({}, { palette: 'neon' })), /--accent:#6e1423/)
+    assert.match(page(base({}, { palette: 'verde-musgo' })), /--accent:#265514/)
+    assert.match(page(base({}, { palette: 'azul', accent: 'rubi' })), /--accent:#0259ba/)
+    assert.match(page(base({}, { palette: 'verde-musgo' })), /--bg:#f2f5f1/)
+    assert.match(page(base({}, { palette: 'neon' })), /--accent:#930500/)
+    // paleta antiga salva no banco vira a atual mais próxima
+    assert.match(page(base({}, { palette: 'creme-pinho' })), /--accent:#265514/)
   })
 
   it('logo só entra se for data URL de imagem válida', () => {
@@ -203,29 +205,27 @@ describe('renderSitePage', () => {
   })
 
   it('paleta e fonte forte entram como variáveis da página', () => {
-    const html = page(base({}, { palette: 'bege-preto', font: 'forte' }))
-    assert.match(html, /--bg:#e8dccb/)
-    assert.match(html, /--accent:#111111/)
+    const html = page(base({}, { palette: 'preto', font: 'forte' }))
+    assert.match(html, /--bg:#f2f2f2/)
+    assert.match(html, /--accent:#000000/)
     assert.match(html, /--du:uppercase/)
     assert.match(html, /--dw:800/)
     assert.match(html, /--display:Raleway,/)
     assert.match(html, /<link rel="stylesheet" href="https:\/\/fonts\.googleapis\.com\/css2\?family=Raleway:wght@800&display=swap">/)
     assert.doesNotMatch(html, /family=Manrope|family=Forum/)
-    assert.match(html, /<meta name="theme-color" content="#e8dccb">/)
+    assert.match(html, /<meta name="theme-color" content="#f2f2f2">/)
   })
 
-  it('paleta preto e branco deixa a página escura (capa sem foto e contato sem bloco branco)', () => {
-    const html = page(base({}, { palette: 'preto-branco' }))
-    assert.match(html, /--bg:#000000/)
-    assert.match(html, /--ink:#ffffff/)
-    assert.match(html, /color-scheme:dark/)
-    assert.match(html, /\.contact\{background:var\(--soft\)/)
-    assert.doesNotMatch(page(base({}, { palette: 'vinho-preto' })), /\.contact\{background:var\(--soft\)/)
+  it('rosa bebê: botão na cor exata com texto escuro; itálicos e preços num tom mais fechado', () => {
+    const html = page(base({}, { palette: 'rosa-bebe' }))
+    assert.match(html, /--accent:#dd88c1;--accent-ink:#8d577c;/)
+    assert.match(html, /--on:#4d3044/)
+    assert.match(html, /\.price\{font-weight:600;color:var\(--accent-ink\)/)
   })
 
-  it('paleta e fonte desconhecidas voltam a vinho e preto e à fonte moderna', () => {
+  it('paleta e fonte desconhecidas voltam ao vermelho e à fonte moderna', () => {
     const html = page(base({}, { palette: 'neon', accent: 'x', font: 'comic' }))
-    assert.match(html, /--bg:#f2eded/)
+    assert.match(html, /--bg:#f9f0f0/)
     assert.match(html, /color-scheme:light/)
     assert.match(html, /--du:none/)
   })

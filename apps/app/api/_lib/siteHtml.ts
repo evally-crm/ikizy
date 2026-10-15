@@ -91,7 +91,7 @@ const CSS = `
 body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased;padding-bottom:84px}
 a{color:inherit}
 h1,h2,h3{letter-spacing:-.035em;line-height:1.04;color:var(--ink);margin:0;font-family:var(--display);font-weight:var(--dw);text-transform:var(--du)}
-em{font-family:Georgia,"Times New Roman",serif;font-style:italic;color:var(--accent)}
+em{font-family:Georgia,"Times New Roman",serif;font-style:italic;color:var(--accent-ink)}
 .wrap{max-width:1040px;margin:0 auto;padding:0 10px}
 .panel{background:var(--panel);border-radius:28px;margin:10px 0;padding:28px 22px}
 @media(min-width:720px){.panel{padding:44px 44px}}
@@ -104,7 +104,7 @@ em{font-family:Georgia,"Times New Roman",serif;font-style:italic;color:var(--acc
 .logo img{flex:none;width:38px;height:38px;border-radius:12px;object-fit:cover}
 .top nav{display:none;gap:22px;font-size:14px;color:var(--muted)}
 @media(min-width:720px){.top nav{display:flex}}
-.top nav a{text-decoration:none}.top nav a:hover{color:var(--accent)}
+.top nav a{text-decoration:none}.top nav a:hover{color:var(--accent-ink)}
 
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:50px;padding:0 28px;border-radius:999px;background:var(--accent);color:var(--on);text-decoration:none;font-weight:500;font-size:15px;border:1px solid var(--accent)}
 .btn:hover{filter:brightness(1.12)}
@@ -142,13 +142,13 @@ em{font-family:Georgia,"Times New Roman",serif;font-style:italic;color:var(--acc
 .cats{display:grid;gap:12px}
 @media(min-width:720px){.cats{grid-template-columns:repeat(2,1fr);gap:16px}}
 .cat{padding:22px;border-radius:24px;background:var(--soft)}
-.cat h3{font-family:Georgia,"Times New Roman",serif;font-style:italic;font-size:26px;color:var(--accent);margin-bottom:6px}
+.cat h3{font-family:Georgia,"Times New Roman",serif;font-style:italic;font-size:26px;color:var(--accent-ink);margin-bottom:6px}
 .cat ul{list-style:none;margin:0;padding:0}
 .cat li{display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid color-mix(in srgb,var(--ink) 12%,transparent)}
 .cat li:last-child{border-bottom:0}
 .cat li>span:first-child{flex:1;min-width:0}
 .cat small{display:block;color:var(--muted);font-size:13px}
-.price{font-weight:600;color:var(--accent);white-space:nowrap}
+.price{font-weight:600;color:var(--accent-ink);white-space:nowrap}
 .go{flex:none;display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:var(--accent);color:var(--on);text-decoration:none;font-size:18px;border:0;cursor:pointer;font-family:inherit}
 .go:hover{filter:brightness(1.15)}
 
@@ -165,7 +165,7 @@ em{font-family:Georgia,"Times New Roman",serif;font-style:italic;color:var(--acc
 
 .team{list-style:none;margin:0;padding:0;display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}
 .team li{display:flex;align-items:center;gap:14px}
-.avatar{display:grid;place-items:center;width:54px;height:54px;border-radius:50%;background:var(--soft);color:var(--accent);font-weight:600;font-size:20px}
+.avatar{display:grid;place-items:center;width:54px;height:54px;border-radius:50%;background:var(--soft);color:var(--accent-ink);font-weight:600;font-size:20px}
 .team small{display:block;color:var(--muted);font-size:13px}
 
 .contact{background:var(--accent);color:var(--on)}
@@ -182,7 +182,7 @@ em{font-family:Georgia,"Times New Roman",serif;font-style:italic;color:var(--acc
 @media(min-width:720px){.shop{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}}
 .item{display:flex;flex-direction:column;gap:6px;min-width:0;padding:10px 10px 16px;border-radius:24px;background:var(--soft)}
 .item__img{display:block;width:100%;aspect-ratio:1;border-radius:18px;object-fit:cover;background:var(--panel)}
-.item__ph{display:grid;place-items:center;width:100%;aspect-ratio:1;border-radius:18px;background:var(--panel);color:var(--accent);font-size:42px;font-family:var(--display)}
+.item__ph{display:grid;place-items:center;width:100%;aspect-ratio:1;border-radius:18px;background:var(--panel);color:var(--accent-ink);font-size:42px;font-family:var(--display)}
 .item h3{padding:6px 6px 0;font-size:19px}
 .item p{margin:0;padding:0 6px;color:var(--muted);font-size:14px;line-height:1.4}
 .item .price{padding:0 6px;font-size:18px}
@@ -206,7 +206,7 @@ const coverStyleCss = (dark: boolean): string => {
   const onLight = (c: string, bg: string, extra = '') =>
     `.hero--${c}${nc}{background:${bg};color:var(--ink)}` +
     `.hero--${c}${nc} h1,.hero--${c}${nc} .hero__lead,.hero--${c}${nc} .hero__name{color:var(--ink)}` +
-    `.hero--${c}${nc} h1 em{color:var(--accent)}` +
+    `.hero--${c}${nc} h1 em{color:var(--accent-ink)}` +
     `.hero--${c}${nc} .btn{background:var(--accent);color:var(--on);border-color:var(--accent)}` +
     `.hero--${c}${nc} .btn--ghost{background:transparent;color:var(--ink);border-color:var(--line)}` +
     `.hero--${c}${nc} .chip{background:var(--soft);color:var(--text)}` +
@@ -396,7 +396,7 @@ export function renderSitePage(site: PublicSite, opts: { canonical: string }): s
 <meta property="og:url" content="${esc(opts.canonical)}">
 <meta name="twitter:card" content="summary">
 <script type="application/ld+json">${jsonLd}</script>
-<style>:root{--accent:${pal.accent};--soft:${pal.soft};--on:${pal.on};--bg:${pal.bg};--panel:${pal.panel};--ink:${pal.ink};--text:${pal.text};--muted:${pal.muted};--line:${pal.line};--display:${font.family};--dw:${font.weight};--du:${font.upper ? 'uppercase' : 'none'};color-scheme:${pal.dark ? 'dark' : 'light'}}${CSS}${pal.dark ? DARK_CSS : ''}${coverStyleCss(pal.dark)}${online ? BOOKING_CSS : ''}</style>
+<style>:root{--accent:${pal.accent};--accent-ink:${pal.accentInk};--soft:${pal.soft};--on:${pal.on};--bg:${pal.bg};--panel:${pal.panel};--ink:${pal.ink};--text:${pal.text};--muted:${pal.muted};--line:${pal.line};--display:${font.family};--dw:${font.weight};--du:${font.upper ? 'uppercase' : 'none'};color-scheme:${pal.dark ? 'dark' : 'light'}}${CSS}${pal.dark ? DARK_CSS : ''}${coverStyleCss(pal.dark)}${online ? BOOKING_CSS : ''}</style>
 </head>
 <body>
 <header class="top"><div class="wrap"><div class="bar"><span class="logo">${logo ? `<img src="${logo}" alt="">` : ''}<span>${esc(name)}</span></span><nav aria-label="Seções">${

@@ -14,7 +14,7 @@ const contrast = (a: string, b: string) => {
 describe('paletas fixas', () => {
   const ids = Object.keys(PALETTES) as PaletteId[]
 
-  it('são as sete combinações escolhidas, todas com cores #rrggbb', () => {
+  it('são as oito cores escolhidas, todas com cores #rrggbb', () => {
     assert.equal(ids.length, 8)
     for (const id of ids) {
       for (const [k, v] of Object.entries(PALETTES[id])) {
@@ -30,8 +30,8 @@ describe('paletas fixas', () => {
       assert.ok(contrast(p.ink, p.panel) >= 7, `${id}: título sobre painel`)
       assert.ok(contrast(p.text, p.bg) >= 7, `${id}: texto sobre fundo`)
       assert.ok(contrast(p.muted, p.panel) >= 4.5, `${id}: texto de apoio sobre painel`)
-      assert.ok(contrast(p.accent, p.panel) >= 4.5, `${id}: destaque sobre painel (itálicos e preços)`)
-      assert.ok(contrast(p.accent, p.soft) >= 4.5, `${id}: destaque sobre cartão suave`)
+      assert.ok(contrast(p.accentInk, p.panel) >= 4.5, `${id}: cor como texto sobre painel (itálicos e preços)`)
+      assert.ok(contrast(p.accentInk, p.soft) >= 4.5, `${id}: cor como texto sobre cartão suave`)
       assert.ok(contrast(p.on, p.accent) >= 4.5, `${id}: texto do botão sobre a cor de destaque`)
     }
   })
@@ -39,21 +39,39 @@ describe('paletas fixas', () => {
 
 describe('paletteFor', () => {
   it('usa a paleta salva quando válida', () => {
-    assert.equal(paletteFor({ palette: 'creme-pinho' }).id, 'creme-pinho')
+    assert.equal(paletteFor({ palette: 'verde-musgo' }).id, 'verde-musgo')
+  })
+
+  it('as cores pedidas entram exatas nos botões e na capa', () => {
+    const exact: Record<PaletteId, string> = {
+      vermelho: '#930500',
+      'rosa-bebe': '#dd88c1',
+      'verde-musgo': '#265514',
+      rosa: '#e52877',
+      roxo: '#56024d',
+      azul: '#0259ba',
+      preto: '#000000',
+      marrom: '#362209',
+    }
+    for (const id of Object.keys(PALETTES) as PaletteId[]) assert.equal(PALETTES[id].accent, exact[id], id)
   })
 
   it('escolhas antigas viram a combinação mais próxima', () => {
-    assert.equal(paletteFor({ palette: 'noir' }).id, 'bege-preto')
-    assert.equal(paletteFor({ palette: 'floresta' }).id, 'creme-pinho')
-    assert.equal(paletteFor({ palette: 'marinho' }).id, 'marinho-branco')
-    assert.equal(paletteFor({ accent: 'rubi', theme: 'escuro' }).id, 'bege-preto')
-    assert.equal(paletteFor({ accent: 'rubi', theme: 'bege' }).id, 'branco-bege')
-    assert.equal(paletteFor({ accent: 'vinho', theme: 'claro' }).id, 'vinho-preto')
+    assert.equal(paletteFor({ palette: 'vinho-preto' }).id, 'vermelho')
+    assert.equal(paletteFor({ palette: 'rosa-branco' }).id, 'rosa-bebe')
+    assert.equal(paletteFor({ palette: 'creme-pinho' }).id, 'verde-musgo')
+    assert.equal(paletteFor({ palette: 'marinho-branco' }).id, 'azul')
+    assert.equal(paletteFor({ palette: 'preto-branco' }).id, 'preto')
+    assert.equal(paletteFor({ palette: 'noir' }).id, 'preto')
+    assert.equal(paletteFor({ palette: 'floresta' }).id, 'verde-musgo')
+    assert.equal(paletteFor({ accent: 'rubi', theme: 'escuro' }).id, 'preto')
+    assert.equal(paletteFor({ accent: 'rubi', theme: 'bege' }).id, 'marrom')
+    assert.equal(paletteFor({ accent: 'vinho', theme: 'claro' }).id, 'vermelho')
   })
 
-  it('valor desconhecido cai em vinho e preto', () => {
-    assert.equal(paletteFor({ palette: 'neon', accent: 'x', theme: 'y' }).id, 'vinho-preto')
-    assert.equal(paletteFor({}).id, 'vinho-preto')
+  it('valor desconhecido cai no vermelho', () => {
+    assert.equal(paletteFor({ palette: 'neon', accent: 'x', theme: 'y' }).id, 'vermelho')
+    assert.equal(paletteFor({}).id, 'vermelho')
     assert.ok(!isPaletteId('neon'))
   })
 })

@@ -2,7 +2,7 @@
 
 // ---------------------------------------------------------------- paletas (cores fixas, já combinadas e testadas)
 
-export type PaletteId = 'branco-bege' | 'rosa-branco' | 'bege-preto' | 'gelo-branco' | 'marinho-branco' | 'vinho-preto' | 'creme-pinho' | 'preto-branco'
+export type PaletteId = 'vermelho' | 'rosa-bebe' | 'verde-musgo' | 'rosa' | 'roxo' | 'azul' | 'preto' | 'marrom'
 
 export interface Palette {
   label: string
@@ -18,48 +18,57 @@ export interface Palette {
   muted: string
   /** bordas */
   line: string
-  /** cor de destaque: botões, itálicos e preços */
+  /** cor da paleta, exata: botões, capa e blocos de cor */
   accent: string
-  /** tom suave da cor de destaque, para cartões */
+  /** a cor da paleta quando vira texto (itálicos e preços); nas cores claras, um tom mais fechado para continuar legível */
+  accentInk: string
+  /** tom suave da cor, para cartões */
   soft: string
-  /** cor do texto sobre a cor de destaque */
+  /** cor do texto sobre a cor da paleta */
   on: string
   dark: boolean
 }
 
 /**
- * Só as combinações escolhidas para o produto (duas cores cada). Nas cores claras (bege, rosa bebê, azul gelo),
- * o destaque usa um tom mais fechado da mesma cor para o texto continuar legível.
- * "Preto e branco" é a única escura: fundo preto, texto e botões brancos.
+ * Uma cor por paleta, nas cores escolhidas para o produto; o fundo e os cartões são a mesma cor bem clarinha.
+ * Rosa bebê e Rosa são claras demais para texto branco: o botão usa texto escuro e os itálicos/preços um tom mais fechado.
  */
 export const PALETTES: Record<PaletteId, Palette> = {
-  'branco-bege': { label: 'Branco e bege', bg: '#f6f1ea', panel: '#ffffff', ink: '#1f1a14', text: '#2e2720', muted: '#6e6356', line: '#e8dfd3', accent: '#6f5c48', soft: '#efe6da', on: '#ffffff', dark: false },
-  'rosa-branco': { label: 'Rosa bebê', bg: '#fbeef2', panel: '#ffffff', ink: '#2a1a20', text: '#3a2730', muted: '#7a5f69', line: '#f1dbe3', accent: '#a3405f', soft: '#f9e1ea', on: '#ffffff', dark: false },
-  'bege-preto': { label: 'Bege e preto', bg: '#e8dccb', panel: '#f6efe5', ink: '#111111', text: '#1d1a17', muted: '#5f564c', line: '#d9cbb7', accent: '#111111', soft: '#e9dfd0', on: '#f6efe5', dark: false },
-  'gelo-branco': { label: 'Azul gelo', bg: '#e8f0f9', panel: '#ffffff', ink: '#0f1b2b', text: '#1d2a3b', muted: '#56657a', line: '#d6e2f0', accent: '#2f5d8f', soft: '#dce8f6', on: '#ffffff', dark: false },
-  'marinho-branco': { label: 'Azul-marinho', bg: '#f4f6fa', panel: '#ffffff', ink: '#0d1530', text: '#1a2340', muted: '#59627a', line: '#e1e6ef', accent: '#1b2a55', soft: '#e2e7f2', on: '#ffffff', dark: false },
-  'vinho-preto': { label: 'Vinho e preto', bg: '#f2eded', panel: '#ffffff', ink: '#0e0d0d', text: '#1f1c1c', muted: '#6b6566', line: '#e6dfdf', accent: '#6e1423', soft: '#f4e1e4', on: '#ffffff', dark: false },
-  'creme-pinho': { label: 'Creme e pinho', bg: '#fffbda', panel: '#fffdf0', ink: '#00371c', text: '#10301f', muted: '#4f5f53', line: '#ede7bf', accent: '#00371c', soft: '#f3efc8', on: '#fffbda', dark: false },
-  'preto-branco': { label: 'Preto e branco', bg: '#000000', panel: '#121212', ink: '#ffffff', text: '#f2f2f2', muted: '#a3a3a3', line: '#2a2a2a', accent: '#ffffff', soft: '#1c1c1c', on: '#000000', dark: true },
+  vermelho: { label: 'Vermelho', bg: '#f9f0f0', panel: '#ffffff', ink: '#1a0100', text: '#301110', muted: '#6a4645', line: '#eed7d6', accent: '#930500', accentInk: '#930500', soft: '#f4e6e6', on: '#ffffff', dark: false },
+  'rosa-bebe': { label: 'Rosa bebê', bg: '#fbf1f8', panel: '#ffffff', ink: '#281823', text: '#402e3a', muted: '#7c6775', line: '#f5dbec', accent: '#dd88c1', accentInk: '#8d577c', soft: '#f8e7f3', on: '#4d3044', dark: false },
+  'verde-musgo': { label: 'Verde musgo', bg: '#f2f5f1', panel: '#ffffff', ink: '#070f04', text: '#182214', muted: '#4e5a4a', line: '#dce4d9', accent: '#265514', accentInk: '#265514', soft: '#e9eee8', on: '#ffffff', dark: false },
+  rosa: { label: 'Rosa', bg: '#fdf2f7', panel: '#ffffff', ink: '#290715', text: '#42182a', muted: '#7e4f63', line: '#fbdde9', accent: '#e52877', accentInk: '#c72368', soft: '#fceaf1', on: '#1e050f', dark: false },
+  roxo: { label: 'Roxo', bg: '#f5f0f4', panel: '#ffffff', ink: '#0f000e', text: '#231021', muted: '#5a4658', line: '#e4d7e3', accent: '#56024d', accentInk: '#56024d', soft: '#eee6ed', on: '#ffffff', dark: false },
+  azul: { label: 'Azul', bg: '#f0f5fb', panel: '#ffffff', ink: '#001021', text: '#102339', muted: '#465b74', line: '#d7e4f4', accent: '#0259ba', accentInk: '#0259ba', soft: '#e6eef8', on: '#ffffff', dark: false },
+  preto: { label: 'Preto', bg: '#f2f2f2', panel: '#ffffff', ink: '#0d0d0d', text: '#1c1c1c', muted: '#5f5f5f', line: '#dddddd', accent: '#000000', accentInk: '#000000', soft: '#eaeaea', on: '#ffffff', dark: false },
+  marrom: { label: 'Marrom', bg: '#f3f2f0', panel: '#ffffff', ink: '#0a0602', text: '#1b1712', muted: '#524e47', line: '#dfdcd8', accent: '#362209', accentInk: '#362209', soft: '#ebe9e6', on: '#ffffff', dark: false },
 }
 
-export const DEFAULT_PALETTE: PaletteId = 'vinho-preto'
+export const DEFAULT_PALETTE: PaletteId = 'vermelho'
 
 export const isPaletteId = (v: unknown): v is PaletteId => typeof v === 'string' && v in PALETTES
 
-/** paletas que existiram antes (e cores/temas mais antigos ainda) -> combinação atual mais próxima */
+/** paletas que existiram antes (e cores/temas mais antigos ainda) -> paleta atual mais próxima */
 const LEGACY: Record<string, PaletteId> = {
-  bordo: 'vinho-preto',
-  rubi: 'vinho-preto',
-  vinho: 'vinho-preto',
-  toledo: 'vinho-preto',
-  rose: 'rosa-branco',
-  cafe: 'bege-preto',
-  noir: 'bege-preto',
-  floresta: 'creme-pinho',
-  marinho: 'marinho-branco',
-  escuro: 'bege-preto',
-  bege: 'branco-bege',
+  'vinho-preto': 'vermelho',
+  'rosa-branco': 'rosa-bebe',
+  'creme-pinho': 'verde-musgo',
+  'gelo-branco': 'azul',
+  'marinho-branco': 'azul',
+  'bege-preto': 'preto',
+  'preto-branco': 'preto',
+  'branco-bege': 'marrom',
+  bordo: 'vermelho',
+  rubi: 'vermelho',
+  vinho: 'vermelho',
+  toledo: 'vermelho',
+  rose: 'rosa-bebe',
+  cafe: 'marrom',
+  noir: 'preto',
+  floresta: 'verde-musgo',
+  marinho: 'azul',
+  escuro: 'preto',
+  bege: 'marrom',
 }
 
 /** paleta de um site: a salva, senão a equivalente das escolhas antigas, senão a padrão */
