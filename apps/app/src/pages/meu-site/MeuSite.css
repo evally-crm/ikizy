@@ -339,24 +339,117 @@
 }
 
 /* editor da página: seções recolhíveis, uma por assunto */
-.sects {
+.parts {
   display: flex;
-  flex-direction: column;
+  flex-direction: column-reverse;
   gap: 12px;
 }
 
-.fold > summary {
+/* painel da parte escolhida: sempre aberto, no lugar da sanfona */
+.part {
+  flex: 1;
+  min-width: 0;
+}
+
+.part:hover {
+  box-shadow: none;
+}
+
+.part__head {
+  padding: 16px 18px 4px;
+}
+
+.part__head h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--ink-900);
+}
+
+.part__head p {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--ink-500);
+}
+
+.checklist__status {
   display: flex;
   align-items: center;
-  min-height: 48px;
-  padding: 0 18px;
-  font-size: 14px;
-  font-weight: 500;
+  gap: 10px;
+  margin: 0 0 6px;
+  font-size: 13px;
   color: var(--ink-700);
 }
 
-.fold[open] > summary {
-  margin-bottom: 4px;
+/* trilho de ícones, como a barra lateral do editor de referência */
+.rail {
+  display: flex;
+  flex: none;
+  gap: 6px;
+  padding: 4px;
+  overflow-x: auto;
+  border-radius: 20px;
+  background: var(--bg);
+}
+
+.rail__btn {
+  display: flex;
+  flex: 1 0 64px;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-height: 62px;
+  padding: 10px 6px 8px;
+  border: 0;
+  border-radius: 16px;
+  background: transparent;
+  color: var(--ink-500);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.rail__btn:hover {
+  color: var(--ink-900);
+}
+
+.rail__btn[aria-current='true'] {
+  background: var(--white);
+  box-shadow: var(--shadow-sm);
+  color: var(--ink-900);
+}
+
+.rail__btn:focus-visible {
+  outline: 2px solid var(--brand-500);
+  outline-offset: 2px;
+}
+
+/* telas largas: painel à esquerda, trilho fixo à direita (como no Figma) */
+@media (min-width: 640px) {
+  .parts {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+  .rail {
+    position: sticky;
+    top: 0;
+    flex-direction: column;
+    width: 76px;
+    overflow: visible;
+  }
+  .rail__btn {
+    flex: none;
+  }
+}
+
+/* checklist de agendamento dentro do bloco: lista sem moldura própria */
+.sect .checklist__list {
+  padding: 0 2px;
+}
+
+.sect .checklist__item:first-child {
+  border-top: 0;
 }
 
 /* logo */
@@ -444,51 +537,17 @@
   min-height: 0;
 }
 
-/* passos do editor: tracinhos, como no cadastro */
-.stepbar {
+/* abas do editor: a faixa fica fina e cinza, como o seletor "Temas | Personalizar" */
+.studio__editor > .tabs {
   flex: none;
+  background: var(--bg);
+  box-shadow: none;
 }
 
-.stepbar__bars {
-  display: flex;
-  gap: 4px;
-}
-
-.stepbar__bars button {
-  flex: 1;
-  min-height: 28px;
-  padding: 12px 0;
-  border: 0;
-  background: none;
-  cursor: pointer;
-}
-
-.stepbar__bars i {
-  display: block;
-  height: 4px;
-  border-radius: var(--radius-pill);
-  background: color-mix(in srgb, var(--ink-900) 14%, transparent);
-  transition: background-color 0.25s;
-}
-
-.stepbar__bars button.is-done i {
-  background: var(--ink-900);
-}
-
-.stepbar__bars button:hover i {
-  background: var(--ink-700);
-}
-
-.stepbar__bars button:focus-visible {
-  outline: 2px solid var(--brand-500);
-  outline-offset: 2px;
-  border-radius: 6px;
-}
-
-.stepbar__label {
-  margin: 0;
-  font-size: 13px;
-  color: var(--ink-500);
+.studio__editor > .tabs .tabs__item[aria-selected='true'] {
+  background: var(--white);
+  box-shadow: var(--shadow-sm);
+  color: var(--ink-900);
 }
 
 /* Meu site em tela cheia: sem o menu do app, a página inteira vira editor + prévia */
@@ -526,90 +585,6 @@
   border-radius: 16px;
   background: var(--white);
   color: var(--ink-500);
-}
-
-/* setas das etapas do editor (como no cadastro: voltar e seguir ao lado dos tracinhos) */
-.stepbar__row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.stepbar__row .stepbar__bars {
-  flex: 1;
-}
-
-.stepbar__arrow {
-  display: grid;
-  flex: none;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border: 0;
-  border-radius: 50%;
-  background: var(--bg);
-  color: var(--ink-900);
-  cursor: pointer;
-  transition: background-color 0.15s, color 0.15s;
-}
-
-.stepbar__arrow:hover:not(:disabled) {
-  background: var(--ink-900);
-  color: var(--white);
-}
-
-.stepbar__arrow:disabled {
-  opacity: 0.3;
-  cursor: default;
-}
-
-.stepbar__label span {
-  color: var(--ink-500);
-}
-
-.stepbar__label {
-  color: var(--ink-900);
-  font-weight: 500;
-}
-
-.stepnav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: 20px;
-  padding-top: 16px;
-  border-top: 1px solid var(--line);
-}
-
-.stepnav__prev,
-.stepnav__next {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 46px;
-  padding: 0 20px;
-  border-radius: var(--radius-pill);
-  font: inherit;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.stepnav__prev {
-  border: 1px solid var(--line-strong, var(--line));
-  background: var(--white);
-  color: var(--ink-900);
-}
-
-.stepnav__next {
-  border: 0;
-  background: var(--ink-900);
-  color: var(--white);
-}
-
-.stepnav__next:hover {
-  background: var(--black);
 }
 
 /* publicar */
