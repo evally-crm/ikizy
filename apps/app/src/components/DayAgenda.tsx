@@ -1,6 +1,6 @@
 import './DayAgenda.css'
 import { useState } from 'react'
-import { ChevronDown, MessageCircle, Plus } from 'lucide-react'
+import { ChevronDown, MessageCircle, Plus, UserRound } from 'lucide-react'
 import { formatDuration, type HourInterval } from '../lib/agendaTime'
 import { formatBRL, formatTime } from '../lib/format'
 import type { Appointment, Professional } from '../types'
@@ -58,37 +58,40 @@ function ApptRow({
 }) {
   const step = STEP[a.status]
   return (
-    <li className={`dayrow ${highlight ? 'dayrow--now' : ''} dayrow--${a.status}`}>
-      <button type="button" className="dayrow__main" onClick={onOpen}>
-        <span className="dayrow__time">
-          <strong>{formatTime(a.start)}</strong>
-          <span>{formatDuration(a.duration)}</span>
-        </span>
-        <span className="dayrow__body">
-          <span className="dayrow__name">{a.client}</span>
-          <span className="dayrow__meta">
-            <StatusBadge status={a.status} />
+    <li className="dayslot">
+      <span className="dayslot__time">
+        <strong>{formatTime(a.start)}</strong>
+        <span>{formatDuration(a.duration)}</span>
+      </span>
+      <div className={`dayrow ${highlight ? 'dayrow--now' : ''} dayrow--${a.status}`}>
+        <button type="button" className="dayrow__main" onClick={onOpen}>
+          <span className="dayrow__icon" aria-hidden="true">
+            <UserRound size={18} />
+          </span>
+          <span className="dayrow__body">
+            <span className="dayrow__name">{a.client}</span>
             <span className="dayrow__detail">
-              {a.service}
-              {proName && ` · ${proName}`} · {formatBRL(a.price).replace(',00', '')}
+              {a.service} · {formatBRL(a.price).replace(',00', '')}
             </span>
           </span>
+        </button>
+        <span className="dayrow__foot">
+          <StatusBadge status={a.status} />
+          {proName && <span className="dayrow__pro">{proName}</span>}
+          <span className="dayrow__actions">
+            {highlight && step && onStep && (
+              <button type="button" className="dayrow__step" onClick={onStep}>
+                {step}
+              </button>
+            )}
+            {onMessage && (
+              <button type="button" className="dayrow__msg" aria-label={`Mensagem para ${a.client}`} title="Mensagem no WhatsApp" onClick={onMessage}>
+                <MessageCircle size={17} aria-hidden="true" />
+              </button>
+            )}
+          </span>
         </span>
-      </button>
-      {(onMessage || (highlight && step && onStep)) && (
-        <span className="dayrow__actions">
-          {highlight && step && onStep && (
-            <button type="button" className="dayrow__step" onClick={onStep}>
-              {step}
-            </button>
-          )}
-          {onMessage && (
-            <button type="button" className="dayrow__msg" aria-label={`Mensagem para ${a.client}`} title="Mensagem no WhatsApp" onClick={onMessage}>
-              <MessageCircle size={17} aria-hidden="true" />
-            </button>
-          )}
-        </span>
-      )}
+      </div>
     </li>
   )
 }
@@ -196,12 +199,13 @@ export function DayAgenda({
             <ul className="dayagenda__list">
               {rows.map((r) =>
                 r.kind === 'gap' ? (
-                  <li key={`gap-${r.start}`} className="daygap">
+                  <li key={`gap-${r.start}`} className="dayslot daygap">
+                    <span className="dayslot__time">
+                      <strong>{formatTime(r.start)}</strong>
+                    </span>
                     <button type="button" onClick={() => onNew(r.start)}>
-                      <span>
-                        {formatTime(r.start)}–{formatTime(r.end)} livre
-                      </span>
                       <Plus size={16} aria-hidden="true" />
+                      <span>Livre até {formatTime(r.end)}</span>
                     </button>
                   </li>
                 ) : (

@@ -909,8 +909,7 @@ button.textlink:disabled {
   background: rgba(255, 255, 255, 0.035);
 }
 
-:root[data-theme='dark'] .dayrow--now,
-:root[data-theme='dark'] .dayrow--atendimento {
+:root[data-theme='dark'] .dayrow--pendente {
   background: var(--brand-tint);
 }
 
