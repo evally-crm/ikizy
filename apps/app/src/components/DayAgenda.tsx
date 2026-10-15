@@ -111,6 +111,7 @@ export function DayAgenda({
   onStep,
   onMessage,
   onNew,
+  title,
 }: {
   items: Appointment[]
   professionals: Professional[]
@@ -127,6 +128,8 @@ export function DayAgenda({
   onStep: (a: Appointment) => void
   onMessage: (a: Appointment) => void
   onNew: (start: number) => void
+  /** cabeçalho do cartão: de qual dia é a lista e quantos atendimentos tem */
+  title?: { day: string; count: string }
 }) {
   const [showDone, setShowDone] = useState(false)
   const proName = (id: string) => (showPro ? (professionals.find((p) => p.id === id)?.name ?? '') : '')
@@ -142,10 +145,25 @@ export function DayAgenda({
   const next = ahead.filter((a) => a !== current)
   const rows = hours && !isPast ? withGaps(next, hours, weekday, isToday ? nowMinutes : 0) : next.map((a) => ({ kind: 'appt' as const, a }))
 
-  if (loading) return <p className="dayagenda__empty">Carregando…</p>
+  const head = title && (
+    <h2 className="dayagenda__head">
+      {title.day} <span>{title.count}</span>
+    </h2>
+  )
+
+  if (loading)
+    return head ? (
+      <section className="dayagenda" aria-label="Atendimentos do dia">
+        {head}
+        <p className="dayagenda__empty">Carregando…</p>
+      </section>
+    ) : (
+      <p className="dayagenda__empty">Carregando…</p>
+    )
 
   return (
     <section className="dayagenda" aria-label="Atendimentos do dia">
+      {head}
       {current && (
         <>
           <p className="dayagenda__label">Agora</p>

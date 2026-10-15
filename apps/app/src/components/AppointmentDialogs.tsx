@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { format, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { MessageCircle, X } from 'lucide-react'
+import { MessageCircle, Pencil, X } from 'lucide-react'
 import { useAgenda, type NewAppointment } from '../data/AgendaProvider'
 import { findConflict } from '../domain/agenda'
 import { formatDuration } from '../lib/agendaTime'
@@ -330,8 +330,18 @@ export function AppointmentDialog({
           <div>
             <dt>Horário</dt>
             <dd>
-              {format(parseISO(appointment.date), 'dd/MM')} · {formatTime(appointment.start)} –{' '}
-              {formatTime(appointment.start + appointment.duration)}
+              {/* em aberto, tocar no horário já leva a remarcar */}
+              {open ? (
+                <button type="button" className="dialog__when" title="Mudar dia ou horário" onClick={() => setRescheduling(true)}>
+                  {format(parseISO(appointment.date), 'dd/MM')} · {formatTime(appointment.start)} – {formatTime(appointment.start + appointment.duration)}
+                  <Pencil size={13} aria-hidden="true" />
+                </button>
+              ) : (
+                <>
+                  {format(parseISO(appointment.date), 'dd/MM')} · {formatTime(appointment.start)} –{' '}
+                  {formatTime(appointment.start + appointment.duration)}
+                </>
+              )}
             </dd>
           </div>
           <div>

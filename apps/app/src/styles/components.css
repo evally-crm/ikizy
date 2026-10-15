@@ -318,6 +318,31 @@
   margin: 0;
   overflow-wrap: anywhere;
 }
+.dialog__when {
+  border: 0;
+  background: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: -4px -8px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: underline dotted var(--ink-400);
+  text-underline-offset: 3px;
+}
+.dialog__when svg {
+  flex: none;
+  color: var(--ink-500);
+}
+@media (hover: hover) {
+  .dialog__when:hover {
+    background: var(--gray-200);
+  }
+}
 .dialog__text {
   margin-bottom: 22px;
   color: var(--ink-500);

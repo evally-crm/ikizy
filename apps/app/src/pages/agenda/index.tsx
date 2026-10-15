@@ -28,6 +28,7 @@ import { TimeGrid } from './TimeGrid'
 import './Agenda.css'
 
 type Mode = 'lista' | 'grade'
+const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 const MODE_KEY = 'ikizy:agenda-modo'
 
 /** celular e tablet: lista do dia (padrão) ou grade; a escolha fica guardada neste aparelho */
@@ -118,9 +119,10 @@ export default function Agenda() {
   // /dashboard/agenda?nova=1&cliente=Nome abre um agendamento novo já com a cliente (atalho da ficha)
   useEffect(() => {
     if (params.get('nova') !== '1' || loading) return
-    setCreating({ date: dayKey(new Date()), start: null, clientName: params.get('cliente') ?? undefined })
+    // já na agenda, o [+] agenda no dia que está aberto (vindo de outra tela, é hoje)
+    setCreating({ date: today, start: null, clientName: params.get('cliente') ?? undefined })
     setParams({}, { replace: true })
-  }, [params, setParams, loading])
+  }, [params, setParams, loading]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const openRequest = (a: Appointment) => {
     setDate(parseISO(a.date))
@@ -301,6 +303,10 @@ export default function Agenda() {
             {listMode ? (
               <>
                 <DayAgenda
+                  title={{
+                    day: isToday ? `Hoje, ${format(date, "d 'de' MMM", { locale: ptBR }).replace('.', '')}` : capitalize(format(date, "EEEE, d 'de' MMM", { locale: ptBR }).replace('.', '')),
+                    count: loading ? '' : summary.count === 0 ? 'sem atendimentos' : `${summary.count} ${summary.count === 1 ? 'atendimento' : 'atendimentos'}`,
+                  }}
                   items={visiblePros.length === professionals.length ? dayAppointments : dayAppointments.filter((x) => visiblePros.some((p) => p.id === x.professionalId))}
                   professionals={professionals}
                   showPro={visiblePros.length > 1}

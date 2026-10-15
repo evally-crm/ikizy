@@ -10,6 +10,25 @@
   box-shadow: var(--shadow-sm);
 }
 
+.dayagenda__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 2px 4px 0;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink-900);
+}
+
+.dayagenda__head span {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-500);
+  white-space: nowrap;
+}
+
 .dayagenda__label {
   margin: 6px 4px 0;
   font-size: 12px;
