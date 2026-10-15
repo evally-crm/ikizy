@@ -88,6 +88,11 @@ export default function Agenda() {
   const isToday = isSameDay(date, now)
   const nowMinutes = now.getHours() * 60 + now.getMinutes()
   const dayAppointments = useMemo(() => appointmentsOn(appointments, today), [appointments, today])
+  // a lista do celular segue o filtro de profissional (e o número no cabeçalho dela também)
+  const listItems = useMemo(
+    () => (activePro === 'all' ? dayAppointments : dayAppointments.filter((x) => x.professionalId === activePro)),
+    [dayAppointments, activePro],
+  )
   const countsByDay = useMemo(() => countByDay(appointments), [appointments])
   const summary = useMemo(() => summarizeDay(appointments, today, isToday ? nowMinutes : null), [appointments, today, isToday, nowMinutes])
   const professionalName = (id: string) => professionals.find((p) => p.id === id)?.name ?? ''
@@ -305,9 +310,9 @@ export default function Agenda() {
                 <DayAgenda
                   title={{
                     day: isToday ? `Hoje, ${format(date, "d 'de' MMM", { locale: ptBR }).replace('.', '')}` : capitalize(format(date, "EEEE, d 'de' MMM", { locale: ptBR }).replace('.', '')),
-                    count: loading ? '' : summary.count === 0 ? 'sem atendimentos' : `${summary.count} ${summary.count === 1 ? 'atendimento' : 'atendimentos'}`,
+                    count: loading ? '' : listItems.length === 0 ? 'sem atendimentos' : `${listItems.length} ${listItems.length === 1 ? 'atendimento' : 'atendimentos'}`,
                   }}
-                  items={visiblePros.length === professionals.length ? dayAppointments : dayAppointments.filter((x) => visiblePros.some((p) => p.id === x.professionalId))}
+                  items={listItems}
                   professionals={professionals}
                   showPro={visiblePros.length > 1}
                   hours={visiblePros.length === 1 ? workingHours[visiblePros[0].id] : undefined}
