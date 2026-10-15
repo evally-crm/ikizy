@@ -91,7 +91,7 @@ const CSS = `
 body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased;padding-bottom:84px}
 a{color:inherit}
 h1,h2,h3{letter-spacing:-.035em;line-height:1.04;color:var(--ink);margin:0;font-family:var(--display);font-weight:var(--dw);text-transform:var(--du)}
-em{font-family:Georgia,"Times New Roman",serif;font-style:italic;color:var(--accent-ink)}
+em{font-family:inherit;font-style:normal;color:var(--accent-ink)}
 .wrap{max-width:1040px;margin:0 auto;padding:0 10px}
 .panel{background:var(--panel);border-radius:28px;margin:10px 0;padding:28px 22px}
 @media(min-width:720px){.panel{padding:44px 44px}}
@@ -142,7 +142,7 @@ em{font-family:Georgia,"Times New Roman",serif;font-style:italic;color:var(--acc
 .cats{display:grid;gap:12px}
 @media(min-width:720px){.cats{grid-template-columns:repeat(2,1fr);gap:16px}}
 .cat{padding:22px;border-radius:24px;background:var(--soft)}
-.cat h3{font-family:Georgia,"Times New Roman",serif;font-style:italic;font-size:26px;color:var(--accent-ink);margin-bottom:6px}
+.cat h3{font-size:26px;color:var(--accent-ink);margin-bottom:6px}
 .cat ul{list-style:none;margin:0;padding:0}
 .cat li{display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid color-mix(in srgb,var(--ink) 12%,transparent)}
 .cat li:last-child{border-bottom:0}
