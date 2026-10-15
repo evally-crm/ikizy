@@ -11,14 +11,15 @@ export function PreviewSheet({ studio, host, onClose }: { studio: Studio; host: 
 
   return createPortal(
     <div className="sprev" role="dialog" aria-modal="true" aria-label="Prévia do site">
+      {/* mesmo desenho da barra do editor: o X fica no mesmo lugar para entrar e sair sem procurar */}
       <header className="sprev__bar">
+        <button type="button" className="sprev__close" aria-label="Fechar a prévia" onClick={onClose}>
+          <X size={20} aria-hidden="true" />
+        </button>
         <div className="sprev__title">
           <strong>Prévia</strong>
           <small>{host}</small>
         </div>
-        <button type="button" className="sprev__close" aria-label="Fechar a prévia" onClick={onClose}>
-          <X size={18} aria-hidden="true" />
-        </button>
       </header>
       <div className="sprev__body">
         <SiteFrame studio={studio} device="mobile" height="fill" />

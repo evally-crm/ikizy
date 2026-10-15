@@ -1,0 +1,61 @@
+/* PageLoader: o mesmo pulso da abertura do app, dentro da tela */
+.pageloader {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 22px;
+  min-height: 320px;
+  padding: 48px 0 24px;
+  animation: fluid-fade-in 0.3s ease backwards;
+}
+
+.pageloader__logo {
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  color: var(--ink-900);
+  animation: splash-pulse 1.2s ease-in-out infinite;
+}
+
+/* silhueta dos blocos: três pequenos e dois largos, com um brilho que passa */
+.pageloader__ghost {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+}
+
+.pageloader__ghost span {
+  height: 84px;
+  border-radius: 22px;
+  background: linear-gradient(100deg, var(--white) 30%, var(--page-bg) 50%, var(--white) 70%) 0 0 / 300% 100%;
+  box-shadow: var(--shadow-sm);
+  animation: pageloader-shine 1.4s ease-in-out infinite;
+}
+
+.pageloader__ghost span:nth-child(n + 4) {
+  grid-column: 1 / -1;
+  height: 110px;
+}
+
+@keyframes pageloader-shine {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: 0 0;
+  }
+}
+
+@keyframes splash-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pageloader__logo,
+  .pageloader__ghost span {
+    animation: none;
+  }
+}

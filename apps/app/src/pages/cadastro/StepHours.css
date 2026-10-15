@@ -22,8 +22,8 @@
   background: var(--gray-200);
 }
 .onb-days__day[aria-pressed='true'] {
-  background: var(--ink-900);
-  color: var(--white);
+  background: var(--solid);
+  color: var(--on-solid);
 }
 .onb-time {
   display: inline-flex;

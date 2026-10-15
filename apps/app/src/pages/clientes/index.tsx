@@ -5,13 +5,14 @@ import { useAuth } from '../../auth/AuthProvider'
 import { useClientBook } from '../../data/useClientBook'
 import { summarizeBook } from '../../domain/clients'
 import { ClientDialog } from '../../components/ClientDialog'
-import { Button, Card, Em, PageHeader, StatTile } from '../../components/ui'
+import { Button, Card, Em, PageHeader } from '../../components/ui'
 import { useMediaQuery } from '../../hooks/useMediaQuery'
 import { dash } from '../../lib/routes'
 import { ClientDetail } from './ClientDetail'
 import { ForgetClientDialog } from './ForgetClientDialog'
 import { ClientList } from './ClientList'
 import './Clientes.css'
+import { PageLoader } from '../../components/PageLoader'
 
 /** Clientes: a lista de contatos ao lado da ficha da cliente escolhida (no celular, uma de cada vez) */
 export default function Clientes() {
@@ -95,7 +96,28 @@ export default function Clientes() {
         title={
           <>
             Seus <Em>contatos</Em>
+            {clients.length > 0 && (
+              <span className="crm__total" aria-label={`${clients.length} contatos`}>
+                {clients.length}
+              </span>
+            )}
           </>
+        }
+        // a linha do resumo existe desde o início (carregando ou vazia) para o título e o botão não pularem
+        crumb={
+          book.loading ? (
+            'Carregando…'
+          ) : clients.length === 0 ? (
+            'Nenhum contato ainda'
+          ) : (
+            <span className="crm__summary">
+              <span>{summary.newOnes} {summary.newOnes === 1 ? 'nova' : 'novas'} no mês</span>
+              <span>{summary.returningPct}% voltam</span>
+              <span className={summary.missing > 0 ? 'is-alert' : undefined}>
+                {summary.missing} {summary.missing === 1 ? 'sumida' : 'sumidas'}
+              </span>
+            </span>
+          )
         }
         actions={
           <Button size="sm" onClick={() => setDialog('new')}>
@@ -103,16 +125,6 @@ export default function Clientes() {
           </Button>
         }
       />
-
-      {/* no celular a lista vem primeiro: os números ficam só na tela larga */}
-      {isWide && clients.length > 0 && (
-        <div className="crmtiles">
-          <StatTile label="Ativas" value={summary.active} />
-          <StatTile label="Novas no mês" value={summary.newOnes} />
-          <StatTile label="Retorno" value={`${summary.returningPct}%`} hint="com mais de uma visita" />
-          <StatTile label="Sumidas" value={summary.missing} tone={summary.missing > 0 ? 'brand' : 'default'} hint="sem vir há mais de 45 dias" />
-        </div>
-      )}
 
       {book.error && (
         <p className="dialog__error" role="alert">
@@ -124,9 +136,7 @@ export default function Clientes() {
       )}
 
       {book.loading ? (
-        <p className="crm__empty" role="status">
-          Carregando clientes…
-        </p>
+        <PageLoader label="Carregando clientes…" />
       ) : clients.length === 0 ? (
         <Card className="agenda__empty">
           <h2 className="card__title">Cadastre sua primeira cliente</h2>

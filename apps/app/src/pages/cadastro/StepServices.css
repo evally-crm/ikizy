@@ -106,8 +106,8 @@
   padding: 0 10px;
   border: 0;
   border-radius: var(--radius-pill);
-  background: var(--ink-900);
-  color: var(--white);
+  background: var(--solid);
+  color: var(--on-solid);
   font-size: 13px;
 }
 .onb-svc__ok:disabled {

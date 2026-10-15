@@ -9,7 +9,7 @@
   background: var(--gray-200);
 }
 .waffle__dot--net {
-  background: var(--ink-900);
+  background: var(--solid);
 }
 .waffle__dot--commissions {
   background: var(--brand-500);

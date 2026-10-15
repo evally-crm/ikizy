@@ -23,6 +23,17 @@
   --ink-700: #242424;
   --ink-900: #0e0d0d;
   --black: #000000;
+  --danger: #bf0c22;
+  /* texto sobre o vermelho da marca: sempre branco */
+  --on-brand: #ffffff;
+
+  /* preenchimentos fortes (botões escuros, cartão do plano) e o texto sobre eles: no escuro continuam escuros com texto branco */
+  --solid: var(--ink-900);
+  --on-solid: #ffffff;
+  /* vidro das barras flutuantes */
+  --glass: rgba(255, 255, 255, 0.86);
+  --glass-strong: rgba(255, 255, 255, 0.94);
+  --glass-page: rgba(245, 244, 244, 0.78);
 
   /* semânticas (uso pontual) */
   --success: #1f7a4d;
@@ -49,7 +60,7 @@
   --radius-pill: 999px;
 
   /* layout */
-  --bottomnav-h: 64px;
+  --bottomnav-h: 52px;
   --topbar-h: 76px;
   --content-max: 1440px;
   --content-pb: 24px;
@@ -67,4 +78,76 @@
   :root {
     --gutter: 40px;
   }
+}
+
+/* ---------- modo escuro (só dentro do sistema; login e cadastro seguem claros) ---------- */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  /* escuro em preto e branco com o vermelho de acento: os preenchimentos grandes (vinho) viram branco;
+     o vermelho da marca segue no [+], no dia de hoje, nos pontinhos, nos selos e no mapa de dias */
+  --brand-500: #e0283f;
+  --brand-700: #f0596c;
+  --brand-900: #f4f2f3;
+  --danger: #ff6b7d;
+  --on-brand: #ffffff;
+
+  --pink-100: #3a1c22;
+  --pink-300: #7d3a46;
+
+  --bg: #2a292c;
+  --page-bg: #121113;
+  --white: #1c1b1e;
+  --blush: #231d25;
+  --gray-200: #333236;
+  --gray-300: #4b494e;
+
+  --ink-400: #7a757c;
+  --ink-500: #a7a2a8;
+  --ink-700: #dcd8da;
+  --ink-900: #f4f2f3;
+
+  --solid: #f4f2f3;
+  --on-solid: #121113;
+  --glass: rgba(28, 27, 30, 0.82);
+  --glass-strong: rgba(32, 31, 34, 0.94);
+  --glass-page: rgba(18, 17, 19, 0.78);
+
+  --success: #5ccf97;
+  --success-soft: #15301f;
+  --warning: #e8b04a;
+  --warning-soft: #33280f;
+
+  --line: rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.16);
+  --brand-tint: rgba(224, 40, 63, 0.12);
+  /* no escuro os cartões se separam pelo tom, sem sombra nem contorno */
+  /* sombra vazia (e não `none`): continua válida quando somada a outras sombras */
+  --shadow-sm: 0 0 0 0 transparent;
+  --shadow-md: 0 18px 40px -18px rgba(0, 0, 0, 0.8);
+}
+
+/* papel (recibo e nota) continua branco no escuro: é o que sai na impressora e no PDF */
+:root[data-theme='dark'] .invoice,
+:root[data-theme='dark'] .receipt__paper {
+  color-scheme: light;
+  --white: #ffffff;
+  --page-bg: #f5f5f7;
+  --bg: #e8e8ea;
+  --gray-200: #dddde0;
+  --gray-300: #c9c9cd;
+  --ink-400: #a5a0a2;
+  --ink-500: #6b6668;
+  --ink-700: #242424;
+  --ink-900: #0e0d0d;
+  --brand-500: #bf0c22;
+  --brand-700: #800513;
+  --line: rgba(14, 13, 13, 0.08);
+  --line-strong: rgba(14, 13, 13, 0.16);
+  color: var(--ink-900);
+}
+
+/* a fenda da impressora fica preta de verdade */
+:root[data-theme='dark'] .printer__slot {
+  background: #000000;
 }

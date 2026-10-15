@@ -34,3 +34,84 @@
     flex-wrap: nowrap;
   }
 }
+
+/* celular: sem barra no topo, o cabeçalho leva o sininho e a lista dele abre em toda a largura */
+.pageheader__shell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+/* avatar ao lado do sininho: abre as Configurações; fica marcado quando a tela aberta mora lá dentro */
+.shellavatar {
+  border-radius: 50%;
+}
+.shellavatar .avatar {
+  width: 46px;
+  height: 46px;
+}
+.shellavatar.is-active .avatar {
+  box-shadow: 0 0 0 2px var(--white), 0 0 0 4px var(--brand-500);
+}
+.shellavatar:focus-visible {
+  outline: 2px solid var(--brand-500);
+  outline-offset: 3px;
+}
+/* celular: título e sininho numa linha, centrados entre si; as ações da tela vêm na linha de baixo */
+@media (max-width: 1023px) {
+  .pageheader {
+    position: relative;
+    z-index: 5;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 10px 12px;
+  }
+  /* a linha do título tem a altura do sininho (46px): os dois ficam no mesmo centro, com ou sem crumb */
+  .pageheader__title {
+    font-size: 21px;
+    line-height: 46px;
+  }
+  /* sem sininho ao lado, o título não precisa da linha alta */
+  .pageheader:not(:has(.pageheader__shell)) .pageheader__title {
+    line-height: 1.2;
+  }
+  /* selos dentro do título (ex.: total de contatos) não herdam a linha alta */
+  .pageheader__title > * {
+    line-height: 1;
+  }
+  .pageheader__crumb {
+    margin-top: 0;
+  }
+  /* o texto usa a largura toda (o crumb passa por baixo do sininho); só o título deixa o espaço dele */
+  .pageheader__text {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+  .pageheader__text:not(:only-child) .pageheader__title {
+    padding-right: 58px;
+  }
+  .pageheader__shell {
+    grid-column: 2;
+    grid-row: 1;
+    z-index: 1;
+  }
+  .pageheader__actions {
+    grid-column: 1 / -1;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .pageheader__actions:empty {
+    display: none;
+  }
+  .pageheader .pendpop {
+    left: 0;
+    right: 0;
+  }
+}
+@media (min-width: 1024px) {
+  .pageheader__shell,
+  .pageheader--mobile {
+    display: none;
+  }
+}

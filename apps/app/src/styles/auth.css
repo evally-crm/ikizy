@@ -286,8 +286,8 @@
   color: var(--ink-900);
 }
 .auth__pill:hover {
-  background: var(--ink-900);
-  color: var(--white);
+  background: var(--solid);
+  color: var(--on-solid);
 }
 
 /* rodapé: aviso legal à esquerda, disco escuro com seta à direita */
@@ -319,8 +319,8 @@
   height: 68px;
   border: 0;
   border-radius: 50%;
-  background: var(--ink-900);
-  color: var(--white);
+  background: var(--solid);
+  color: var(--on-solid);
   transition: transform 0.15s, background-color 0.15s;
 }
 .auth__go:hover:not(:disabled) {
@@ -343,7 +343,7 @@
 /* botões principais das telas sem disco (recuperar senha, nova senha, criar negócio) */
 .auth .btn--primary {
   min-height: 56px;
-  background: var(--ink-900);
+  background: var(--solid);
 }
 .auth .btn--primary:hover:not(:disabled) {
   background: var(--black);

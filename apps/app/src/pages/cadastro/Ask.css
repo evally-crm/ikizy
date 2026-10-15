@@ -58,8 +58,8 @@
   height: 48px;
   border: 0;
   border-radius: 50%;
-  background: var(--ink-900);
-  color: var(--white);
+  background: var(--solid);
+  color: var(--on-solid);
   transition: transform 0.15s, background-color 0.15s;
 }
 .ask__go:hover:not(:disabled) {
@@ -134,8 +134,8 @@
 }
 .ask-sug[aria-pressed='true'] {
   border-color: var(--ink-900);
-  background: var(--ink-900);
-  color: var(--white);
+  background: var(--solid);
+  color: var(--on-solid);
 }
 
 @media (max-width: 640px) {
@@ -173,8 +173,8 @@
   padding: 0 22px 0 26px;
   border: 0;
   border-radius: var(--radius-pill);
-  background: var(--ink-900);
-  color: var(--white);
+  background: var(--solid);
+  color: var(--on-solid);
   font-size: 16px;
   font-weight: 500;
   transition: transform 0.15s, background-color 0.15s;

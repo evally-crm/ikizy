@@ -11,6 +11,7 @@ import SiteFrame, { DeviceToggle, type Device } from '../../components/SiteFrame
 import OnlineBookingChecklist from '../../components/OnlineBookingChecklist'
 import { Button, Card, Em, PageHeader, Tabs, Tag } from '../../components/ui'
 import { AppearanceFields } from './AppearanceFields'
+import { Group } from './Group'
 import { IdentityFields } from './IdentityFields'
 import { PreviewSheet } from './PreviewSheet'
 import { PublishButton } from './PublishButton'
@@ -26,6 +27,17 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'servicos', label: 'Serviços' },
   { id: 'vitrine', label: 'Produtos' },
 ]
+
+const TAB_KEY = 'ikizy:site:tab'
+/** a aba aberta por último nesta aba do navegador (ex.: volta em Serviços depois de editar em Meu negócio) */
+const savedTab = (): Tab => {
+  try {
+    const t = sessionStorage.getItem(TAB_KEY)
+    return TABS.some((x) => x.id === t) ? (t as Tab) : 'pagina'
+  } catch {
+    return 'pagina'
+  }
+}
 
 type Part = 'agendamento' | 'aparencia' | 'identidade' | 'textos' | 'contato' | 'mostrar'
 
@@ -43,7 +55,7 @@ const PARTS: { id: Part; label: string; short: string; icon: ReactNode }[] = [
 export default function MeuSite() {
   const { draft, setDraft, dirty, publish, discard, loading, error: loadError, isLive, publishedSlug } = useStudio()
   const isWide = useMediaQuery('(min-width: 1100px)')
-  const [tab, setTab] = useState<Tab>('pagina')
+  const [tab, setTab] = useState<Tab>(savedTab)
   const [part, setPart] = useState<Part>('aparencia')
   const [justPublished, setJustPublished] = useState(false)
   const [publishing, setPublishing] = useState(false)
@@ -60,6 +72,11 @@ export default function MeuSite() {
   /** troca de aba e volta ao começo dela */
   const goTab = (id: Tab) => {
     setTab(id)
+    try {
+      sessionStorage.setItem(TAB_KEY, id)
+    } catch {
+      /* sem storage: só não lembra a aba */
+    }
     bodyRef.current?.scrollTo({ top: 0 })
   }
 
@@ -120,16 +137,27 @@ export default function MeuSite() {
           <span>{siteHost(site.slug)}</span>
         )}
       </div>
-      {dirty && (
-        <button type="button" className="sbar__icon sbar__icon--soft" aria-label="Descartar alterações" title="Descartar alterações" onClick={discard}>
-          <Undo2 size={18} aria-hidden="true" />
-        </button>
-      )}
-      <button type="button" className="sbar__icon sbar__icon--soft" aria-label="Ver a prévia" title="Ver a prévia" onClick={() => setPreviewOpen(true)}>
-        <Eye size={18} aria-hidden="true" />
+      <button type="button" className="sbar__icon sbar__icon--soft sbar__icon--label" title="Ver a prévia" onClick={() => setPreviewOpen(true)}>
+        <Eye size={18} aria-hidden="true" /> Prévia
       </button>
-      <PublishButton state={publishState} variant="compact" onClick={() => void onPublish()} />
     </header>
+  )
+
+  // celular: descartar e publicar só aparecem embaixo depois da primeira alteração (ou enquanto o site não foi ao ar)
+  // enquanto carrega ainda não se sabe se o site está no ar: a barra espera para não piscar
+  const mobileDock = !loading && (dirty || !isLive || justPublished || publishing) && (
+    <div className="sdock" role="region" aria-label="Publicação">
+      <div className="sdock__bar">
+        {dirty ? (
+          <button type="button" className="sdock__undo" onClick={discard}>
+            <Undo2 size={18} aria-hidden="true" /> Descartar
+          </button>
+        ) : (
+          <span className="sdock__status">{justPublished ? 'Site no ar' : 'Ainda não publicado'}</span>
+        )}
+      </div>
+      <PublishButton state={publishState} variant="compact" onClick={() => void onPublish()} />
+    </div>
   )
 
   const root = (
@@ -175,7 +203,10 @@ export default function MeuSite() {
           }
         />
       ) : (
-        mobileBar
+        <>
+          {mobileBar}
+          {mobileDock}
+        </>
       )}
 
       {(loadError || publishError) && (
@@ -199,7 +230,11 @@ export default function MeuSite() {
               <div className="parts">
                 <section className="sect part" aria-label={PARTS.find((p) => p.id === part)?.label}>
                   <div className="form">
-                    {part === 'agendamento' && <OnlineBookingChecklist bare whatsapp={site.whatsapp} online={site.onlineBooking} />}
+                    {part === 'agendamento' && (
+                      <Group title="Agendamento pelo site">
+                        <OnlineBookingChecklist bare whatsapp={site.whatsapp} online={site.onlineBooking} />
+                      </Group>
+                    )}
                     {part === 'aparencia' && <AppearanceFields site={site} setSite={setSite} />}
                     {part === 'identidade' && <IdentityFields site={site} setSite={setSite} />}
                     {part === 'textos' && <TextFields site={site} setSite={setSite} />}

@@ -7,7 +7,6 @@
   justify-content: center;
   background: color-mix(in srgb, var(--ink-900) 45%, transparent);
   backdrop-filter: blur(3px);
-  animation: sheet-fade 0.2s ease-out;
 }
 .sheet__panel {
   position: relative;
@@ -18,7 +17,6 @@
   border-radius: 0 0 var(--radius-lg) var(--radius-lg);
   background: var(--page-bg);
   box-shadow: var(--shadow-md);
-  animation: sheet-drop 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 .sheet__close {
   position: absolute;

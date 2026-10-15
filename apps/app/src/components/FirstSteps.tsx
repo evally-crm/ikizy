@@ -1,7 +1,7 @@
 import './FirstSteps.css'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Check, ChevronDown, ChevronRight, Sparkles } from 'lucide-react'
+import { Check, ChevronRight, CircleCheck, X } from 'lucide-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useAgenda } from '../data/AgendaProvider'
 import { useMediaQuery } from '../hooks/useMediaQuery'
@@ -151,7 +151,7 @@ export function FirstSteps() {
 
   if (isMin) {
     return (
-      <button type="button" className="setup setup--pill" onClick={() => setMin(false)} aria-label={`Primeiros passos, ${doneCount} de ${steps.length} feitos. Abrir`}>
+      <button type="button" className="setup setup--pill" onClick={() => setMin(false)} aria-label={`Primeiros passos, ${doneCount} de ${steps.length} feitos. Abrir`} title={`Primeiros passos ${doneCount}/${steps.length}`}>
         <Ring done={doneCount} total={steps.length} />
         <span>
           Primeiros passos <small>{doneCount}/{steps.length}</small>
@@ -169,11 +169,6 @@ export function FirstSteps() {
             {celebrate ? 'Seu negócio já pode receber clientes.' : `${doneCount} de ${steps.length} feitos`}
           </p>
         </div>
-        {!celebrate && (
-          <button type="button" className="setup__min" onClick={() => setMin(true)} aria-label="Recolher">
-            <ChevronDown size={18} aria-hidden="true" />
-          </button>
-        )}
       </header>
       <div className="setup__bar" aria-hidden="true">
         {steps.map((s) => (
@@ -182,7 +177,7 @@ export function FirstSteps() {
       </div>
       {celebrate ? (
         <p className="setup__party">
-          <Sparkles size={18} aria-hidden="true" /> Os 4 passos estão feitos.
+          <CircleCheck size={18} aria-hidden="true" /> Os 4 passos estão feitos.
         </p>
       ) : (
         <ol className="setup__list">
@@ -210,6 +205,11 @@ export function FirstSteps() {
             </li>
           ))}
         </ol>
+      )}
+      {!celebrate && (
+        <button type="button" className="setup__close" onClick={() => setMin(true)} aria-label="Fechar (fica no botão lá embaixo)">
+          <X size={16} aria-hidden="true" /> Fechar
+        </button>
       )}
     </section>
   )

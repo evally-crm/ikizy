@@ -3,6 +3,7 @@ import { ImagePlus, Trash2 } from 'lucide-react'
 import type { SiteConfig } from '../../data/catalog'
 import { resizeToDataUrl } from '../../lib/imageResize'
 import { Button } from '../../components/ui'
+import { Group } from './Group'
 import type { SetSite } from './types'
 import './MeuSite.css'
 
@@ -71,7 +72,7 @@ export function IdentityFields({ site, setSite }: { site: SiteConfig; setSite: S
     }
   }
   return (
-    <>
+    <Group title="Logo e capa">
       <ImageField
         value={site.logo}
         titleEmpty="Adicione seu logo"
@@ -96,6 +97,6 @@ export function IdentityFields({ site, setSite }: { site: SiteConfig; setSite: S
           {error}
         </p>
       )}
-    </>
+    </Group>
   )
 }

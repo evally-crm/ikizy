@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react'
 import { addDays, addMonths, endOfMonth, format, getDay, isSameDay, startOfMonth } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { ChevronLeft, ChevronRight, Plus, RotateCcw } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import { dayKey } from '../../lib/agendaTime'
 import { Tabs } from '../../components/ui'
 import './CalendarCard.css'
@@ -67,15 +67,9 @@ export function CalendarCard({
           <button type="button" aria-label={shown === 'mes' ? 'Mês anterior' : 'Semana anterior'} onClick={() => onDate(step(date, -1))}>
             <ChevronLeft size={18} />
           </button>
-          {side ? (
-            <button type="button" className="calcard__today" onClick={() => onDate(new Date())}>
-              Hoje
-            </button>
-          ) : (
-            <button type="button" aria-label="Voltar para hoje" title="Hoje" onClick={() => onDate(new Date())}>
-              <RotateCcw size={16} />
-            </button>
-          )}
+          <button type="button" className="calcard__today" title="Voltar para hoje" onClick={() => onDate(new Date())}>
+            Hoje
+          </button>
           <button type="button" aria-label={shown === 'mes' ? 'Próximo mês' : 'Próxima semana'} onClick={() => onDate(step(date, 1))}>
             <ChevronRight size={18} />
           </button>

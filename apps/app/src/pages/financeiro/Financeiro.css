@@ -85,7 +85,7 @@
   background: var(--gray-300);
 }
 .finlegend__dot--net {
-  background: var(--ink-900);
+  background: var(--solid);
 }
 .finlegend__dot--commissions {
   background: var(--brand-500);
@@ -141,8 +141,8 @@
 }
 .fm-stat--dark {
   border-color: var(--ink-900);
-  background: var(--ink-900);
-  color: var(--white);
+  background: var(--solid);
+  color: var(--on-solid);
 }
 .fm-stat__label,
 .fm-stat__hint {
@@ -167,14 +167,28 @@
 }
 @media (min-width: 1024px) {
   .fm-layout {
-    grid-template-columns: minmax(0, 3fr) minmax(300px, 2fr);
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 400px);
   }
   .fm-preview {
     position: sticky;
     top: 16px;
   }
 }
-.fm-details,
+.fm-details {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: 10px;
+  min-width: 0;
+}
+@media (min-width: 1280px) {
+  .fm-details {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .fm-card--wide {
+    grid-column: 1 / -1;
+  }
+}
 .fm-preview {
   display: flex;
   flex-direction: column;
@@ -183,7 +197,7 @@
 }
 .fm-card,
 .fm-preview {
-  padding: 16px;
+  padding: 14px 16px;
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   background: var(--white);
@@ -191,7 +205,7 @@
 .fm-card {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 .fm-card__title {
   display: flex;
@@ -227,17 +241,11 @@
   justify-content: space-between;
   gap: 10px;
 }
-.fm-preview .receipt {
-  padding-bottom: 0;
-  filter: none;
-}
-.fm-preview .receipt__paper {
-  border: 1px solid var(--line);
+/* a nota fica num fundo cinza, como uma folha sobre a mesa */
+.fm-preview__doc {
+  padding: 12px;
   border-radius: var(--radius-sm);
   background: var(--page-bg);
-}
-.fm-preview .receipt__paper::after {
-  display: none;
 }
 
 /* linhas de rótulo, barra fina e valor */
@@ -292,7 +300,7 @@
   width: var(--w, 0);
   height: 100%;
   border-radius: inherit;
-  background: var(--ink-900);
+  background: var(--solid);
 }
 .fm-pill {
   display: inline-flex;
@@ -334,7 +342,7 @@
 }
 .fm-details .daygrid__day[data-level='4'] {
   border-color: var(--ink-900);
-  background: var(--ink-900);
+  background: var(--solid);
 }
 .fm-details .daygrid__day:disabled {
   border-style: dashed;
@@ -342,4 +350,445 @@
 }
 .fm-details .daygrid__day.is-today {
   outline: 2px solid var(--brand-500);
+}
+
+/* ---- mobile: a nota do dia sai da impressora no lugar dos cartões ---- */
+.fm-ticket {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: min(100%, 420px);
+  margin-inline: auto;
+}
+.fm-ticket__note {
+  font-size: 13px;
+  text-align: center;
+  color: var(--ink-500);
+}
+.fm-ticket__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* ---------- mês em blocos: números pequenos, mapa de dias e cartões que abrem o detalhe ---------- */
+.fm-details.fb {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+}
+
+/* tudo que abre detalhe é botão com cara de cartão */
+.fb-tile,
+.fb-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  padding: 14px;
+  border: 0;
+  border-radius: 22px;
+  background: var(--white);
+  box-shadow: var(--shadow-sm);
+  color: var(--ink-900);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.2s var(--ease-fluid), box-shadow 0.2s;
+}
+
+button.fb-tile:active,
+button.fb-card:active {
+  transform: scale(0.97);
+}
+
+@media (hover: hover) {
+  button.fb-tile:hover,
+  button.fb-card:hover {
+    box-shadow: var(--shadow-md);
+  }
+}
+
+.fb-tiles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.fb-tile {
+  gap: 2px;
+  padding: 12px;
+}
+
+.fb-tile__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  min-height: 22px;
+  margin-bottom: 6px;
+  color: var(--ink-500);
+}
+
+.fb-tile strong {
+  overflow: hidden;
+  font-size: clamp(17px, 4.6vw, 22px);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fb-tile small {
+  font-size: 12px;
+  color: var(--ink-500);
+}
+
+.fb-delta {
+  padding: 2px 7px;
+  border-radius: var(--radius-pill);
+  background: var(--success-soft);
+  color: var(--success);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.fb-delta--down {
+  background: var(--brand-tint);
+  color: var(--brand-700);
+}
+
+.fb-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--ink-500);
+}
+
+.fb-card__head > span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-700);
+  font-weight: 500;
+}
+
+.fb-card__head small {
+  font-size: 12px;
+}
+
+.fb-card__head > svg {
+  color: var(--ink-400);
+}
+
+/* mapa de dias: calendário de 7 colunas alinhado à semana, mais forte onde entrou mais dinheiro */
+.fb-heat {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.fb-heat__weekday {
+  font-size: 10px;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-500);
+}
+
+.fb-heat__day {
+  display: grid;
+  place-items: center;
+  height: 26px;
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--ink-500);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.fb-heat__day--future {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--line);
+  color: var(--ink-400);
+}
+
+.fb-heat__day--1 {
+  background: color-mix(in srgb, var(--brand-500) 22%, var(--white));
+  color: var(--ink-900);
+}
+
+.fb-heat__day--2 {
+  background: color-mix(in srgb, var(--brand-500) 45%, var(--white));
+  color: var(--ink-900);
+}
+
+.fb-heat__day--3 {
+  background: color-mix(in srgb, var(--brand-500) 72%, var(--white));
+  color: var(--on-solid);
+}
+
+.fb-heat__day--4 {
+  background: var(--brand-700);
+  color: var(--on-brand);
+}
+
+.fb-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.fb-mini {
+  gap: 2px;
+}
+
+.fb-mini .fb-card__head {
+  margin-bottom: 8px;
+}
+
+.fb-mini__value {
+  font-size: 20px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+}
+
+.fb-mini__hint {
+  overflow: hidden;
+  font-size: 12px;
+  color: var(--ink-500);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fb-minibars {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 44px;
+  margin-top: 10px;
+}
+
+.fb-minibars span {
+  flex: 1;
+  height: var(--h);
+  border-radius: 6px;
+  background: var(--solid);
+}
+
+.fb-minibars span.is-future {
+  background: var(--bg);
+}
+
+/* pagamentos: uma barra dividida entre as formas, a maior mais escura */
+.fb-split {
+  display: flex;
+  gap: 3px;
+  height: 10px;
+  margin-top: auto;
+  padding-top: 10px;
+  box-sizing: content-box;
+}
+
+.fb-split span {
+  width: var(--w);
+  min-width: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--gray-300);
+}
+
+.fb-split span:first-child {
+  background: var(--solid);
+}
+
+/* para onde foi: barra empilhada e legenda */
+.fb-stack {
+  display: flex;
+  gap: 3px;
+  height: 12px;
+}
+
+.fb-stack span {
+  width: var(--w);
+  border-radius: var(--radius-pill);
+}
+
+.fb-stack span[style*='--w: 0%'] {
+  display: none;
+}
+
+.fb-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: 12px;
+  color: var(--ink-500);
+}
+
+.fb-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.fb-legend i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.fb-tone--net {
+  background: var(--solid);
+}
+
+.fb-tone--commissions {
+  background: var(--brand-500);
+}
+
+.fb-tone--products {
+  background: var(--brand-700);
+}
+
+.fb-tone--expenses {
+  background: var(--pink-300);
+}
+
+.fb-tone--fees {
+  background: var(--gray-300);
+}
+
+.fb-row__end {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--ink-900);
+  font-weight: 500;
+}
+
+.fb-row__end svg {
+  color: var(--ink-400);
+}
+
+.fb-expenses {
+  cursor: default;
+}
+
+/* ---------- folha de detalhe: puxador, número grande, gráfico num cartão ---------- */
+.dialog.dialog--fin {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 10px;
+  background: var(--page-bg);
+}
+
+.finsheet__grab {
+  align-self: center;
+  width: 38px;
+  height: 5px;
+  margin-bottom: 10px;
+  border-radius: var(--radius-pill);
+  background: var(--gray-300);
+}
+
+.finsheet__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.finsheet__kicker {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-500);
+}
+
+.finsheet__close {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--white);
+  box-shadow: var(--shadow-sm);
+  color: var(--ink-900);
+  cursor: pointer;
+}
+
+.finsheet__value {
+  margin-top: 8px;
+  font-size: 44px;
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  color: var(--ink-900);
+}
+
+.finsheet__label {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ink-900);
+}
+
+.finsheet__text {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--ink-500);
+}
+
+.finsheet__chart {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 14px;
+  border-radius: 20px;
+  background: var(--white);
+  box-shadow: var(--shadow-sm);
+}
+
+.finsheet__chart h3 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-700);
+}
+
+.finsheet__facts {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.finsheet__facts li {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  font-size: 14px;
+  color: var(--ink-500);
+}
+
+.finsheet__facts li + li {
+  border-top: 1px solid var(--line);
+}
+
+.finsheet__facts strong {
+  font-weight: 500;
+  color: var(--ink-900);
+}
+
+/* escuro: o preto dos gráficos vira o tom claro, para aparecer sobre o cartão */
+:root[data-theme='dark'] .fb-minibars span:not(.is-future),
+:root[data-theme='dark'] .fb-split span:first-child,
+:root[data-theme='dark'] .fb-tone--net {
+  background: var(--ink-900);
 }

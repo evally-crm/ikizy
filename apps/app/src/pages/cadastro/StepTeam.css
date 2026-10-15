@@ -40,11 +40,11 @@
   height: 22px;
   border: 1.5px solid var(--gray-300);
   border-radius: 50%;
-  color: var(--white);
+  color: var(--on-solid);
 }
 .onb-team__card[aria-checked='true'] .onb-team__radio {
   border-color: var(--ink-900);
-  background: var(--ink-900);
+  background: var(--solid);
 }
 /* desenho: colunas de agenda com atendimentos */
 .onb-team__art {

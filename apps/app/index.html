@@ -11,6 +11,12 @@
       href="https://fonts.googleapis.com/css2?family=Forum&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;600&family=Manrope:wght@600&family=Outfit:wght@300;400;500;600&family=Raleway:wght@800&display=swap"
       rel="stylesheet"
     />
+    <script>
+      // modo escuro escolhido nas Configurações: aplica antes de desenhar, só dentro do sistema
+      try {
+        if (location.pathname.startsWith('/dashboard') && localStorage.getItem('ikizy:theme') === 'dark') document.documentElement.dataset.theme = 'dark'
+      } catch (e) {}
+    </script>
     <title>IKIZY — gestão simples para negócios de beleza</title>
     <meta name="description" content="IKIZY: estética, elegância e autenticidade com gestão simples e completa para negócios de beleza." />
   </head>

@@ -41,10 +41,10 @@
   padding: 0 14px;
   border: 0;
   border-radius: var(--radius-pill);
-  background: var(--ink-900);
+  background: var(--solid);
   font-size: 13px;
   font-weight: 500;
-  color: var(--white);
+  color: var(--on-solid);
   transition: opacity 0.15s;
 }
 

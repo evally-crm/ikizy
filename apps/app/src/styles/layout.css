@@ -20,7 +20,7 @@
   position: sticky;
   top: 0;
   z-index: 30;
-  background: rgba(245, 244, 244, 0.78);
+  background: var(--glass-page);
   backdrop-filter: blur(14px);
 }
 /* mesma largura máxima e respiro do conteúdo, para logo e títulos alinharem */
@@ -53,7 +53,7 @@
   border: 2px solid var(--white);
   border-radius: var(--radius-pill);
   background: var(--brand-500);
-  color: var(--white);
+  color: var(--on-brand);
   font-size: 10px;
   font-weight: 600;
   line-height: 1;
@@ -160,7 +160,7 @@
 }
 .pillnav__link.active {
   background: var(--brand-900);
-  color: var(--white);
+  color: var(--on-solid);
 }
 .pillnav__more {
   position: relative;
@@ -193,7 +193,7 @@
 }
 .popover__item.active {
   background: var(--brand-900);
-  color: var(--white);
+  color: var(--on-solid);
 }
 
 /* ---------- conteúdo ---------- */
@@ -211,50 +211,274 @@
   left: 50%;
   bottom: calc(14px + env(safe-area-inset-bottom));
   z-index: 40;
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  display: flex;
+  gap: 10px;
   width: min(420px, calc(100% - 2 * var(--gutter)));
   height: var(--bottomnav-h);
-  padding: 8px;
   transform: translateX(-50%);
+}
+.bottomnav__bar {
+  display: flex;
+  flex: 1;
+  gap: 2px;
+  padding: 5px;
   border-radius: var(--radius-pill);
-  background: rgba(255, 255, 255, 0.86);
-  backdrop-filter: blur(16px);
-  box-shadow: 0 12px 34px -12px rgba(14, 13, 13, 0.3), 0 0 0 1px var(--line);
+  /* vidro: translúcido, desfoca o que passa por trás e tem um brilho fino na borda de cima */
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.5));
+  backdrop-filter: blur(22px) saturate(180%);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -1px 0 rgba(14, 13, 13, 0.04),
+    0 14px 34px -14px rgba(14, 13, 13, 0.28);
 }
 .bottomnav__link {
-  display: grid;
-  place-items: center;
-  align-content: center;
-  gap: 2px;
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 0;
   border: 0;
   border-radius: var(--radius-pill);
   background: transparent;
-  color: var(--ink-700);
+  color: var(--ink-500);
   font: inherit;
-  font-size: 10.5px;
-  font-weight: 500;
-  line-height: 1;
-  transition: background-color 0.15s, color 0.15s;
+  cursor: pointer;
+  transition:
+    flex-grow 0.4s var(--ease-fluid, ease),
+    background-color 0.3s,
+    color 0.3s;
 }
+.bottomnav__link svg {
+  flex: none;
+  transition: fill 0.2s;
+}
+/* nome só na página atual (os outros seguem com o nome para leitores de tela) */
+.bottomnav__label {
+  overflow: hidden;
+  max-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+  transition: max-width 0.4s var(--ease-fluid, ease), opacity 0.25s;
+}
+/* página atual: pílula clara, ícone preenchido e o nome ao lado */
 .bottomnav__link.active {
-  background: var(--brand-900);
-  color: var(--white);
+  flex-grow: 2.2;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 2px 10px -4px rgba(14, 13, 13, 0.2);
+  color: var(--ink-900);
 }
-/* novo agendamento: a ação mais repetida do dia, no meio da barra */
+.bottomnav__link.active svg {
+  fill: currentColor;
+}
+.bottomnav__link.active .bottomnav__label {
+  max-width: 90px;
+  opacity: 1;
+}
+/* vidro escuro no modo escuro */
+:root[data-theme='dark'] .bottomnav__bar {
+  background: linear-gradient(180deg, rgba(44, 43, 47, 0.7), rgba(28, 27, 30, 0.55));
+  border-color: transparent;
+  box-shadow: 0 14px 34px -14px rgba(0, 0, 0, 0.7);
+}
+:root[data-theme='dark'] .bottomnav__link.active {
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: none;
+}
 .bottomnav__add {
   display: grid;
+  flex: none;
   place-items: center;
-  justify-self: center;
-  width: 48px;
-  height: 48px;
+  width: var(--bottomnav-h);
+  height: var(--bottomnav-h);
   border: 0;
   border-radius: 50%;
   background: var(--brand-500);
-  color: var(--white);
-  box-shadow: 0 8px 18px -8px rgba(191, 12, 34, 0.7);
+  color: var(--on-brand);
+  box-shadow: 0 12px 26px -10px rgba(191, 12, 34, 0.7);
   cursor: pointer;
 }
+/* ---------- [+] da barra: a barra se desfaz e vira a grade de atalhos ---------- */
+/* curva sem tranco, a mesma das folhas do iOS */
+.bottomnav {
+  --ease-fluid: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.bottomnav__bar {
+  transition: opacity 0.3s var(--ease-fluid), filter 0.3s var(--ease-fluid), transform 0.35s var(--ease-fluid);
+}
+
+.bottomnav.is-quick:not(.is-closing) .bottomnav__bar {
+  opacity: 0;
+  filter: blur(8px);
+  transform: scale(0.94);
+  pointer-events: none;
+}
+
+.bottomnav__add {
+  transition: background-color 0.3s var(--ease-fluid), transform 0.15s;
+}
+
+.bottomnav__add svg {
+  transition: transform 0.4s var(--ease-fluid);
+}
+
+.bottomnav.is-quick:not(.is-closing) .bottomnav__add {
+  background: var(--solid);
+  box-shadow: 0 12px 26px -10px rgba(14, 13, 13, 0.5);
+}
+
+.bottomnav.is-quick:not(.is-closing) .bottomnav__add svg {
+  transform: rotate(135deg);
+}
+
+.quick {
+  position: absolute;
+  right: calc(var(--bottomnav-h) + 10px);
+  bottom: 0;
+  left: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px 10px;
+  padding: 16px 14px 14px;
+  border-radius: 30px;
+  background: var(--glass-strong);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 18px 44px -14px rgba(14, 13, 13, 0.35), 0 0 0 1px var(--line);
+  transform-origin: 50% 100%;
+  animation: quick-in 0.46s var(--ease-fluid) both;
+}
+
+.bottomnav.is-closing .quick {
+  animation: quick-out 0.26s cubic-bezier(0.4, 0, 1, 1) both;
+  pointer-events: none;
+}
+
+.quick__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 0 0 2px;
+  border-radius: 0;
+  background: none;
+  color: var(--ink-700);
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  animation: quick-item-in 0.42s var(--ease-fluid) both;
+  animation-delay: calc(0.08s + var(--i, 0) * 0.025s);
+}
+
+/* o ícone num quadrado arredondado, sem círculo e na cor do texto; o nome fica embaixo, fora do quadrado */
+.quick__icon {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 1;
+  max-width: 64px;
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--ink-900) 6%, transparent);
+  color: var(--ink-900);
+  transition: transform 0.15s, background-color 0.15s;
+}
+
+.quick__icon svg {
+  width: 24px;
+  height: 24px;
+  stroke-width: 1.75;
+}
+
+.quick__item:active .quick__icon {
+  transform: scale(0.93);
+  background: color-mix(in srgb, var(--ink-900) 12%, transparent);
+}
+
+@media (hover: hover) {
+  .quick__item:hover .quick__icon {
+    background: color-mix(in srgb, var(--ink-900) 10%, transparent);
+  }
+}
+
+.quick-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 39;
+  background: rgba(14, 13, 13, 0.16);
+  backdrop-filter: blur(3px);
+  animation: quick-fade-in 0.3s ease both;
+}
+
+.quick-backdrop.is-closing {
+  animation: quick-fade-out 0.26s ease both;
+}
+
+/* nasce do tamanho da barra: achatada, desfocada, e cresce para cima ficando nítida */
+@keyframes quick-in {
+  from {
+    opacity: 0;
+    filter: blur(14px);
+    transform: scale(0.9, 0.3);
+  }
+  45% {
+    opacity: 1;
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: none;
+  }
+}
+
+@keyframes quick-out {
+  to {
+    opacity: 0;
+    filter: blur(12px);
+    transform: scale(0.9, 0.3);
+  }
+}
+
+@keyframes quick-item-in {
+  from {
+    opacity: 0;
+    filter: blur(6px);
+    transform: translateY(8px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: none;
+  }
+}
+
+@keyframes quick-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes quick-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .quick,
+  .quick__item,
+  .bottomnav.is-closing .quick {
+    animation-duration: 0.01s;
+    animation-delay: 0s;
+  }
+}
+
 .bottomnav__add:active {
   transform: scale(0.96);
 }
@@ -327,7 +551,7 @@ button.popover__item {
 }
 .more-grid__item.active {
   background: var(--brand-900);
-  color: var(--white);
+  color: var(--on-solid);
 }
 
 @media (min-width: 1024px) {
@@ -396,4 +620,250 @@ button.popover__item {
   padding: 10px 14px 10px;
   margin-bottom: 4px;
   border-bottom: 1px solid var(--line);
+}
+
+/* celular: sem barra no topo; cada tela abre com o próprio título (e o sininho ao lado) */
+@media (max-width: 1023px) {
+  .topbar {
+    display: none;
+  }
+  .content {
+    padding-top: calc(8px + env(safe-area-inset-top));
+  }
+}
+
+/* ---------- Configurações (celular): perfil, plano e listas agrupadas, como uma tela de perfil ---------- */
+.dialog.dialog--settings {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 14px;
+  background: var(--page-bg);
+}
+
+/* título pequeno e leve, centralizado entre os lados (o X fica à direita sem empurrar o título) */
+.settings__head {
+  display: grid;
+  grid-template-columns: 40px 1fr 40px;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.settings__title {
+  grid-column: 2;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  text-align: center;
+  color: var(--ink-900);
+}
+
+.settings__close {
+  grid-column: 3;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--white);
+  box-shadow: var(--shadow-sm);
+  color: var(--ink-900);
+  cursor: pointer;
+}
+
+.settings__profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 0;
+  border-radius: 20px;
+  background: var(--white);
+  box-shadow: var(--shadow-sm);
+  color: var(--ink-900);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.settings__profile > svg {
+  flex: none;
+  color: var(--ink-400);
+}
+
+.settings__who {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+
+.settings__who strong {
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings__who small {
+  overflow: hidden;
+  font-size: 12.5px;
+  color: var(--ink-500);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* cartão escuro do plano */
+.plancard {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px 12px;
+  align-items: start;
+  padding: 16px;
+  border-radius: 20px;
+  background: radial-gradient(120% 140% at 100% 0%, color-mix(in srgb, var(--brand-700) 55%, transparent) 0%, transparent 60%), var(--solid);
+  color: var(--on-solid);
+  text-decoration: none;
+}
+
+.plancard__icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: color-mix(in srgb, #ffffff 12%, transparent);
+  color: #ffb3bd;
+}
+
+.plancard__text {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.plancard__text strong {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.plancard__text small {
+  font-size: 12.5px;
+  line-height: 1.35;
+  color: color-mix(in srgb, #ffffff 68%, transparent);
+}
+
+.plancard__btn {
+  grid-column: 2;
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 32px;
+  padding: 0 12px 0 14px;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, #ffffff 14%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, #ffffff 18%, transparent);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+/* listas agrupadas: cartão branco, linhas com ícone, nome e seta, fio fino entre elas */
+.settings__list {
+  margin: 0;
+  padding: 4px 0;
+  border-radius: 20px;
+  background: var(--white);
+  box-shadow: var(--shadow-sm);
+  list-style: none;
+}
+
+.settings__list li + li .settings__row {
+  border-top: 1px solid var(--line);
+}
+
+.settings__list li {
+  padding: 0 14px;
+}
+
+.settings__row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 52px;
+  border: 0;
+  background: none;
+  color: var(--ink-900);
+  font: inherit;
+  font-size: 14.5px;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.settings__row > svg:first-child {
+  flex: none;
+  color: var(--ink-500);
+}
+
+.settings__row > span {
+  flex: 1;
+  min-width: 0;
+}
+
+.settings__row > svg:last-child:not(:first-child) {
+  flex: none;
+  color: var(--ink-400);
+}
+
+.settings__row.active > svg:first-child {
+  color: var(--brand-700);
+}
+
+.settings__row--danger,
+.settings__row--danger > svg:first-child {
+  color: var(--brand-500);
+}
+
+.settings__profile:active,
+.settings__row:active,
+.plancard:active {
+  opacity: 0.7;
+}
+
+/* linha com chave (Modo escuro): a linha toda liga e desliga */
+.settings__row--switch {
+  position: relative;
+}
+
+.settings__row--switch input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.settings__row--switch input:checked + .switch__track {
+  background: var(--brand-900);
+}
+
+.settings__row--switch input:checked + .switch__track::after {
+  transform: translateX(18px);
+}
+
+.settings__row--switch input:focus-visible + .switch__track {
+  outline: 2px solid var(--brand-500);
+  outline-offset: 2px;
+}
+
+.popover__item.settings__row--switch > span:not(.switch__track) {
+  flex: 1;
+}
+
+.settings__row > .switch__track {
+  flex: none;
 }

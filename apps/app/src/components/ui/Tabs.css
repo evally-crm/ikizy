@@ -1,48 +1,111 @@
+/* seletor em pílula: faixa cinza-clara e a opção escolhida numa pílula branca que desliza (como "Home | Mypage") */
 .tabs {
+  --tabs-track: var(--bg);
+  --tabs-pill: var(--white);
+  --tabs-text: var(--ink-500);
+  --tabs-text-on: var(--ink-900);
+  position: relative;
+  isolation: isolate;
   display: inline-flex;
-  gap: 4px;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+  gap: 0;
   padding: 4px;
   border-radius: var(--radius-pill);
-  background: var(--white);
-  box-shadow: var(--shadow-sm);
+  background: var(--tabs-track);
+}
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+/* sem `fill`, o seletor tem o tamanho das opções (não estica dentro de colunas) */
+.tabs:not(.tabs--fill) {
+  flex: none;
+  align-self: flex-start;
 }
 .tabs--fill {
   display: flex;
   width: 100%;
 }
+
+/* a pílula que anda até a opção escolhida */
+.tabs__pill {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 0;
+  z-index: -1;
+  width: var(--pill-w, 0);
+  border-radius: var(--radius-pill);
+  background: var(--tabs-pill);
+  box-shadow: 0 1px 3px rgba(14, 13, 13, 0.1), 0 4px 12px -6px rgba(14, 13, 13, 0.18);
+  opacity: 0;
+  transform: translateX(var(--pill-x, 0));
+}
+.tabs.has-pill .tabs__pill {
+  opacity: 1;
+}
+.tabs.is-ready .tabs__pill {
+  transition:
+    transform 0.42s var(--ease-fluid, cubic-bezier(0.32, 0.72, 0, 1)),
+    width 0.42s var(--ease-fluid, cubic-bezier(0.32, 0.72, 0, 1));
+}
+
+/* todas as opções com a mesma largura mínima: nada fica espremido nem esticado */
 .tabs__item {
   display: inline-flex;
-  flex: 1;
+  flex: 1 0 auto;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-height: 34px;
-  padding: 0 14px;
+  min-width: 84px;
+  min-height: 36px;
+  padding: 0 18px;
   border: 0;
   border-radius: var(--radius-pill);
   background: transparent;
-  color: var(--ink-500);
+  color: var(--tabs-text);
   font: inherit;
-  font-size: 13px;
+  font-size: 13.5px;
+  font-weight: 500;
   white-space: nowrap;
   cursor: pointer;
-  transition: background-color 0.15s, color 0.15s;
+  transition: color 0.3s var(--ease-fluid, ease);
 }
-.tabs__item:hover {
+.tabs__item:not([aria-selected='true']):hover {
   color: var(--ink-900);
 }
 .tabs__item[aria-selected='true'] {
-  background: var(--brand-900);
-  color: var(--white);
+  color: var(--tabs-text-on);
 }
+/* antes da medida (ou sem JS), a escolhida já aparece com a pílula */
+.tabs:not(.has-pill) .tabs__item[aria-selected='true'] {
+  background: var(--tabs-pill);
+}
+
+/* só ícone (lista | grade): opções quadradas */
+.tabs__item:has(> svg:only-child) {
+  min-width: 52px;
+  padding: 0 14px;
+}
+
 .tabs__badge {
   display: inline-flex;
   align-items: center;
   font-size: 11px;
   opacity: 0.7;
 }
-@media (min-width: 640px) {
-  .tabs:not(.tabs--fill) .tabs__item {
-    flex: none;
+
+/* celular: as abas que dividem a largura encolhem o respiro para caberem sem cortar */
+@media (max-width: 479px) {
+  .tabs--fill .tabs__item {
+    min-width: 0;
+    padding: 0 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tabs.is-ready .tabs__pill {
+    transition: none;
   }
 }

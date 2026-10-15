@@ -16,6 +16,7 @@ import { ProductDialog } from './ProductDialog'
 import { ServiceDialog } from './ServiceDialog'
 import { ServicesPanel } from './ServicesPanel'
 import './MeuNegocio.css'
+import { PageLoader } from '../../components/PageLoader'
 
 const TABS = [
   { id: 'dados', label: 'Dados' },
@@ -114,9 +115,7 @@ export default function MeuNegocio() {
       {!canManage && <p className="alert">Só a dona ou a gerente alteram os dados do negócio. Você pode consultar.</p>}
 
       {biz.loading ? (
-        <p className="panel__empty" role="status">
-          Carregando…
-        </p>
+        <PageLoader label="Carregando os dados do negócio…" />
       ) : (
         <>
           <div className="biztiles">

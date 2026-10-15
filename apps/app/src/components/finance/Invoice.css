@@ -1,0 +1,172 @@
+/* nota em formato de documento: letra pequena, linhas finas, totais à direita */
+.invoice {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--white);
+  color: var(--ink-900);
+  font-size: 11px;
+  line-height: 1.45;
+}
+.invoice dl,
+.invoice dd {
+  margin: 0;
+}
+.invoice__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.invoice__logo {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+}
+.invoice__logo span {
+  color: var(--brand-500);
+}
+.invoice__status {
+  padding: 2px 8px;
+  border: 1px dashed var(--brand-500);
+  border-radius: var(--radius-pill);
+  color: var(--brand-500);
+  font-size: 10px;
+}
+.invoice__status.is-closed {
+  border: 0;
+  background: var(--success-soft);
+  color: var(--success);
+}
+.invoice__meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.invoice__meta dt,
+.invoice__party span,
+.invoice__foot span,
+.invoice__stats dt {
+  color: var(--ink-500);
+}
+.invoice__meta dd {
+  font-weight: 500;
+}
+.invoice__period::first-letter {
+  text-transform: uppercase;
+}
+.invoice__party {
+  display: flex;
+  flex-direction: column;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.invoice__party strong {
+  font-weight: 500;
+}
+.invoice__empty {
+  padding: 14px 0;
+  border-block: 1px solid var(--line);
+  text-align: center;
+  color: var(--ink-500);
+}
+.invoice__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.invoice__table th {
+  padding: 6px 8px;
+  background: var(--page-bg);
+  font-weight: 500;
+  text-align: left;
+  color: var(--ink-700);
+}
+.invoice__table th:first-child {
+  border-radius: 6px 0 0 6px;
+}
+.invoice__table th:last-child {
+  border-radius: 0 6px 6px 0;
+}
+.invoice__table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+.invoice__table th:not(:first-child),
+.invoice__table td:not(:first-child) {
+  width: 1%;
+  text-align: right;
+  white-space: nowrap;
+}
+.invoice__bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+/* indicadores em grade, rótulo sobre o valor */
+.invoice__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px 10px;
+}
+.invoice__stats dd {
+  font-weight: 500;
+}
+/* totais alinhados à direita, como numa fatura */
+.invoice__sums {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: min(100%, 260px);
+  margin-left: auto;
+}
+.invoice__sums > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+.invoice__sums dd {
+  white-space: nowrap;
+}
+.invoice__sums dt {
+  color: var(--ink-700);
+}
+.invoice__total {
+  margin-top: 4px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: var(--solid);
+  color: var(--on-solid);
+  font-weight: 500;
+}
+.invoice__total dt {
+  color: inherit !important;
+}
+.invoice__foot {
+  display: flex;
+  flex-direction: column;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  color: var(--ink-700);
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .invoice,
+  .invoice * {
+    visibility: visible;
+  }
+  .invoice {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 520px;
+    transform: translateX(-50%);
+    border: 0;
+    font-size: 12px;
+  }
+}

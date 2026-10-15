@@ -1,5 +1,5 @@
 import { useState, type KeyboardEvent } from 'react'
-import { Sparkles, X } from 'lucide-react'
+import { Scissors, X } from 'lucide-react'
 import { OTHER_SEGMENT, SEGMENTS } from '../../lib/segments'
 import { Ask, Suggestion, Suggestions } from './Ask'
 
@@ -42,7 +42,7 @@ export function StepAreas({
 
   return (
     <>
-      <Ask icon={<Sparkles size={20} />} goLabel="Continuar">
+      <Ask icon={<Scissors size={20} />} goLabel="Continuar">
         {segments.map((id) => (
           <span key={id} className="ask-chip">
             {labelOf(id)}

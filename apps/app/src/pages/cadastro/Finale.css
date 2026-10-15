@@ -38,7 +38,7 @@
 .onb-build__item--done .onb-build__ico {
   border-color: var(--success);
   background: var(--success);
-  color: var(--white);
+  color: var(--on-solid);
 }
 
 .onb-done {

@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { AlertTriangle, ArrowLeft, AtSign, Briefcase, Cake, CalendarCheck, CalendarPlus, FileSignature, Heart, MessageCircle, Pencil, Phone, Sparkles, Trash2 } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, AtSign, Briefcase, Cake, CalendarCheck, CalendarPlus, FileSignature, Heart, MessageCircle, Pencil, Phone, Trash2, History } from 'lucide-react'
 import type { Client } from '../../data/clients'
 import { useClientBook, useClientNotes, useClientPhotos } from '../../data/useClientBook'
 import { TAG_LABEL, awaitsConfirmation, clientProfile, lastVisitLabel, type ReturnState } from '../../domain/clients'
@@ -50,7 +50,7 @@ function ReturnBanner({ state, firstName, days, onInvite }: { state: ReturnState
   if (state.kind === 'expected') {
     return (
       <>
-        <Sparkles size={18} aria-hidden="true" />
+        <CalendarCheck size={18} aria-hidden="true" />
         <p>
           Próxima visita prevista para <strong>{format(state.on, "dd 'de' MMMM", { locale: ptBR })}</strong>. {lastVisitLabel(days)}.
         </p>
@@ -59,7 +59,7 @@ function ReturnBanner({ state, firstName, days, onInvite }: { state: ReturnState
   }
   return (
     <>
-      <Sparkles size={18} aria-hidden="true" />
+      <History size={18} aria-hidden="true" />
       <p>Ainda sem atendimentos concluídos. O histórico e o retorno aparecem depois do primeiro.</p>
     </>
   )
@@ -168,8 +168,13 @@ export function ClientDetail({
                 <Trash2 size={18} />
               </button>
             )}
-            <Button variant="accent" icon aria-label={`Agendar ${firstName}`} onClick={() => navigate(agenda(`nova=1&cliente=${encodeURIComponent(client.name)}`))}>
-              <CalendarPlus size={18} />
+            <Button
+              variant="accent"
+              className="profile__book"
+              aria-label={`Agendar ${firstName}`}
+              onClick={() => navigate(agenda(`nova=1&cliente=${encodeURIComponent(client.name)}`))}
+            >
+              <CalendarPlus size={18} aria-hidden="true" /> Agendar
             </Button>
           </div>
         </div>
@@ -229,11 +234,12 @@ export function ClientDetail({
 
       <Tabs
         label={`Ficha de ${firstName}`}
+        fill
         value={tab}
         onChange={setTab}
         items={[
           { id: 'resumo', label: 'Resumo' },
-          { id: 'ficha', label: 'Ficha', badge: profile.fileDone ? null : 'pendente' },
+          { id: 'ficha', label: 'Ficha', badge: profile.fileDone ? null : '•', ariaLabel: profile.fileDone ? undefined : 'Ficha (pendente)' },
           { id: 'historico', label: 'Histórico' },
           { id: 'notas', label: 'Anotações', badge: notes.notes.length > 0 ? notes.notes.length : null },
         ]}

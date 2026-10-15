@@ -98,3 +98,10 @@
       width: 100%;
     }
 }
+
+/* celular: menos respiro entre calendário, avisos e lista */
+@media (max-width: 1099px) {
+  .page.agendapage {
+      gap: 12px;
+    }
+}

@@ -102,7 +102,7 @@
   height: 44px;
   background: var(--brand-900);
   box-shadow: 0 8px 18px -8px color-mix(in srgb, var(--brand-900) 60%, transparent);
-  color: var(--white);
+  color: var(--on-solid);
   font-weight: 500;
 }
 
@@ -165,7 +165,7 @@
 
 .monthgrid__day.is-selected {
   background: var(--brand-900);
-  color: var(--white);
+  color: var(--on-solid);
 }
 
 .monthgrid__day.is-selected .arc__dot.is-on {
@@ -195,7 +195,7 @@
   border: 0;
   border-radius: var(--radius-pill);
   background: var(--brand-900);
-  color: var(--white);
+  color: var(--on-solid);
   font-size: 13px;
   font-weight: 500;
   transition: background-color 0.15s;
@@ -245,7 +245,7 @@
 
 .monthgrid__day.is-selected .monthgrid__num {
   background: var(--brand-900);
-  color: var(--white);
+  color: var(--on-solid);
   box-shadow: none;
 }
 
@@ -282,7 +282,7 @@
   background: var(--gray-200);
 }
 
-.calcard--flat .calcard__nav .calcard__today {
+.calcard__nav .calcard__today {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -297,7 +297,7 @@
   color: var(--ink-700);
 }
 
-.calcard--flat .calcard__nav .calcard__today:hover {
+.calcard__nav .calcard__today:hover {
   background: var(--gray-200);
 }
 
@@ -318,5 +318,54 @@
 @media (max-width: 767px) {
   .calcard__foot {
       display: none;
+    }
+}
+
+/* celular: o mesmo arco, mais baixo e enxuto, para sobrar tela para os atendimentos */
+@media (max-width: 767px) {
+  .calcard {
+      gap: 8px;
+      padding: 12px 12px 4px;
+    }
+  .calcard__nav {
+      gap: 4px;
+    }
+  .calcard__nav button {
+      width: 34px;
+      height: 34px;
+    }
+  .calcard__title {
+      font-size: 32px;
+    }
+  .arc {
+      padding: 0 0 10px;
+    }
+  .arc__day {
+      transform: translateY(calc(var(--dist, 0) * var(--dist, 0) * 1.5px));
+      gap: 3px;
+      padding: 6px 0 0;
+    }
+  .arc__name {
+      font-size: 11px;
+    }
+  .arc__num {
+      width: 32px;
+      height: 32px;
+      font-size: 15px;
+    }
+  .arc__day[aria-selected='true'] .arc__num {
+      width: 38px;
+      height: 38px;
+    }
+  .arc__dot {
+      width: 4px;
+      height: 4px;
+    }
+  .monthgrid {
+      padding-bottom: 8px;
+    }
+  .monthgrid__num {
+      width: 30px;
+      height: 30px;
     }
 }

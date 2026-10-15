@@ -103,7 +103,7 @@
 
 /* escolhida: um sinal de certo dentro da bolinha, sem anel em volta */
 .palette__check {
-  color: var(--white);
+  color: var(--on-solid);
   filter: drop-shadow(0 1px 1px color-mix(in srgb, var(--ink-900) 35%, transparent));
   opacity: 0;
   transform: scale(0.6);
@@ -261,7 +261,7 @@
 .coverpick__tile--poa {
   background:
     radial-gradient(circle, color-mix(in srgb, var(--accent) 45%, transparent) 1.5px, transparent 2px) 0 0 / 12px 12px,
-    var(--white);
+    #ffffff;
   box-shadow: inset 0 0 0 1px var(--line);
 }
 
@@ -269,14 +269,14 @@
   background:
     linear-gradient(90deg, color-mix(in srgb, var(--accent) 30%, transparent) 50%, transparent 50%) 0 0 / 20px 20px,
     linear-gradient(color-mix(in srgb, var(--accent) 30%, transparent) 50%, transparent 50%) 0 0 / 20px 20px,
-    var(--white);
+    #ffffff;
   box-shadow: inset 0 0 0 1px var(--line);
 }
 
 .coverpick__tile--editorial {
   background:
     radial-gradient(70% 90% at 100% 0%, color-mix(in srgb, white 20%, transparent) 0%, transparent 60%),
-    var(--ink-900);
+    #0e0d0d;
 }
 
 .coverpick__tile--organico {
@@ -284,7 +284,7 @@
   background:
     radial-gradient(60% 70% at 88% 6%, color-mix(in srgb, var(--accent) 38%, transparent) 0%, transparent 70%),
     radial-gradient(55% 60% at 4% 100%, color-mix(in srgb, var(--accent) 26%, transparent) 0%, transparent 72%),
-    var(--white);
+    #ffffff;
   box-shadow: inset 0 0 0 1px var(--line);
 }
 
@@ -632,14 +632,15 @@
 
 /* abas do editor: a faixa fica fina e cinza, como o seletor "Temas | Personalizar" */
 .studio__editor > .tabs {
+  --tabs-track: var(--bg);
+  --tabs-pill: var(--white);
+  --tabs-text: var(--ink-500);
+  --tabs-text-on: var(--ink-900);
   flex: none;
-  background: var(--bg);
   box-shadow: none;
 }
 
-.studio__editor > .tabs .tabs__item[aria-selected='true'] {
-  background: var(--white);
-  box-shadow: var(--shadow-sm);
+.studio__editor > .tabs .tabs__item:not([aria-selected='true']):hover {
   color: var(--ink-900);
 }
 
@@ -782,8 +783,8 @@ button.sitelink {
   height: 40px;
   border: 0;
   border-radius: 50%;
-  background: var(--ink-900);
-  color: var(--white);
+  background: var(--solid);
+  color: var(--on-solid);
   cursor: pointer;
 }
 
@@ -791,6 +792,19 @@ button.sitelink {
   background: var(--white);
   box-shadow: var(--shadow-sm);
   color: var(--ink-900);
+}
+
+/* botão com texto ao lado do ícone (Prévia) */
+.sbar__icon--label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: auto;
+  padding: 0 16px 0 14px;
+  border-radius: var(--radius-pill);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .sbar__icon:focus-visible {
@@ -820,5 +834,353 @@ button.sitelink {
   .sfull .studio__body {
     padding: 0 0 calc(24px + env(safe-area-inset-bottom));
     scrollbar-width: none;
+  }
+}
+
+/* ---------- editor em blocos de ajuste (como telas de configuração) ---------- */
+/* fundo cinza bem claro; cada assunto é um cartão branco com o título pequeno por fora */
+.studio__editor {
+  background: color-mix(in srgb, var(--bg) 45%, var(--white));
+}
+
+.part > .form,
+.sect.part > .form {
+  gap: 18px;
+}
+
+.sgroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.sgroup__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 6px;
+}
+
+.sgroup__title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--ink-500);
+}
+
+.sgroup__card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+  padding: 14px;
+  border-radius: 20px;
+  background: var(--white);
+  box-shadow: var(--shadow-sm);
+}
+
+.sgroup__card .input {
+  background: var(--page-bg);
+}
+
+.sgroup__card .input:hover {
+  background: var(--bg);
+}
+
+.sgroup__card .input:focus-within {
+  background: var(--white);
+}
+
+/* linhas seguidas (chaves e ajustes): fio fino entre elas */
+.sgroup__card > :is(.switch, .srow, .logofield) + :is(.switch, .srow, .logofield) {
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.srow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.srow__text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  font-size: 14px;
+  color: var(--ink-900);
+  cursor: pointer;
+}
+
+.srow__text small {
+  font-size: 12px;
+  color: var(--ink-500);
+}
+
+.srow__control {
+  flex: none;
+}
+
+.srow__note {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ink-500);
+}
+
+/* número curto alinhado à direita da linha, como "Font Size  15" */
+.input.input--mini {
+  width: 104px;
+  min-height: 38px;
+  padding: 0 12px;
+  border-radius: 12px;
+}
+
+.input--mini input {
+  text-align: right;
+}
+
+/* fonte: blocos "Aa" na própria fonte */
+.fontpick {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.fontpick__opt {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  padding: 14px 6px 10px;
+  border-radius: 16px;
+  background: var(--page-bg);
+  cursor: pointer;
+  transition: background-color 0.15s, box-shadow 0.15s;
+}
+
+.fontpick__opt input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.fontpick__aa {
+  margin-bottom: 4px;
+  font-size: 30px;
+  line-height: 1.1;
+  color: var(--ink-900);
+}
+
+.fontpick__name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-900);
+}
+
+.fontpick__opt small {
+  font-size: 11px;
+  color: var(--ink-500);
+}
+
+.fontpick__opt:hover {
+  background: var(--bg);
+}
+
+/* escolhida: contorno na cor da marca, como o cartão "Inter" da referência */
+.fontpick__opt:has(input:checked),
+.coverpick__opt:has(input:checked) {
+  background: var(--white);
+  box-shadow: inset 0 0 0 1.5px var(--brand-900);
+}
+
+.fontpick__opt:has(input:focus-visible) {
+  outline: 2px solid var(--brand-500);
+  outline-offset: 2px;
+}
+
+/* logo e capa no mesmo cartão: sem fundo próprio */
+.sgroup__card > .logofield {
+  padding: 0;
+  border-radius: 0;
+  background: none;
+}
+
+/* serviços e produtos: cada categoria é um cartão branco e os itens viram linhas com fio entre elas */
+.studio__body .grp {
+  background: var(--white);
+  box-shadow: var(--shadow-sm);
+}
+
+.studio__body .grp__body {
+  gap: 0;
+  padding: 0 14px 12px;
+}
+
+.studio__body .grp__body > .catalog__intro {
+  padding: 0 4px 10px;
+}
+
+.studio__body .grp__body .rows {
+  gap: 0;
+}
+
+.studio__body .grp__body .row {
+  padding: 12px 4px;
+  border: 0;
+  border-radius: 0;
+  background: none;
+}
+
+.studio__body .grp__body .row + .row {
+  border-top: 1px solid var(--line);
+}
+
+.studio__body .grp__body .row.is-hidden {
+  opacity: 0.6;
+}
+
+.studio__body .grp__body > .catalog__add {
+  margin-top: 6px;
+}
+
+/* produtos à venda: cada um num cartão branco */
+.studio__body .catalog > .rows .row {
+  border: 0;
+  background: var(--white);
+  box-shadow: var(--shadow-sm);
+}
+
+.studio__body .catalog > .rows .row.is-hidden {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--gray-300);
+}
+
+.studio__body .catalog__intro {
+  padding: 0 6px;
+}
+
+.studio__body .row .input {
+  background: var(--page-bg);
+}
+
+.studio__body .row .input:focus-within {
+  background: var(--white);
+}
+
+/* os cinco estilos de capa numa linha quando cabem */
+.sgroup .coverpick {
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+}
+
+/* celular: estilos de capa numa faixa que desliza para o lado, sem a descrição */
+@media (max-width: 639px) {
+  .sgroup .coverpick {
+    display: flex;
+    gap: 8px;
+    margin: 0 -14px;
+    padding: 0 14px 2px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+  .sgroup .coverpick::-webkit-scrollbar {
+    display: none;
+  }
+  .sgroup .coverpick__opt {
+    flex: 0 0 104px;
+    scroll-snap-align: start;
+  }
+  .sgroup .coverpick__opt small {
+    display: none;
+  }
+  .sgroup .coverpick__tile {
+    height: 52px;
+  }
+}
+
+/* celular: barra flutuante de publicação, no lugar da barra de navegação */
+.sdock {
+  position: fixed;
+  left: 50%;
+  bottom: calc(14px + env(safe-area-inset-bottom));
+  z-index: 50;
+  display: flex;
+  gap: 10px;
+  width: min(420px, calc(100% - 2 * var(--gutter)));
+  height: var(--bottomnav-h);
+  transform: translateX(-50%);
+  animation: sdock-in 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.sdock__bar {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+  padding: 0 8px;
+  border-radius: var(--radius-pill);
+  background: var(--glass-strong);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 12px 34px -12px rgba(14, 13, 13, 0.3), 0 0 0 1px var(--line);
+}
+.sdock__undo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: calc(var(--bottomnav-h) - 16px);
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--ink-900);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.sdock__status {
+  overflow: hidden;
+  padding: 0 12px;
+  font-size: 12.5px;
+  color: var(--ink-500);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sdock .publishbtn {
+  flex: none;
+  height: 100%;
+  min-height: 0;
+  padding: 0 20px;
+  border-radius: var(--radius-pill);
+  box-shadow: 0 12px 26px -10px rgba(78, 6, 14, 0.6);
+}
+/* o editor deixa espaço para a barra não cobrir o fim da lista */
+@media (max-width: 1099px) {
+  .sfull .studio__body {
+    padding-bottom: calc(var(--bottomnav-h) + 40px + env(safe-area-inset-bottom));
+  }
+}
+@keyframes sdock-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 16px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sdock {
+    animation: none;
+  }
+}
+@media (min-width: 1100px) {
+  .sdock {
+    display: none;
   }
 }

@@ -10,12 +10,12 @@
   color: var(--ink-900);
 }
 .stattile--dark {
-  background: var(--ink-900);
-  color: var(--white);
+  background: var(--solid);
+  color: var(--on-solid);
 }
 .stattile--brand {
   background: var(--brand-900);
-  color: var(--white);
+  color: var(--on-solid);
 }
 .stattile__head {
   display: flex;

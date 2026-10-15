@@ -10,6 +10,7 @@ import type { Appointment } from '../types'
 import { Avatar, Button } from './ui'
 import { ConfirmDialog } from './Modal'
 import { AppointmentMessageDialog } from './MessageDialog'
+import { usePresence } from '../hooks/usePresence'
 
 const plural = (n: number) => (n === 1 ? '1 pedido' : `${n} pedidos`)
 
@@ -106,6 +107,7 @@ export function PendingBell() {
   const { pending } = useAgenda()
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
+  const pop = usePresence(open)
   const ref = useRef<HTMLDivElement>(null)
   const count = pending?.length ?? 0
 
@@ -148,8 +150,8 @@ export function PendingBell() {
           </span>
         )}
       </Button>
-      {open && (
-        <div className="pendpop" role="dialog" aria-label="Pedidos do site">
+      {pop.mounted && (
+        <div className={`pendpop ${pop.closing ? 'is-closing' : ''}`.trim()} role="dialog" aria-label="Pedidos do site">
           <div className="pendpop__head">
             <p className="pendpop__title">Pedidos do site</p>
             <p className="pendpop__sub">{count ? `${plural(count)} para confirmar` : 'Nada esperando confirmação'}</p>

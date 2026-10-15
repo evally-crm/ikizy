@@ -18,8 +18,8 @@
 }
 
 .tag--vip {
-  background: var(--ink-900);
-  color: var(--white);
+  background: var(--solid);
+  color: var(--on-solid);
 }
 
 .tag--nova {

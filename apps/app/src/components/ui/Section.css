@@ -83,8 +83,8 @@ details.sect:not([open]):hover {
 }
 
 .sect__head:hover .sect__chev {
-  background: var(--ink-900);
-  color: var(--white);
+  background: var(--solid);
+  color: var(--on-solid);
 }
 
 .sect[open] > .sect__head .sect__chev svg {

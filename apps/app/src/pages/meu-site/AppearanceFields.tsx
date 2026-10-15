@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react'
 import { Check } from 'lucide-react'
 import { PALETTES, type PaletteId, type SiteConfig } from '../../data/catalog'
 import { COVER_STYLES, FONTS, type CoverStyleId, type FontId } from '../../lib/siteTheme'
+import { Group } from './Group'
 import type { SetSite } from './types'
 import './MeuSite.css'
 
@@ -46,16 +47,18 @@ export function CoverStyleOptions({ site, setSite }: { site: SiteConfig; setSite
   )
 }
 
-/** fonte dos títulos, cada opção escrita na própria fonte */
+/** fonte dos títulos: blocos "Aa" escritos na própria fonte, com o nome embaixo */
 export function FontOptions({ site, setSite }: { site: SiteConfig; setSite: SetSite }) {
   return (
-    <div className="swatches">
+    <div className="fontpick">
       {(Object.keys(FONTS) as FontId[]).map((id) => (
-        <label key={id} className="swatch swatch--font">
+        <label key={id} className="fontpick__opt">
           <input type="radio" name="font" checked={site.font === id} onChange={() => setSite('font', id)} />
-          <span className="swatch__font" style={fontVars(id)}>
-            {FONTS[id].label}
+          <span className="fontpick__aa swatch__font" style={fontVars(id)} aria-hidden="true">
+            Aa
           </span>
+          <span className="fontpick__name">{FONTS[id].sample}</span>
+          <small>{FONTS[id].label}</small>
         </label>
       ))}
     </div>
@@ -66,19 +69,25 @@ export function FontOptions({ site, setSite }: { site: SiteConfig; setSite: SetS
 export function AppearanceFields({ site, setSite }: { site: SiteConfig; setSite: SetSite }) {
   return (
     <>
-      <fieldset className="field">
-        <legend className="field__label">Paleta de cores</legend>
-        <PaletteOptions site={site} setSite={setSite} />
-      </fieldset>
-      <fieldset className="field">
-        <legend className="field__label">Estilo da capa</legend>
-        <CoverStyleOptions site={site} setSite={setSite} />
-        <p className="field__hint">Vale quando a capa não tem foto. Se você enviar uma foto, ela passa na frente.</p>
-      </fieldset>
-      <fieldset className="field">
-        <legend className="field__label">Fonte dos títulos</legend>
-        <FontOptions site={site} setSite={setSite} />
-      </fieldset>
+      <Group title="Paleta de cores">
+        <fieldset className="field">
+          <legend className="sr-only">Paleta de cores</legend>
+          <PaletteOptions site={site} setSite={setSite} />
+        </fieldset>
+      </Group>
+      <Group title="Estilo da capa">
+        <fieldset className="field">
+          <legend className="sr-only">Estilo da capa</legend>
+          <CoverStyleOptions site={site} setSite={setSite} />
+          <p className="field__hint">Vale quando a capa não tem foto. Se você enviar uma foto, ela passa na frente.</p>
+        </fieldset>
+      </Group>
+      <Group title="Fonte dos títulos">
+        <fieldset className="field">
+          <legend className="sr-only">Fonte dos títulos</legend>
+          <FontOptions site={site} setSite={setSite} />
+        </fieldset>
+      </Group>
     </>
   )
 }

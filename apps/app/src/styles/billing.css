@@ -25,7 +25,7 @@
 }
 .billing-banner--alert {
   background: var(--brand-500);
-  color: var(--white);
+  color: var(--on-brand);
 }
 
 .billing-note {
@@ -187,8 +187,8 @@
   margin-bottom: 18px;
   padding: 16px 20px;
   border-radius: var(--radius-md);
-  background: var(--ink-900);
-  color: var(--white);
+  background: var(--solid);
+  color: var(--on-solid);
 }
 .trialbar__count {
   display: flex;

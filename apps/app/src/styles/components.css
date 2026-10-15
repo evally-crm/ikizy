@@ -22,14 +22,14 @@
 }
 .btn--primary {
   background: var(--brand-900);
-  color: var(--white);
+  color: var(--on-solid);
 }
 .btn--primary:hover:not(:disabled) {
   background: var(--brand-700);
 }
 .btn--accent {
   background: var(--brand-500);
-  color: var(--white);
+  color: var(--on-brand);
 }
 .btn--accent:hover:not(:disabled) {
   background: var(--brand-700);
@@ -85,16 +85,16 @@
   box-shadow: none;
 }
 .card--dark {
-  background: var(--ink-900);
+  background: var(--solid);
   color: rgba(255, 255, 255, 0.92);
 }
 .card--dark h2,
 .card--dark h3 {
-  color: var(--white);
+  color: var(--on-solid);
 }
 .card--brand {
   overflow: hidden;
-  color: var(--white);
+  color: var(--on-solid);
   background:
     radial-gradient(120% 90% at 85% 0%, rgba(191, 12, 34, 0.55), transparent 60%),
     radial-gradient(90% 80% at 0% 100%, rgba(128, 5, 19, 0.9), transparent 70%),
@@ -102,7 +102,7 @@
 }
 .card--brand h2,
 .card--brand h3 {
-  color: var(--white);
+  color: var(--on-solid);
 }
 .card--brand .em,
 .card--dark .em {
@@ -206,7 +206,7 @@
 }
 .badge--atendimento {
   background: var(--brand-500);
-  color: var(--white);
+  color: var(--on-brand);
 }
 .badge--concluido {
   background: var(--gray-200);
@@ -222,8 +222,8 @@
   color: var(--success);
 }
 .badge--dark {
-  background: var(--ink-900);
-  color: var(--white);
+  background: var(--solid);
+  color: var(--on-solid);
 }
 
 /* ---------- avatar ---------- */
@@ -273,7 +273,7 @@
 .chip[aria-pressed='true'],
 .chip[aria-selected='true'] {
   background: var(--brand-900);
-  color: var(--white);
+  color: var(--on-solid);
 }
 
 /* ---------- modal / sheet ---------- */
@@ -471,7 +471,7 @@
   height: 40px;
   border-radius: 50%;
   background: var(--brand-500);
-  color: var(--white);
+  color: var(--on-brand);
 }
 .pendbanner__title {
   margin: 0;
@@ -515,7 +515,7 @@
 .pendrow__yes {
   border: 0;
   background: var(--brand-900);
-  color: var(--white);
+  color: var(--on-solid);
 }
 .pendrow__no {
   border: 1px solid var(--line-strong);
@@ -565,7 +565,7 @@
 
 .chevbtn:hover {
   background: var(--brand-900);
-  color: var(--white);
+  color: var(--on-solid);
 }
 
 .chips--scroll {
@@ -616,7 +616,7 @@
   border: 0;
   border-radius: 50%;
   background: var(--brand-900);
-  color: var(--white);
+  color: var(--on-solid);
 }
 
 .chevbtn.is-done {
@@ -640,7 +640,255 @@ button.textlink:disabled {
   width: 52px;
   height: 52px;
   background: linear-gradient(135deg, var(--brand-500), var(--brand-900));
-  color: var(--white);
+  color: var(--on-solid);
   font-family: var(--font-sans);
   font-size: 24px;
+}
+
+/* ---------- movimento fluido: tudo que abre cresce desfocado e fica nítido; ao fechar, o inverso ---------- */
+/* mesma linguagem do [+] da barra de baixo; `backwards` para não deixar transform/filter presos depois de abrir */
+:root {
+  --ease-fluid: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+}
+
+.overlay {
+  animation: fluid-fade-in 0.3s ease backwards;
+}
+
+.overlay.is-closing {
+  animation: fluid-fade-out 0.24s ease forwards;
+  pointer-events: none;
+}
+
+/* celular: a folha nasce de baixo, achatada e desfocada */
+.dialog {
+  transform-origin: 50% 100%;
+  animation: fluid-rise 0.46s var(--ease-fluid) backwards;
+}
+
+.overlay.is-closing .dialog {
+  animation: fluid-sink 0.24s var(--ease-exit) forwards;
+}
+
+/* conteúdo da folha chega logo depois, como os atalhos do [+] */
+.dialog > * {
+  animation: fluid-item 0.42s var(--ease-fluid) backwards;
+  animation-delay: 0.08s;
+}
+
+/* computador: a janela fica no meio, então cresce do centro */
+@media (min-width: 768px) {
+  .dialog {
+    transform-origin: 50% 50%;
+    animation-name: fluid-pop;
+  }
+  .overlay.is-closing .dialog {
+    animation-name: fluid-pop-out;
+  }
+}
+
+/* menus que saem de um botão (sininho, conta): crescem a partir do canto do botão */
+.popover,
+.pendpop {
+  transform-origin: calc(100% - 22px) 0;
+  animation: fluid-pop 0.36s var(--ease-fluid) backwards;
+}
+
+.popover.is-closing,
+.pendpop.is-closing {
+  animation: fluid-pop-out 0.2s var(--ease-exit) forwards;
+  pointer-events: none;
+}
+
+/* folhas que descem do topo (prévia do recibo etc.) */
+.sheet {
+  animation: fluid-fade-in 0.3s ease backwards;
+}
+
+.sheet__panel {
+  transform-origin: 50% 0;
+  animation: fluid-drop 0.46s var(--ease-fluid) backwards;
+}
+
+/* telas que cobrem tudo (editor do Meu site): entram com um leve zoom e foco */
+.sfull {
+  animation: fluid-screen 0.45s var(--ease-fluid) backwards;
+}
+
+@keyframes fluid-rise {
+  from {
+    opacity: 0;
+    filter: blur(14px);
+    transform: scale(0.94, 0.4);
+  }
+  45% {
+    opacity: 1;
+  }
+}
+
+@keyframes fluid-sink {
+  to {
+    opacity: 0;
+    filter: blur(12px);
+    transform: scale(0.94, 0.4);
+  }
+}
+
+@keyframes fluid-drop {
+  from {
+    opacity: 0;
+    filter: blur(14px);
+    transform: scale(0.94, 0.5);
+  }
+  45% {
+    opacity: 1;
+  }
+}
+
+@keyframes fluid-pop {
+  from {
+    opacity: 0;
+    filter: blur(10px);
+    transform: scale(0.88);
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes fluid-pop-out {
+  to {
+    opacity: 0;
+    filter: blur(8px);
+    transform: scale(0.9);
+  }
+}
+
+@keyframes fluid-item {
+  from {
+    opacity: 0;
+    filter: blur(6px);
+    transform: translateY(8px);
+  }
+}
+
+@keyframes fluid-screen {
+  from {
+    opacity: 0;
+    filter: blur(10px);
+    transform: scale(0.97);
+  }
+}
+
+@keyframes fluid-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes fluid-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay,
+  .dialog,
+  .dialog > *,
+  .popover,
+  .pendpop,
+  .sheet,
+  .sheet__panel,
+  .sfull {
+    animation-duration: 0.01s !important;
+    animation-delay: 0s !important;
+  }
+}
+
+/* ---------- ajustes do modo escuro que os tokens sozinhos não resolvem ---------- */
+:root[data-theme='dark'] .btn--light {
+  background: var(--bg);
+  color: var(--ink-900);
+}
+
+:root[data-theme='dark'] .btn--light:hover:not(:disabled) {
+  background: var(--gray-200);
+}
+
+/* botões claros no escuro: ao passar o mouse, um cinza bem claro */
+:root[data-theme='dark'] .btn--primary:hover:not(:disabled),
+:root[data-theme='dark'] .btn--accent:hover:not(:disabled) {
+  background: #d6d2d4;
+}
+
+/* seletores no escuro: faixa grafite e a pílula branca, sem virar uma barra branca enorme */
+:root[data-theme='dark'] .tabs {
+  --tabs-track: var(--bg);
+  --tabs-pill: var(--ink-900);
+  --tabs-text: var(--ink-500);
+  --tabs-text-on: var(--page-bg);
+}
+
+:root[data-theme='dark'] .tabs__item:not([aria-selected='true']):hover {
+  color: var(--ink-900);
+}
+
+/* o pontinho do logo segue vermelho: é a marca */
+:root[data-theme='dark'] .logo__dot {
+  color: #e0283f;
+}
+
+/* avisos de erro continuam vermelhos */
+:root[data-theme='dark'] .dialog__error,
+:root[data-theme='dark'] [role='alert'] {
+  color: var(--danger);
+}
+
+/* cartão do plano continua escuro com texto branco */
+:root[data-theme='dark'] .plancard {
+  --solid: #232226;
+  --on-solid: #ffffff;
+}
+
+:root[data-theme='dark'] .avatar--soft,
+:root[data-theme='dark'] .appt--pendente {
+  color: var(--ink-900);
+}
+
+/* ---------- escuro sem contornos nem brilhos claros: cada bloco se separa só pelo tom ---------- */
+:root[data-theme='dark'] .bottomnav__bar {
+  border-color: transparent;
+  box-shadow: 0 14px 34px -14px rgba(0, 0, 0, 0.7);
+}
+
+:root[data-theme='dark'] .arc__day[aria-selected='true'] .arc__num,
+:root[data-theme='dark'] .monthgrid__day.is-selected .monthgrid__num,
+:root[data-theme='dark'] .tabs__pill,
+:root[data-theme='dark'] .bottomnav__add {
+  box-shadow: none;
+}
+
+:root[data-theme='dark'] .dayrow,
+:root[data-theme='dark'] .setup--pill,
+:root[data-theme='dark'] .setup--card,
+:root[data-theme='dark'] .quick,
+:root[data-theme='dark'] .popover,
+:root[data-theme='dark'] .pendpop {
+  border-color: transparent;
+}
+
+/* atendimentos da lista: um tom acima do cartão, no lugar da borda */
+:root[data-theme='dark'] .dayrow {
+  background: rgba(255, 255, 255, 0.035);
+}
+
+:root[data-theme='dark'] .dayrow--now,
+:root[data-theme='dark'] .dayrow--atendimento {
+  background: var(--brand-tint);
+}
+
+:root[data-theme='dark'] .quick {
+  box-shadow: 0 18px 44px -14px rgba(0, 0, 0, 0.7);
 }

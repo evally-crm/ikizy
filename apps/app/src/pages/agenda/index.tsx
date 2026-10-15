@@ -9,7 +9,7 @@ import { useSubscription } from '../../billing/SubscriptionProvider'
 import { dayKey, gridWindow } from '../../lib/agendaTime'
 import { formatTime } from '../../lib/format'
 import { useMediaQuery } from '../../hooks/useMediaQuery'
-import { Tabs } from '../../components/ui'
+import { PageHeader, Tabs } from '../../components/ui'
 import { AppointmentDialog, NewAppointmentDialog, whatsappLink, type NewInitial } from '../../components/AppointmentDialogs'
 import { appointmentEntries } from '../../components/appointmentMenu'
 import { ContextMenu, type MenuEntry } from '../../components/ContextMenu'
@@ -213,6 +213,7 @@ export default function Agenda() {
 
   return (
     <div className="page agendapage">
+      <PageHeader title="Agenda" className="pageheader--mobile" />
       <div className="agendapage__side">
         <CalendarCard
           side={isDesktop}

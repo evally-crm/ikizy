@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { CalendarPlus, Copy, ExternalLink, Globe, KeyRound, Link2, LogIn, LogOut, RotateCw, Sparkles, UserPlus, UserRoundPlus } from 'lucide-react'
+import { CalendarPlus, Copy, ExternalLink, Globe, KeyRound, Link2, LogIn, LogOut, RotateCw, UserPlus, UserRoundPlus } from 'lucide-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useSalonInfo } from '../hooks/useSalonInfo'
 import { agenda, dash, ROUTES } from '../lib/routes'
@@ -71,7 +71,7 @@ export function AppContextMenu() {
           { kind: 'item', label: 'Criar conta', icon: UserPlus, checked: pathname === ROUTES.signup, onSelect: () => navigate(ROUTES.signup) },
           { kind: 'item', label: 'Esqueci minha senha', icon: KeyRound, onSelect: () => navigate(ROUTES.recover) },
           { kind: 'sep' },
-          { kind: 'item', label: 'Conhecer o IKIZY', icon: Sparkles, onSelect: () => open('https://ikizy.com') },
+          { kind: 'item', label: 'Conhecer o IKIZY', icon: Globe, onSelect: () => open('https://ikizy.com') },
         )
       }
 

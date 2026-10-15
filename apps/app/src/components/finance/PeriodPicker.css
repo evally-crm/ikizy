@@ -120,8 +120,8 @@
 }
 .periodpicker__day.is-edge {
   border-radius: 8px;
-  background: var(--ink-900);
-  color: var(--white);
+  background: var(--solid);
+  color: var(--on-solid);
 }
 .periodpicker__day.is-today:not(.is-edge) {
   font-weight: 600;

@@ -42,11 +42,11 @@
 }
 .daygrid__day[data-level='3'] {
   background: var(--brand-500);
-  color: var(--white);
+  color: var(--on-brand);
 }
 .daygrid__day[data-level='4'] {
   background: var(--brand-900);
-  color: var(--white);
+  color: var(--on-solid);
 }
 .daygrid__day.is-today {
   outline: 2px solid var(--ink-900);

@@ -142,7 +142,7 @@
 }
 .onb__dash--on {
   width: 26px;
-  background: var(--ink-900);
+  background: var(--solid);
 }
 .onb__title {
   max-width: 18ch;

@@ -142,7 +142,7 @@
 
 .stepper button:hover:not(:disabled) {
   background: var(--brand-900);
-  color: var(--white);
+  color: var(--on-solid);
 }
 
 .stepper button:disabled {
@@ -185,7 +185,7 @@
 
 .dstrip__head button:hover {
   background: var(--brand-900);
-  color: var(--white);
+  color: var(--on-solid);
 }
 
 .dstrip__days {
@@ -402,9 +402,9 @@
   max-width: calc(100vw - 32px);
   padding: 11px 20px;
   border-radius: var(--radius-pill);
-  background: var(--ink-900);
+  background: var(--solid);
   box-shadow: var(--shadow-md);
-  color: var(--white);
+  color: var(--on-solid);
   font-size: 13px;
   transform: translateX(-50%);
   animation: toast-in 0.2s ease-out;

@@ -44,7 +44,12 @@ export function ClientList({ clients, selectedId, today }: { clients: Client[]; 
   const visible = useMemo(() => filterClients(clients, query, filter, today), [clients, query, filter, today])
   const toCall = useMemo(() => countToCall(clients, today), [clients, today])
   const allPicked = visible.length > 0 && visible.every((c) => picked.has(c.id))
-  const filterItems = FILTERS.map((f) => ({ id: f.id, label: f.id === 'chamar' && toCall > 0 ? `${f.label} (${toCall})` : f.label }))
+  // o número de cada filtro fica num selo ao lado do nome, no lugar dos números grandes
+  const counts = useMemo(
+    () => Object.fromEntries(FILTERS.map((f) => [f.id, f.id === 'chamar' ? toCall : filterClients(clients, '', f.id, today).length])) as Record<ClientFilter, number>,
+    [clients, today, toCall],
+  )
+  const filterItems = FILTERS.map((f) => ({ id: f.id, label: f.label, badge: counts[f.id] > 0 ? counts[f.id] : undefined }))
 
   const stopPicking = () => {
     setPicking(false)

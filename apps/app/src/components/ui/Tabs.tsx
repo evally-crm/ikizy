@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import './Tabs.css'
 
 export interface TabItem<T extends string> {
@@ -10,7 +10,10 @@ export interface TabItem<T extends string> {
   ariaLabel?: string
 }
 
-/** abas em pílula: uma opção ativa por vez (período, mês, seção) */
+/** última posição da pílula de cada seletor (pelo nome): quando a tela troca e o seletor nasce de novo, ele desliza dali */
+const LAST = new Map<string, { x: number; w: number }>()
+
+/** abas em pílula: uma opção ativa por vez (período, mês, seção); a pílula branca desliza até a escolhida */
 export function Tabs<T extends string>({
   items,
   value,
@@ -26,8 +29,51 @@ export function Tabs<T extends string>({
   /** as abas dividem a largura toda (celular) */
   fill?: boolean
 }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [pill, setPill] = useState<{ x: number; w: number } | null>(null)
+  // a primeira medida aparece sem animar (senão a pílula "voa" do canto ao abrir a tela)
+  const [ready, setReady] = useState(false)
+
+  useLayoutEffect(() => {
+    const box = ref.current
+    if (!box) return
+    const measure = () => {
+      const active = box.querySelector<HTMLElement>('[aria-selected="true"]')
+      if (!active) return setPill(null)
+      const next = { x: active.offsetLeft, w: active.offsetWidth }
+      LAST.set(label, next)
+      setPill(next)
+    }
+    // a tela trocou junto com a aba (ex.: Hoje → Mês) e o seletor nasceu de novo: parte de onde a pílula estava
+    const prev = LAST.get(label)
+    let raf = 0
+    if (!ready && prev) {
+      setPill(prev)
+      raf = requestAnimationFrame(() => {
+        setReady(true)
+        raf = requestAnimationFrame(measure)
+      })
+    } else {
+      measure()
+      raf = requestAnimationFrame(() => setReady(true))
+    }
+    const ro = new ResizeObserver(() => ready && measure())
+    ro.observe(box)
+    return () => {
+      cancelAnimationFrame(raf)
+      ro.disconnect()
+    }
+  }, [value, items.length, label, ready])
+
   return (
-    <div className={`tabs ${fill ? 'tabs--fill' : ''}`.trim()} role="tablist" aria-label={label}>
+    <div
+      ref={ref}
+      className={`tabs ${fill ? 'tabs--fill' : ''} ${pill ? 'has-pill' : ''} ${ready ? 'is-ready' : ''}`.replace(/\s+/g, ' ').trim()}
+      role="tablist"
+      aria-label={label}
+      style={pill ? ({ '--pill-x': `${pill.x}px`, '--pill-w': `${pill.w}px` } as CSSProperties) : undefined}
+    >
+      <span className="tabs__pill" aria-hidden="true" />
       {items.map((item) => (
         <button key={item.id} type="button" role="tab" className="tabs__item" aria-selected={item.id === value} aria-label={item.ariaLabel} title={item.ariaLabel} onClick={() => onChange(item.id)}>
           {item.label}

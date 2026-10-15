@@ -161,13 +161,13 @@
 }
 
 .appt--confirmado {
-  background: var(--ink-900);
-  color: var(--white);
+  background: var(--solid);
+  color: var(--on-solid);
 }
 
 .appt--atendimento {
   background: var(--brand-500);
-  color: var(--white);
+  color: var(--on-brand);
 }
 
 .appt--pendente {
@@ -212,7 +212,7 @@
 }
 
 .legend__dot--confirmado {
-  background: var(--ink-900);
+  background: var(--solid);
 }
 
 .legend__dot--atendimento {

@@ -50,7 +50,7 @@
   border: 0;
   border-radius: var(--radius-pill);
   background: var(--brand-900);
-  color: var(--white);
+  color: var(--on-solid);
   font: inherit;
   font-size: 14px;
   font-weight: 500;
@@ -86,13 +86,9 @@
   border-radius: 18px;
 }
 
-/* cor de status na borda esquerda, como os blocos da grade */
-.dayrow--confirmado {
-  box-shadow: inset 3px 0 0 var(--ink-900);
-}
-
+/* status sem faixa lateral: o selo de status já diz; em atendimento, o fundo fica levemente rosado */
 .dayrow--atendimento {
-  box-shadow: inset 3px 0 0 var(--brand-500);
+  background: var(--brand-tint);
 }
 
 .dayrow--pendente {
@@ -205,7 +201,7 @@
   border: 0;
   border-radius: var(--radius-pill);
   background: var(--brand-900);
-  color: var(--white);
+  color: var(--on-solid);
   font: inherit;
   font-size: 13px;
   font-weight: 500;
@@ -235,4 +231,46 @@
   color: var(--ink-500);
   font: inherit;
   font-size: 13px;
+}
+
+/* celular: linhas mais baixas, cabem mais atendimentos na tela */
+@media (max-width: 767px) {
+  .dayagenda {
+      gap: 6px;
+      margin-bottom: 12px;
+      padding: 8px;
+    }
+  .dayagenda__list {
+      gap: 6px;
+    }
+  .dayrow {
+      gap: 4px;
+      padding: 2px;
+      border-radius: 16px;
+    }
+  .dayrow__main {
+      gap: 10px;
+      padding: 6px 8px;
+    }
+  .dayrow__time {
+      min-width: 44px;
+      padding-right: 10px;
+    }
+  .dayrow__time strong {
+      font-size: 15px;
+    }
+  .dayrow__name {
+      font-size: 14px;
+    }
+  .dayrow__step {
+      min-height: 34px;
+      padding: 0 14px;
+    }
+  .dayrow__msg {
+      width: 34px;
+      height: 34px;
+    }
+  .daygap button {
+      min-height: 34px;
+    }
 }

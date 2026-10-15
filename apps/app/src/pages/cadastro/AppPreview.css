@@ -42,8 +42,8 @@
   border-radius: var(--radius-pill);
 }
 .apv__tab--on {
-  background: var(--ink-900);
-  color: var(--white);
+  background: var(--solid);
+  color: var(--on-solid);
 }
 .apv__me {
   display: flex;
@@ -67,7 +67,7 @@
   height: 30px;
   border-radius: 50%;
   background: var(--brand-700);
-  color: var(--white);
+  color: var(--on-brand);
   font-size: 13px;
   font-weight: 600;
 }
@@ -168,9 +168,8 @@
   height: var(--h);
   overflow: hidden;
   padding: 4px 6px;
-  border-left: 3px solid var(--brand-500);
   border-radius: 8px;
-  background: var(--white);
+  background: var(--pink-100);
   font-size: 11px;
   line-height: 1.25;
   color: var(--ink-900);
@@ -193,7 +192,7 @@
   padding: 12px;
   border-radius: var(--radius-sm);
   background: var(--brand-900);
-  color: var(--white);
+  color: var(--on-solid);
   text-align: center;
   font-size: 18px;
 }
@@ -233,8 +232,8 @@
   flex: none;
   padding: 2px 8px;
   border-radius: var(--radius-pill);
-  background: var(--ink-900);
-  color: var(--white);
+  background: var(--solid);
+  color: var(--on-solid);
   font-size: 11px;
 }
 

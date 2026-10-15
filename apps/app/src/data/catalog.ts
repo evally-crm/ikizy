@@ -171,6 +171,30 @@ function load(): Studio {
   return DEFAULT_STUDIO
 }
 
+/** rascunho não publicado guardado na aba: sobrevive a ir para Meu negócio (ou outra tela) e voltar */
+const draftKey = (salonId: string | undefined) => `ikizy:studio:draft:${salonId ?? 'demo'}`
+
+/** junta o rascunho guardado à versão recém-carregada; dos serviços e produtos de custo, só a escolha do site
+ * (foto e "No site") vem do rascunho: nome, preço e duração valem como estão em Meu negócio */
+function restoreDraft(salonId: string | undefined, fresh: Studio): Studio {
+  try {
+    const raw = sessionStorage.getItem(draftKey(salonId))
+    if (!raw) return fresh
+    const saved = normalize({ ...fresh, ...JSON.parse(raw) })
+    const savedServices = new Map(saved.services.map((s) => [s.id, s]))
+    return {
+      ...saved,
+      products: fresh.products,
+      services: fresh.services.map((s) => {
+        const prev = savedServices.get(s.id)
+        return prev ? { ...s, visible: prev.visible, photo: prev.photo, photoId: prev.photoId } : s
+      }),
+    }
+  } catch {
+    return fresh
+  }
+}
+
 export const newId = (prefix: string) =>
   `${prefix}-${typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID().slice(0, 8) : Date.now().toString(36)}`
 
@@ -223,7 +247,7 @@ export function useStudio() {
   const live = isNeonConfigured && Boolean(neon) && Boolean(salonId)
 
   const [published, setPublished] = useState<Studio>(() => (live ? blankStudio(salon?.name ?? '', salon?.slug ?? '') : load()))
-  const [draft, setDraft] = useState<Studio>(published)
+  const [draft, setDraft] = useState<Studio>(() => (live ? published : restoreDraft(salonId, published)))
   const [loading, setLoading] = useState(live)
   const [error, setError] = useState<string | null>(null)
   /** true depois do primeiro "Publicar": só então a página pública existe */
@@ -325,7 +349,7 @@ export function useStudio() {
             })),
       }
       setPublished(studio)
-      setDraft(studio)
+      setDraft(restoreDraft(salonId, studio))
       setIsLive(Boolean(row?.published))
       setError(null)
       setLoading(false)
@@ -553,6 +577,17 @@ export function useStudio() {
   }, [draft, live, published, salonId])
 
   const discard = useCallback(() => setDraft(published), [published])
+
+  // guarda o rascunho enquanto houver alteração não publicada (só depois de carregar, para não apagar o guardado)
+  useEffect(() => {
+    if (loading) return
+    try {
+      if (dirty) sessionStorage.setItem(draftKey(salonId), JSON.stringify(draft))
+      else sessionStorage.removeItem(draftKey(salonId))
+    } catch {
+      /* sem espaço (fotos grandes) ou sem storage: segue só na memória */
+    }
+  }, [draft, dirty, loading, salonId])
 
   // avisa antes de sair com alterações não publicadas
   useEffect(() => {

@@ -13,8 +13,8 @@ export const ROUTES = {
 /** caminho dentro do dashboard: dash('/clientes') => '/dashboard/clientes' */
 export const dash = (path = '') => `${ROUTES.dashboard}${path}`
 
-/** a agenda é a tela inicial do sistema; `query` sem o "?": agenda('nova=1') => '/dashboard?nova=1' */
-export const agenda = (query = '') => (query ? `${ROUTES.dashboard}?${query}` : ROUTES.dashboard)
+/** agenda; `query` sem o "?": agenda('nova=1') => '/dashboard/agenda?nova=1' */
+export const agenda = (query = '') => dash(query ? `/agenda?${query}` : '/agenda')
 
 /** abre um pedido do site na agenda: ela vai até o dia e abre o atendimento */
 export const requestLink = (id: string) => agenda(`pedido=${id}`)

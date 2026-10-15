@@ -36,7 +36,7 @@
 }
 .paycols__bar.is-top {
   background: var(--brand-500);
-  color: var(--white);
+  color: var(--on-brand);
 }
 .paycols__pct {
   font-size: 11px;

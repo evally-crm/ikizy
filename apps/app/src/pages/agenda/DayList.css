@@ -37,7 +37,7 @@
   border: 0;
   border-radius: var(--radius-pill);
   background: var(--brand-900);
-  color: var(--white);
+  color: var(--on-solid);
   font-size: 13px;
   font-weight: 500;
 }

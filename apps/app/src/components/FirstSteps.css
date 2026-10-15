@@ -46,6 +46,17 @@
   animation: setup-in 0.18s ease-out;
 }
 
+/* celular: só o anel, para não cobrir o conteúdo da tela (o nome fica no aria-label e no title) */
+@media (max-width: 1023px) {
+  .setup--pill {
+    min-height: 48px;
+    padding: 8px;
+  }
+  .setup--pill > span {
+    display: none;
+  }
+}
+
 .setup--pill small {
   margin-left: 4px;
   color: var(--ink-500);
@@ -80,21 +91,25 @@
   color: var(--ink-500);
 }
 
-.setup__min {
-  display: grid;
-  flex: none;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  margin: -4px -4px 0 0;
+.setup__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
   border: 0;
-  border-radius: 50%;
+  border-top: 1px solid var(--line);
+  margin: 0 -16px -16px;
+  padding: 0 16px;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
   background: none;
   color: var(--ink-500);
+  font: inherit;
+  font-size: 13px;
   cursor: pointer;
 }
 
-.setup__min:hover {
+.setup__close:hover {
   background: var(--page-bg);
   color: var(--ink-900);
 }
@@ -199,5 +214,5 @@ a.setup__item:hover {
 .is-done > .setup__check {
   border-color: var(--brand-500);
   background: var(--brand-500);
-  color: var(--white);
+  color: var(--on-brand);
 }

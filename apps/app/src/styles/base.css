@@ -11,7 +11,7 @@ html {
 /* texto selecionado em vermelho (no lugar do azul padrão do navegador) */
 ::selection {
   background: var(--brand-500);
-  color: var(--white);
+  color: var(--on-brand);
 }
 
 body {

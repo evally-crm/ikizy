@@ -1,20 +1,22 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type FormEvent } from 'react'
+import { usePresence } from '../../hooks/usePresence'
+import { useAppTheme, useTheme } from '../../lib/theme'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { CalendarPlus, Ellipsis, LogOut, Plus, UserRound, X } from 'lucide-react'
+import { CalendarPlus, ChevronRight, Clock, CreditCard, Globe, LogOut, Moon, Plus, ReceiptText, Scissors, UserPlus, UserRound, X, type LucideIcon } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
 import { SubscriptionProvider, useSubscription } from '../../billing/SubscriptionProvider'
 import { AgendaProvider } from '../../data/AgendaProvider'
 import BillingBanner from '../BillingBanner'
 import { FirstSteps } from '../FirstSteps'
 import { PendingBell, PendingToast } from '../PendingRequests'
-import { isActive, moreItems, navItems, type NavItem } from './nav'
+import { isActive, moreItems, navItems } from './nav'
 import { daysLeft, describeSubscription, isCardTrial, periodEnd } from '../../lib/plans'
 import { agenda, dash, ROUTES } from '../../lib/routes'
-import { Avatar, Button } from '../ui'
+import { Avatar, Button, PageHeaderShell } from '../ui'
 
 function Logo() {
   return (
-    <NavLink to={ROUTES.dashboard} className="logo" aria-label="IKIZY — agenda">
+    <NavLink to={ROUTES.dashboard} className="logo" aria-label="IKIZY — início">
       IKIZY<span className="logo__dot">.</span>
     </NavLink>
   )
@@ -69,6 +71,7 @@ function UserMenu({ onAccount }: { onAccount: () => void }) {
   const { salon, displayName, signOut, status } = useAuth()
   const items = useMoreItems()
   const [open, setOpen] = useState(false)
+  const pop = usePresence(open)
   const ref = useRef<HTMLDivElement>(null)
   const close = useRef(() => setOpen(false)).current
   useCloseOn(open, close)
@@ -85,8 +88,8 @@ function UserMenu({ onAccount }: { onAccount: () => void }) {
       <button type="button" className="user" aria-label="Menu da conta" aria-expanded={open} aria-haspopup="menu" onClick={() => setOpen((o) => !o)}>
         <Avatar name={displayName} />
       </button>
-      {open && (
-        <div className="popover popover--list" role="menu">
+      {pop.mounted && (
+        <div className={`popover popover--list ${pop.closing ? 'is-closing' : ''}`.trim()} role="menu">
           <div className="popover__who">
             <p className="user__name">{displayName}</p>
             <p className="user__role">{salon?.name ?? 'Studio Maria Beauty'}</p>
@@ -98,6 +101,7 @@ function UserMenu({ onAccount }: { onAccount: () => void }) {
               {label}
             </NavLink>
           ))}
+          <DarkModeRow className="popover__item" />
           <button
             type="button"
             className="popover__item"
@@ -122,88 +126,206 @@ function UserMenu({ onAccount }: { onAccount: () => void }) {
   )
 }
 
-/** barra flutuante (celular): Agenda, Clientes, [+], Caixa, Mais */
-function BottomNav({ onAccount }: { onAccount: () => void }) {
-  const { signOut, status } = useAuth()
-  const items = useMoreItems()
-  const navigate = useNavigate()
-  const { pathname } = useLocation()
-  const [open, setOpen] = useState(false)
-  const close = useRef(() => setOpen(false)).current
-  useCloseOn(open, close)
-
-  const [agendaItem, clientsItem, moneyItem, ...rest] = navItems
-  const sheet = [...rest, ...items]
-  const moreActive = sheet.some((i) => isActive(i.to, pathname))
-
-  const link = ({ to, label, short, icon: Icon }: NavItem) => (
-    <NavLink key={to} to={to} end={to === ROUTES.dashboard} className="bottomnav__link">
-      <Icon size={20} aria-hidden="true" />
-      <span>{short ?? label}</span>
+/** cartão escuro do plano nas Configurações: teste grátis ou plano atual, com atalho para a assinatura (só a dona) */
+function PlanCard() {
+  const { salon } = useAuth()
+  const { sub } = useSubscription()
+  const isOwner = !salon || salon.role === 'owner'
+  if (!sub || !isOwner) return null
+  const trialDays = sub.status === 'trialing' ? daysLeft(isCardTrial(sub) ? periodEnd(sub) : sub.accessUntil) : 0
+  return (
+    <NavLink to={dash('/assinatura')} className="plancard">
+      <span className="plancard__icon">
+        <CreditCard size={18} aria-hidden="true" />
+      </span>
+      <span className="plancard__text">
+        <strong>{trialDays > 0 ? `Teste grátis · ${trialDays === 1 ? 'último dia' : `${trialDays} dias`}` : 'Seu plano'}</strong>
+        <small>{trialDays > 0 ? 'Escolha um plano para seguir depois do teste, sem perder nada.' : describeSubscription(sub)}</small>
+      </span>
+      <span className="plancard__btn">
+        {trialDays > 0 ? 'Ver planos' : 'Gerenciar'} <ChevronRight size={14} aria-hidden="true" />
+      </span>
     </NavLink>
   )
+}
+
+/** linha "Modo escuro" com a chave à direita (Configurações no celular e menu da conta no computador) */
+function DarkModeRow({ className = 'settings__row' }: { className?: string }) {
+  const [theme, setTheme] = useTheme()
+  const dark = theme === 'dark'
+  return (
+    <label className={`${className} settings__row--switch`}>
+      <Moon size={19} aria-hidden="true" />
+      <span>Modo escuro</span>
+      <input type="checkbox" role="switch" checked={dark} onChange={(e) => setTheme(e.target.checked ? 'dark' : 'light')} />
+      <span className="switch__track" aria-hidden="true" />
+    </label>
+  )
+}
+
+/** atalhos do [+]: o que mais se cria no dia a dia */
+const QUICK: { to: string; label: string; icon: LucideIcon }[] = [
+  { to: agenda('nova=1'), label: 'Agendamento', icon: CalendarPlus },
+  { to: dash('/clientes?nova=1'), label: 'Cliente', icon: UserPlus },
+  { to: dash('/financeiro?saida=1'), label: 'Saída', icon: ReceiptText },
+  { to: dash('/negocio#servicos'), label: 'Serviços', icon: Scissors },
+  { to: dash('/negocio#horario'), label: 'Horário', icon: Clock },
+  { to: dash('/site'), label: 'Meu site', icon: Globe },
+]
+
+/** na barra do celular cabem as quatro primeiras seções; Meu site e Meu negócio vão para as Configurações */
+const barItems = navItems.slice(0, 4)
+const sheetItems = navItems.slice(4)
+
+/** tempo da animação de fechar o painel do [+] (igual ao CSS) */
+const QUICK_OUT_MS = 260
+
+/** barra flutuante (celular): Início, Agenda, Clientes, Caixa e o [+]; o resto fica no avatar do topo */
+function BottomNav() {
+  // painel do [+]: a barra se desfaz e vira a grade de atalhos; ao fechar, o caminho inverso
+  const [quick, setQuick] = useState<'closed' | 'open' | 'closing'>('closed')
+  const quickTimer = useRef<number>()
+  const closeQuick = useCallback(() => {
+    setQuick((q) => (q === 'open' ? 'closing' : q))
+    window.clearTimeout(quickTimer.current)
+    quickTimer.current = window.setTimeout(() => setQuick('closed'), QUICK_OUT_MS)
+  }, [])
+  useCloseOn(quick === 'open', closeQuick)
+  useEffect(() => () => window.clearTimeout(quickTimer.current), [])
+  const toggleQuick = () => {
+    if (quick === 'open') closeQuick()
+    else {
+      window.clearTimeout(quickTimer.current)
+      setQuick('open')
+    }
+  }
 
   return (
     <>
-      <nav className="bottomnav" aria-label="Navegação principal">
-        {link(agendaItem)}
-        {link(clientsItem)}
-        <button type="button" className="bottomnav__add" aria-label="Novo agendamento" onClick={() => navigate(agenda('nova=1'))}>
-          <Plus size={24} aria-hidden="true" />
-        </button>
-        {link(moneyItem)}
+      {quick !== 'closed' && <div className={`quick-backdrop ${quick === 'closing' ? 'is-closing' : ''}`.trim()} aria-hidden="true" onClick={closeQuick} />}
+      <nav className={`bottomnav ${quick !== 'closed' ? 'is-quick' : ''} ${quick === 'closing' ? 'is-closing' : ''}`.replace(/\s+/g, ' ').trim()} aria-label="Navegação principal">
+        {quick !== 'closed' && (
+          <div className="quick" id="quick-actions" role="menu" aria-label="Criar">
+            {QUICK.map(({ to, label, icon: Icon }, i) => (
+              <NavLink key={to} to={to} className="quick__item" role="menuitem" style={{ '--i': i } as CSSProperties} onClick={closeQuick}>
+                <span className="quick__icon">
+                  <Icon size={22} aria-hidden="true" />
+                </span>
+                {label}
+              </NavLink>
+            ))}
+          </div>
+        )}
+        {/* pílula de vidro: só ícones; a página atual ganha o ícone preenchido e o nome ao lado. O + fica à parte, sólido */}
+        <div className="bottomnav__bar">
+          {barItems.map(({ to, label, short, icon: Icon }) => (
+            <NavLink key={to} to={to} end={to === ROUTES.dashboard} className="bottomnav__link" title={short ?? label}>
+              <Icon size={22} aria-hidden="true" />
+              <span className="bottomnav__label">{short ?? label}</span>
+            </NavLink>
+          ))}
+        </div>
         <button
           type="button"
-          className={`bottomnav__link ${moreActive ? 'active' : ''}`}
-          aria-expanded={open}
-          aria-haspopup="dialog"
-          onClick={() => setOpen(true)}
+          className="bottomnav__add"
+          aria-label={quick === 'open' ? 'Fechar atalhos' : 'Criar'}
+          aria-expanded={quick === 'open'}
+          aria-controls="quick-actions"
+          onClick={toggleQuick}
         >
-          <Ellipsis size={20} aria-hidden="true" />
-          <span>Mais</span>
+          <Plus size={24} aria-hidden="true" />
         </button>
       </nav>
-
-      {open && (
-        <div className="overlay" onClick={close}>
-          <div className="dialog" role="dialog" aria-modal="true" aria-label="Mais" onClick={(e) => e.stopPropagation()}>
-            <div className="dialog__head">
-              <h2>
-                Mais <span className="em">opções</span>
-              </h2>
-              <Button variant="ghost" size="sm" icon aria-label="Fechar" onClick={close}>
-                <X size={18} />
-              </Button>
-            </div>
-            <TrialLine />
-            <div className="more-grid">
-              {sheet.map(({ to, label, icon: Icon }) => (
-                <NavLink key={to} to={to} className="more-grid__item">
-                  <Icon size={20} aria-hidden="true" />
-                  {label}
-                </NavLink>
-              ))}
-              <button
-                type="button"
-                className="more-grid__item"
-                onClick={() => {
-                  close()
-                  onAccount()
-                }}
-              >
-                <UserRound size={20} aria-hidden="true" />
-                Minha conta
-              </button>
-            </div>
-            {status !== 'demo' && (
-              <button type="button" className="dialog__signout" onClick={() => void signOut()}>
-                <LogOut size={16} aria-hidden="true" /> Sair da conta
-              </button>
-            )}
-          </div>
-        </div>
-      )}
     </>
+  )
+}
+
+/** avatar ao lado do sininho (celular): abre as Configurações */
+function SettingsButton({ open, onOpen }: { open: boolean; onOpen: () => void }) {
+  const { displayName } = useAuth()
+  const { pathname } = useLocation()
+  const active = [...sheetItems, ...moreItems].some((i) => isActive(i.to, pathname))
+  return (
+    <button
+      type="button"
+      className={`user shellavatar ${active ? 'is-active' : ''}`.trim()}
+      aria-label="Configurações"
+      aria-expanded={open}
+      aria-haspopup="dialog"
+      onClick={onOpen}
+    >
+      <Avatar name={displayName} />
+    </button>
+  )
+}
+
+/** Configurações (celular): conta, plano, Meu site, Meu negócio, assinatura, modo escuro e sair */
+function SettingsSheet({ open, onClose, onAccount }: { open: boolean; onClose: () => void; onAccount: () => void }) {
+  const { signOut, status, displayName, salon, session } = useAuth()
+  const items = useMoreItems()
+  const sheetIn = usePresence(open)
+  useCloseOn(open, onClose)
+  const sheet = [...sheetItems, ...items]
+
+  if (!sheetIn.mounted) return null
+  return (
+    <div className={`overlay ${sheetIn.closing ? 'is-closing' : ''}`.trim()} onClick={onClose}>
+      <div className="dialog dialog--settings" role="dialog" aria-modal="true" aria-label="Configurações" onClick={(e) => e.stopPropagation()}>
+        <div className="settings__head">
+          <h2 className="settings__title">Configurações</h2>
+          <button type="button" className="settings__close" aria-label="Fechar" onClick={onClose}>
+            <X size={18} aria-hidden="true" />
+          </button>
+        </div>
+
+        <button
+          type="button"
+          className="settings__profile"
+          onClick={() => {
+            onClose()
+            onAccount()
+          }}
+        >
+          <Avatar name={displayName} />
+          <span className="settings__who">
+            <strong>{displayName}</strong>
+            <small>{session?.user.email ?? salon?.name ?? 'Minha conta'}</small>
+          </span>
+          <ChevronRight size={18} aria-hidden="true" />
+        </button>
+
+        <PlanCard />
+
+        <ul className="settings__list">
+          {sheet.map(({ to, label, icon: Icon }) => (
+            <li key={to}>
+              <NavLink to={to} className="settings__row">
+                <Icon size={19} aria-hidden="true" />
+                <span>{label}</span>
+                <ChevronRight size={17} aria-hidden="true" />
+              </NavLink>
+            </li>
+          ))}
+        </ul>
+
+        <ul className="settings__list">
+          <li>
+            <DarkModeRow />
+          </li>
+        </ul>
+
+        {status !== 'demo' && (
+          <ul className="settings__list">
+            <li>
+              <button type="button" className="settings__row settings__row--danger" onClick={() => void signOut()}>
+                <LogOut size={19} aria-hidden="true" />
+                <span>Sair da conta</span>
+              </button>
+            </li>
+          </ul>
+        )}
+      </div>
+    </div>
   )
 }
 
@@ -339,9 +461,12 @@ function ProfileDialog({ onClose }: { onClose: () => void }) {
 }
 
 export default function AppShell() {
+  useAppTheme()
   const navigate = useNavigate()
   const [editing, setEditing] = useState(false)
   const closeEdit = useRef(() => setEditing(false)).current
+  const [settings, setSettings] = useState(false)
+  const closeSettings = useRef(() => setSettings(false)).current
 
   return (
     <SubscriptionProvider>
@@ -362,9 +487,19 @@ export default function AppShell() {
       </header>
       <main className="content">
         <BillingBanner />
-        <Outlet />
+        <PageHeaderShell.Provider
+          value={
+            <>
+              <PendingBell />
+              <SettingsButton open={settings} onOpen={() => setSettings(true)} />
+            </>
+          }
+        >
+          <Outlet />
+        </PageHeaderShell.Provider>
       </main>
-      <BottomNav onAccount={() => setEditing(true)} />
+      <BottomNav />
+      <SettingsSheet open={settings} onClose={closeSettings} onAccount={() => setEditing(true)} />
       <PendingToast />
       <FirstSteps />
       {editing && <ProfileDialog onClose={closeEdit} />}
