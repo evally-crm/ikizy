@@ -1,5 +1,6 @@
-import { useEffect, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { createPortal } from 'react-dom'
+import { useOverlay } from '../hooks/useOverlay'
 import { Button } from './ui'
 
 /** janela sobre a tela; Esc e clique fora fecham */
@@ -14,20 +15,7 @@ export function Modal({
   wide?: boolean
   children: ReactNode
 }) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
-
-  // trava a rolagem da página enquanto a janela está aberta
-  useEffect(() => {
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = prev
-    }
-  }, [])
+  useOverlay(onClose)
 
   // no body: dentro do conteúdo da página, a barra de baixo ficava por cima da janela
   return createPortal(

@@ -1,3 +1,4 @@
+import './ClientPhotos.css'
 import { useEffect, useMemo, useState, type ChangeEvent } from 'react'
 import { format, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'

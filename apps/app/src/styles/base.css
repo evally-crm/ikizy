@@ -8,6 +8,12 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
+/* texto selecionado em vermelho (no lugar do azul padrão do navegador) */
+::selection {
+  background: var(--brand-500);
+  color: var(--white);
+}
+
 body {
   margin: 0;
   min-width: 320px;
@@ -64,17 +70,14 @@ svg {
   outline-offset: 2px;
 }
 
-/* palavra em destaque: serifada, itálica, na cor de acento */
+/* palavra em destaque: mesma fonte do título, em cinza mais claro */
 .em {
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-weight: 400;
-  color: var(--brand-500);
+  font-style: normal;
+  font-weight: inherit;
+  color: var(--ink-400);
 }
 
 .eyebrow {
-  font-family: var(--font-serif);
-  font-style: italic;
   font-size: 15px;
   color: var(--ink-700);
 }

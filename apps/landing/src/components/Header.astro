@@ -13,27 +13,64 @@ const current = (href: string) => (path === href ? 'page' : undefined)
       {NAV.map((item) => <a href={item.href} aria-current={current(item.href)}>{item.label}</a>)}
     </nav>
 
-    <!-- quatro pontinhos: abre o menu com entrar e criar conta (e os links, no celular) -->
+    <!-- desktop: teste grátis sempre à vista (entrar fica no menu do celular, no contato e no rodapé) -->
+    <a class="btn btn--primary btn--sm header__cta" href={LINKS.signup}>{CTA.short}</a>
+
+    <!-- celular: quatro pontinhos abrem os links, entrar e teste grátis -->
     <details class="menu">
       <summary aria-label="Abrir menu">
-        <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor" aria-hidden="true">
+        <!-- os quatro pontinhos se juntam no meio e viram um ✕ -->
+        <svg class="menu__icon" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
           <circle cx="4.5" cy="4.5" r="2.4"></circle>
           <circle cx="13.5" cy="4.5" r="2.4"></circle>
           <circle cx="4.5" cy="13.5" r="2.4"></circle>
           <circle cx="13.5" cy="13.5" r="2.4"></circle>
+          <path d="M3.5 3.5l11 11M14.5 3.5l-11 11"></path>
         </svg>
       </summary>
       <div class="menu__panel">
-        {NAV.map((item) => <a class="menu__link" href={item.href} aria-current={current(item.href)}>{item.label}</a>)}
-        <a href={LINKS.login}>Entrar</a>
-        <a class="btn btn--primary" href={LINKS.signup}>{CTA.short}</a>
+        {NAV.map((item, i) => <a href={item.href} aria-current={current(item.href)} style={`--i: ${i}`}>{item.label}</a>)}
+        <a href={LINKS.login} style={`--i: ${NAV.length}`}>Entrar</a>
+        <a class="btn btn--primary" href={LINKS.signup} style={`--i: ${NAV.length + 1}`}>{CTA.short}</a>
       </div>
     </details>
   </div>
 </header>
 
 <script>
-  document.querySelectorAll('.menu a').forEach((a) =>
-    a.addEventListener('click', () => a.closest('details')?.removeAttribute('open')),
-  )
+  // menu fixo: ao rolar, ganha fundo e sombra para não ficar ilegível sobre o conteúdo
+  const header = document.querySelector<HTMLElement>('.header')
+  if (header) {
+    const sync = () => header.classList.toggle('is-scrolled', window.scrollY > 8)
+    addEventListener('scroll', sync, { passive: true })
+    sync()
+  }
+</script>
+
+<script>
+  // menu com animação de abrir e fechar: o <details> abre na hora e a classe is-open liga a animação;
+  // para fechar, tira a classe, espera a animação e só então fecha o <details>
+  const OUT_MS = 220
+  document.querySelectorAll<HTMLDetailsElement>('details.menu').forEach((menu) => {
+    const summary = menu.querySelector('summary')!
+    const close = () => {
+      if (!menu.open) return
+      menu.classList.remove('is-open')
+      summary.setAttribute('aria-label', 'Abrir menu')
+      setTimeout(() => menu.classList.contains('is-open') || menu.removeAttribute('open'), OUT_MS)
+    }
+    const open = () => {
+      menu.open = true
+      summary.setAttribute('aria-label', 'Fechar menu')
+      requestAnimationFrame(() => requestAnimationFrame(() => menu.classList.add('is-open')))
+    }
+    summary.addEventListener('click', (e) => {
+      e.preventDefault()
+      if (menu.classList.contains('is-open')) close()
+      else open()
+    })
+    menu.querySelectorAll('a').forEach((a) => a.addEventListener('click', close))
+    document.addEventListener('click', (e) => menu.contains(e.target as Node) || close())
+    document.addEventListener('keydown', (e) => e.key === 'Escape' && close())
+  })
 </script>

@@ -1,9 +1,10 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { addMonths, format, startOfMonth } from 'date-fns'
 import { useAuth } from '../auth/AuthProvider'
 import { isNeonConfigured, neon } from '../lib/neon'
-import { ACTIVE_STATUSES, type Appointment, type AppointmentStatus, type PaymentMethod, type Professional } from '../types'
+import type { Appointment, AppointmentStatus, PaymentMethod, Professional } from '../types'
 import { appointments as mockAppointments, professionals as mockProfessionals } from './mock'
+import { isForgotten } from '../domain/clients'
 import { getClients } from './clients'
 import type { HourInterval } from '../lib/agendaTime'
 
@@ -46,6 +47,12 @@ interface AgendaState {
   clients: ClientOption[]
   services: ServiceOption[]
   appointments: Appointment[]
+  /**
+   * pedidos para confirmar: atendimentos pendentes daqui para a frente, do pedido mais novo ao mais antigo.
+   * Só o agendamento online cria pendentes (os feitos no sistema já entram confirmados).
+   * null até a primeira busca. Atualiza a cada minuto e ao voltar para a aba.
+   */
+  pending: Appointment[] | null
   /** horário de atendimento por profissional; sem entrada = ainda não configurado */
   workingHours: Record<string, HourInterval[]>
   /** false quando o banco ainda não tem a tabela de horários (migration pendente) */
@@ -70,23 +77,6 @@ export function useAgenda() {
 
 const dayKey = (d: Date) => format(d, 'yyyy-MM-dd')
 
-/** outro atendimento ativo da mesma profissional que se sobrepõe ao intervalo informado */
-export function findConflict(
-  list: Appointment[],
-  slot: { professionalId: string; date: string; start: number; duration: number },
-  ignoreId?: string,
-) {
-  return list.find(
-    (a) =>
-      a.id !== ignoreId &&
-      a.professionalId === slot.professionalId &&
-      a.date === slot.date &&
-      ACTIVE_STATUSES.includes(a.status) &&
-      a.start < slot.start + slot.duration &&
-      slot.start < a.start + a.duration,
-  )
-}
-
 const toIso = (date: string, start: number) => {
   const [y, m, d] = date.split('-').map(Number)
   return new Date(y, m - 1, d, Math.floor(start / 60), start % 60).toISOString()
@@ -102,11 +92,15 @@ interface Row {
   duration: number
   price: number | string
   status: AppointmentStatus
+  payment_method: PaymentMethod | null
   clients: { name: string; phone: string } | null
 }
 
+/** de quanto em quanto tempo procura pedidos novos do site */
+const PENDING_POLL_MS = 60_000
+
 const SELECT =
-  'id, client_id, professional_id, service_id, service_name, starts_at, duration, price, status, clients ( name, phone )'
+  'id, client_id, professional_id, service_id, service_name, starts_at, duration, price, status, payment_method, clients ( name, phone )'
 
 function fromRow(r: Row): Appointment {
   const at = new Date(r.starts_at)
@@ -123,11 +117,19 @@ function fromRow(r: Row): Appointment {
     duration: r.duration,
     price: Number(r.price),
     status: r.status,
+    paymentMethod: r.payment_method,
   }
 }
 
 function friendly(error: { code?: string; message: string }) {
+  // regras do banco: concluir pede a forma de pagamento, concluído não se apaga, WhatsApp não se repete
+  if (error.message.includes('payment_required')) return 'Escolha a forma de pagamento para concluir o atendimento.'
+  if (error.message.includes('settled_appointment')) return 'Atendimento concluído não pode ser apagado.'
+  if (error.message.includes('reference_other_salon')) return 'Cliente, profissional ou serviço não pertence a este negócio.'
+  if (error.code === '23505' && error.message.includes('clients_salon_phone_unique')) return 'Já existe uma cliente com esse WhatsApp.'
   if (error.code === '23514' || error.message.includes('já está fechado')) return 'O mês desse atendimento já está fechado.'
+  // trava do banco: a mesma profissional não tem dois atendimentos ativos no mesmo horário
+  if (error.code === '23P01' || error.message.includes('appointments_no_overlap')) return 'Essa profissional já tem um atendimento nesse horário.'
   return 'Não foi possível salvar agora. Tente novamente.'
 }
 
@@ -169,8 +171,12 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
   const [workingHours, setWorkingHours] = useState<Record<string, HourInterval[]>>({})
   const [hoursAvailable, setHoursAvailable] = useState(true)
   const [loading, setLoading] = useState(live)
+  // salão cujos cadastros (profissionais, clientes, serviços) já chegaram: sem isso a agenda parece "sem profissional" por um instante
+  const [registryFor, setRegistryFor] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [tick, setTick] = useState(0)
+  const [livePending, setLivePending] = useState<Appointment[] | null>(null)
+  const pendingIds = useRef<Set<string> | null>(null)
   const [win, setWin] = useState(() => ({
     from: startOfMonth(addMonths(new Date(), -1)),
     to: startOfMonth(addMonths(new Date(), 2)),
@@ -208,6 +214,7 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
       if (pros.error || cls.error || svcs.error) {
         setError('Não foi possível carregar a agenda. Verifique a conexão e tente de novo.')
         setLoading(false)
+        setRegistryFor(salonId)
         return
       }
       // a tabela de horários pode não existir ainda (migration pendente): a agenda segue com a grade padrão
@@ -223,8 +230,9 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
         setWorkingHours(byPro)
       }
       setProfessionals((pros.data ?? []).map((p) => ({ id: p.id, name: p.name, role: p.title })))
-      setClients((cls.data ?? []).map((c) => ({ id: c.id, name: c.name, phone: c.phone })))
+      setClients((cls.data ?? []).filter((c) => !isForgotten(c.name)).map((c) => ({ id: c.id, name: c.name, phone: c.phone })))
       setServices((svcs.data ?? []).map((s) => ({ id: s.id, name: s.name, price: Number(s.price), duration: s.duration })))
+      setRegistryFor(salonId)
     })()
     return () => {
       cancelled = true
@@ -256,6 +264,50 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
       cancelled = true
     }
   }, [live, salonId, win, tick])
+
+  // pedidos do site esperando confirmação: busca própria, fora da janela da agenda, repetida a cada minuto
+  useEffect(() => {
+    if (!live || !neon || !salonId) return
+    let cancelled = false
+    const load = async () => {
+      if (document.visibilityState === 'hidden') return
+      const { data, error: err } = await neon!
+        .from('appointments')
+        .select(SELECT)
+        .eq('salon_id', salonId)
+        .eq('status', 'pendente')
+        .gte('starts_at', new Date().toISOString())
+        .order('created_at', { ascending: false })
+        .limit(50)
+      if (cancelled || err) return
+      const list = (data as unknown as Row[]).map(fromRow)
+      // chegou pedido novo: recarrega a agenda para ele aparecer na grade também
+      const known = pendingIds.current
+      if (known && list.some((a) => !known.has(a.id))) setTick((t) => t + 1)
+      pendingIds.current = new Set(list.map((a) => a.id))
+      setLivePending(list)
+    }
+    void load()
+    const timer = window.setInterval(() => void load(), PENDING_POLL_MS)
+    const onVisible = () => document.visibilityState === 'visible' && void load()
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      cancelled = true
+      window.clearInterval(timer)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
+  }, [live, salonId])
+
+  // demonstração: os pendentes de hoje que ainda não passaram
+  const pending = useMemo(() => {
+    if (live) return livePending
+    // a demonstração começa com a lista vazia por um instante: sem isso, os pendentes de exemplo "chegariam" como novos
+    if (loading || !appointments.length) return null
+    const now = new Date()
+    const today = dayKey(now)
+    const minutes = now.getHours() * 60 + now.getMinutes()
+    return appointments.filter((a) => a.status === 'pendente' && (a.date > today || (a.date === today && a.start > minutes)))
+  }, [live, livePending, loading, appointments])
 
   const focus = useCallback((date: Date) => {
     setWin((w) =>
@@ -336,16 +388,20 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
         if (patch.professionalId) cols.professional_id = patch.professionalId
         if (patch.duration !== undefined) cols.duration = patch.duration
         if (patch.price !== undefined) cols.price = patch.price
+        // a forma de pagamento vai junto com o status: concluir sem ela é recusado pelo banco
+        if (paymentMethod) cols.payment_method = paymentMethod
         if (current && (patch.date || patch.start !== undefined)) {
           cols.starts_at = toIso(patch.date ?? current.date, patch.start ?? current.start)
         }
         const { data, error: err } = await neon.from('appointments').update(cols).eq('id', id).select('id')
         if (err) return friendly(err)
         if (!data?.length) return 'Você não tem permissão para alterar este atendimento.'
-        // coluna criada pela migration do financeiro; se ainda não existir, o atendimento segue salvo sem a forma de pagamento
-        if (paymentMethod) await neon.from('appointments').update({ payment_method: paymentMethod }).eq('id', id)
       }
-      setAppointments((list) => list.map((a) => (a.id === id ? { ...a, ...patch } : a)))
+      setAppointments((list) => list.map((a) => (a.id === id ? { ...a, ...patch, ...(paymentMethod ? { paymentMethod } : {}) } : a)))
+      // confirmado, recusado etc. sai na hora da lista de pedidos
+      setLivePending((list) =>
+        list && (patch.status && patch.status !== 'pendente' ? list.filter((a) => a.id !== id) : list.map((a) => (a.id === id ? { ...a, ...patch } : a))),
+      )
       return null
     },
     [live, appointments],
@@ -389,14 +445,17 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
     [live, salonId],
   )
 
+  const registryLoading = live && registryFor !== salonId
+
   const value = useMemo<AgendaState>(
     () => ({
-      loading,
+      loading: loading || registryLoading,
       error,
       professionals,
       clients,
       services,
       appointments,
+      pending,
       workingHours,
       hoursAvailable,
       saveHours,
@@ -406,7 +465,7 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
       update,
       addProfessional,
     }),
-    [loading, error, professionals, clients, services, appointments, workingHours, hoursAvailable, saveHours, focus, reload, create, update, addProfessional],
+    [loading, registryLoading, error, professionals, clients, services, appointments, pending, workingHours, hoursAvailable, saveHours, focus, reload, create, update, addProfessional],
   )
 
   return <AgendaContext.Provider value={value}>{children}</AgendaContext.Provider>

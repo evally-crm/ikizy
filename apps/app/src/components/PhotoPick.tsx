@@ -1,3 +1,4 @@
+import './PhotoPick.css'
 import { useRef, useState, type ChangeEvent } from 'react'
 import { ImagePlus, X } from 'lucide-react'
 import { resizeToDataUrl } from '../lib/imageResize'

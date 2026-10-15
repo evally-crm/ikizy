@@ -87,7 +87,7 @@ export function StatusBadge({ status }: { status: AppointmentStatus }) {
   return <span className={`badge badge--${status}`}>{STATUS_LABEL[status]}</span>
 }
 
-export function Avatar({ name, size, soft }: { name: string; size?: 'sm'; soft?: boolean }) {
+export function Avatar({ name, size, soft }: { name: string; size?: 'sm' | 'lg'; soft?: boolean }) {
   const initials = name
     .split(' ')
     .filter(Boolean)
@@ -100,3 +100,16 @@ export function Avatar({ name, size, soft }: { name: string; size?: 'sm'; soft?:
     </span>
   )
 }
+
+export { PageHeader } from './PageHeader'
+export { Panel } from './Panel'
+export { StatTile } from './StatTile'
+export { Tabs, type TabItem } from './Tabs'
+export { Sheet } from './Sheet'
+export { DataTable, type Column } from './DataTable'
+export { SearchField } from './SearchField'
+export { Tag, Tags, type TagTone } from './Tag'
+export { Field } from './Field'
+export { Section } from './Section'
+export { Collapse } from './Collapse'
+export { MoneyInput } from './MoneyInput'

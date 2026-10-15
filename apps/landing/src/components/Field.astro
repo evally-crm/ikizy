@@ -1,0 +1,29 @@
+---
+/**
+ * campo em pílula, sem borda, com o título dentro: ao clicar ou digitar, o título encolhe e sobe.
+ * o placeholder=" " é o que deixa o CSS saber se o campo está vazio (:placeholder-shown).
+ */
+interface Props {
+  label: string
+  name: string
+  type?: 'text' | 'email' | 'tel'
+  autocomplete?: string
+  required?: boolean
+  multiline?: boolean
+  rows?: number
+}
+
+const { label, name, type = 'text', autocomplete, required = false, multiline = false, rows = 5 } = Astro.props
+const id = `field-${name}`
+---
+
+<div class:list={['field', { 'field--multiline': multiline }]}>
+  {
+    multiline ? (
+      <textarea id={id} name={name} rows={rows} placeholder=" " required={required} />
+    ) : (
+      <input id={id} name={name} type={type} autocomplete={autocomplete} placeholder=" " required={required} />
+    )
+  }
+  <label for={id}>{label}</label>
+</div>

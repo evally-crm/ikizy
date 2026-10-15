@@ -279,3 +279,29 @@ describe('renderSitePage', () => {
     assert.match(renderNotFound(), /name="robots" content="noindex"/)
   })
 })
+
+describe('estilo da capa', () => {
+  const hero = (html: string) => html.match(/<section class="panel hero[^"]*"/)?.[0] ?? ''
+
+  it('cada estilo vira uma classe na capa sem foto', () => {
+    for (const id of ['poa', 'xadrez', 'editorial', 'organico']) {
+      assert.match(hero(page(base({}, { cover_style: id }))), new RegExp('hero--' + id))
+    }
+  })
+
+  it('sóbrio, vazio e valor desconhecido ficam sem classe de estilo', () => {
+    for (const v of ['sobrio', '', 'neon', undefined]) {
+      assert.equal(hero(page(base({}, { cover_style: v }))), '<section class="panel hero"')
+    }
+  })
+
+  it('a foto de capa passa na frente do estilo', () => {
+    const cover = 'data:image/png;base64,iVBORw0KGgo='
+    assert.equal(hero(page(base({}, { cover_style: 'poa', cover }))), '<section class="panel hero hero--cover"')
+  })
+
+  it('a folha de estilos traz os cinco estilos usando só variáveis da paleta', () => {
+    const html = page(base({}, { cover_style: 'xadrez' }))
+    for (const id of ['poa', 'xadrez', 'editorial', 'organico']) assert.ok(html.includes('.hero--' + id + ':not(.hero--cover)'))
+  })
+})

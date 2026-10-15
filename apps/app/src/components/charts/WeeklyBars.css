@@ -1,0 +1,43 @@
+.weekbars {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  height: 120px;
+}
+.weekbars__col {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.weekbars__track {
+  display: flex;
+  flex: 1;
+  align-items: flex-end;
+  border-radius: var(--radius-sm);
+  background: var(--page-bg);
+}
+.weekbars__bar {
+  width: 100%;
+  height: var(--h, 0);
+  min-height: 4px;
+  border-radius: var(--radius-sm);
+  background: var(--gray-300);
+}
+.weekbars__bar.is-best {
+  background: var(--brand-500);
+}
+.weekbars__bar.is-current {
+  outline: 2px solid var(--ink-900);
+  outline-offset: 2px;
+}
+.weekbars__bar.is-future {
+  background: var(--gray-200);
+  opacity: 0.6;
+}
+.weekbars__label {
+  font-size: 11px;
+  text-align: center;
+  color: var(--ink-500);
+}

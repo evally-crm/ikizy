@@ -1,33 +1,63 @@
 import { useState, type FormEvent } from 'react'
-import { Link, Navigate } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { Lock, Mail } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
 import { ROUTES } from '../../lib/routes'
 import { Em } from '../../components/ui'
 import { AuthCard, AuthField, AuthLayout, AuthSubmit, FormMessages, GoogleButton } from './AuthLayout'
 
+/** último e-mail que entrou neste aparelho: já vem preenchido na próxima vez */
+const LAST_EMAIL_KEY = 'ikizy:ultimo-email'
+
+const readLastEmail = () => {
+  try {
+    return localStorage.getItem(LAST_EMAIL_KEY) ?? ''
+  } catch {
+    return ''
+  }
+}
+
 export default function Login() {
   const { status, signIn, signInWithGoogle } = useAuth()
-  const [email, setEmail] = useState('')
+  const navigate = useNavigate()
+  const location = useLocation()
+  // vindo da confirmação do e-mail sem sessão aberta: já preenche o e-mail e avisa
+  const verified = location.state?.verified === true
+  // página que a pessoa tentou abrir antes de entrar (só dentro do sistema)
+  const from = typeof location.state?.from === 'string' && location.state.from.startsWith('/dashboard') ? (location.state.from as string) : ROUTES.dashboard
+  const [email, setEmail] = useState<string>(location.state?.email ?? readLastEmail())
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  if (status === 'ready' || status === 'demo') return <Navigate to={ROUTES.dashboard} replace />
+  if (status === 'ready' || status === 'demo') return <Navigate to={from} replace />
   if (status === 'no-salon') return <Navigate to={ROUTES.createSalon} replace />
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setError(null)
     setBusy(true)
-    setError(await signIn(email, password))
+    const res = await signIn(email, password)
     setBusy(false)
+    if (!res.error) {
+      try {
+        localStorage.setItem(LAST_EMAIL_KEY, email.trim())
+      } catch {
+        // sem armazenamento: só não lembra o e-mail
+      }
+    }
+    // senha certa e e-mail ainda não confirmado: o Neon Auth acabou de mandar um código
+    if (res.unverified) {
+      navigate(`${ROUTES.verifyEmail}?email=${encodeURIComponent(email.trim())}`, { state: { fromLogin: true } })
+      return
+    }
+    setError(res.error)
   }
 
   const onGoogle = async () => {
     setError(null)
     setBusy(true)
-    const err = await signInWithGoogle()
+    const err = await signInWithGoogle(from)
     // sem erro, o navegador já está indo para o Google
     if (err) {
       setError(err)
@@ -44,13 +74,13 @@ export default function Login() {
       }
     >
       <AuthCard
-        aside={<GoogleButton onClick={onGoogle} disabled={busy} />}
         title={
           <>
-            Bem-vinda de <Em>volta</Em>
+            <Em>Entrar</Em> no IKIZY
           </>
         }
-        subtitle="Entre para ver a agenda e o caixa do seu negócio."
+        subtitle="Entre para ver a agenda do seu negócio."
+        aside={<GoogleButton onClick={onGoogle} disabled={busy} />}
       >
         <form className="form" onSubmit={onSubmit}>
           <AuthField
@@ -76,7 +106,7 @@ export default function Login() {
               </Link>
             }
           />
-          <FormMessages error={error} />
+          <FormMessages error={error} notice={verified && !error ? 'E-mail confirmado. Agora entre com a sua senha.' : null} />
           <AuthSubmit label="Entrar" disabled={busy} />
         </form>
       </AuthCard>

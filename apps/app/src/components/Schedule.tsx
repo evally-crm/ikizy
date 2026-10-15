@@ -1,7 +1,7 @@
 import { addDays, format, isSameDay, parseISO, startOfWeek } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { findConflict } from '../data/AgendaProvider'
+import { findConflict } from '../domain/agenda'
 import { END_HOUR, PERIODS, SLOT_STEP, dayKey, withinHours, type HourInterval } from '../lib/agendaTime'
 import { formatTime } from '../lib/format'
 import type { Appointment } from '../types'

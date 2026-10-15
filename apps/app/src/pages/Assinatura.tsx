@@ -4,7 +4,7 @@ import { Check, CreditCard, QrCode } from 'lucide-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useSubscription } from '../billing/SubscriptionProvider'
 import type { ReactNode } from 'react'
-import { Button, Card, Em, Money } from '../components/ui'
+import { Button, Card, Em, Money, Tabs } from '../components/ui'
 import { BillingError, openPortal, startCheckout } from '../lib/billingApi'
 import { formatBRL } from '../lib/format'
 import {
@@ -28,7 +28,7 @@ const Badge = ({ children }: { children: ReactNode }) => <span className="badge 
 const longDate = new Intl.DateTimeFormat('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })
 
 export default function Assinatura() {
-  const { sub, state, loading, refresh } = useSubscription()
+  const { sub, state, loading, failed, refresh } = useSubscription()
   const { salon } = useAuth()
   const [params] = useSearchParams()
   const [months, setMonths] = useState<PixMonths>(1)
@@ -37,6 +37,11 @@ export default function Assinatura() {
 
   const isOwner = !salon || salon.role === 'owner'
   const returned = params.get('retorno')
+
+  // ao abrir a tela, relê a assinatura: se a primeira leitura veio vazia, aqui ela se corrige sozinha
+  useEffect(() => {
+    void refresh()
+  }, [refresh])
 
   // ao voltar do Stripe o webhook pode levar alguns segundos: consulta de novo algumas vezes
   useEffect(() => {
@@ -142,7 +147,12 @@ export default function Assinatura() {
 
       {!loading && !sub && (
         <p className="billing-note" role="status">
-          A assinatura ainda não está disponível para o seu negócio. Quando for ativada, você poderá escolher o plano por aqui.
+          {failed
+            ? 'Não conseguimos carregar a sua assinatura agora.'
+            : 'Não encontramos a assinatura do seu negócio.'}{' '}
+          <button type="button" className="textlink" onClick={() => void refresh()}>
+            Tentar de novo
+          </button>
         </p>
       )}
 
@@ -153,21 +163,16 @@ export default function Assinatura() {
         <p id="pix-months" className="billing-pix__label">
           Se pagar com Pix, quantos meses adiantado?
         </p>
-        <div className="seg" role="radiogroup" aria-labelledby="pix-months">
-          {PIX_MONTHS.map((m) => (
-            <button
-              key={m}
-              type="button"
-              role="radio"
-              aria-checked={months === m}
-              className={`seg__item ${months === m ? 'is-active' : ''}`}
-              onClick={() => setMonths(m)}
-            >
-              {monthsLabel(m)}
-              {PIX_DISCOUNT_PCT[m] > 0 && <small className="seg__off">{PIX_DISCOUNT_PCT[m]}% off</small>}
-            </button>
-          ))}
-        </div>
+        <Tabs
+          label="Meses adiantados no Pix"
+          value={String(months)}
+          onChange={(id) => setMonths(Number(id) as PixMonths)}
+          items={PIX_MONTHS.map((m) => ({
+            id: String(m),
+            label: m === 1 ? 'Mensal' : 'Trimestral',
+            badge: PIX_DISCOUNT_PCT[m] > 0 ? `${PIX_DISCOUNT_PCT[m]}% off` : null,
+          }))}
+        />
         <p className="billing-pix__hint">O Pix vale para o período escolhido e não renova sozinho. O cartão renova todo mês.</p>
       </section>
       )}

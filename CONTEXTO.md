@@ -1,7 +1,9 @@
 # IKIZY: contexto completo do projeto
 
 Documento de passagem: o que é o projeto, como está montado, o que já foi feito, como trabalhar nele e o que falta.
-Atualizado em 08/10/2026. Complementa o [README](README.md), que explica como rodar e configurar Neon e Stripe.
+Atualizado em 09/10/2026. Complementa o [README](README.md), que explica como rodar e configurar Neon e Stripe.
+**Antes de mexer em telas, leia o [plano de experiência](docs/PLANO-DE-EXPERIENCIA.md)** (10/10/2026): diagnóstico, nova organização, perfis e fluxos.
+**Para ir ao ar, siga a [especificação de produção](docs/ESPECIFICACAO-PRODUCAO.md)** (11/10/2026): regras de negócio, telas finais, schema final e serviços externos.
 
 > Sem segredos aqui. Chaves e senhas ficam em `.env.local` (raiz e `apps/app/`, fora do git) e nas variáveis da Vercel.
 
@@ -38,7 +40,8 @@ Planos do IKIZY: Solo R$ 9,90, Studio R$ 29,90, Salão R$ 59,90 (fonte única: `
 | Item | Valor |
 |---|---|
 | Repositório | `https://github.com/evally-crm/ikizy` (o remoto antigo `evally-crm/evally` redireciona) |
-| Neon | projeto `gentle-glade-92407636` ("evally"), org `org-tiny-waterfall-27334723`, branch `production` (ver `.neon`) |
+| Neon | projeto **`lingering-base-71670281` ("ikizy")**, org `org-winter-waterfall-22088107` (Maria Eduarda), região São Paulo (`aws-sa-east-1`), branch `production` (`br-ancient-sunset-b6oxgwr8`). Criado do zero em 11/10/2026 com todas as migrations. Desde 11/10/2026 a Vercel (`ikizy-app`, Production) aponta para ele (`DATABASE_URL`, `NEON_AUTH_BASE_URL`, `VITE_NEON_AUTH_URL`, `VITE_NEON_DATA_API_URL`). O projeto antigo `gentle-glade-92407636` ("evally", org do Daniel) ficou parado; só apagar com aprovação |
+| Neon Auth / Data API | `https://ep-twilight-heart-b66hba33.neonauth.c-2.sa-east-1.aws.neon.tech/neondb/auth` · `https://ep-twilight-heart-b66hba33.apirest.c-2.sa-east-1.aws.neon.tech/neondb/rest/v1` |
 | Vercel | time `dfdudas-projects`: projetos `ikizy-app` (app.ikizy.com e `*.ikizy.com`) e `ikizy-landing` (ikizy.com, www) |
 | DNS | `ikizy.com` registrado e com nameservers na Vercel; curinga `*.ikizy.com` no `ikizy-app` |
 
@@ -60,13 +63,13 @@ Variáveis (só nomes):
 
 ### Migrations
 
-Ficam em `neon/migrations/` e são aplicadas **manualmente, em ordem**, no banco de produção (não há ferramenta automática).
-Como foram aplicadas até agora: um script Node com `pg` que lê `DATABASE_URL_UNPOOLED` do `.env.local` da raiz e roda o arquivo
-inteiro dentro de `begin ... commit` (com `rollback` em erro). Toda migration termina com `notify pgrst, 'reload schema';`
-para a Data API enxergar colunas novas (sem isso o app acusa "coluna não existe").
+Ficam em `neon/migrations/`. Desde `20261024000000_fase1` o banco tem a tabela `schema_migrations` e o script
+`npm run db:migrate` (em `apps/app`) lista o que falta; `npm run db:migrate -- --aplicar` aplica em ordem, cada uma em
+`begin ... commit`. Usa `DATABASE_URL_UNPOOLED` do `.env.local` da raiz.
 
-Boa prática usada: antes de aplicar uma migration com lógica, rodar a migration e um roteiro de testes dentro de uma transação
-que termina em `rollback`, com um salão fictício.
+**Sempre testar antes numa branch do Neon** (cópia da produção): criar a branch, apontar
+`DATABASE_URL_UNPOOLED=<url da branch>` e rodar o script; conferir; só então aplicar na produção.
+Toda migration termina com `notify pgrst, 'reload schema';` para a Data API enxergar colunas novas.
 
 ### Verificações antes de commitar
 
@@ -101,6 +104,7 @@ npm run build
 | `20261020000000_client_file` | ficha completa da cliente (e-mail, Instagram, endereço, profissão, como conheceu, anamnese em jsonb, assinatura do termo), `loyalty_settings`, `loyalty_entries` (selos extras e resgates) e `client_notes` |
 | `20261021000000_client_photos` | fotos de antes e depois na ficha (`client_photos`: miniatura + foto, só membros do salão leem; não passam pela página pública) |
 | `20261023000000_plan_choice` | passo de plano no cadastro: `subscriptions.plan_chosen_at` e `choose_trial_plan()` (teste sem cartão, paga por Pix) |
+| `20261024000000_fase1` | aplicada em 11/10/2026 (testada antes numa branch). No projeto novo `ikizy` todas foram aplicadas do zero; `create_salon(text,text,text)`, que existia só no banco antigo (sem migration), não foi recriada. `schema_migrations`; apaga as campanhas de WhatsApp órfãs e a fidelidade; `appointments.origin` (sistema/site); trava contra dois atendimentos da mesma profissional no mesmo horário (`appointments_no_overlap`); `slug_available()` |
 
 Regras importantes:
 - Toda tabela tem `salon_id` + RLS. Escrita de catálogo/site só `owner`/`manager`; sem assinatura ativa, escrita bloqueada (políticas restritivas).
@@ -134,11 +138,7 @@ Regras importantes:
 ### Editor (`apps/app/src/pages/MeuSite.tsx`)
 
 - Abre **sempre em tela cheia** em telas largas (sem o menu do app); o X minimiza só naquela visita.
-- **Guia em 2 passos** (abre sozinho se o site não está publicado; também por "Abrir guia" ou `?guia=1`):
-  segue exatamente o UX da criação de conta (`pages/auth/Onboarding.tsx`): progresso em tracinhos no topo com voltar e "Pular",
-  "Seu site" em cinza, título grande, opções em pílulas (a escolhida fica preta), "Fazer depois" e o disco preto com seta.
-  Passo 1: paleta + fonte. Passo 2: nome + endereço → publicar. Depois: "Seu site está no ar" (Ver meu site / Completar meu site).
-  Ao lado, **prévia fiel** (mesmo gerador da página real, num iframe dentro de uma moldura de navegador; Computador/Celular).
+- **Sem guia:** o guia de 2 passos foi removido; só existe o editor completo, com a **prévia fiel** ao lado (mesmo gerador da página real, num iframe dentro de uma moldura de navegador; Computador/Celular). O primeiro "Publicar" usa a barra de publicar, com o endereço em "Contato e endereço".
 - **Etapas do editor** (tracinhos no topo com setas ← → e "2 de 4"; botões "Próximo: ..." no fim de cada etapa):
   1. **Página:** Aparência (paleta e fonte), Identidade (logo e capa), Textos, Contato e endereço, O que mostrar (preços, equipe, sinal, agendamento online). Seções começam fechadas.
   2. **Serviços e planos:** serviços agrupados por categoria (abre/fecha), com foto opcional; grupo **Planos por assinatura** com selo "Novidade" (nome, preço/mês, descrição, o que inclui, etiqueta Novidade no site). A cobrança dos planos é combinada por WhatsApp.
@@ -153,6 +153,43 @@ Regras importantes:
 - A cliente escolhe serviço, profissional (ou qualquer uma), dia (semana de 7 dias com setas) e horário livre; informa nome e WhatsApp.
 - `api/booking.ts` (GET horários, POST reserva) + funções do banco com trava contra duas reservas na mesma vaga; cliente reaproveitada pelo telefone; até 3 pedidos em aberto por cliente; limite por IP; campo-isca contra robôs.
 - O pedido entra na agenda como **pendente** para o salão confirmar. Fuso fixo: America/Sao_Paulo.
+
+---
+
+## 5b. Confirmação de e-mail no cadastro (LIGADA)
+
+**Estado em 11/10/2026:** quem se cadastra com e-mail e senha só entra depois de digitar o código de 6 números que chega por e-mail.
+
+Configuração do Neon Auth (branch `production`):
+
+| Opção | Valor | Observação |
+|---|---|---|
+| `require_email_verification` | `true` | sem confirmar, o login é recusado com `email_not_confirmed` |
+| `verify_email_on_sign_up` | `false` | **não tem controle no console nem no MCP**; por isso o app pede o código ele mesmo (abaixo) |
+| `email_verification_method` | `otp` | o app usa código de 6 números, não link |
+| `auto_sign_in_after_verification` | `true` | com o código certo a sessão já abre |
+| SMTP | Resend, `nao-responda@ikizy.com`, nome "IKIZY" | domínio verificado (DKIM, SPF e MX no DNS) |
+| Webhook | ligado, evento `send.otp`, timeout 5 s | aponta para `https://app.ikizy.com/api/neon-auth/webhook` |
+
+Como o e-mail sai:
+- O Neon Auth **não manda** o e-mail padrão: com o webhook `send.otp` ligado ele chama `apps/app/api/neon-auth/webhook.ts`,
+  que confere a assinatura Ed25519 (JWKS do Neon) e envia o e-mail pelo Resend com a API `RESEND_API_KEY` (Vercel, Production).
+- O desenho do e-mail está em `apps/app/api/_lib/authEmail.ts` (mesmo visual de `apps/landing/email/verificar-email.html`; a flor vem de
+  `https://ikizy.com/email/flor.png`). Cobre os tipos `email-verification`, `forget-password` e `sign-in`, com texto simples junto.
+- **Cuidado:** não marque `user.before_create` no webhook. É um evento que bloqueia o cadastro e o endpoint não responde `allowed`.
+- Para voltar ao e-mail padrão do Neon (em inglês), desligue o toggle "Enable Webhooks" no console (Auth → Configuration).
+
+O que o app faz (`AuthProvider.tsx`):
+- `sendCode()` pede o código ao Neon (`emailOtp.sendVerificationOtp`) no cadastro sem sessão, no cadastro de e-mail já existente mas não
+  confirmado, e no login de conta não confirmada. O botão de reenviar da tela do código usa o mesmo caminho.
+- Tela `/verificar-email?email=...` (`pages/auth/VerificarEmail.tsx`): campo do código, reenvio com espera de 60 s, "usar outro e-mail".
+  Com o código certo vai para `/dashboard`; se a sessão não abrir, vai para o login com aviso de "e-mail confirmado".
+- Login com Google não passa por isso (o Google já garante o e-mail).
+
+Pontos de atenção:
+- **E-mail errado no cadastro:** se o Gmail recusa o endereço (bounce), o Resend passa a bloquear novos envios para ele (*Suppressed*)
+  e a pessoa fica na tela do código sem receber nada. Os envios aparecem em Resend → Emails.
+- Contas antigas sem confirmação caem na tela do código ao entrar.
 
 ---
 
@@ -181,7 +218,39 @@ Regras importantes:
 
 ## 8. Estado atual
 
-- `main` e `dev` iguais e em produção (merge `2e61050`): setas entre as etapas, serviços agrupados, planos por assinatura (Novidade), guia sem rolagem, paletas combinadas, guia no UX da criação de conta, tela cheia, vitrine e fotos, agendamento online.
+- 12/10/2026 (lembretes por e-mail, **migration `20261027000000_email_reminders` ainda NÃO aplicada**): cron diário `/api/cron/trial-reminders` (9h de Brasília) manda
+  aviso de teste/Pix/cancelamento acabando (7, 3 e 1 dia), cartão recusado e acesso terminado (R-103, E8, E10, E11). Um aviso por negócio por rodada, sem repetir
+  (`email_log`). O e-mail da dona vem de `POST /api/account/sync-email` (token verificado), chamado pelo app ao entrar; sem ele o negócio não recebe aviso.
+  Precisa de `CRON_SECRET` e `RESEND_API_KEY` na Vercel. Hobby: 2 crons diários (expire-requests e trial-reminders).
+- 12/10/2026 (LGPD e pedidos sem resposta, **migration `20261026000000_lgpd_requests` ainda NÃO aplicada**): `forget_client()` (só a dona; ficha anônima "Cliente removida"
+  se houver atendimentos, apagada se não houver; botão na ficha, pede o nome) e `expire_stale_requests()` chamada pelo cron diário `/api/cron/expire-requests`
+  (`vercel.json`; exige a variável `CRON_SECRET` na Vercel, sem ela a rota responde 503).
+- 12/10/2026 (endurecimento, **migration ainda NÃO aplicada**): `neon/migrations/20261025000000_hardening.sql` (mês fechado no fuso de Brasília,
+  `close_month` confere faturamento, atendimentos e saídas com o banco e exige assinatura ativa, concluir exige forma de pagamento e concluído
+  não se apaga, atendimento só aponta para cliente/profissional/serviço do próprio negócio, `hit_rate_limit`, WhatsApp único por negócio).
+  **Testar antes numa branch do Neon** e só então aplicar (`npm run db:migrate -- --aplicar`). O app e a API já tratam as mensagens novas e
+  seguem funcionando sem a migration (o limitador falha aberto). Financeiro: filtro de datas (`PeriodPicker`, `domain/finance/period.ts`,
+  `buildPeriod`) no lugar do seletor de mês e do mapa de dias; só o mês inteiro fecha. Cabeçalhos de segurança em `apps/app/vercel.json`.
+- 12/10/2026, organização do código (fases 1 a 3, ver [docs/CONVENCOES.md](docs/CONVENCOES.md)): regras da casa em três camadas
+  (`src/domain` puro e testado, `src/data` só busca, telas só apresentam), verificador `npm run check:conventions` e `npm test`
+  (API + domínio). Financeiro refeito: `pages/financeiro/`, `components/finance|charts|ui`, recibo do dia e do mês em folha, mapa de dias.
+  Fase 4 concluída (mesma receita): Meu negócio, Agenda, Clientes e Meu site em `pages/<tela>/`, regras em `domain/{finance,business,agenda,clients,site}`.
+  Os arquivos `dashboard.css`, `calendar.css`, `studio.css`, `sects.css` e `wizard.css` deixaram de existir: cada estilo mora ao lado do seu componente;
+  `pages.css` ficou com 78 linhas e `forms.css` guarda o sistema de formulário (`.form`, `.field`, `.input`, `.switch`).
+- 11/10/2026 (depois), na `main`: confirmação de e-mail **ligada** (seção 5b); primeiros passos virou painel flutuante que recolhe
+  e some ao concluir; **Meu negócio** em abas (Dados, Horário, Serviços, Materiais) e no menu do topo; Pix só de 1 e 3 meses (sem 12);
+  tela de assinatura relê e tenta de novo se a leitura vier vazia.
+- 11/10/2026, Fase 1 do [plano de experiência](docs/PLANO-DE-EXPERIENCIA.md) em andamento, já na `main`: Agenda é a tela
+  inicial (o Início com números de exemplo saiu), lista do dia no celular, pedidos com Confirmar/Recusar, barra do celular
+  com [+], **Meu negócio** (`/dashboard/negocio`: dados, horário, serviços, custos), cadastro em 3 telas (nome na conta,
+  "Seu negócio" numa tela, teste sem cartão no plano certo), login que volta para onde ia, Caixa de hoje no Financeiro,
+  Primeiros passos na agenda e planos sem promessas. Migration `fase1` aplicada em produção. Falta: os serviços externos
+  (seção 5 da [especificação](docs/ESPECIFICACAO-PRODUCAO.md)).
+- 09/10/2026, já na `main`: confirmação de e-mail por código pronta no app mas desligada no Neon (seção 5b); seleção de texto em vermelho
+  (landing e sistema); menu próprio do botão direito no sistema (`components/AppContextMenu.tsx`: novo agendamento, nova cliente,
+  seções, ver o site, copiar link, recarregar, sair; campos de texto e Shift + botão direito mantêm o menu do navegador;
+  `/dashboard/clientes?nova=1` abre o cadastro de cliente, como `/dashboard/agenda?nova=1` já fazia).
+- Antes disso, `main` e `dev` iguais e em produção (merge `2e61050`): setas entre as etapas, serviços agrupados, planos por assinatura (Novidade), guia sem rolagem, paletas combinadas, guia no UX da criação de conta, tela cheia, vitrine e fotos, agendamento online.
 - Salão de teste: slug `salao` (12 serviços, 1 profissional), site publicado pela usuária durante os testes.
 
 ---
@@ -197,7 +266,7 @@ Hoje: a cliente escolhe serviço, profissional, dia e horário livre, informa no
 
 | Prioridade | Melhoria | Por quê / como |
 |---|---|---|
-| P1 | **Aviso de novo pedido para o salão** | Hoje o pedido só aparece na agenda. Mostrar no sininho do app (contagem de pendentes), destacar na Agenda e no Início ("3 pedidos para confirmar"), e opcionalmente e-mail/push. Sem isso o salão perde pedidos. |
+| ~~P1~~ | **Aviso de novo pedido para o salão** (feito) | `components/PendingRequests.tsx`: sininho do topo com contagem e lista, faixa "N pedidos do site para confirmar" no Início e na Agenda, contagem no título da aba e aviso rápido (toast) quando chega pedido com o sistema aberto. Pedido = atendimento `pendente` daqui para a frente (os criados no sistema já entram `confirmado`); busca a cada 60 s e ao voltar para a aba (`pending` no `AgendaProvider`). Clicar abre `/dashboard/agenda?pedido=id`, que vai ao dia e abre o atendimento (Confirmar já existe lá). Falta: e-mail/push com o sistema fechado (depende do PWA). |
 | P1 | **Confirmar/recusar em um toque** | Lista "Pedidos online" com botões Confirmar e Recusar; ao confirmar, abrir o WhatsApp da cliente com mensagem pronta ("Seu horário de X, dia Y às Z, está confirmado"). |
 | P1 | **Confirmação automática (opcional)** | Chave "confirmar sozinho" por salão: pedidos dentro do expediente já entram como confirmados. |
 | P1 | **Link da cliente para ver, remarcar ou cancelar** | Após o pedido, um link único (token) com o status; cancelar libera a vaga; remarcar reaproveita a escolha de horário. Regra de antecedência para cancelar. |
@@ -249,7 +318,8 @@ Hoje: a cliente escolhe serviço, profissional, dia e horário livre, informa no
 
 | Prioridade | Melhoria | Por quê / como |
 |---|---|---|
-| P1 | **Checklist de primeiros passos no Início** | "Defina seu horário → cadastre serviços → publique o site → ligue o agendamento". Guia o salão até ter valor no primeiro dia (a GlossGenius faz isso). |
+| ~~P1~~ | **Ligar a confirmação de e-mail** (feito) | Ligada em 11/10/2026: código por e-mail (Resend, webhook `send.otp`). Passo a passo e cuidados na seção 5b. |
+| ~~P1~~ | **Checklist de primeiros passos** (feito) | Painel flutuante no canto (`components/FirstSteps.tsx`), em todas as telas do dashboard: horário, preços, site e agendamento online. Recolhe num botão com anel de progresso, lembra a escolha por negócio e some sozinho ao concluir (mostra "Tudo pronto!" por uns 4 s). Só dona e gerente; some dentro do editor do site. |
 | P1 | **App instalável (PWA) + notificações push** | Base para avisar novos pedidos e lembretes. |
 | P2 | **Indique e ganhe** | Como o "Give $30, get $30" da GlossGenius: link de indicação, crédito na assinatura das duas. Crescimento barato. |
 | P2 | **Testes de ponta a ponta** | Playwright para o fluxo cadastro → site → agendamento; hoje há só testes das funções do servidor (81). |

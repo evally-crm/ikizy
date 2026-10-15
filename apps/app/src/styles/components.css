@@ -236,8 +236,7 @@
   border-radius: 50%;
   background: var(--brand-900);
   color: var(--blush);
-  font-family: var(--font-serif);
-  font-style: italic;
+  font-family: var(--font-sans);
   font-size: 18px;
 }
 .avatar--sm {
@@ -383,4 +382,265 @@
     bottom: -26px;
     padding-bottom: 14px;
   }
+}
+
+/* ---------- pedidos do site (sininho, Início e Agenda) ---------- */
+.pendrow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 56px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--ink-500);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.pendrow:hover,
+.pendrow:focus-visible {
+  background: var(--bg);
+  outline: none;
+}
+.pendrow__text {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+.pendrow__name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-900);
+}
+.pendrow__meta {
+  overflow: hidden;
+  font-size: 12px;
+  color: var(--ink-500);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pendbanner {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 16px;
+  border-radius: var(--radius-lg);
+  background: var(--white);
+  box-shadow: inset 0 0 0 1.5px var(--brand-500), var(--shadow-sm);
+}
+.pendbanner--closed {
+  padding: 10px 12px;
+}
+.pendbanner__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 0 4px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+.pendbanner__head:disabled {
+  cursor: default;
+}
+.pendbanner__headtext {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+.pendbanner__chev {
+  flex: none;
+  color: var(--ink-500);
+  transition: transform 0.15s;
+}
+.pendbanner__head[aria-expanded='true'] .pendbanner__chev {
+  transform: rotate(180deg);
+}
+.pendbanner__icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--brand-500);
+  color: var(--white);
+}
+.pendbanner__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink-900);
+}
+.pendbanner__sub {
+  font-size: 13px;
+  color: var(--ink-500);
+}
+.pendbanner__list {
+  display: grid;
+  gap: 2px;
+}
+.pendrow-wrap {
+  display: grid;
+  gap: 2px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+}
+.pendrow-wrap:last-child {
+  border-bottom: 0;
+}
+.pendrow__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 0 12px;
+}
+.pendrow__yes,
+.pendrow__no {
+  min-height: 36px;
+  padding: 0 16px;
+  border-radius: var(--radius-pill);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.pendrow__yes {
+  border: 0;
+  background: var(--brand-900);
+  color: var(--white);
+}
+.pendrow__no {
+  border: 1px solid var(--line-strong);
+  background: transparent;
+  color: var(--ink-700);
+}
+.pendbanner__more {
+  padding: 0 12px;
+  font-size: 12px;
+  color: var(--ink-500);
+}
+@media (min-width: 768px) {
+  .pendbanner__list {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 8px 16px;
+  }
+  .pendrow-wrap {
+    border-bottom: 0;
+  }
+}
+
+/* variações pequenas dos componentes base */
+.textlink {
+  flex: none;
+  font-size: 13px;
+  color: var(--ink-500);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.textlink:hover {
+  color: var(--brand-700);
+}
+
+.chevbtn {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--ink-700);
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.chevbtn:hover {
+  background: var(--brand-900);
+  color: var(--white);
+}
+
+.chips--scroll {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.chips--scroll .chip {
+  flex: none;
+  min-height: 34px;
+  padding: 0 14px;
+  background: var(--bg);
+}
+
+.chips--scroll .chip[aria-pressed='true'] {
+  background: var(--brand-900);
+}
+
+.chip--sm {
+  min-height: 32px;
+  gap: 4px;
+  padding: 0 12px;
+  font-size: 12px;
+}
+
+.chip:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.card__cta {
+  align-self: flex-start;
+  margin-top: 14px;
+}
+
+.input--sm {
+  min-height: 40px;
+  padding-right: 4px;
+}
+
+.input__add {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--brand-900);
+  color: var(--white);
+}
+
+.chevbtn.is-done {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+button.textlink {
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+button.textlink:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* avatar grande do perfil da cliente */
+.avatar--lg {
+  width: 52px;
+  height: 52px;
+  background: linear-gradient(135deg, var(--brand-500), var(--brand-900));
+  color: var(--white);
+  font-family: var(--font-sans);
+  font-size: 24px;
 }

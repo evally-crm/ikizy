@@ -99,7 +99,7 @@ function PlanStep() {
       <div className="wiz">
         <p className="wiz__eyebrow">Último passo</p>
         <h1 className="auth__title">
-          Escolha o seu <Em>plano</Em>
+          <Em>Escolha</Em> o seu plano
         </h1>
         <p className="card__sub">
           Os primeiros {TRIAL_DAYS} dias são grátis em qualquer plano
@@ -159,7 +159,7 @@ function PlanStep() {
             <QrCode size={20} aria-hidden="true" />
             <span>
               <strong>{busy === 'pix' ? 'Salvando…' : 'Pix, sem cartão'}</strong>
-              <small>Teste sem cadastrar cartão. Antes do fim do teste, você paga por Pix (1, 3 ou 12 meses).</small>
+              <small>Teste sem cadastrar cartão. Antes do fim do teste, você paga por Pix (1 ou 3 meses).</small>
             </span>
           </button>
         </div>

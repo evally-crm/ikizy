@@ -7,6 +7,8 @@ interface SubscriptionState {
   sub: SubscriptionInfo | null
   state: AccessState
   loading: boolean
+  /** a leitura da assinatura falhou (erro de rede ou de acesso), diferente de "ainda não existe" */
+  failed: boolean
   refresh: () => Promise<void>
 }
 
@@ -38,11 +40,23 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const salonId = salon?.id
   const [sub, setSub] = useState<SubscriptionInfo | null>(() => (isNeonConfigured ? null : demoSubscription()))
   const [loading, setLoading] = useState(isNeonConfigured)
+  const [loadFailed, setLoadFailed] = useState(false)
 
   const load = useCallback(async () => {
     if (!neon || !salonId) return
-    const { data, error } = await neon.from('subscriptions').select('*').eq('salon_id', salonId).maybeSingle()
-    setSub(!error && data ? parseSubscription(data as Record<string, unknown>) : null)
+    // todo salão nasce com uma linha de assinatura: vazio ou erro quase sempre é a sessão ainda não pronta, então tenta mais duas vezes
+    let row: Record<string, unknown> | null = null
+    let failed = false
+    for (let attempt = 0; attempt < 3; attempt++) {
+      if (attempt > 0) await new Promise((resolve) => window.setTimeout(resolve, 1200 * attempt))
+      const { data, error } = await neon.from('subscriptions').select('*').eq('salon_id', salonId).maybeSingle()
+      if (error) console.warn('assinatura: não foi possível ler', error)
+      failed = Boolean(error)
+      row = !error && data ? (data as Record<string, unknown>) : null
+      if (row) break
+    }
+    setSub(row ? parseSubscription(row) : null)
+    setLoadFailed(!row && failed)
     setLoading(false)
   }, [salonId])
 
@@ -55,9 +69,10 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       sub,
       state: sub ? accessState(sub) : 'unknown',
       loading,
+      failed: loadFailed,
       refresh: load,
     }),
-    [sub, loading, load],
+    [sub, loading, loadFailed, load],
   )
 
   return <SubscriptionContext.Provider value={value}>{children}</SubscriptionContext.Provider>

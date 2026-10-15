@@ -86,17 +86,19 @@ async function rejects(p: Promise<unknown>, status: number, code?: string) {
 describe('parseCheckoutInput', () => {
   it('aceita cartão e Pix com meses válidos', () => {
     assert.deepEqual(parseCheckoutInput({ plan: 'studio', method: 'card' }), { plan: 'studio', method: 'card', months: 1, from: 'assinatura' })
-    assert.deepEqual(parseCheckoutInput({ plan: 'salao', method: 'pix', months: 12 }), { plan: 'salao', method: 'pix', months: 12, from: 'assinatura' })
+    assert.deepEqual(parseCheckoutInput({ plan: 'salao', method: 'pix', months: 3 }), { plan: 'salao', method: 'pix', months: 3, from: 'assinatura' })
     assert.equal(parseCheckoutInput({ plan: 'solo', method: 'card', from: 'onboarding' }).from, 'onboarding')
   })
   it('rejeita plano, forma e período inválidos', () => {
     assert.throws(() => parseCheckoutInput({ plan: 'gratis', method: 'card' }), HttpError)
     assert.throws(() => parseCheckoutInput({ plan: 'solo', method: 'boleto' }), HttpError)
     assert.throws(() => parseCheckoutInput({ plan: 'solo', method: 'pix', months: 2 }), HttpError)
+    // 12 meses não existe mais (a landing só tem mensal e trimestral)
+    assert.throws(() => parseCheckoutInput({ plan: 'solo', method: 'pix', months: 12 }), HttpError)
     assert.throws(() => parseCheckoutInput(null), HttpError)
   })
   it('ignora "months" no cartão', () => {
-    assert.equal(parseCheckoutInput({ plan: 'solo', method: 'card', months: 12 }).months, 1)
+    assert.equal(parseCheckoutInput({ plan: 'solo', method: 'card', months: 3 }).months, 1)
   })
 })
 
@@ -113,9 +115,6 @@ describe('createCheckout', () => {
     assert.deepEqual(s.allowed_payment_method_types, ['pix'])
     assert.equal(s.line_items[0].price_data.currency, 'brl')
     assert.equal(s.line_items[0].price_data.unit_amount, 7625) // 3 meses com 15% de desconto
-    // 12 meses: o servidor cobra o valor com desconto
-    await createCheckout(deps(fakeDb().db, stripe), user, { plan: 'studio', method: 'pix', months: 12, from: 'assinatura' })
-    assert.equal((created[1] as Record<string, any>).line_items[0].price_data.unit_amount, 34086)
     assert.deepEqual(s.metadata, { kind: 'pix_prepaid', salon_id: 'salon-1', plan: 'studio', months: '3' })
     assert.equal(s.customer, 'cus_new_1')
     assert.deepEqual(calls.setCustomerId, ['cus_new_1'])
@@ -391,12 +390,12 @@ describe('accessState', () => {
     assert.equal(pixAmountCents('studio', 3), 7625)
     assert.equal(pixAmountCents('salao', 3), 15275)
   })
-  it('Pix de 12 meses tem 5% de desconto, sempre em centavos inteiros', () => {
-    assert.equal(pixFullCents('solo', 12), 11880)
-    assert.equal(pixAmountCents('solo', 12), 11286)
-    assert.equal(pixAmountCents('studio', 12), 34086)
-    assert.equal(pixAmountCents('salao', 12), 68286)
-    for (const p of ['solo', 'studio', 'salao'] as const) assert.ok(Number.isInteger(pixAmountCents(p, 12)))
+  it('Pix de 1 e 3 meses: valor cheio e com 15% de desconto, sempre em centavos inteiros', () => {
+    assert.equal(pixFullCents('solo', 3), 2970)
+    assert.equal(pixAmountCents('solo', 1), 990)
+    for (const p of ['solo', 'studio', 'salao'] as const) {
+      for (const m of PIX_MONTHS) assert.ok(Number.isInteger(pixAmountCents(p, m)))
+    }
   })
 })
 

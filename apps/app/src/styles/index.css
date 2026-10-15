@@ -3,11 +3,7 @@
 @import './components.css';
 @import './layout.css';
 @import './pages.css';
-@import './calendar.css';
 @import './controls.css';
-@import './dashboard.css';
-@import './studio.css';
-@import './sects.css';
-@import './wizard.css';
+@import './forms.css';
 @import './auth.css';
 @import './billing.css';

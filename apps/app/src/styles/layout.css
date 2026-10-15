@@ -38,48 +38,79 @@
   gap: 10px;
   margin-left: auto;
 }
-.topsearch {
-  display: none;
-  align-items: center;
-  gap: 8px;
-  width: 240px;
-  min-height: 42px;
-  padding: 0 16px;
-  border-radius: var(--radius-pill);
-  background: var(--white);
-  box-shadow: var(--shadow-sm);
-  color: var(--ink-500);
-}
-.topsearch input {
-  flex: 1;
-  min-width: 0;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: var(--ink-900);
-  font: inherit;
-  font-size: 14px;
-}
-.topsearch input::placeholder {
-  color: var(--ink-500);
-}
-.topsearch:focus-within {
-  box-shadow: 0 0 0 2px var(--pink-300);
-}
 .notif {
   position: relative;
 }
-.notif__dot {
+.notif__count {
   position: absolute;
-  top: 10px;
-  right: 11px;
-  width: 8px;
-  height: 8px;
+  top: -4px;
+  right: -6px;
+  display: grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
   border: 2px solid var(--white);
-  border-radius: 50%;
+  border-radius: var(--radius-pill);
   background: var(--brand-500);
+  color: var(--white);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
   box-sizing: content-box;
 }
+
+/* pedidos do site: lista do sininho */
+.pendbell {
+  position: relative;
+}
+.pendpop {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 40;
+  width: min(360px, calc(100vw - 24px));
+  padding: 8px;
+  border-radius: 22px;
+  background: var(--white);
+  box-shadow: var(--shadow-md);
+}
+/* no celular o sininho fica à direita do logo: a lista ocupa a largura da tela */
+@media (max-width: 1023px) {
+  .pendbell {
+    position: static;
+  }
+  .pendpop {
+    right: 12px;
+    left: 12px;
+    width: auto;
+    top: calc(100% - 4px);
+  }
+}
+.pendpop__head {
+  padding: 10px 12px 8px;
+}
+.pendpop__title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink-900);
+}
+.pendpop__sub {
+  font-size: 12px;
+  color: var(--ink-500);
+}
+.pendpop__list {
+  display: grid;
+  gap: 2px;
+  max-height: min(420px, 60vh);
+  overflow-y: auto;
+}
+.pendpop__empty {
+  padding: 4px 12px 12px;
+  font-size: 13px;
+  color: var(--ink-500);
+}
+
 .user {
   display: flex;
   align-items: center;
@@ -94,9 +125,6 @@
 }
 .user:hover .user__name {
   text-decoration: underline;
-}
-.user__text {
-  display: none;
 }
 .user__name {
   font-size: 14px;
@@ -197,15 +225,83 @@
 .bottomnav__link {
   display: grid;
   place-items: center;
+  align-content: center;
+  gap: 2px;
   border: 0;
   border-radius: var(--radius-pill);
   background: transparent;
   color: var(--ink-700);
+  font: inherit;
+  font-size: 10.5px;
+  font-weight: 500;
+  line-height: 1;
   transition: background-color 0.15s, color 0.15s;
 }
 .bottomnav__link.active {
   background: var(--brand-900);
   color: var(--white);
+}
+/* novo agendamento: a ação mais repetida do dia, no meio da barra */
+.bottomnav__add {
+  display: grid;
+  place-items: center;
+  justify-self: center;
+  width: 48px;
+  height: 48px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--brand-500);
+  color: var(--white);
+  box-shadow: 0 8px 18px -8px rgba(191, 12, 34, 0.7);
+  cursor: pointer;
+}
+.bottomnav__add:active {
+  transform: scale(0.96);
+}
+
+/* teste grátis: uma linha discreta no menu, em vez do cartão grande no topo da tela */
+.trialline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  background: var(--brand-tint);
+  color: var(--brand-700);
+  font-size: 13px;
+  font-weight: 500;
+}
+.trialline span {
+  text-decoration: underline;
+}
+
+/* menu do avatar (computador) */
+.usermenu {
+  position: relative;
+}
+.popover--list {
+  grid-template-columns: 1fr;
+  width: 260px;
+}
+.popover--list .trialline {
+  margin-bottom: 4px;
+}
+button.popover__item {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.popover__item--muted {
+  color: var(--ink-500);
+}
+.topbar__add {
+  display: none;
 }
 
 .more-grid {
@@ -223,7 +319,11 @@
   border-radius: var(--radius-md);
   background: var(--bg);
   color: var(--ink-900);
+  border: 0;
+  font: inherit;
   font-weight: 500;
+  text-align: left;
+  cursor: pointer;
 }
 .more-grid__item.active {
   background: var(--brand-900);
@@ -236,7 +336,10 @@
     background: transparent;
     backdrop-filter: none;
   }
+  /* logo à esquerda, menu realmente no centro da página, ações à direita */
   .topbar__inner {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     height: var(--topbar-h);
     padding-top: 0;
     padding-bottom: 0;
@@ -244,8 +347,11 @@
   .pillnav {
     display: flex;
     align-items: center;
-    gap: 4px;
-    margin: 0 auto;
+    gap: 2px;
+    margin: 0;
+  }
+  .topbar__actions {
+    justify-self: end;
   }
   .pillnav__link {
     position: relative;
@@ -277,16 +383,17 @@
   .bottomnav {
     display: none;
   }
+  .topbar__add {
+    display: inline-flex;
+  }
   .content {
     padding-bottom: var(--content-pb);
   }
 }
 
-@media (min-width: 1280px) {
-  .topsearch {
-    display: flex;
-  }
-  .user__text {
-    display: block;
-  }
+/* nome e negócio no topo do menu do avatar */
+.popover__who {
+  padding: 10px 14px 10px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--line);
 }

@@ -7,6 +7,7 @@ import { ptBR } from 'date-fns/locale'
 
 export type MessageKind =
   | 'confirmacao'
+  | 'recusa'
   | 'lembrete'
   | 'hoje'
   | 'pos'
@@ -18,6 +19,7 @@ export type MessageKind =
 
 export const MESSAGE_LABEL: Record<MessageKind, string> = {
   confirmacao: 'Confirmar horário',
+  recusa: 'Não vai dar',
   lembrete: 'Lembrete da véspera',
   hoje: 'Tudo certo para hoje?',
   pos: 'Pós-atendimento',
@@ -29,7 +31,7 @@ export const MESSAGE_LABEL: Record<MessageKind, string> = {
 }
 
 /** mensagens ligadas a um horário marcado */
-export const APPOINTMENT_KINDS: MessageKind[] = ['confirmacao', 'lembrete', 'hoje', 'pos', 'falta']
+export const APPOINTMENT_KINDS: MessageKind[] = ['confirmacao', 'recusa', 'lembrete', 'hoje', 'pos', 'falta']
 /** mensagens de relacionamento com a cliente */
 export const CLIENT_KINDS: MessageKind[] = ['manutencao', 'sumida', 'aniversario', 'livre']
 
@@ -61,6 +63,8 @@ export function renderMessage(kind: MessageKind, ctx: MessageContext): string {
   switch (kind) {
     case 'confirmacao':
       return `Oi, ${nome}! Tudo bem? 😊\n\nSeu horário está marcado aqui no ${salao}:\n📅 ${quando}\n💅 ${servico}\n\nPode me confirmar se está tudo certo?`
+    case 'recusa':
+      return `Oi, ${nome}! Recebi seu pedido de ${servico} para ${quando}, mas infelizmente não vou conseguir te atender nesse horário. 😕\n\nPosso te sugerir outro? Me fala o melhor dia para você.${agendar}`
     case 'lembrete':
       return `Oi, ${nome}! Passando para lembrar do seu horário amanhã:\n📅 ${quando}\n💅 ${servico}\n\nVocê confirma? Se precisar remarcar, é só me avisar por aqui. 💕`
     case 'hoje':
@@ -94,6 +98,8 @@ export function suggestForAppointment(status: string, date: string, today: strin
   if (status === 'pendente') return 'confirmacao'
   if (status === 'concluido') return 'pos'
   if (status === 'faltou') return 'falta'
+  // pedido recusado ou horário desmarcado pelo salão: avisar e oferecer outro
+  if (status === 'cancelado') return 'recusa'
   if (date === today) return 'hoje'
   if (date === tomorrow) return 'lembrete'
   return 'confirmacao'

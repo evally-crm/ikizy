@@ -3,6 +3,9 @@ import { createRemoteJWKSet, jwtVerify } from 'jose'
 import Stripe from 'stripe'
 import { HttpError, type BillingDb, type Membership, type SubscriptionRow } from './billing.js'
 import type { BookingDb, BookingResult, Slot } from './booking.js'
+import { FROM } from './authEmail.js'
+import type { CronDb } from './cron.js'
+import type { PlannedReminder, ReminderCandidate, ReminderDb, SendEmail } from './reminders.js'
 import type { PublicSite } from './siteHtml.js'
 
 /** lê uma variável de ambiente obrigatória (configurada na Vercel, nunca no código) */
@@ -158,7 +161,77 @@ export function createBookingDb(): BookingDb {
       }[]
       return rows[0].r
     },
+    async limited(bucket, max, windowSeconds) {
+      const rows = (await sql`select public.hit_rate_limit(${bucket}, ${max}, ${windowSeconds}) as blocked`) as { blocked: boolean }[]
+      return rows[0]?.blocked === true
+    },
   }
+}
+
+/** tarefas automáticas (cron): conexão de dono, só no servidor */
+export function createCronDb(): CronDb {
+  const sql = neon(env('DATABASE_URL'))
+  return {
+    async expireStaleRequests() {
+      const rows = (await sql`select public.expire_stale_requests() as n`) as { n: number }[]
+      return Number(rows[0]?.n ?? 0)
+    },
+  }
+}
+
+/** avisos de cobrança por e-mail (cron): lista, reserva e devolve os envios */
+export function createReminderDb(): ReminderDb {
+  const sql = neon(env('DATABASE_URL'))
+  return {
+    async candidates() {
+      const rows = (await sql`
+        select s.salon_id, sa.name, s.notify_email, s.status, s.billing_method, s.cancel_at_period_end, s.access_until
+        from public.subscriptions s join public.salons sa on sa.id = s.salon_id
+        where s.notify_email is not null
+          and (s.status = 'past_due' or (s.access_until > now() - interval '4 days' and s.access_until < now() + interval '8 days'))`) as Row[]
+      return rows.map(
+        (r): ReminderCandidate => ({
+          salonId: r.salon_id as string,
+          salonName: r.name as string,
+          email: r.notify_email as string | null,
+          status: r.status as ReminderCandidate['status'],
+          method: r.billing_method as ReminderCandidate['method'],
+          cancelAtPeriodEnd: r.cancel_at_period_end as boolean,
+          accessUntil: new Date(r.access_until as string),
+        }),
+      )
+    },
+    async claim(r: PlannedReminder) {
+      const rows = (await sql`
+        insert into public.email_log (key, salon_id, to_email, template)
+        values (${r.key}, ${r.salonId}::uuid, ${r.to}, ${r.kind})
+        on conflict (key) do nothing returning key`) as Row[]
+      return rows.length === 1
+    },
+    async release(key) {
+      await sql`delete from public.email_log where key = ${key}`
+    },
+  }
+}
+
+/** manda um e-mail transacional pelo Resend (a chave fica só na Vercel) */
+export const sendEmail: SendEmail = async ({ to, subject, html, text }) => {
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { authorization: `Bearer ${env('RESEND_API_KEY')}`, 'content-type': 'application/json' },
+    body: JSON.stringify({ from: FROM, to: [to], subject, html, text }),
+  })
+  if (!res.ok) throw new Error(`resend ${res.status} ${await res.text()}`)
+}
+
+/** grava o e-mail da dona para os avisos; só quem é dona do negócio muda a própria assinatura */
+export async function setNotifyEmail(userId: string, email: string): Promise<void> {
+  const sql = neon(env('DATABASE_URL'))
+  await sql`
+    update public.subscriptions s set notify_email = ${email}
+    from public.members m
+    where m.salon_id = s.salon_id and m.user_id = ${userId} and m.role = 'owner'
+      and s.notify_email is distinct from ${email}`
 }
 
 // ---------------------------------------------------------------- respostas HTTP

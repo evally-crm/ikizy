@@ -1,3 +1,4 @@
+import './ClientFile.css'
 import { useState, type FormEvent, type KeyboardEvent } from 'react'
 import { format, isAfter } from 'date-fns'
 import { ptBR } from 'date-fns/locale'

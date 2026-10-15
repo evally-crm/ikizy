@@ -8,7 +8,7 @@ export const LINKS = {
 
 /** textos dos botões de cadastro: deixam claro que é gestão de negócio de beleza, simples e grátis para testar */
 export const CTA = {
-  main: 'Organizar meu salão grátis',
+  main: 'Começar grátis',
   short: 'Teste grátis',
   hint: '30 dias grátis, sem cartão.',
 } as const
@@ -22,6 +22,13 @@ export const COMPANY = {
   updatedAt: '7 de outubro de 2026',
 } as const
 
+/** redes da IKIZY no rodapé: só aparecem as que têm endereço preenchido (ex.: 'https://instagram.com/ikizy') */
+export const SOCIALS = [
+  { id: 'instagram', label: 'Instagram', url: '' },
+  { id: 'tiktok', label: 'TikTok', url: '' },
+  { id: 'whatsapp', label: 'WhatsApp', url: '' },
+] as const
+
 export const NAV = [
   { href: '/#recursos', label: 'Recursos' },
   { href: '/#como-funciona', label: 'Como funciona' },
@@ -29,4 +36,4 @@ export const NAV = [
   { href: '/#contato', label: 'Contato' },
 ] as const
 
-export const TAGLINE = 'Estética, elegância e autenticidade com a gestão mais simples para negócios de beleza.'
+export const TAGLINE = 'Estética, elegância e autenticidade com gestão simples e completa para negócios de beleza.'

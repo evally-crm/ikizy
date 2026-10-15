@@ -1,3 +1,4 @@
+import './BulkMessageDialog.css'
 import { useState } from 'react'
 import { format } from 'date-fns'
 import { ArrowLeft, Check, Copy, MessageCircle, X } from 'lucide-react'

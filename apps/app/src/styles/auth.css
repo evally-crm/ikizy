@@ -33,7 +33,7 @@
   background: rgba(255, 255, 255, 0.9);
 }
 
-/* celular: o rosto fica bem apagado atrás do formulário, só como textura */
+/* celular: o rosto fica bem apagado e só embaixo, longe dos textos; o cartão fica centralizado na tela */
 .auth__art {
   position: absolute;
   inset: 0;
@@ -41,7 +41,25 @@
   width: 100%;
   height: 100%;
   color: var(--ink-900);
-  opacity: 0.18;
+  opacity: 0.14;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, transparent 62%, #000 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, transparent 62%, #000 100%);
+}
+@media (max-width: 1023px) {
+  .auth {
+    place-items: center;
+  }
+  /* celular: tudo dentro de um cartão de vidro, com a marca e o link do topo dentro dele */
+  .auth__box {
+    gap: 22px;
+    padding: 22px 20px 26px;
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    border-radius: 32px;
+    background: rgba(255, 255, 255, 0.42);
+    box-shadow: 0 24px 60px -30px rgba(14, 13, 13, 0.25);
+    -webkit-backdrop-filter: blur(18px);
+    backdrop-filter: blur(18px);
+  }
 }
 
 /* desktop: painel claro com o formulário à esquerda e o rosto em pontos ocupando o lado direito */
@@ -61,6 +79,8 @@
     inset: 0 0 0 42%;
     width: 58%;
     opacity: 1;
+    -webkit-mask-image: none;
+    mask-image: none;
   }
   .auth .auth__box {
     align-self: center;
@@ -89,6 +109,28 @@
 .auth__toplink {
   font-size: 16px;
   color: var(--ink-700);
+}
+/* X de fechar: só o traço, sem círculo nem borda, na mesma cor do link "Entrar" das outras telas */
+.auth__close {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  margin-right: -4px;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--ink-700);
+  cursor: pointer;
+}
+.auth__close:hover {
+  color: var(--brand-700);
+}
+.auth__close:focus-visible {
+  outline: 2px solid var(--brand-700);
+  outline-offset: 2px;
+  border-radius: 6px;
 }
 .auth__toplink:hover {
   color: var(--brand-700);
@@ -121,6 +163,15 @@
   line-height: 1.08;
   letter-spacing: -0.035em;
   text-wrap: balance;
+}
+/* títulos como o "Escolha seu plano" do site: a primeira palavra em cinza, numa linha só dela, e o resto em preto */
+.auth__title .em {
+  display: block;
+  font-family: inherit;
+  font-style: normal;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  color: #a3a3a8;
 }
 .auth__switch {
   margin-top: 8px;
@@ -166,15 +217,12 @@
   background: var(--white);
 }
 
-/* campos: o destaque da tela. Pílulas brancas com sombra suave; o rótulo fica só para leitores de tela */
+/* campos: o destaque da tela. Pílulas brancas com sombra suave; o nome do campo fica sempre visível em cima */
 .auth .field__label {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
+  margin: 0 0 6px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-700);
 }
 .auth .input {
   gap: 10px;
@@ -623,4 +671,150 @@
   .auth__ico {
     background: var(--white);
   }
+}
+/* cadastro em uma tela: link do site, perguntas curtas */
+.wiz__link {
+  margin: -4px 0 0 18px;
+  font-size: 13px;
+  color: var(--ink-500);
+}
+.wiz__link strong {
+  color: var(--ink-900);
+  font-weight: 500;
+}
+.wiz__link .textlink {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--brand-700);
+}
+.wiz__warn {
+  margin: -6px 0 0 18px;
+  color: var(--brand-500);
+}
+.wiz__q {
+  margin: 10px 0 -2px 4px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ink-900);
+}
+
+/* escolha do plano no cadastro: igual à lista do site (o marcado fica branco, os outros cinza e apagados) */
+.auth .plans {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  margin: 6px 0 0;
+  padding: 0;
+  border: 0;
+}
+.plans__legend {
+  margin: 0 0 8px 18px;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-700);
+}
+.auth .plan {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  border-radius: 20px;
+  background: rgba(14, 13, 13, 0.07);
+  opacity: 0.6;
+  cursor: pointer;
+  transition: background-color 0.25s, opacity 0.25s;
+}
+.auth .plan:hover {
+  opacity: 0.85;
+}
+.auth .plan:has(input:checked) {
+  background: var(--white);
+  opacity: 1;
+}
+.auth .plan input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.plan__radio {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1.5px solid rgba(14, 13, 13, 0.25);
+  border-radius: 50%;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+.auth .plan:has(input:checked) .plan__radio {
+  border-color: var(--ink-900);
+  background: var(--ink-900);
+}
+.auth .plan:has(input:checked) .plan__radio::after {
+  content: '';
+  width: 9px;
+  height: 5px;
+  margin-top: -2px;
+  border-left: 1.5px solid var(--white);
+  border-bottom: 1.5px solid var(--white);
+  transform: rotate(-45deg);
+}
+.auth .plan:has(input:focus-visible) {
+  outline: 2px solid #800513;
+  outline-offset: 3px;
+}
+.auth .plan__info,
+.auth .plan__price {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.auth .plan__price {
+  align-items: flex-end;
+}
+.auth .plan__info b,
+.auth .plan__price b {
+  font-size: 17px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  color: var(--ink-900);
+}
+.auth .plan__info small,
+.auth .plan__price small {
+  font-size: 12px;
+  color: var(--ink-500);
+}
+.plan__tag {
+  position: absolute;
+  top: -10px;
+  right: 18px;
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  background: #800513;
+  font-size: 11px;
+  color: var(--white);
+}
+.auth .plans__note {
+  margin: 0;
+  font-size: 12px;
+  text-align: center;
+  color: var(--ink-500);
+}
+
+.wiz__dot {
+  width: 18px;
+  height: 18px;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  border-radius: 50%;
+}
+
+.wiz__opt[aria-pressed='true'] .wiz__dot {
+  border-color: rgba(255, 255, 255, 0.6);
 }

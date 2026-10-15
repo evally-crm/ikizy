@@ -2,12 +2,12 @@
  * Preços exibidos na landing. A cobrança real vem de apps/app/src/lib/plans.ts; o teste
  * apps/app/api/_lib/billing.test.ts confere que os dois arquivos estão com os mesmos valores.
  */
-export type PixMonths = 1 | 3 | 12
+export type PixMonths = 1 | 3
 
-export const PIX_MONTHS: PixMonths[] = [1, 3, 12]
+export const PIX_MONTHS: PixMonths[] = [1, 3]
 
 /** desconto (em %) de quem paga mais meses adiantado no Pix (igual ao de apps/app/src/lib/plans.ts) */
-export const PIX_DISCOUNT_PCT: Record<PixMonths, number> = { 1: 0, 3: 15, 12: 5 }
+export const PIX_DISCOUNT_PCT: Record<PixMonths, number> = { 1: 0, 3: 15 }
 
 export interface LandingPlan {
   id: 'solo' | 'studio' | 'salao'
@@ -16,6 +16,8 @@ export interface LandingPlan {
   cents: number
   hot: boolean
   cta: string
+  /** linha curta embaixo do nome, na lista de escolha da landing */
+  line: string
   items: string[]
 }
 
@@ -26,7 +28,8 @@ export const PLANS: LandingPlan[] = [
     cents: 990,
     hot: false,
     cta: 'Começar com o Solo',
-    items: ['Para quem atende sozinha', 'Agenda e clientes', 'Financeiro básico', 'Site do negócio'],
+    line: 'Para quem atende sozinha',
+    items: ['Para quem atende sozinha', 'Agenda e clientes', 'Caixa e fechamento do mês', 'Site com agendamento online'],
   },
   {
     id: 'studio',
@@ -34,7 +37,8 @@ export const PLANS: LandingPlan[] = [
     cents: 2990,
     hot: true,
     cta: 'Começar com o Studio',
-    items: ['Equipe pequena', 'Tudo do Solo', 'Comissões por profissional', 'Fechamento mensal em recibo', 'Relatórios'],
+    line: 'Equipe pequena, com comissões',
+    items: ['Equipe pequena', 'Tudo do Solo', 'Agenda com várias profissionais', 'Comissões por profissional'],
   },
   {
     id: 'salao',
@@ -42,7 +46,8 @@ export const PLANS: LandingPlan[] = [
     cents: 5990,
     hot: false,
     cta: 'Começar com o Salão',
-    items: ['Equipe maior', 'Tudo do Studio', 'Mais profissionais e permissões', 'Atendimento prioritário'],
+    line: 'Equipe maior',
+    items: ['Equipe maior', 'Tudo do Studio', 'Para equipes maiores'],
   },
 ]
 

@@ -88,6 +88,23 @@ export const fontHref = (id: FontId) => `https://fonts.googleapis.com/css2?famil
 
 export const isFontId = (v: unknown): v is FontId => typeof v === 'string' && v in FONTS
 
+// ---------------------------------------------------------------- estilo da capa (o que fica atrás do título)
+
+export type CoverStyleId = 'sobrio' | 'poa' | 'xadrez' | 'editorial' | 'organico'
+
+/** cinco estilos fixos; todos usam as cores da paleta escolhida, então combinam com qualquer uma */
+export const COVER_STYLES: Record<CoverStyleId, { label: string; hint: string }> = {
+  sobrio: { label: 'Sóbrio', hint: 'Cor lisa com degradê suave' },
+  poa: { label: 'Poá', hint: 'Bolinhas delicadas' },
+  xadrez: { label: 'Xadrez', hint: 'Vichy com cartão no centro' },
+  editorial: { label: 'Editorial', hint: 'Fundo escuro e título grande' },
+  organico: { label: 'Orgânico', hint: 'Formas suaves' },
+}
+
+export const DEFAULT_COVER_STYLE: CoverStyleId = 'sobrio'
+
+export const isCoverStyleId = (v: unknown): v is CoverStyleId => typeof v === 'string' && v in COVER_STYLES
+
 // mesma ordem do enum service_category no banco; "Outros" fica por último na página e no painel
 export const CATEGORIES = ['Unhas', 'Cílios', 'Sobrancelha', 'Cabelo', 'Estética', 'Outros'] as const
 export type Category = (typeof CATEGORIES)[number]

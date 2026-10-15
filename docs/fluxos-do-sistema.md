@@ -1,5 +1,7 @@
 # IKIZY — fluxos de cadastro e uso
 
+> **Desatualizado.** Use o [PLANO-DE-EXPERIENCIA.md](PLANO-DE-EXPERIENCIA.md) (10/10/2026), que tem o estado atual e a proposta.
+
 Levantado do código em 07/10/2026 (branch `dev`, inclui alterações ainda não commitadas).
 Renderiza em GitHub, VS Code (extensão Mermaid) ou https://mermaid.live.
 
@@ -118,7 +120,7 @@ flowchart TD
     T[Trial Solo 30 dias sem cartão<br/>criado no create_salon] --> AS[/dashboard/assinatura/]
     AS -->|só a dona owner| ESC{Plano + forma}
     ESC -->|Cartão| CK1[POST /api/billing/checkout<br/>Stripe Checkout modo assinatura<br/>Solo em trial mantém dias restantes]
-    ESC -->|Pix 1, 3 ou 12 meses<br/>12 meses = 5% off| CK2[POST /api/billing/checkout<br/>Stripe Checkout modo pagamento]
+    ESC -->|Pix 1 ou 3 meses<br/>3 meses = 15% off| CK2[POST /api/billing/checkout<br/>Stripe Checkout modo pagamento]
     ESC -->|já tem cartão ativo| PT[POST /api/billing/portal<br/>Portal Stripe: trocar, cancelar,<br/>atualizar cartão]
     CK1 & CK2 --> ST[Stripe]
     ST -->|retorno=ok / cancelado| AS

@@ -80,28 +80,6 @@
   font-size: 13px;
   color: var(--ink-500);
 }
-.seg {
-  display: inline-flex;
-  align-self: flex-start;
-  padding: 4px;
-  border-radius: var(--radius-pill);
-  background: var(--gray-200);
-}
-.seg__item {
-  min-height: 38px;
-  padding: 0 18px;
-  border: 0;
-  border-radius: var(--radius-pill);
-  background: transparent;
-  font: inherit;
-  font-size: 14px;
-  color: var(--ink-700);
-  cursor: pointer;
-}
-.seg__item.is-active {
-  background: var(--ink-900);
-  color: var(--white);
-}
 
 .billing-plans {
   display: grid;
@@ -175,19 +153,6 @@
   color: var(--ink-500);
 }
 
-.seg__off {
-  margin-left: 6px;
-  padding: 1px 7px;
-  border-radius: var(--radius-pill);
-  background: var(--success-soft);
-  color: var(--success);
-  font-size: 11px;
-  font-weight: 500;
-}
-.seg__item.is-active .seg__off {
-  background: rgba(255, 255, 255, 0.16);
-  color: var(--white);
-}
 .billing-plan__equiv {
   margin-top: -6px;
   font-size: 13px;

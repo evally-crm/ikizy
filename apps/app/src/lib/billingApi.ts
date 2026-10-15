@@ -59,3 +59,16 @@ export async function chooseTrialPlan(plan: PlanId): Promise<void> {
   const { error } = await neon.rpc('choose_trial_plan', { p_plan: plan })
   if (error) throw new BillingError('choose_failed', 'Não foi possível salvar o plano agora. Tente novamente.')
 }
+
+const synced = new Set<string>()
+
+/** guarda no servidor o e-mail da dona para os avisos de cobrança; uma vez por negócio e por visita, sem fazer barulho se falhar */
+export async function syncNotifyEmail(salonId: string): Promise<void> {
+  if (synced.has(salonId)) return
+  synced.add(salonId)
+  try {
+    await post('/api/account/sync-email', {})
+  } catch {
+    synced.delete(salonId)
+  }
+}
