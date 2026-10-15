@@ -1,22 +1,23 @@
 import { isAfter } from 'date-fns'
-import { clientTags, type ClientTag, type TaggableClient } from './tags'
+import { callReason, type CallableClient } from './call'
+import { clientTags, type ClientTag } from './tags'
 
-export type ClientFilter = 'todas' | ClientTag
+/** `chamar`: quem tem motivo para receber mensagem hoje (ver `callReason`) */
+export type ClientFilter = 'todas' | 'chamar' | ClientTag
 
 export const FILTERS: { id: ClientFilter; label: string }[] = [
   { id: 'todas', label: 'Todas' },
+  { id: 'chamar', label: 'Chamar hoje' },
   { id: 'vip', label: 'VIP' },
   { id: 'nova', label: 'Novas' },
   { id: 'sumida', label: 'Sumidas' },
   { id: 'aniversario', label: 'Aniversário' },
 ]
 
-export interface BookClient extends TaggableClient {
+export interface BookClient extends CallableClient {
   id: string
   name: string
   phone: string
-  visits: number
-  appointments: { status: string; date: Date }[]
 }
 
 const fold = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase()
@@ -33,10 +34,13 @@ export function filterClients<T extends BookClient & { lastVisit: Date }>(client
   const q = fold(query.trim())
   const digits = q.replace(/\D/g, '')
   return clients
-    .filter((c) => filter === 'todas' || clientTags(c, today).includes(filter))
+    .filter((c) => filter === 'todas' || (filter === 'chamar' ? callReason(c, today) !== null : clientTags(c, today).includes(filter)))
     .filter((c) => !q || fold(c.name).includes(q) || (digits !== '' && c.phone.replace(/\D/g, '').includes(digits)))
     .sort((a, b) => b.lastVisit.getTime() - a.lastVisit.getTime())
 }
+
+/** quantas têm motivo para receber mensagem hoje (o número do filtro "Chamar hoje") */
+export const countToCall = (clients: CallableClient[], today: Date) => clients.filter((c) => callReason(c, today) !== null).length
 
 export interface BookSummary {
   active: number

@@ -104,7 +104,8 @@ export default function Clientes() {
         }
       />
 
-      {clients.length > 0 && (
+      {/* no celular a lista vem primeiro: os números ficam só na tela larga */}
+      {isWide && clients.length > 0 && (
         <div className="crmtiles">
           <StatTile label="Ativas" value={summary.active} />
           <StatTile label="Novas no mês" value={summary.newOnes} />

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { awaitsConfirmation, filterClients, summarizeBook, type BookClient } from './book'
+import { awaitsConfirmation, countToCall, filterClients, summarizeBook, type BookClient } from './book'
+import { callReason, callReasonLabel } from './call'
 import { confirmsClientName } from './forget'
 import { clientProfile, type ProfileClient } from './profile'
 import { DEFAULT_INTERVAL, MISSING_AFTER, averageInterval, clientTags, daysSince, lastVisitLabel } from './tags'
@@ -80,6 +81,38 @@ describe('lista de contatos', () => {
     assert.equal(awaitsConfirmation({ appointments: [{ status: 'pendente', date: future }] }, TODAY), true)
     assert.equal(awaitsConfirmation({ appointments: [{ status: 'pendente', date: daysAgo(2) }] }, TODAY), false)
     assert.equal(awaitsConfirmation({ appointments: [{ status: 'confirmado', date: future }] }, TODAY), false)
+  })
+})
+
+describe('chamar hoje', () => {
+  it('aniversário hoje, sumida e retorno atrasado pelo intervalo dela', () => {
+    assert.deepEqual(callReason(client({ id: '1', birthday: '10-12' }), TODAY), { kind: 'aniversario' })
+    assert.deepEqual(callReason(client({ id: '2', lastVisit: daysAgo(60) }), TODAY), { kind: 'sumida', days: 60 })
+    assert.deepEqual(callReason(client({ id: '3', lastVisit: daysAgo(25), interval: 20 }), TODAY), { kind: 'manutencao', days: 5 })
+    assert.equal(callReason(client({ id: '4', lastVisit: daysAgo(10), interval: 30 }), TODAY), null)
+    assert.equal(callReason(client({ id: '5', birthday: '10-13' }), TODAY), null)
+  })
+
+  it('quem já tem horário marcado não precisa ser chamada, mas o parabéns vale sempre', () => {
+    const appointments = [{ status: 'confirmado', date: new Date(2026, 9, 20) }]
+    assert.equal(callReason(client({ id: '1', lastVisit: daysAgo(60), appointments }), TODAY), null)
+    assert.deepEqual(callReason(client({ id: '2', birthday: '10-12', appointments }), TODAY), { kind: 'aniversario' })
+    const past = [{ status: 'cancelado', date: new Date(2026, 9, 20) }]
+    assert.equal(callReason(client({ id: '3', lastVisit: daysAgo(60), appointments: past }), TODAY)?.kind, 'sumida')
+  })
+
+  it('cliente sem visitas só entra pelo aniversário', () => {
+    assert.equal(callReason(client({ id: '1', visits: 0, lastVisit: daysAgo(90) }), TODAY), null)
+  })
+
+  it('filtro, contagem e frase da lista', () => {
+    const list = [client({ id: 'a', lastVisit: daysAgo(60) }), client({ id: 'b' }), client({ id: 'c', birthday: '10-12' })]
+    assert.deepEqual(filterClients(list, '', 'chamar', TODAY).map((c) => c.id), ['c', 'a'])
+    assert.equal(countToCall(list, TODAY), 2)
+    assert.deepEqual(
+      [{ kind: 'aniversario' } as const, { kind: 'sumida', days: 60 } as const, { kind: 'manutencao', days: 1 } as const].map(callReasonLabel),
+      ['Faz aniversário hoje 🎂', 'Sem vir há 60 dias', 'Retorno atrasado 1 dia'],
+    )
   })
 })
 

@@ -91,8 +91,40 @@
   white-space: nowrap;
 }
 
+/* em "Chamar hoje", a linha diz o motivo */
+.clist__meta--call {
+  color: var(--brand-700);
+  font-weight: 500;
+}
+
 .clist__item.is-active .clist__meta {
   color: color-mix(in srgb, var(--white) 65%, transparent);
+}
+
+/* mensagem pronta direto da lista ("Chamar hoje"); vira um visto depois de enviada */
+.clist__call {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--brand-700);
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.clist__call:hover {
+  background: var(--brand-500);
+  color: var(--white);
+}
+
+.clist__call.is-sent {
+  background: transparent;
+  color: var(--ink-500);
 }
 
 .clist__spent {
@@ -366,8 +398,9 @@
 .crm__pickbar {
   display: flex;
   flex: none;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
+  gap: 8px 12px;
   font-size: 13px;
   font-weight: 500;
 }
@@ -376,9 +409,16 @@
   margin-left: auto;
 }
 
-.crm__pickall {
+/* "N contatos" e o atalho para selecionar várias, na mesma linha */
+.crm__countbar {
+  display: flex;
   flex: none;
-  align-self: flex-start;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.crm__countbar .textlink {
   font-size: 12px;
 }
 
