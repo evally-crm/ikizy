@@ -1,10 +1,10 @@
 import type { ReactNode } from 'react'
-import { ArrowRight, ChevronDown, Loader2 } from 'lucide-react'
+import { ArrowRight, Loader2 } from 'lucide-react'
 import './Ask.css'
 
 /**
  * Campo único estilo barra de busca: ícone, o conteúdo (campo, chips, seletores) e o disco preto com seta,
- * que envia o formulário em volta. Brilho colorido suave quando está em foco.
+ * que envia o formulário em volta. Mesmo visual dos campos em pílula do login.
  */
 export function Ask({
   icon,
@@ -46,18 +46,6 @@ export function Suggestion({ on, onClick, children }: { on?: boolean; onClick: (
     <button type="button" className="ask-sug" aria-pressed={on ?? false} onClick={onClick}>
       {children}
     </button>
-  )
-}
-
-/** seletor nativo em forma de chip (o celular abre a roda de opções do sistema) */
-export function Pick({ label, value, onChange, children }: { label: string; value: string | number; onChange: (value: string) => void; children: ReactNode }) {
-  return (
-    <span className="ask-pick">
-      <select aria-label={label} value={value} onChange={(e) => onChange(e.target.value)}>
-        {children}
-      </select>
-      <ChevronDown size={14} aria-hidden="true" />
-    </span>
   )
 }
 

@@ -38,6 +38,11 @@ export function Select({
   const ref = useRef<HTMLDivElement>(null)
   useOutside(ref, () => setOpen(false), open)
 
+  // ao abrir, a lista já mostra o que está escolhido (numa lista de horários, não começa sempre no primeiro)
+  useEffect(() => {
+    if (open) ref.current?.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: 'nearest' })
+  }, [open])
+
   const index = Math.max(
     options.findIndex((o) => o.value === value),
     0,

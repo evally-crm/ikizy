@@ -32,6 +32,18 @@
   font-size: 15px;
   color: var(--ink-500);
 }
+/* o seletor do app (components/controls), mais baixo para caber dentro do campo */
+.onb-time .field {
+  width: 104px;
+}
+.onb-time .pick__btn {
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: var(--radius-pill);
+}
+.onb-time .pick__list {
+  max-height: 240px;
+}
 
 @media (max-width: 640px) {
   .onb-days {

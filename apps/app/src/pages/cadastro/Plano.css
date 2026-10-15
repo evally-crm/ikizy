@@ -16,7 +16,6 @@
   border-radius: var(--radius-md);
   background: var(--white);
   text-align: left;
-  box-shadow: var(--shadow-sm);
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 .onb-plans__card:hover {
@@ -24,7 +23,7 @@
 }
 .onb-plans__card[aria-checked='true'] {
   border-color: var(--ink-900);
-  box-shadow: 0 0 0 1px var(--ink-900), var(--shadow-md);
+  box-shadow: 0 0 0 1px var(--ink-900);
 }
 .onb-plans__tag {
   position: absolute;

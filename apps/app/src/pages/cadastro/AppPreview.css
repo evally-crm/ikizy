@@ -171,7 +171,6 @@
   border-left: 3px solid var(--brand-500);
   border-radius: 8px;
   background: var(--white);
-  box-shadow: var(--shadow-sm);
   font-size: 11px;
   line-height: 1.25;
   color: var(--ink-900);

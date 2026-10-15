@@ -1,10 +1,11 @@
 import { Clock } from 'lucide-react'
 import { DAY_CHIPS, HOUR_PRESETS, matchingPreset, timeOptions, toggleDay } from '../../domain/onboarding'
 import { formatTime } from '../../lib/format'
-import { Ask, Pick, Suggestion, Suggestions } from './Ask'
+import { Select, type Option } from '../../components/controls'
+import { Ask, Suggestion, Suggestions } from './Ask'
 import './StepHours.css'
 
-const TIMES = timeOptions()
+const TIMES: Option[] = timeOptions().map((m) => ({ value: String(m), label: formatTime(m) }))
 
 /** "Quando você atende?": dias e horário no mesmo campo, atalhos comuns embaixo */
 export function StepHours({
@@ -39,21 +40,9 @@ export function StepHours({
         </span>
         <span className="onb-time">
           das
-          <Pick label="Abre às" value={start} onChange={(v) => onChange({ start: Number(v) })}>
-            {TIMES.map((m) => (
-              <option key={m} value={m}>
-                {formatTime(m)}
-              </option>
-            ))}
-          </Pick>
+          <Select label="Abre às" hideLabel value={String(start)} options={TIMES} onChange={(v) => onChange({ start: Number(v) })} />
           às
-          <Pick label="Fecha às" value={end} onChange={(v) => onChange({ end: Number(v) })}>
-            {TIMES.map((m) => (
-              <option key={m} value={m}>
-                {formatTime(m)}
-              </option>
-            ))}
-          </Pick>
+          <Select label="Fecha às" hideLabel value={String(end)} options={TIMES} onChange={(v) => onChange({ end: Number(v) })} />
         </span>
       </Ask>
       <Suggestions label="Horários comuns">
