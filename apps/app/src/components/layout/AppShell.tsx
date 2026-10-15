@@ -184,7 +184,7 @@ const QUICK_OUT_MS = 260
 function BottomNav() {
   // painel do [+]: a barra se desfaz e vira a grade de atalhos; ao fechar, o caminho inverso
   const [quick, setQuick] = useState<'closed' | 'open' | 'closing'>('closed')
-  const quickTimer = useRef<number>()
+  const quickTimer = useRef<number | undefined>(undefined)
   const closeQuick = useCallback(() => {
     setQuick((q) => (q === 'open' ? 'closing' : q))
     window.clearTimeout(quickTimer.current)
