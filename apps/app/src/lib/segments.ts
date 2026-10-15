@@ -1,4 +1,4 @@
-import type { Category } from '../data/catalog'
+import type { Category } from './siteTheme'
 
 export interface SuggestedService {
   id: string
@@ -114,4 +114,6 @@ export interface SalonSetup {
   professionalName: string
   /** plano do teste grátis: Só eu → Solo, Eu e equipe → Studio, ou o que veio do site */
   plan: 'solo' | 'studio' | 'salao'
+  /** horário de atendimento da dona (sem ele, vale STARTER_HOURS) */
+  hours?: { weekday: number; start_minute: number; end_minute: number }[]
 }

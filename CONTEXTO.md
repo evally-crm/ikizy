@@ -218,14 +218,15 @@ Pontos de atenção:
 
 ## 8. Estado atual
 
-- 12/10/2026 (lembretes por e-mail, **migration `20261027000000_email_reminders` ainda NÃO aplicada**): cron diário `/api/cron/trial-reminders` (9h de Brasília) manda
+- 15/10/2026 (cadastro novo, estilo Peec AI, migration `20261029000000_create_salon_setup` aplicada em 15/10/2026): `/cadastro/salao` virou uma pergunta por tela (seu nome se faltar, nome do negócio + link, áreas, Só eu / Eu e equipe, horário, revisão dos serviços) com a prévia do sistema se montando ao fundo; depois "Montando…", "Sua agenda está pronta" e `/cadastro/plano` com os 3 planos (30 dias grátis sem cartão via `choose_trial_plan`, ou cartão no Stripe com `from=onboarding`). Código em `pages/cadastro/`, regras em `domain/onboarding/`, rascunho em `data/onboarding.ts`. `create_salon_setup()` cria tudo numa transação (R-11); sem a migration o app usa o caminho antigo em partes. No modo demonstração (`npm run dev -- --mode demo` com `.env.demo.local` vazio) o cadastro roda de ensaio, sem gravar.
+- 12/10/2026 (lembretes por e-mail, migration `20261027000000_email_reminders` aplicada em 15/10/2026): cron diário `/api/cron/trial-reminders` (9h de Brasília) manda
   aviso de teste/Pix/cancelamento acabando (7, 3 e 1 dia), cartão recusado e acesso terminado (R-103, E8, E10, E11). Um aviso por negócio por rodada, sem repetir
   (`email_log`). O e-mail da dona vem de `POST /api/account/sync-email` (token verificado), chamado pelo app ao entrar; sem ele o negócio não recebe aviso.
   Precisa de `CRON_SECRET` e `RESEND_API_KEY` na Vercel. Hobby: 2 crons diários (expire-requests e trial-reminders).
-- 12/10/2026 (LGPD e pedidos sem resposta, **migration `20261026000000_lgpd_requests` ainda NÃO aplicada**): `forget_client()` (só a dona; ficha anônima "Cliente removida"
+- 12/10/2026 (LGPD e pedidos sem resposta, migration `20261026000000_lgpd_requests` aplicada em 15/10/2026): `forget_client()` (só a dona; ficha anônima "Cliente removida"
   se houver atendimentos, apagada se não houver; botão na ficha, pede o nome) e `expire_stale_requests()` chamada pelo cron diário `/api/cron/expire-requests`
   (`vercel.json`; exige a variável `CRON_SECRET` na Vercel, sem ela a rota responde 503).
-- 12/10/2026 (endurecimento, **migration ainda NÃO aplicada**): `neon/migrations/20261025000000_hardening.sql` (mês fechado no fuso de Brasília,
+- 12/10/2026 (endurecimento, migration `20261025000000_hardening` aplicada em 15/10/2026): `neon/migrations/20261025000000_hardening.sql` (mês fechado no fuso de Brasília,
   `close_month` confere faturamento, atendimentos e saídas com o banco e exige assinatura ativa, concluir exige forma de pagamento e concluído
   não se apaga, atendimento só aponta para cliente/profissional/serviço do próprio negócio, `hit_rate_limit`, WhatsApp único por negócio).
   **Testar antes numa branch do Neon** e só então aplicar (`npm run db:migrate -- --aplicar`). O app e a API já tratam as mensagens novas e

@@ -272,8 +272,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfile({})
       },
       async createSalon(name, slug, setup) {
+        // modo demonstração: o cadastro roda de ensaio, nada é gravado
+        if (status === 'demo') return null
         if (!neon || !userId) return 'Você precisa estar logada.'
-        const { data: salonId, error } = await neon.rpc('create_salon', { p_name: name, p_slug: slug })
+        const hours = setup?.hours ?? STARTER_HOURS
+        // tudo numa transação só (R-11): negócio, dona como profissional, serviços, horário e o plano do teste
+        let { data: salonId, error } = setup
+          ? await neon.rpc('create_salon_setup', {
+              p_name: name,
+              p_slug: slug,
+              p_owner_name: setup.professionalName,
+              p_services: setup.services,
+              p_hours: hours,
+              p_plan: setup.plan,
+            })
+          : await neon.rpc('create_salon', { p_name: name, p_slug: slug })
+        // banco ainda sem a função nova (migration 20261029000000 não aplicada): caminho antigo, em partes
+        const legacy = Boolean(setup && error && (error.code === 'PGRST202' || error.code === '42883'))
+        if (legacy) ({ data: salonId, error } = await neon.rpc('create_salon', { p_name: name, p_slug: slug }))
         if (error) {
           if (error.message.includes('salons_slug_key') || error.code === '23505') {
             return error.message.includes('já pertence') ? 'Esta conta já tem um salão.' : 'Este endereço já está em uso. Escolha outro.'
@@ -282,26 +298,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (error.code === '23514') return 'Use de 3 a 40 letras minúsculas, números e hífen.'
           return 'Não foi possível criar o salão agora. Tente novamente.'
         }
-        // monta o começo do negócio; se algo falhar, o negócio já existe e os primeiros passos mostram o que falta
         if (setup && typeof salonId === 'string') {
           // conta sem nome (cadastro antigo): o nome digitado aqui vira o nome da conta
           if (!sessionName && setup.professionalName.length >= 2) {
             await authCall(() => neon!.auth.getBetterAuthInstance().updateUser({ name: setup.professionalName }))
             setProfile((p) => ({ ...p, userName: setup.professionalName }))
           }
-          if (setup.services.length > 0) {
-            await neon.from('services').insert(setup.services.map((s) => ({ ...s, salon_id: salonId })))
+          // caminho antigo: monta o começo em partes; se algo falhar, o negócio já existe e os primeiros passos mostram o que falta.
+          // O plano fica no teste do Solo até a dona escolher na tela de planos (choose_trial_plan)
+          if (legacy) {
+            if (setup.services.length > 0) {
+              await neon.from('services').insert(setup.services.map((s) => ({ ...s, salon_id: salonId })))
+            }
+            const pro = await neon
+              .from('professionals')
+              .insert({ salon_id: salonId, user_id: userId, name: setup.professionalName })
+              .select('id')
+              .single()
+            if (!pro.error && pro.data) {
+              await neon.rpc('set_working_hours', { p_professional: pro.data.id, p_intervals: hours })
+            }
           }
-          const pro = await neon
-            .from('professionals')
-            .insert({ salon_id: salonId, user_id: userId, name: setup.professionalName })
-            .select('id')
-            .single()
-          if (!pro.error && pro.data) {
-            await neon.rpc('set_working_hours', { p_professional: pro.data.id, p_intervals: STARTER_HOURS })
-          }
-          // o teste começa sem cartão, no plano que combina com a resposta da equipe
-          await neon.rpc('choose_trial_plan', { p_plan: setup.plan })
         }
         await loadSalon(userId)
         return null

@@ -1,0 +1,139 @@
+/* ---------- planos no fim do cadastro ---------- */
+.onb-plans {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  width: 100%;
+}
+.onb-plans__card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 22px 20px 20px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--white);
+  text-align: left;
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.onb-plans__card:hover {
+  border-color: var(--ink-400);
+}
+.onb-plans__card[aria-checked='true'] {
+  border-color: var(--ink-900);
+  box-shadow: 0 0 0 1px var(--ink-900), var(--shadow-md);
+}
+.onb-plans__tag {
+  position: absolute;
+  top: -11px;
+  left: 18px;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--brand-500);
+  color: var(--white);
+  font-size: 12px;
+  font-weight: 500;
+}
+.onb-plans__name {
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--ink-900);
+}
+.onb-plans__aud {
+  font-size: 14px;
+  color: var(--ink-500);
+}
+.onb-plans__price {
+  margin: 8px 0 2px;
+  font-size: 30px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--ink-900);
+}
+.onb-plans__price small {
+  margin-left: 2px;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--ink-500);
+}
+.onb-plans__fit {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--success-soft);
+  font-size: 13px;
+  color: var(--success);
+}
+.onb-plans__fit--no {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+.onb-plans__feats {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  width: 100%;
+  font-size: 14px;
+  color: var(--ink-700);
+}
+.onb-plans__feats span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.onb-plans__feats svg {
+  flex: none;
+  color: var(--ink-400);
+}
+.onb-plans__warn {
+  margin-top: 14px;
+  font-size: 14px;
+  color: var(--warning);
+}
+.onb-plans__note {
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--ink-500);
+}
+.onb-plans__card-link {
+  margin-top: 8px;
+  padding: 4px;
+  border: 0;
+  background: none;
+  font-size: 14px;
+  color: var(--ink-900);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.onb-plans__card-link:disabled {
+  opacity: 0.5;
+}
+.onb-plans__alert {
+  margin-bottom: 8px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--warning-soft);
+  font-size: 14px;
+  color: var(--warning);
+}
+
+@media (max-width: 820px) {
+  .onb-plans {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+  }
+  .onb-plans__feats {
+    display: none;
+  }
+  .onb-plans__card[aria-checked='true'] .onb-plans__feats {
+    display: flex;
+  }
+}

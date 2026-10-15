@@ -1,0 +1,323 @@
+/* ---------- prévia do sistema ao fundo do cadastro ---------- */
+.apv {
+  --apv-line: var(--line);
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 76px max(var(--gutter), calc((100vw - 1320px) / 2)) 0;
+  color: var(--ink-400);
+  font-size: 13px;
+  opacity: 0.6;
+  filter: saturate(0.25);
+  transition: opacity 0.6s, filter 0.6s;
+}
+.apv--ready {
+  opacity: 0.9;
+  filter: none;
+}
+
+.apv__top {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 10px 16px;
+  border: 1px solid var(--apv-line);
+  border-radius: var(--radius-md);
+  background: var(--white);
+}
+.apv__logo {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  color: var(--ink-700);
+}
+.apv__nav {
+  display: flex;
+  gap: 4px;
+}
+.apv__tab {
+  padding: 5px 12px;
+  border-radius: var(--radius-pill);
+}
+.apv__tab--on {
+  background: var(--ink-900);
+  color: var(--white);
+}
+.apv__me {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+.apv__salon {
+  max-width: 220px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-weight: 500;
+  color: var(--ink-900);
+  animation: apv-pop 0.4s ease both;
+}
+.apv__avatar {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--brand-700);
+  color: var(--white);
+  font-size: 13px;
+  font-weight: 600;
+}
+.apv__avatar--sm {
+  width: 24px;
+  height: 24px;
+  font-size: 11px;
+  border: 2px solid var(--white);
+}
+.apv__avatar--ghost {
+  margin-left: -8px;
+  background: var(--pink-300);
+  animation: apv-pop 0.4s ease both;
+}
+
+.apv__body {
+  display: grid;
+  flex: 1;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 18px;
+  min-height: 0;
+}
+
+.apv__agenda,
+.apv__site {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--apv-line);
+  border-radius: var(--radius-md);
+  background: var(--white);
+}
+.apv__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.apv__h {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--ink-900);
+}
+.apv__team {
+  display: flex;
+}
+
+.apv__grid {
+  display: grid;
+  flex: 1;
+  grid-template-columns: 44px repeat(7, minmax(0, 1fr));
+  gap: 6px;
+  min-height: 460px;
+}
+.apv__hours {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 26px 0 0;
+  font-size: 11px;
+}
+.apv__day {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.apv__dlabel {
+  text-align: center;
+  font-weight: 500;
+}
+.apv__day--open .apv__dlabel {
+  color: var(--ink-900);
+}
+.apv__col {
+  position: relative;
+  flex: 1;
+  border-radius: var(--radius-sm);
+  background: var(--page-bg);
+}
+/* faixa em que o negócio está aberto naquele dia */
+.apv__range {
+  position: absolute;
+  top: var(--top);
+  right: 0;
+  left: 0;
+  height: var(--h);
+  border-radius: var(--radius-sm);
+  background: var(--pink-100);
+  animation: apv-grow 0.5s ease both;
+  transform-origin: top;
+}
+/* atendimento de exemplo */
+.apv__appt {
+  position: absolute;
+  top: var(--top);
+  right: 4px;
+  left: 4px;
+  height: var(--h);
+  overflow: hidden;
+  padding: 4px 6px;
+  border-left: 3px solid var(--brand-500);
+  border-radius: 8px;
+  background: var(--white);
+  box-shadow: var(--shadow-sm);
+  font-size: 11px;
+  line-height: 1.25;
+  color: var(--ink-900);
+  animation: apv-pop 0.45s ease both;
+  animation-delay: calc(var(--i) * 0.12s + 0.1s);
+}
+
+.apv__url {
+  align-self: flex-start;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--page-bg);
+  font-size: 12px;
+  color: var(--ink-700);
+}
+.apv__cover {
+  display: grid;
+  place-items: center;
+  height: 120px;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  background: var(--brand-900);
+  color: var(--white);
+  text-align: center;
+  font-size: 18px;
+}
+.apv__cover b {
+  font-weight: 500;
+  animation: apv-pop 0.4s ease both;
+}
+.apv__cover .apv__bone {
+  background: color-mix(in srgb, var(--white) 22%, transparent);
+}
+.apv__sh {
+  font-weight: 500;
+  color: var(--ink-900);
+}
+.apv__services {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.apv__services li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--apv-line);
+  border-radius: 10px;
+  color: var(--ink-700);
+  animation: apv-pop 0.35s ease both;
+}
+.apv__services li span:first-child {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.apv__btn {
+  flex: none;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--ink-900);
+  color: var(--white);
+  font-size: 11px;
+}
+
+/* esqueleto */
+.apv__bone {
+  display: inline-block;
+  height: 10px;
+  border-radius: var(--radius-pill);
+  background: var(--gray-200);
+}
+.apv__bone--sm {
+  width: 44px;
+}
+.apv__bone--md {
+  width: 110px;
+}
+.apv__bone--lg {
+  width: 160px;
+  height: 16px;
+}
+/* montando: o esqueleto brilha passando */
+.apv--building .apv__bone,
+.apv--building .apv__col {
+  background: linear-gradient(90deg, var(--gray-200) 0%, var(--page-bg) 40%, var(--gray-200) 80%) 0 0 / 300% 100%;
+  animation: apv-shine 1.3s linear infinite;
+}
+.apv--building .apv__col {
+  background-image: linear-gradient(90deg, var(--page-bg) 0%, var(--white) 40%, var(--page-bg) 80%);
+}
+
+@keyframes apv-pop {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes apv-grow {
+  from {
+    opacity: 0;
+    transform: scaleY(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes apv-shine {
+  to {
+    background-position: -300% 0;
+  }
+}
+
+/* tablet: o site sai, a agenda fica */
+@media (max-width: 960px) {
+  .apv__body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .apv__site {
+    display: none;
+  }
+  .apv__nav .apv__tab:nth-child(n + 3) {
+    display: none;
+  }
+}
+/* celular: três dias, sem menu */
+@media (max-width: 640px) {
+  .apv {
+    gap: 10px;
+    padding-top: 380px;
+  }
+  .apv__nav {
+    display: none;
+  }
+  .apv__grid {
+    grid-template-columns: 36px repeat(3, minmax(0, 1fr));
+    min-height: 380px;
+  }
+  .apv__day:nth-child(n + 5) {
+    display: none;
+  }
+}

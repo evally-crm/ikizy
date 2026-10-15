@@ -46,6 +46,8 @@ const SCOPES = [
   'hooks/useScrollLock.ts',
   'components/ui/Tag.tsx',
   'components/ui/Tag.css',
+  'pages/cadastro',
+  'data/onboarding.ts',
 ]
 
 /** imports que a camada de domínio nunca pode ter: ela é função pura, sem tela, banco nem sessão */

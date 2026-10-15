@@ -7,12 +7,12 @@ import { ROUTES } from './lib/routes'
 import Agenda from './pages/agenda'
 import Assinatura from './pages/Assinatura'
 import Cadastro from './pages/auth/Cadastro'
-import EscolherPlano from './pages/auth/EscolherPlano'
 import Login from './pages/auth/Login'
-import Onboarding from './pages/auth/Onboarding'
 import RecuperarSenha from './pages/auth/RecuperarSenha'
 import RedefinirSenha from './pages/auth/RedefinirSenha'
 import VerificarEmail from './pages/auth/VerificarEmail'
+import Onboarding from './pages/cadastro'
+import Plano from './pages/cadastro/Plano'
 import Clientes from './pages/clientes'
 import Financeiro from './pages/financeiro'
 import MeuNegocio from './pages/meu-negocio'
@@ -21,7 +21,7 @@ import MeuSite from './pages/meu-site'
 /**
  * app.ikizy.com: acesso (/login, /cadastro, /recuperar-senha) e sistema (/dashboard/*).
  * A agenda é a tela inicial (/dashboard); /dashboard/agenda continua valendo para links antigos.
- * Cadastro: /cadastro (e-mail e senha ou Google) > /verificar-email (código, só e-mail e senha) > /cadastro/salao (questionário) > /cadastro/plano > /dashboard
+ * Cadastro: /cadastro (e-mail e senha ou Google) > /verificar-email (código, só e-mail e senha) > /cadastro/salao (uma pergunta por tela, com o sistema se montando ao fundo) > /cadastro/plano > /dashboard
  */
 /** links antigos /dashboard/agenda?... vão para a agenda na raiz, com os mesmos parâmetros */
 function ToAgenda() {
@@ -37,7 +37,7 @@ export default function App() {
         <Route path="cadastro" element={<Cadastro />} />
         <Route path="verificar-email" element={<VerificarEmail />} />
         <Route path="cadastro/salao" element={<Onboarding />} />
-        <Route path="cadastro/plano" element={<EscolherPlano />} />
+        <Route path="cadastro/plano" element={<Plano />} />
         <Route path="recuperar-senha" element={<RecuperarSenha />} />
         <Route path="redefinir-senha" element={<RedefinirSenha />} />
 

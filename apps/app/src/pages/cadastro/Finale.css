@@ -1,0 +1,86 @@
+/* ---------- montando e pronto ---------- */
+.onb-build {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 260px;
+  padding: 20px 24px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--white);
+  box-shadow: var(--shadow-md);
+  text-align: left;
+}
+.onb-build__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 15px;
+  color: var(--ink-400);
+  transition: color 0.3s;
+}
+.onb-build__item--now,
+.onb-build__item--done {
+  color: var(--ink-900);
+}
+.onb-build__ico {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1.5px solid var(--gray-300);
+  border-radius: 50%;
+  color: var(--ink-700);
+}
+.onb-build__item--now .onb-build__ico {
+  border-color: transparent;
+}
+.onb-build__item--done .onb-build__ico {
+  border-color: var(--success);
+  background: var(--success);
+  color: var(--white);
+}
+
+.onb-done {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 460px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--white);
+  box-shadow: var(--shadow-md);
+  text-align: left;
+}
+.onb-done li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 18px;
+  font-size: 15px;
+  color: var(--ink-500);
+  animation: onb-in 0.4s ease both;
+}
+.onb-done li:nth-child(2) {
+  animation-delay: 0.08s;
+}
+.onb-done li:nth-child(3) {
+  animation-delay: 0.16s;
+}
+.onb-done li:nth-child(4) {
+  animation-delay: 0.24s;
+}
+.onb-done li + li {
+  border-top: 1px solid var(--line);
+}
+.onb-done svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--brand-500);
+}
+.onb-done b {
+  font-weight: 500;
+  color: var(--ink-900);
+  overflow-wrap: anywhere;
+}

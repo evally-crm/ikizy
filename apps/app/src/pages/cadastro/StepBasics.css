@@ -1,0 +1,66 @@
+/* ---------- link do site embaixo do nome do negócio ---------- */
+.onb-link {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 12px;
+  margin-top: 18px;
+  font-size: 14px;
+  color: var(--ink-500);
+}
+.onb-link b {
+  font-weight: 500;
+  color: var(--ink-900);
+  overflow-wrap: anywhere;
+}
+.onb-link__edit {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  background: var(--white);
+  color: var(--ink-500);
+}
+.onb-link__edit:focus-within {
+  border-color: var(--ink-700);
+}
+.onb-link__edit input {
+  width: 15ch;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font: inherit;
+  color: var(--ink-900);
+  text-align: right;
+}
+.onb-link__state {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+}
+.onb-link__state--free {
+  background: var(--success-soft);
+  color: var(--success);
+}
+.onb-link__state--taken {
+  background: var(--brand-tint);
+  color: var(--brand-700);
+}
+.onb-link__state--checking {
+  color: var(--ink-400);
+}
+.onb-link__btn {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 14px;
+  color: var(--ink-900);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

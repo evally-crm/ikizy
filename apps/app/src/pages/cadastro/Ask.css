@@ -1,0 +1,227 @@
+/* ---------- campo único do cadastro (estilo barra de busca) ---------- */
+.ask {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 64px;
+  padding: 8px 8px 8px 20px;
+  border: 1px solid var(--line-strong);
+  border-radius: 32px;
+  background: var(--white);
+  box-shadow:
+    0 1px 2px color-mix(in srgb, var(--ink-900) 6%, transparent),
+    0 14px 36px -18px color-mix(in srgb, var(--brand-900) 32%, transparent);
+  text-align: left;
+  transition: box-shadow 0.25s, border-color 0.25s;
+}
+/* brilho colorido por trás (bordô e rosa da marca) */
+.ask::before {
+  content: '';
+  position: absolute;
+  inset: -10px;
+  z-index: -1;
+  border-radius: 42px;
+  background: linear-gradient(100deg, color-mix(in srgb, var(--pink-300) 55%, transparent), color-mix(in srgb, var(--brand-500) 22%, transparent) 50%, color-mix(in srgb, var(--blush) 90%, transparent));
+  filter: blur(18px);
+  opacity: 0.55;
+  transition: opacity 0.25s;
+}
+.ask:focus-within {
+  border-color: var(--ink-400);
+}
+.ask:focus-within::before {
+  opacity: 1;
+}
+.ask__ico {
+  display: grid;
+  flex: none;
+  place-items: center;
+  color: var(--ink-400);
+}
+.ask__body {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.ask__input {
+  flex: 1;
+  min-width: 120px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 17px;
+  color: var(--ink-900);
+}
+.ask__input::placeholder {
+  color: var(--ink-400);
+}
+.ask__go {
+  display: grid;
+  flex: none;
+  place-items: center;
+  align-self: flex-end;
+  width: 48px;
+  height: 48px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--ink-900);
+  color: var(--white);
+  transition: transform 0.15s, background-color 0.15s;
+}
+.ask__go:hover:not(:disabled) {
+  background: var(--black);
+  transform: translateX(2px);
+}
+.ask__go:active:not(:disabled) {
+  transform: scale(0.95);
+}
+.ask__go:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+.ask__spin {
+  animation: ask-spin 0.9s linear infinite;
+}
+@keyframes ask-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* chip dentro do campo (área escolhida, dia) */
+.ask-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 34px;
+  padding: 0 8px 0 12px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--page-bg);
+  font-size: 14px;
+  color: var(--ink-900);
+}
+.ask-chip__x {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-500);
+}
+.ask-chip__x:hover {
+  background: var(--gray-200);
+  color: var(--ink-900);
+}
+
+/* seletor nativo com cara de chip (horas), com a setinha por cima */
+.ask-pick {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.ask-pick select {
+  height: 36px;
+  padding: 0 30px 0 12px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--page-bg);
+  font: inherit;
+  font-size: 15px;
+  color: var(--ink-900);
+  appearance: none;
+  cursor: pointer;
+}
+.ask-pick svg {
+  position: absolute;
+  right: 10px;
+  color: var(--ink-500);
+  pointer-events: none;
+}
+
+/* sugestões embaixo do campo */
+.ask-sugs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 18px;
+}
+.ask-sug {
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  background: var(--white);
+  font-size: 14px;
+  color: var(--ink-700);
+  transition: border-color 0.15s, background-color 0.15s, color 0.15s;
+}
+.ask-sug:hover {
+  border-color: var(--ink-400);
+}
+.ask-sug[aria-pressed='true'] {
+  border-color: var(--ink-900);
+  background: var(--ink-900);
+  color: var(--white);
+}
+
+@media (max-width: 640px) {
+  .ask {
+    min-height: 58px;
+    padding-left: 16px;
+  }
+  .ask__input {
+    font-size: 16px;
+  }
+}
+
+/* botão de seguir das perguntas sem campo */
+.ask-next {
+  display: flex;
+  justify-content: center;
+  margin-top: 26px;
+}
+.ask-next--sticky {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  width: 100%;
+  padding: 18px 0 20px;
+  background: linear-gradient(to top, var(--white) 60%, transparent);
+}
+.ask-next__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 52px;
+  padding: 0 22px 0 26px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--ink-900);
+  color: var(--white);
+  font-size: 16px;
+  font-weight: 500;
+  transition: transform 0.15s, background-color 0.15s;
+}
+.ask-next__btn:hover:not(:disabled) {
+  background: var(--black);
+}
+.ask-next__btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+.ask-next__btn:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}

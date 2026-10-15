@@ -1,0 +1,118 @@
+/* ---------- quem atende: dois cartões ---------- */
+.onb-team {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  width: 100%;
+}
+.onb-team__card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 18px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--white);
+  text-align: left;
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+.onb-team__card:hover {
+  border-color: var(--ink-400);
+}
+.onb-team__card[aria-checked='true'] {
+  border-color: var(--ink-900);
+  box-shadow: 0 0 0 1px var(--ink-900), var(--shadow-md);
+}
+.onb-team__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+}
+.onb-team__radio {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1.5px solid var(--gray-300);
+  border-radius: 50%;
+  color: var(--white);
+}
+.onb-team__card[aria-checked='true'] .onb-team__radio {
+  border-color: var(--ink-900);
+  background: var(--ink-900);
+}
+/* desenho: colunas de agenda com atendimentos */
+.onb-team__art {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+  height: 92px;
+  margin-bottom: 8px;
+  padding: 8px;
+  border-radius: var(--radius-sm);
+  background: var(--page-bg);
+}
+.onb-team__col {
+  position: relative;
+  flex: 1;
+  border-radius: 8px;
+  background: var(--white);
+}
+.onb-team__bar {
+  position: absolute;
+  right: 4px;
+  left: 4px;
+  border-radius: 5px;
+  background: var(--pink-300);
+}
+.onb-team__card[aria-checked='true'] .onb-team__bar {
+  background: var(--brand-500);
+}
+.onb-team__bar--0 {
+  top: 8%;
+  height: 30%;
+}
+.onb-team__bar--b0 {
+  top: 50%;
+  height: 38%;
+}
+.onb-team__bar--1 {
+  top: 22%;
+  height: 40%;
+}
+.onb-team__bar--b1 {
+  top: 70%;
+  height: 20%;
+}
+.onb-team__bar--2 {
+  top: 6%;
+  height: 22%;
+}
+.onb-team__bar--b2 {
+  top: 40%;
+  height: 46%;
+}
+.onb-team__title {
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--ink-900);
+}
+.onb-team__text {
+  font-size: 14px;
+  color: var(--ink-500);
+}
+
+@media (max-width: 480px) {
+  .onb-team {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .onb-team__art {
+    height: 64px;
+  }
+}

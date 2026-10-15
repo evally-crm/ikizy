@@ -1,0 +1,45 @@
+/* ---------- horário: dias e horas dentro do campo ---------- */
+.onb-days {
+  display: inline-flex;
+  gap: 4px;
+  margin-right: 6px;
+}
+.onb-days__day {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--page-bg);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-500);
+  transition: background-color 0.15s, color 0.15s;
+}
+.onb-days__day:hover {
+  background: var(--gray-200);
+}
+.onb-days__day[aria-pressed='true'] {
+  background: var(--ink-900);
+  color: var(--white);
+}
+.onb-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+  color: var(--ink-500);
+}
+
+@media (max-width: 640px) {
+  .onb-days {
+    gap: 3px;
+    margin-right: 0;
+  }
+  .onb-days__day {
+    width: 32px;
+    height: 32px;
+  }
+}

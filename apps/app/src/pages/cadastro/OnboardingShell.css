@@ -1,0 +1,215 @@
+/* ---------- cadastro: moldura em tela cheia ---------- */
+.onb {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  /* clip (e não hidden): corta a prévia sem virar área de rolagem, senão o botão fixo no rodapé não gruda */
+  overflow: clip;
+  background: var(--white);
+}
+
+/* prévia do sistema ao fundo: cinza, esmaecida e sumindo para baixo */
+.onb__backdrop {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  user-select: none;
+  -webkit-mask-image: linear-gradient(to bottom, var(--black) 0%, var(--black) 35%, transparent 92%);
+  mask-image: linear-gradient(to bottom, var(--black) 0%, var(--black) 35%, transparent 92%);
+}
+/* véu claro no meio, onde fica a pergunta: o texto nunca disputa com a prévia */
+.onb__backdrop::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 62% 48% at 50% 46%, var(--white) 30%, color-mix(in srgb, var(--white) 70%, transparent) 62%, transparent 100%);
+}
+
+.onb__top {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px var(--gutter);
+}
+.onb__left {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-width: 0;
+}
+.onb__logo {
+  font-size: 22px;
+}
+.onb__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px 7px 9px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--ink-500);
+  font-size: 14px;
+}
+.onb__back:hover {
+  background: var(--page-bg);
+  color: var(--ink-900);
+}
+.onb__account {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--ink-500);
+}
+.onb__who {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.onb__who b {
+  font-weight: 500;
+  color: var(--ink-700);
+}
+.onb__out {
+  flex: none;
+  padding: 7px 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  background: var(--white);
+  font-size: 13px;
+  color: var(--ink-700);
+}
+.onb__out:hover {
+  border-color: var(--ink-400);
+}
+
+.onb__stage {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 24px var(--gutter) 40px;
+}
+.onb__stage--md {
+  max-width: 780px;
+}
+.onb__stage--wide {
+  max-width: 1040px;
+}
+
+.onb__q {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: center;
+  animation: onb-in 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+@keyframes onb-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.onb__dashes {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.onb__dash {
+  width: 18px;
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--gray-200);
+  transition: background-color 0.3s, width 0.3s;
+}
+.onb__dash--on {
+  width: 26px;
+  background: var(--ink-900);
+}
+.onb__title {
+  max-width: 18ch;
+  font-size: clamp(30px, 5.2vw, 46px);
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+.onb__sub {
+  max-width: 46ch;
+  margin-bottom: 18px;
+  font-size: 16px;
+  color: var(--ink-500);
+  text-wrap: pretty;
+}
+.onb__error {
+  font-size: 14px;
+  color: var(--brand-700);
+}
+
+.onb__foot {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  padding: 14px var(--gutter) 18px;
+  font-size: 12px;
+  color: var(--ink-400);
+}
+.onb__foot a:hover {
+  color: var(--ink-700);
+}
+
+/* celular: a pergunta começa no alto (o teclado não cobre o campo) e a conta mostra só o "Sair" */
+@media (max-width: 640px) {
+  .onb__top {
+    padding-top: 14px;
+    padding-bottom: 10px;
+  }
+  .onb__left {
+    gap: 8px;
+  }
+  .onb__who {
+    display: none;
+  }
+  .onb__stage {
+    justify-content: flex-start;
+    padding-top: 28px;
+  }
+  /* no celular a prévia aparece embaixo da pergunta, não atrás do título */
+  .onb__backdrop::after {
+    background: linear-gradient(to bottom, var(--white) 0, var(--white) 330px, color-mix(in srgb, var(--white) 40%, transparent) 460px, transparent 640px);
+  }
+  .onb__sub {
+    font-size: 15px;
+    margin-bottom: 12px;
+  }
+}
+
+.onb__form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  width: 100%;
+}
+.onb__form .onb__error {
+  margin-top: 16px;
+}
