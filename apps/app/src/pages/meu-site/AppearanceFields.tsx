@@ -11,11 +11,11 @@ const fontVars = (id: FontId) =>
 /** paleta de cores (duas cores por opção) */
 export function PaletteOptions({ site, setSite }: { site: SiteConfig; setSite: SetSite }) {
   return (
-    <div className="swatches">
+    <div className="palettes">
       {(Object.keys(PALETTES) as PaletteId[]).map((id) => (
-        <label key={id} className="swatch">
+        <label key={id} className="palette">
           <input type="radio" name="palette" checked={site.palette === id} onChange={() => setSite('palette', id)} />
-          <span className="swatch__dot swatch__dot--duo" style={paletteVars(id)} />
+          <span className="palette__dot" style={paletteVars(id)} aria-hidden="true" />
           {PALETTES[id].label}
         </label>
       ))}

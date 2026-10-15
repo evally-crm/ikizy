@@ -40,20 +40,21 @@ export interface PublishState {
 
 /**
  * o botão de publicar: texto e se está desligado.
- * `header` (topo, computador) mostra também "Publicado!" e "Tudo publicado"; `bar` (barra do celular) só aparece quando há o que publicar.
+ * `header` (topo, computador) fala por extenso; `compact` (barra de cima do celular) usa uma palavra só.
  */
-export function publishButton(s: PublishState, variant: 'header' | 'bar'): { label: string; disabled: boolean } {
-  if (variant === 'bar') {
-    return {
-      label: s.publishing ? 'Publicando…' : !s.isLive ? 'Publicar site' : 'Publicar alterações',
-      disabled: s.reserved || s.publishing || s.loading,
-    }
+export function publishButton(s: PublishState, variant: 'header' | 'compact'): { label: string; disabled: boolean } {
+  const disabled = (!s.dirty && !s.justPublished && s.isLive) || s.reserved || s.publishing || s.loading
+  if (variant === 'compact') {
+    return { label: s.publishing ? 'Publicando…' : s.justPublished || (s.isLive && !s.dirty) ? 'Publicado' : 'Publicar', disabled }
   }
   return {
     label: s.publishing ? 'Publicando…' : s.justPublished ? 'Publicado!' : !s.isLive ? 'Publicar site' : s.dirty ? 'Publicar alterações' : 'Tudo publicado',
-    disabled: (!s.dirty && !s.justPublished && s.isLive) || s.reserved || s.publishing || s.loading,
+    disabled,
   }
 }
+
+/** há algo ainda não publicado (o site nunca foi ao ar ou tem alterações): o botão ganha um pontinho */
+export const hasPendingPublish = (s: PublishState) => !s.publishing && !s.justPublished && (s.dirty || !s.isLive)
 
 /** índice dentro de uma lista de `length` itens: -1 ou fora do fim vira o item mais próximo */
 export const clampIndex = (index: number, length: number) => Math.max(0, Math.min(length - 1, index))

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import { blankPlan, blankShowcaseItem, patchById, removeById } from './lists'
-import { cleanSlug, clampIndex, depositPercent, noticeHours, parseAmount, publishButton, splitIncludes, windowDays, type PublishState } from './rules'
+import { cleanSlug, clampIndex, depositPercent, noticeHours, parseAmount, hasPendingPublish, publishButton, splitIncludes, windowDays, type PublishState } from './rules'
 
 describe('campos do site', () => {
   it('valor digitado vira número não negativo', () => {
@@ -51,9 +51,18 @@ describe('botão de publicar', () => {
     assert.deepEqual(publishButton({ ...base, dirty: true, publishing: true }, 'header'), { label: 'Publicando…', disabled: true })
   })
 
-  it('barra do celular: sempre "Publicar alterações" se já está no ar', () => {
-    assert.deepEqual(publishButton({ ...base, dirty: true }, 'bar'), { label: 'Publicar alterações', disabled: false })
-    assert.deepEqual(publishButton({ ...base, isLive: false }, 'bar'), { label: 'Publicar site', disabled: false })
+  it('celular: uma palavra só, e "Publicado" desligado quando não há o que publicar', () => {
+    assert.deepEqual(publishButton(base, 'compact'), { label: 'Publicado', disabled: true })
+    assert.deepEqual(publishButton({ ...base, dirty: true }, 'compact'), { label: 'Publicar', disabled: false })
+    assert.deepEqual(publishButton({ ...base, isLive: false }, 'compact'), { label: 'Publicar', disabled: false })
+    assert.deepEqual(publishButton({ ...base, dirty: true, publishing: true }, 'compact'), { label: 'Publicando…', disabled: true })
+  })
+
+  it('pontinho de pendente: site fora do ar ou com alterações, nunca enquanto publica', () => {
+    assert.equal(hasPendingPublish(base), false)
+    assert.equal(hasPendingPublish({ ...base, dirty: true }), true)
+    assert.equal(hasPendingPublish({ ...base, isLive: false }), true)
+    assert.equal(hasPendingPublish({ ...base, dirty: true, publishing: true }), false)
   })
 })
 

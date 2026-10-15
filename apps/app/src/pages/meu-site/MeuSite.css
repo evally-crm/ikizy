@@ -53,7 +53,72 @@
     }
 }
 
-/* cores */
+/* paletas: grade de bolinhas nas duas cores, com o nome embaixo */
+.palettes {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px 6px;
+}
+
+.palette {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 12px;
+  line-height: 1.25;
+  text-align: center;
+  color: var(--ink-500);
+  cursor: pointer;
+}
+
+.palette input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.palette__dot {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--bg) 50%, var(--accent) 50%);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink-900) 14%, transparent);
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+
+.palette:hover .palette__dot {
+  transform: scale(1.05);
+}
+
+.palette:has(input:checked) {
+  color: var(--ink-900);
+  font-weight: 500;
+}
+
+.palette:has(input:checked) .palette__dot {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--ink-900) 14%, transparent),
+    0 0 0 3px var(--white),
+    0 0 0 5px var(--brand-900);
+}
+
+.palette:has(input:focus-visible) .palette__dot {
+  outline: 2px solid var(--brand-500);
+  outline-offset: 7px;
+}
+
+/* com espaço, as 8 cabem numa linha só (nunca 7 + 1 sobrando) */
+@container (min-width: 560px) {
+  .palettes {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
+}
+
+/* fontes */
 .swatches {
   display: flex;
   flex-wrap: wrap;
@@ -78,12 +143,6 @@
   inset: 0;
   opacity: 0;
   cursor: pointer;
-}
-
-.swatch__dot {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
 }
 
 .swatch:has(input:checked) {
@@ -345,31 +404,23 @@
   gap: 12px;
 }
 
-/* painel da parte escolhida: sempre aberto, no lugar da sanfona */
+/* painel da parte escolhida: sempre aberto, sem cartão próprio (o rótulo do trilho já diz o assunto) */
 .part {
   flex: 1;
   min-width: 0;
+  container-type: inline-size;
+}
+
+.sect.part {
+  background: transparent;
 }
 
 .part:hover {
   box-shadow: none;
 }
 
-.part__head {
-  padding: 16px 18px 4px;
-}
-
-.part__head h2 {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 500;
-  color: var(--ink-900);
-}
-
-.part__head p {
-  margin: 2px 0 0;
-  font-size: 13px;
-  color: var(--ink-500);
+.sect.part > .form {
+  padding: 4px 2px 8px;
 }
 
 .checklist__status {
@@ -385,21 +436,21 @@
 .rail {
   display: flex;
   flex: none;
-  gap: 6px;
+  gap: 2px;
   padding: 4px;
-  overflow-x: auto;
   border-radius: 20px;
   background: var(--bg);
 }
 
 .rail__btn {
   display: flex;
-  flex: 1 0 64px;
+  flex: 1 1 0;
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  min-height: 62px;
-  padding: 10px 6px 8px;
+  min-width: 0;
+  min-height: 58px;
+  padding: 9px 2px 7px;
   border: 0;
   border-radius: 16px;
   background: transparent;
@@ -435,8 +486,11 @@
     position: sticky;
     top: 0;
     flex-direction: column;
+    gap: 6px;
     width: 76px;
-    overflow: visible;
+  }
+  .sect.part > .form {
+    padding: 4px 4px 8px;
   }
   .rail__btn {
     flex: none;
@@ -498,22 +552,12 @@
   color: var(--ink-500);
 }
 
-.swatch--custom input {
-  width: 100%;
-  height: 100%;
-}
-
 .logofield .btn {
   flex: 1 1 140px;
 }
 
 .logofield .chevbtn {
   margin-left: auto;
-}
-
-/* paleta e fonte: botões pequenos em linha */
-.swatch__dot--duo {
-  border: 1px solid color-mix(in srgb, var(--ink-900) 18%, transparent);
 }
 
 .swatch--font {
@@ -587,44 +631,6 @@
   color: var(--ink-500);
 }
 
-/* publicar */
-/* publicar o site: no celular a ação fica à mão, acima da barra de baixo */
-.publishbar {
-  position: fixed;
-  left: 50%;
-  bottom: calc(var(--bottomnav-h, 0px) + 28px + env(safe-area-inset-bottom));
-  z-index: 45;
-  display: flex;
-  gap: 8px;
-  width: min(420px, calc(100% - 2 * var(--gutter)));
-  padding: 8px;
-  transform: translateX(-50%);
-  border-radius: var(--radius-pill);
-  background: color-mix(in srgb, var(--white) 94%, transparent);
-  backdrop-filter: blur(16px);
-  box-shadow: 0 12px 34px -12px color-mix(in srgb, var(--ink-900) 30%, transparent), 0 0 0 1px var(--line);
-}
-
-.publishbar .btn {
-  flex: 1;
-  min-height: 44px;
-}
-
-.bar__publish {
-  display: none;
-  align-items: center;
-  gap: 10px;
-}
-
-@media (min-width: 768px) {
-  .publishbar {
-      display: none;
-    }
-  .bar__publish {
-      display: flex;
-    }
-}
-
 /* botão do endereço do site e de "tela cheia" no cabeçalho */
 .sitelink {
   display: inline-flex;
@@ -654,11 +660,116 @@ button.sitelink {
 }
 
 /* amostras das opções: as cores e a fonte chegam por variável */
-.swatch__dot--duo {
-  background: linear-gradient(135deg, var(--bg) 50%, var(--accent) 50%);
-}
 .swatch__font {
   font-family: var(--ff);
   font-weight: var(--fw);
   text-transform: var(--tt);
+}
+
+/* publicar: pontinho quando há algo ainda não publicado */
+.bar__publish {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.publishbtn {
+  position: relative;
+}
+
+.publishbtn__dot {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 11px;
+  height: 11px;
+  border: 2px solid var(--page-bg);
+  border-radius: 50%;
+  background: var(--brand-500);
+}
+
+/* celular: o editor ocupa a tela toda, com uma barra só no topo */
+.sbar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+}
+
+.sbar__title {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+
+.sbar__title h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+}
+
+.sbar__title > a,
+.sbar__title > span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 12px;
+  color: var(--ink-500);
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sbar__icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--ink-900);
+  color: var(--white);
+  cursor: pointer;
+}
+
+.sbar__icon--soft {
+  background: var(--white);
+  box-shadow: var(--shadow-sm);
+  color: var(--ink-900);
+}
+
+.sbar__icon:focus-visible {
+  outline: 2px solid var(--brand-500);
+  outline-offset: 2px;
+}
+
+.sbar .publishbtn {
+  flex: none;
+  min-height: 40px;
+}
+
+@media (max-width: 1099px) {
+  .sfull {
+    gap: 10px;
+    padding: 8px var(--gutter) 0;
+  }
+  .sfull > .studio {
+    grid-template-rows: minmax(0, 1fr);
+  }
+  .sfull .studio__editor {
+    gap: 12px;
+    padding: 12px 12px 0;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+  .sfull .studio__body {
+    padding: 0 0 calc(24px + env(safe-area-inset-bottom));
+    scrollbar-width: none;
+  }
 }

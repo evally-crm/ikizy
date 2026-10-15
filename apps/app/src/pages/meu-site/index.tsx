@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import { CalendarCheck, ExternalLink, Eye, Image as ImageIcon, MapPin, Maximize2, Palette, Type, Undo2, X } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { CalendarCheck, ExternalLink, Eye, Image as ImageIcon, MapPin, Maximize2, Palette, SlidersHorizontal, Type, Undo2, X } from 'lucide-react'
 import { newId, useStudio, type ClientPlan, type Service, type ShowcaseItem, type SiteConfig } from '../../data/catalog'
 import { blankPlan, blankShowcaseItem, patchById, removeById, type PublishState } from '../../domain/site'
 import { isReservedSlug, siteHost } from '../../lib/slug'
@@ -11,31 +12,31 @@ import OnlineBookingChecklist from '../../components/OnlineBookingChecklist'
 import { Button, Card, Em, PageHeader, Tabs, Tag } from '../../components/ui'
 import { AppearanceFields } from './AppearanceFields'
 import { IdentityFields } from './IdentityFields'
+import { PreviewSheet } from './PreviewSheet'
 import { PublishButton } from './PublishButton'
 import { ServicesEditor } from './ServicesEditor'
 import { ShowcaseEditor } from './ShowcaseEditor'
 import { ContactFields, ShowFields, TextFields } from './SiteFields'
 import './MeuSite.css'
 
-type Tab = 'pagina' | 'servicos' | 'vitrine' | 'previa'
+type Tab = 'pagina' | 'servicos' | 'vitrine'
 
-const TABS: { id: Tab; label: string; narrowOnly?: boolean }[] = [
+const TABS: { id: Tab; label: string }[] = [
   { id: 'pagina', label: 'Página' },
   { id: 'servicos', label: 'Serviços' },
   { id: 'vitrine', label: 'Produtos' },
-  { id: 'previa', label: 'Prévia', narrowOnly: true },
 ]
 
 type Part = 'agendamento' | 'aparencia' | 'identidade' | 'textos' | 'contato' | 'mostrar'
 
-/** partes da aba Página: uma aberta por vez, escolhida no trilho de ícones */
-const PARTS: { id: Part; label: string; short: string; hint: string; icon: ReactNode }[] = [
-  { id: 'agendamento', label: 'Agendamento pelo site', short: 'Agenda', hint: 'O que falta para a cliente pedir horário.', icon: <CalendarCheck size={20} aria-hidden="true" /> },
-  { id: 'aparencia', label: 'Aparência', short: 'Cores', hint: 'Paleta e fonte.', icon: <Palette size={20} aria-hidden="true" /> },
-  { id: 'identidade', label: 'Identidade', short: 'Logo', hint: 'Logo e foto de capa.', icon: <ImageIcon size={20} aria-hidden="true" /> },
-  { id: 'textos', label: 'Textos', short: 'Textos', hint: 'O que a cliente lê primeiro.', icon: <Type size={20} aria-hidden="true" /> },
-  { id: 'contato', label: 'Contato e endereço', short: 'Contato', hint: 'Como a cliente fala com você e encontra a página.', icon: <MapPin size={20} aria-hidden="true" /> },
-  { id: 'mostrar', label: 'O que mostrar', short: 'Mostrar', hint: 'Preços, equipe e sinal.', icon: <Eye size={20} aria-hidden="true" /> },
+/** partes da aba Página: uma aberta por vez, escolhida no trilho de ícones (o rótulo do trilho já diz o assunto) */
+const PARTS: { id: Part; label: string; short: string; icon: ReactNode }[] = [
+  { id: 'aparencia', label: 'Aparência: paleta, capa e fonte', short: 'Cores', icon: <Palette size={20} aria-hidden="true" /> },
+  { id: 'identidade', label: 'Identidade: logo e foto de capa', short: 'Logo', icon: <ImageIcon size={20} aria-hidden="true" /> },
+  { id: 'textos', label: 'Textos', short: 'Textos', icon: <Type size={20} aria-hidden="true" /> },
+  { id: 'contato', label: 'Contato e endereço', short: 'Contato', icon: <MapPin size={20} aria-hidden="true" /> },
+  { id: 'mostrar', label: 'O que mostrar: preços, equipe e sinal', short: 'Mostrar', icon: <SlidersHorizontal size={20} aria-hidden="true" /> },
+  { id: 'agendamento', label: 'Agendamento pelo site', short: 'Agenda', icon: <CalendarCheck size={20} aria-hidden="true" /> },
 ]
 
 /** Meu site: editor em etapas com a prévia ao vivo */
@@ -49,13 +50,13 @@ export default function MeuSite() {
   const [publishError, setPublishError] = useState<string | null>(null)
   const [fullPref, setFullPref] = useState(true)
   const [device, setDevice] = useState<Device>(isWide ? 'desktop' : 'mobile')
+  const [previewOpen, setPreviewOpen] = useState(false)
+  const navigate = useNavigate()
   const bodyRef = useRef<HTMLDivElement>(null)
 
   const { site, services, showcase, plans } = draft
   const slugReserved = isReservedSlug(site.slug)
 
-  const active: Tab = isWide && tab === 'previa' ? 'pagina' : tab
-  const stepTabs = TABS.filter((t) => !t.narrowOnly || !isWide)
   /** troca de aba e volta ao começo dela */
   const goTab = (id: Tab) => {
     setTab(id)
@@ -86,49 +87,81 @@ export default function MeuSite() {
     setJustPublished(true)
     window.setTimeout(() => setJustPublished(false), 2500)
   }
-  // tela cheia: padrão em telas largas; o X minimiza só nesta visita
-  const full = fullPref && isWide
+  // tela cheia: sempre no celular (sem o menu do app); em telas largas é o padrão e o X minimiza só nesta visita
+  const full = isWide ? fullPref : true
   useScrollLock(full)
   useEffect(() => {
-    if (!full) return
+    if (!full || !isWide) return
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setFullPref(false)
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [full])
+  }, [full, isWide])
 
   const publishState: PublishState = { isLive, dirty, justPublished, publishing, loading, reserved: slugReserved }
   const liveUrl = `https://${siteHost(publishedSlug)}`
+  const closePreview = () => setPreviewOpen(false)
+
+  // celular: uma barra só no topo (fechar, nome e endereço, prévia e publicar)
+  const mobileBar = (
+    <header className="sbar">
+      <button type="button" className="sbar__icon" aria-label="Fechar o editor" onClick={() => navigate('/dashboard')}>
+        <X size={20} aria-hidden="true" />
+      </button>
+      <div className="sbar__title">
+        <h1>
+          Meu <Em>site</Em>
+        </h1>
+        {isLive ? (
+          <a href={liveUrl} target="_blank" rel="noreferrer">
+            {siteHost(publishedSlug)}
+            <ExternalLink size={11} aria-hidden="true" />
+          </a>
+        ) : (
+          <span>{siteHost(site.slug)}</span>
+        )}
+      </div>
+      {dirty && (
+        <button type="button" className="sbar__icon sbar__icon--soft" aria-label="Descartar alterações" title="Descartar alterações" onClick={discard}>
+          <Undo2 size={18} aria-hidden="true" />
+        </button>
+      )}
+      <button type="button" className="sbar__icon sbar__icon--soft" aria-label="Ver a prévia" title="Ver a prévia" onClick={() => setPreviewOpen(true)}>
+        <Eye size={18} aria-hidden="true" />
+      </button>
+      <PublishButton state={publishState} variant="compact" onClick={() => void onPublish()} />
+    </header>
+  )
 
   const root = (
     <div className={`page page--fit ${full ? 'sfull' : ''}`.trim()}>
-      <PageHeader
-        title={
-          <>
-            Meu <Em>site</Em>
-          </>
-        }
-        actions={
-          <>
-            {isLive ? (
-              <a className="sitelink" href={liveUrl} target="_blank" rel="noreferrer">
-                <span>{siteHost(publishedSlug)}</span>
-                <ExternalLink size={13} aria-hidden="true" />
-              </a>
-            ) : (
-              <span className="sitelink">
-                <span>{siteHost(site.slug)} · ainda não publicado</span>
-              </span>
-            )}
-            <div className="bar__publish">
-              {dirty && (
-                <Button variant="ghost" size="sm" onClick={discard}>
-                  <Undo2 size={15} aria-hidden="true" /> Descartar
-                </Button>
+      {isWide ? (
+        <PageHeader
+          title={
+            <>
+              Meu <Em>site</Em>
+            </>
+          }
+          actions={
+            <>
+              {isLive ? (
+                <a className="sitelink" href={liveUrl} target="_blank" rel="noreferrer">
+                  <span>{siteHost(publishedSlug)}</span>
+                  <ExternalLink size={13} aria-hidden="true" />
+                </a>
+              ) : (
+                <span className="sitelink">
+                  <span>{siteHost(site.slug)} · ainda não publicado</span>
+                </span>
               )}
-              <PublishButton state={publishState} variant="header" onClick={() => void onPublish()} />
-            </div>
-            {isWide &&
-              (full ? (
+              <div className="bar__publish">
+                {dirty && (
+                  <Button variant="ghost" size="sm" onClick={discard}>
+                    <Undo2 size={15} aria-hidden="true" /> Descartar
+                  </Button>
+                )}
+                <PublishButton state={publishState} variant="header" onClick={() => void onPublish()} />
+              </div>
+              {full ? (
                 <button type="button" className="sfull__x" aria-label="Minimizar" title="Minimizar (Esc)" onClick={() => setFullPref(false)}>
                   <X size={20} aria-hidden="true" />
                 </button>
@@ -137,20 +170,12 @@ export default function MeuSite() {
                   <Maximize2 size={14} aria-hidden="true" />
                   <span>Tela cheia</span>
                 </button>
-              ))}
-          </>
-        }
-      />
-
-      {(dirty || !isLive) && (
-        <div className="publishbar" role="region" aria-label="Publicar o site">
-          {dirty && (
-            <Button variant="light" size="sm" onClick={discard}>
-              <Undo2 size={15} aria-hidden="true" /> Descartar
-            </Button>
-          )}
-          <PublishButton state={publishState} variant="bar" onClick={() => void onPublish()} />
-        </div>
+              )}
+            </>
+          }
+        />
+      ) : (
+        mobileBar
       )}
 
       {(loadError || publishError) && (
@@ -164,19 +189,15 @@ export default function MeuSite() {
           <Tabs
             label="Partes do site"
             fill
-            value={active}
+            value={tab}
             onChange={goTab}
-            items={stepTabs.map((t) => ({ id: t.id, label: t.label }))}
+            items={TABS}
           />
 
           <div className="studio__body" id="studio-panel" role="tabpanel" ref={bodyRef}>
-            {active === 'pagina' && (
+            {tab === 'pagina' && (
               <div className="parts">
-                <section className="sect part" aria-labelledby="part-title">
-                  <header className="part__head">
-                    <h2 id="part-title">{PARTS.find((p) => p.id === part)?.label}</h2>
-                    <p>{PARTS.find((p) => p.id === part)?.hint}</p>
-                  </header>
+                <section className="sect part" aria-label={PARTS.find((p) => p.id === part)?.label}>
                   <div className="form">
                     {part === 'agendamento' && <OnlineBookingChecklist bare whatsapp={site.whatsapp} online={site.onlineBooking} />}
                     {part === 'aparencia' && <AppearanceFields site={site} setSite={setSite} />}
@@ -198,13 +219,12 @@ export default function MeuSite() {
               </div>
             )}
 
-            {active === 'servicos' && (
+            {tab === 'servicos' && (
               <ServicesEditor services={services} plans={plans} onPatchService={patchService} onPatchPlan={patchPlan} onAddPlan={addPlan} onRemovePlan={removePlan} />
             )}
 
-            {active === 'vitrine' && <ShowcaseEditor items={showcase} onPatch={patchShowcase} onAdd={addShowcase} onRemove={removeShowcase} />}
+            {tab === 'vitrine' && <ShowcaseEditor items={showcase} onPatch={patchShowcase} onAdd={addShowcase} onRemove={removeShowcase} />}
 
-            {active === 'previa' && <SiteFrame studio={draft} device="mobile" height={600} />}
           </div>
         </Card>
 
@@ -221,6 +241,8 @@ export default function MeuSite() {
           </Card>
         )}
       </div>
+
+      {previewOpen && !isWide && <PreviewSheet studio={draft} host={siteHost(site.slug)} onClose={closePreview} />}
     </div>
   )
 
