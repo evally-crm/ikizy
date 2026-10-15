@@ -454,12 +454,13 @@
   background: transparent;
 }
 
-.parts > .sect.part:hover {
-  box-shadow: none;
-}
-
 .sect.part > .form {
   padding: 4px 2px 8px;
+}
+
+/* o legend do fieldset não recebe o gap do flex: sem isso o título cola nas opções */
+.part .field > legend.field__label {
+  margin-bottom: 10px;
 }
 
 .checklist__status {

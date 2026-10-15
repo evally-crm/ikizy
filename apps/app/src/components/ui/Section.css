@@ -15,7 +15,8 @@
   display: none;
 }
 
-.sect:not([open]):hover {
+/* só o bloco recolhível (details) ganha moldura no hover; um painel sempre aberto não */
+details.sect:not([open]):hover {
   box-shadow: inset 0 0 0 1px var(--line-strong, var(--line));
 }
 
