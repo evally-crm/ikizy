@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { format } from 'date-fns'
 import { Check, MessageCircle } from 'lucide-react'
 import type { Client } from '../../data/clients'
@@ -32,7 +32,9 @@ import './Clientes.css'
  */
 export function ClientList({ clients, selectedId, today }: { clients: Client[]; selectedId?: string; today: Date }) {
   const [query, setQuery] = useState('')
-  const [filter, setFilter] = useState<ClientFilter>('todas')
+  // ?filtro=chamar (atalho da Início) abre já no filtro pedido
+  const [params] = useSearchParams()
+  const [filter, setFilter] = useState<ClientFilter>(() => FILTERS.find((f) => f.id === params.get('filtro'))?.id ?? 'todas')
   const [picking, setPicking] = useState(false)
   const [picked, setPicked] = useState<Set<string>>(new Set())
   const [bulk, setBulk] = useState(false)

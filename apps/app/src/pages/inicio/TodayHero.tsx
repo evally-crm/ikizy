@@ -1,5 +1,5 @@
-import { CalendarPlus, Clock, Globe } from 'lucide-react'
-import type { DaySummary } from '../../domain/agenda'
+import { CalendarPlus, Clock, MessageCircle } from 'lucide-react'
+import type { DayLoad, DaySummary } from '../../domain/agenda'
 import { formatBRL, formatTime } from '../../lib/format'
 import type { Appointment } from '../../types'
 import './TodayHero.css'
@@ -7,11 +7,18 @@ import './TodayHero.css'
 const TICKS = 36
 const SWEEP = 270
 
-/** medidor redondo do dia (como o de pressão): tracinhos em arco que acendem conforme os atendimentos são concluídos */
-function DayGauge({ done, total }: { done: number; total: number }) {
-  const lit = total > 0 ? Math.round((done / total) * TICKS) : 0
+/** horas e minutos curtos: 300 → "5h", 270 → "4h30" */
+const hm = (min: number) => {
+  const h = Math.floor(min / 60)
+  const m = Math.round(min % 60)
+  return m ? `${h}h${String(m).padStart(2, '0')}` : `${h}h`
+}
+
+/** medidor redondo do dia (como o de pressão): tracinhos em arco que acendem conforme a agenda enche */
+function DayGauge({ load }: { load: DayLoad }) {
+  const lit = Math.round((load.pct / 100) * TICKS)
   return (
-    <svg className="gauge" viewBox="0 0 100 100" role="img" aria-label={`${done} de ${total} atendimentos concluídos`}>
+    <svg className="gauge" viewBox="0 0 100 100" role="img" aria-label={`Agenda ${load.pct}% ocupada: ${hm(load.booked)} de ${hm(load.capacity)}`}>
       <circle className="gauge__face" cx="50" cy="50" r="49" />
       {Array.from({ length: TICKS }, (_, i) => {
         const angle = ((-SWEEP / 2 + (i / (TICKS - 1)) * SWEEP - 90) * Math.PI) / 180
@@ -27,18 +34,18 @@ function DayGauge({ done, total }: { done: number; total: number }) {
           />
         )
       })}
-      <text className="gauge__value" x="50" y="52" textAnchor="middle">
-        {done}
-        <tspan className="gauge__of">/{total}</tspan>
+      <text className="gauge__value" x="50" y="53" textAnchor="middle">
+        {load.pct}
+        <tspan className="gauge__of">%</tspan>
       </text>
       <text className="gauge__label" x="50" y="64" textAnchor="middle">
-        feitos
+        ocupado
       </text>
       <text className="gauge__end" x="27" y="86" textAnchor="middle">
-        0
+        0h
       </text>
       <text className="gauge__end" x="73" y="86" textAnchor="middle">
-        {total}
+        {hm(load.capacity)}
       </text>
     </svg>
   )
@@ -47,22 +54,24 @@ function DayGauge({ done, total }: { done: number; total: number }) {
 /**
  * topo da Início: um número em destaque (o previsto do dia) com o anel do que já foi concluído,
  * uma linha de números pequenos e, embaixo, o próximo atendimento em vermelho e dois atalhos
+ * (o medidor mostra a ocupação: horas marcadas contra o expediente)
  */
 export function TodayHero({
   summary,
-  upcoming,
-  siteRequests,
+  load,
+  toCall,
   professionalName,
   onNext,
-  onRequests,
+  onCall,
   onNew,
 }: {
   summary: DaySummary<Appointment>
-  upcoming: number
-  siteRequests: number
+  load: DayLoad
+  /** clientes do filtro "Chamar hoje" (sumidas, aniversário…) */
+  toCall: number
   professionalName: (id: string) => string
   onNext: (a: Appointment) => void
-  onRequests: () => void
+  onCall: () => void
   onNew: () => void
 }) {
   const { next } = summary
@@ -76,21 +85,21 @@ export function TodayHero({
           <strong className="hero__value">{formatBRL(summary.expected).replace(',00', '')}</strong>
           <span className="hero__caption">previsto no dia, sem as faltas</span>
         </div>
-        <DayGauge done={summary.concluded} total={summary.count} />
+        <DayGauge load={load} />
       </div>
 
       <dl className="hero__row">
         <div>
-          <dt>atend.</dt>
-          <dd>{summary.count}</dd>
+          <dt>recebido</dt>
+          <dd>{formatBRL(load.received).replace(',00', '')}</dd>
         </div>
         <div>
-          <dt>feitos</dt>
-          <dd>{summary.concluded}</dd>
+          <dt>livres</dt>
+          <dd>{hm(load.free)}</dd>
         </div>
         <div>
-          <dt>a seguir</dt>
-          <dd>{upcoming}</dd>
+          <dt>a confirmar</dt>
+          <dd>{summary.awaiting}</dd>
         </div>
       </dl>
 
@@ -113,12 +122,12 @@ export function TodayHero({
           )}
         </button>
 
-        <button type="button" className={`hero__pill ${siteRequests > 0 ? 'is-hot' : ''}`.trim()} onClick={onRequests}>
+        <button type="button" className={`hero__pill ${toCall > 0 ? 'is-hot' : ''}`.trim()} onClick={onCall}>
           <span>
-            <strong>{siteRequests}</strong>
-            <small>{siteRequests === 1 ? 'pedido do site' : 'pedidos do site'}</small>
+            <strong>{toCall}</strong>
+            <small>para chamar</small>
           </span>
-          <Globe size={18} aria-hidden="true" />
+          <MessageCircle size={18} aria-hidden="true" />
         </button>
 
         <button type="button" className="hero__pill" onClick={onNew}>

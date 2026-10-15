@@ -4,9 +4,11 @@ import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { useAgenda } from '../../data/AgendaProvider'
 import { useAuth } from '../../auth/AuthProvider'
-import { appointmentsOn, nextStep, summarizeDay } from '../../domain/agenda'
+import { appointmentsOn, dayLoad, nextStep, summarizeDay } from '../../domain/agenda'
+import { filterClients } from '../../domain/clients'
+import { useClientBook } from '../../data/useClientBook'
 import { dayKey } from '../../lib/agendaTime'
-import { agenda, requestLink } from '../../lib/routes'
+import { agenda, dash, requestLink } from '../../lib/routes'
 import { Card, PageHeader } from '../../components/ui'
 import { DayAgenda } from '../../components/DayAgenda'
 import { PendingBanner } from '../../components/PendingRequests'
@@ -33,6 +35,7 @@ function headline(count: number, upcoming: number, awaiting: number) {
 export default function Inicio() {
   const { professionals, appointments, pending, workingHours, loading, error, focus, reload, update } = useAgenda()
   const { displayName } = useAuth()
+  const book = useClientBook()
   const navigate = useNavigate()
   const [now, setNow] = useState(() => new Date())
   const [messaging, setMessaging] = useState<Appointment | null>(null)
@@ -56,6 +59,8 @@ export default function Inicio() {
   const items = useMemo(() => appointmentsOn(appointments, today), [appointments, today])
   const summary = useMemo(() => summarizeDay(appointments, today, nowMinutes), [appointments, today, nowMinutes])
   const upcoming = items.filter((a) => (a.status === 'pendente' || a.status === 'confirmado' || a.status === 'atendimento') && a.start + a.duration > nowMinutes).length
+  const load = useMemo(() => dayLoad(items, professionals.map((p) => p.id), workingHours, now.getDay()), [items, professionals, workingHours, now])
+  const toCall = useMemo(() => filterClients(book.clients, '', 'chamar', now).length, [book.clients, now])
   const professionalName = (id: string) => professionals.find((p) => p.id === id)?.name ?? ''
   const solo = professionals.length === 1
   const firstName = displayName.split(' ')[0] || displayName
@@ -99,11 +104,11 @@ export default function Inicio() {
             {!loading && (
               <TodayHero
                 summary={summary}
-                upcoming={upcoming}
-                siteRequests={pending?.length ?? 0}
+                load={load}
+                toCall={toCall}
                 professionalName={professionalName}
                 onNext={open}
-                onRequests={() => document.querySelector('.pendbanner')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+                onCall={() => navigate(dash('/clientes?filtro=chamar'))}
                 onNew={() => navigate(agenda('nova=1'))}
               />
             )}
