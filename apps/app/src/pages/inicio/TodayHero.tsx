@@ -1,9 +1,48 @@
-import type { CSSProperties } from 'react'
-import { CalendarPlus, ChevronRight, Clock, Globe } from 'lucide-react'
+import { CalendarPlus, Clock, Globe } from 'lucide-react'
 import type { DaySummary } from '../../domain/agenda'
 import { formatBRL, formatTime } from '../../lib/format'
 import type { Appointment } from '../../types'
 import './TodayHero.css'
+
+const TICKS = 36
+const SWEEP = 270
+
+/** medidor redondo do dia (como o de pressão): tracinhos em arco que acendem conforme os atendimentos são concluídos */
+function DayGauge({ done, total }: { done: number; total: number }) {
+  const lit = total > 0 ? Math.round((done / total) * TICKS) : 0
+  return (
+    <svg className="gauge" viewBox="0 0 100 100" role="img" aria-label={`${done} de ${total} atendimentos concluídos`}>
+      <circle className="gauge__face" cx="50" cy="50" r="49" />
+      {Array.from({ length: TICKS }, (_, i) => {
+        const angle = ((-SWEEP / 2 + (i / (TICKS - 1)) * SWEEP - 90) * Math.PI) / 180
+        const [c, s] = [Math.cos(angle), Math.sin(angle)]
+        return (
+          <line
+            key={i}
+            className={i < lit ? 'gauge__tick is-on' : 'gauge__tick'}
+            x1={50 + c * 36}
+            y1={50 + s * 36}
+            x2={50 + c * (i % 6 === 0 ? 44 : 42)}
+            y2={50 + s * (i % 6 === 0 ? 44 : 42)}
+          />
+        )
+      })}
+      <text className="gauge__value" x="50" y="52" textAnchor="middle">
+        {done}
+        <tspan className="gauge__of">/{total}</tspan>
+      </text>
+      <text className="gauge__label" x="50" y="64" textAnchor="middle">
+        feitos
+      </text>
+      <text className="gauge__end" x="27" y="86" textAnchor="middle">
+        0
+      </text>
+      <text className="gauge__end" x="73" y="86" textAnchor="middle">
+        {total}
+      </text>
+    </svg>
+  )
+}
 
 /**
  * topo da Início: um número em destaque (o previsto do dia) com o anel do que já foi concluído,
@@ -27,7 +66,6 @@ export function TodayHero({
   onNew: () => void
 }) {
   const { next } = summary
-  const done = summary.count > 0 ? summary.concluded / summary.count : 0
   const pro = next ? professionalName(next.professionalId) : ''
 
   return (
@@ -38,12 +76,7 @@ export function TodayHero({
           <strong className="hero__value">{formatBRL(summary.expected).replace(',00', '')}</strong>
           <span className="hero__caption">previsto no dia, sem as faltas</span>
         </div>
-        <span
-          className="hero__ring"
-          role="img"
-          aria-label={`${summary.concluded} de ${summary.count} atendimentos concluídos`}
-          style={{ '--p': `${Math.round(done * 100)}%` } as CSSProperties}
-        />
+        <DayGauge done={summary.concluded} total={summary.count} />
       </div>
 
       <dl className="hero__row">
@@ -91,14 +124,13 @@ export function TodayHero({
         <button type="button" className="hero__pill" onClick={onNew}>
           <span>
             <strong className="hero__pill-title">Agendar</strong>
-            <small>novo horário</small>
+            <small>horário</small>
           </span>
           <span className="hero__pill-icon">
             <CalendarPlus size={18} aria-hidden="true" />
           </span>
         </button>
       </div>
-      {next && <ChevronRight hidden />}
     </section>
   )
 }

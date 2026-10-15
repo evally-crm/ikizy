@@ -13,7 +13,7 @@ import { PendingBanner } from '../../components/PendingRequests'
 import { TodayMessages } from '../../components/TodayMessages'
 import { AppointmentMessageDialog } from '../../components/MessageDialog'
 import type { Appointment } from '../../types'
-import { DaySummary } from '../agenda/DaySummary'
+import { TodayHero } from './TodayHero'
 import './Inicio.css'
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
@@ -96,7 +96,17 @@ export default function Inicio() {
       ) : (
         <div className="inicio__grid">
           <div className="inicio__main">
-            {!loading && <DaySummary summary={summary} isToday professionalName={professionalName} />}
+            {!loading && (
+              <TodayHero
+                summary={summary}
+                upcoming={upcoming}
+                siteRequests={pending?.length ?? 0}
+                professionalName={professionalName}
+                onNext={open}
+                onRequests={() => document.querySelector('.pendbanner')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+                onNew={() => navigate(agenda('nova=1'))}
+              />
+            )}
 
             <PendingBanner onOpen={(id) => navigate(requestLink(id))} notify={notify} />
 
