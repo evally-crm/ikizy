@@ -210,9 +210,9 @@ export default function MeuSite() {
 
                 <nav className="rail" aria-label="Partes da página">
                   {PARTS.map((p) => (
-                    <button key={p.id} type="button" className="rail__btn" aria-current={part === p.id ? 'true' : undefined} onClick={() => setPart(p.id)}>
+                    <button key={p.id} type="button" className="rail__btn" aria-current={part === p.id ? 'true' : undefined} aria-label={p.short} title={p.short} onClick={() => setPart(p.id)}>
                       {p.icon}
-                      <span>{p.short}</span>
+                      <span className="rail__label" aria-hidden="true">{p.short}</span>
                     </button>
                   ))}
                 </nav>

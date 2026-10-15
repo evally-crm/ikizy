@@ -113,9 +113,11 @@
 }
 
 .sect .swatch {
-  background: var(--white);
+  background: var(--page-bg);
 }
 
 .sect .swatch:has(input:checked) {
-  box-shadow: inset 0 0 0 2px var(--brand-900);
+  background: var(--white);
+  box-shadow: inset 0 0 0 1px var(--line-strong), var(--shadow-sm);
+  font-weight: 600;
 }

@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react'
+import { Check } from 'lucide-react'
 import { PALETTES, type PaletteId, type SiteConfig } from '../../data/catalog'
 import { COVER_STYLES, FONTS, type CoverStyleId, type FontId } from '../../lib/siteTheme'
 import type { SetSite } from './types'
@@ -15,7 +16,9 @@ export function PaletteOptions({ site, setSite }: { site: SiteConfig; setSite: S
       {(Object.keys(PALETTES) as PaletteId[]).map((id) => (
         <label key={id} className="palette">
           <input type="radio" name="palette" checked={site.palette === id} onChange={() => setSite('palette', id)} />
-          <span className="palette__dot" style={paletteVars(id)} aria-hidden="true" />
+          <span className="palette__dot" style={paletteVars(id)} aria-hidden="true">
+            <Check className="palette__check" size={20} strokeWidth={2.5} />
+          </span>
           {PALETTES[id].label}
         </label>
       ))}
@@ -30,7 +33,11 @@ export function CoverStyleOptions({ site, setSite }: { site: SiteConfig; setSite
       {(Object.keys(COVER_STYLES) as CoverStyleId[]).map((id) => (
         <label key={id} className="coverpick__opt">
           <input type="radio" name="coverStyle" checked={site.coverStyle === id} onChange={() => setSite('coverStyle', id)} />
-          <span className={`coverpick__tile coverpick__tile--${id}`} aria-hidden="true" />
+          <span className={`coverpick__tile coverpick__tile--${id}`} aria-hidden="true">
+            <span className="coverpick__check">
+              <Check size={14} strokeWidth={2.75} />
+            </span>
+          </span>
           <strong>{COVER_STYLES[id].label}</strong>
           <small>{COVER_STYLES[id].hint}</small>
         </label>
