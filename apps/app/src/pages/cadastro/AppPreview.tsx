@@ -7,7 +7,7 @@ import './AppPreview.css'
 
 export type PreviewPhase = 'blank' | 'building' | 'ready'
 
-const NAV = ['Agenda', 'Clientes', 'Financeiro', 'Meu site', 'Meu negócio']
+const NAV = ['Agenda', 'Clientes', 'Financeiro', 'Meu site', 'Negócio']
 
 /**
  * O sistema "se montando" atrás da pergunta: barra do topo, a semana da agenda e o site do negócio.

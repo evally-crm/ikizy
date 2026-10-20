@@ -9,6 +9,7 @@ import { BillingError, chooseTrialPlan, startCheckout } from '../../lib/billingA
 import { formatBRL } from '../../lib/format'
 import { CHOSEN_PLAN_KEY, PLAN_IDS, PLANS, TRIAL_DAYS, type PlanId } from '../../lib/plans'
 import { ROUTES } from '../../lib/routes'
+import { noSalonPath } from '../../lib/pendingInvite'
 import { Next } from './Ask'
 import { DraftPreview } from './AppPreview'
 import { OnboardingShell, Question } from './OnboardingShell'
@@ -83,7 +84,7 @@ function PlanStep() {
   }, [done])
 
   if (status === 'signed-out') return <Navigate to={ROUTES.login} replace />
-  if (status === 'no-salon') return <Navigate to={ROUTES.createSalon} replace />
+  if (status === 'no-salon') return <Navigate to={noSalonPath()} replace />
   if (done) return <Navigate to={ROUTES.dashboard} replace />
 
   const demo = status === 'demo'

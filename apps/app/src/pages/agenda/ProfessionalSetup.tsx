@@ -97,3 +97,13 @@ export function FirstProfessional() {
     </Card>
   )
 }
+
+/** recepção ou profissional sem agenda ligada: só avisa (quem cadastra é a dona ou a gerente) */
+export function NoAgenda() {
+  return (
+    <Card className="agenda__empty">
+      <h2 className="card__title">Sua agenda ainda não está pronta</h2>
+      <p className="card__sub">Peça para a dona do negócio ligar o seu acesso a quem atende, em Meu negócio → Equipe.</p>
+    </Card>
+  )
+}

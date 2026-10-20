@@ -6,6 +6,7 @@ import type { Appointment, AppointmentStatus, PaymentMethod, Professional } from
 import { appointments as mockAppointments, professionals as mockProfessionals } from './mock'
 import { isForgotten } from '../domain/clients'
 import { getClients } from './clients'
+import { roleAccess } from '../domain/team'
 import type { HourInterval } from '../lib/agendaTime'
 
 export interface ClientOption {
@@ -163,6 +164,8 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
   const { salon } = useAuth()
   const salonId = salon?.id
   const live = isNeonConfigured && Boolean(neon) && Boolean(salonId)
+  const onlyMine = salon ? !roleAccess(salon.role).agendaAll : false
+  const myProfessional = salon?.professionalId ?? null
 
   const [professionals, setProfessionals] = useState<Professional[]>(live ? [] : mockProfessionals)
   const [clients, setClients] = useState<ClientOption[]>([])
@@ -229,7 +232,9 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
         setHoursAvailable(true)
         setWorkingHours(byPro)
       }
-      setProfessionals((pros.data ?? []).map((p) => ({ id: p.id, name: p.name, role: p.title })))
+      // a profissional enxerga só a própria agenda (o banco já só devolve os atendimentos dela)
+      const own = (pros.data ?? []).filter((p) => !onlyMine || p.id === myProfessional)
+      setProfessionals(own.map((p) => ({ id: p.id, name: p.name, role: p.title })))
       setClients((cls.data ?? []).filter((c) => !isForgotten(c.name)).map((c) => ({ id: c.id, name: c.name, phone: c.phone })))
       setServices((svcs.data ?? []).map((s) => ({ id: s.id, name: s.name, price: Number(s.price), duration: s.duration })))
       setRegistryFor(salonId)
@@ -237,7 +242,7 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true
     }
-  }, [live, salonId, tick])
+  }, [live, salonId, tick, onlyMine, myProfessional])
 
   // atendimentos do período
   useEffect(() => {

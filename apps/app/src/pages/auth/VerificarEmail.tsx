@@ -3,6 +3,7 @@ import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react
 import { ShieldCheck } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
 import { ROUTES } from '../../lib/routes'
+import { noSalonPath } from '../../lib/pendingInvite'
 import { Em } from '../../components/ui'
 import { AuthCard, AuthField, AuthLayout, AuthSubmit, FormMessages } from './AuthLayout'
 
@@ -33,7 +34,7 @@ export default function VerificarEmail() {
   }, [wait])
 
   if (status === 'ready' || status === 'demo') return <Navigate to={ROUTES.dashboard} replace />
-  if (status === 'no-salon') return <Navigate to={ROUTES.createSalon} replace />
+  if (status === 'no-salon') return <Navigate to={noSalonPath()} replace />
   if (!email) return <Navigate to={ROUTES.signup} replace />
 
   const onSubmit = async (e: FormEvent) => {

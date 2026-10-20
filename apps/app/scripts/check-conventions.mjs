@@ -38,6 +38,8 @@ const SCOPES = [
   'pages/meu-negocio',
   'pages/agenda',
   'pages/clientes',
+  'pages/ganhos',
+  'pages/convite',
   'pages/meu-site',
   'components/ui/Field.tsx',
   'components/ui/Section.tsx',

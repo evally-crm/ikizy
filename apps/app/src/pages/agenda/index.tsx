@@ -23,7 +23,9 @@ import type { Appointment } from '../../types'
 import { CalendarCard, type CalendarView } from './CalendarCard'
 import { DayList } from './DayList'
 import { DaySummary } from './DaySummary'
-import { FirstProfessional, SoloProfessional } from './ProfessionalSetup'
+import { FirstProfessional, NoAgenda, SoloProfessional } from './ProfessionalSetup'
+import { useAuth } from '../../auth/AuthProvider'
+import { roleAccess } from '../../domain/team'
 import { TimeGrid } from './TimeGrid'
 import './Agenda.css'
 
@@ -57,6 +59,9 @@ export default function Agenda() {
   const { professionals, appointments, pending, workingHours, loading, error, focus, reload, update } = useAgenda()
   const [params, setParams] = useSearchParams()
   const { sub, loading: subLoading } = useSubscription()
+  const { salon } = useAuth()
+  // só quem cuida do negócio cadastra quem atende; a recepção e a profissional só esperam
+  const canSetUp = roleAccess(salon?.role ?? 'owner').business
   const [editingHours, setEditingHours] = useState(false)
   const [date, setDate] = useState(() => new Date())
   const [proFilter, setProFilter] = useState<string>('all')
@@ -261,7 +266,7 @@ export default function Agenda() {
         )}
 
         {!loading && professionals.length === 0 && !error ? (
-          subLoading ? null : sub && sub.plan !== 'solo' ? <FirstProfessional /> : <SoloProfessional />
+          subLoading ? null : !canSetUp ? <NoAgenda /> : sub && sub.plan !== 'solo' ? <FirstProfessional /> : <SoloProfessional />
         ) : (
           <>
             {isDesktop && !loading && <DaySummary summary={summary} isToday={isToday} professionalName={professionalName} />}

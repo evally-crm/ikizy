@@ -3,6 +3,7 @@ import {
   GRACE_DAYS,
   MIN_TRIAL_END_HOURS,
   PLANS,
+  fitsPlan,
   isPixMonths,
   isPlanId,
   pixAmountCents,
@@ -47,6 +48,8 @@ export interface SubscriptionRow {
 export interface BillingDb {
   getMembership(userId: string): Promise<Membership | null>
   getSubscription(salonId: string): Promise<SubscriptionRow | null>
+  /** profissionais ativas e logins do negócio, para conferir se a equipe cabe no plano escolhido */
+  teamCounts(salonId: string): Promise<{ professionals: number; members: number }>
   setCustomerId(salonId: string, customerId: string): Promise<void>
   findSalonByCustomer(customerId: string): Promise<string | null>
   /** soma meses ao acesso, uma única vez por `key` (o Stripe reenvia eventos) */
@@ -113,6 +116,11 @@ export async function createCheckout(deps: CheckoutDeps, user: { id: string; ema
     !!sub.stripeSubscriptionId && sub.billingMethod === 'card' && (sub.status === 'active' || sub.status === 'trialing' || sub.status === 'past_due') && !sub.cancelAtPeriodEnd
   if (hasLiveCardSubscription) {
     throw new HttpError(409, 'use_portal', 'Você já tem uma assinatura no cartão. Gerencie pelo portal de pagamento.')
+  }
+
+  // plano menor só se a equipe couber nele (R-106); o banco também não deixa crescer além do limite
+  if (!fitsPlan(input.plan, await db.teamCounts(member.salonId))) {
+    throw new HttpError(409, 'team_too_big', `Sua equipe passa do limite do plano ${PLANS[input.plan].name}. Desative profissionais ou remova acessos em Meu negócio → Equipe antes de trocar.`)
   }
 
   let customerId = sub.stripeCustomerId

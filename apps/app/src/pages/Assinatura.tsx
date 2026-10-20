@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { Check, CreditCard, QrCode } from 'lucide-react'
 import { useAuth } from '../auth/AuthProvider'
 import { useSubscription } from '../billing/SubscriptionProvider'
+import { useTeam } from '../data/team'
 import type { ReactNode } from 'react'
 import { Button, Card, Em, Money, Tabs } from '../components/ui'
 import { BillingError, openPortal, startCheckout } from '../lib/billingApi'
@@ -13,6 +14,7 @@ import {
   PLAN_IDS,
   PLANS,
   daysLeft,
+  fitsPlan,
   isCardTrial,
   monthsLabel,
   periodEnd,
@@ -36,6 +38,9 @@ export default function Assinatura() {
   const [error, setError] = useState<string | null>(null)
 
   const isOwner = !salon || salon.role === 'owner'
+  // plano menor só se a equipe couber nele (R-106): o servidor confere de novo
+  const team = useTeam()
+  const teamSize = { professionals: team.professionals.filter((p) => p.active).length, members: team.members.length }
   const returned = params.get('retorno')
 
   // ao abrir a tela, relê a assinatura: se a primeira leitura veio vazia, aqui ela se corrige sozinha
@@ -182,6 +187,7 @@ export default function Assinatura() {
         {PLAN_IDS.map((id) => {
           const plan = PLANS[id]
           const current = sub?.plan === id && state !== 'expired'
+          const fits = team.loading || fitsPlan(id, teamSize)
           const inTrialOffer = state === 'trial'
           const total = pixAmountCents(id, months)
           const full = pixFullCents(id, months)
@@ -221,15 +227,20 @@ export default function Assinatura() {
                 </Button>
               ) : (
                 <div className="billing-plan__actions">
-                  <Button disabled={!isOwner || busy !== null} onClick={() => pay(id, 'card')}>
+                  <Button disabled={!isOwner || busy !== null || !fits} onClick={() => pay(id, 'card')}>
                     <CreditCard size={16} aria-hidden="true" />
                     {busy === `${id}-card` ? 'Abrindo…' : `Cartão · ${formatBRL(plan.cents / 100)}/mês`}
                   </Button>
-                  <Button variant="light" disabled={!isOwner || busy !== null} onClick={() => pay(id, 'pix')}>
+                  <Button variant="light" disabled={!isOwner || busy !== null || !fits} onClick={() => pay(id, 'pix')}>
                     <QrCode size={16} aria-hidden="true" />
                     {busy === `${id}-pix` ? 'Abrindo…' : `Pix · ${formatBRL(total / 100)}`}
                   </Button>
                 </div>
+              )}
+              {!fits && (
+                <p className="billing-plan__note">
+                  Sua equipe passa do limite deste plano. Para trocar, desative profissionais ou remova acessos em Meu negócio → Equipe.
+                </p>
               )}
               {inTrialOffer && <p className="billing-plan__note">Assinando agora, você mantém os dias que sobraram do teste.</p>}
             </Card>

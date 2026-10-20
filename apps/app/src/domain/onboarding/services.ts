@@ -80,7 +80,7 @@ export function addService(
   const group = groups.find((g) => g.segment === change.segment)
   if (group?.services.some((s) => sameName(s.name, name))) return { error: 'Esse serviço já está na lista.' }
   if (groups.reduce((n, g) => n + g.services.length, 0) >= MAX_STARTER_SERVICES) {
-    return { error: `Coloque até ${MAX_STARTER_SERVICES} serviços agora. O resto você cadastra depois, em Meu negócio.` }
+    return { error: `Coloque até ${MAX_STARTER_SERVICES} serviços agora. O resto você cadastra depois, na aba Negócio.` }
   }
   const back = removed.filter((r) => !(r.segment === change.segment && sameName(r.name, name)))
   if (back.length < removed.length) return { removed: back, added }

@@ -3,6 +3,7 @@ import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { Lock, Mail } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
 import { ROUTES } from '../../lib/routes'
+import { noSalonPath } from '../../lib/pendingInvite'
 import { Em } from '../../components/ui'
 import { AuthCard, AuthField, AuthLayout, AuthSubmit, FormMessages, GoogleButton } from './AuthLayout'
 
@@ -31,7 +32,7 @@ export default function Login() {
   const [error, setError] = useState<string | null>(null)
 
   if (status === 'ready' || status === 'demo') return <Navigate to={from} replace />
-  if (status === 'no-salon') return <Navigate to={ROUTES.createSalon} replace />
+  if (status === 'no-salon') return <Navigate to={noSalonPath()} replace />
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -100,12 +101,10 @@ export default function Login() {
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            action={
-              <Link to={ROUTES.recover} className="auth__pill">
-                Esqueci
-              </Link>
-            }
           />
+          <Link to={ROUTES.recover} className="auth__forgot">
+            Esqueci a senha
+          </Link>
           <FormMessages error={error} notice={verified && !error ? 'E-mail confirmado. Agora entre com a sua senha.' : null} />
           <AuthSubmit label="Entrar" disabled={busy} />
         </form>

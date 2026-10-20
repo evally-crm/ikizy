@@ -1,5 +1,6 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { ROUTES } from '../lib/routes'
+import { noSalonPath } from '../lib/pendingInvite'
 import { useAuth } from './AuthProvider'
 
 /** protege as telas do sistema: exige login e um salão (no modo demo, libera tudo) */
@@ -19,6 +20,6 @@ export default function RequireSalon() {
   }
   // guarda para onde a pessoa ia (ex.: o link de um pedido): depois de entrar, volta para lá
   if (status === 'signed-out') return <Navigate to={ROUTES.login} replace state={{ from: `${pathname}${search}` }} />
-  if (status === 'no-salon') return <Navigate to={ROUTES.createSalon} replace />
+  if (status === 'no-salon') return <Navigate to={noSalonPath()} replace />
   return <Outlet />
 }

@@ -1,0 +1,190 @@
+/* Meus ganhos: mesmo desenho do Início (cartão branco com número grande e selo preto, bloco vermelho ao lado) */
+.earn {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.earn__months {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.earn__month {
+  min-width: 128px;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  color: var(--ink-900);
+}
+
+.earn__bento {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 16px;
+}
+
+.earn__card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 24px 28px;
+  border-radius: var(--radius-lg);
+  background: var(--white);
+  box-shadow: var(--shadow-sm);
+}
+
+.earn__kicker {
+  align-self: flex-start;
+  margin-bottom: 10px;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  background: var(--solid);
+  color: var(--on-solid);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.earn__value {
+  font-size: clamp(44px, 11vw, 64px);
+  font-weight: 300;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: var(--ink-900);
+}
+
+.earn__caption {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-500);
+}
+
+.earn__row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 18px 0 0;
+}
+.earn__row div {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 2px;
+  min-width: 0;
+}
+.earn__row dd {
+  overflow: hidden;
+  margin: 0;
+  font-size: clamp(20px, 5.6vw, 30px);
+  font-weight: 300;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: var(--ink-900);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.earn__row dt {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-500);
+}
+
+/* bloco vermelho, como o "Próximo" do Início */
+.earn__pct {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  background: var(--brand-500);
+  color: var(--on-brand);
+}
+.earn__label {
+  margin-bottom: auto;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+.earn__big {
+  margin-top: 24px;
+  font-size: 56px;
+  font-weight: 300;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+.earn__pct small {
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+.earn__title {
+  margin: 0 0 8px;
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--ink-900);
+}
+
+.earn__list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.earn__item {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+.earn__item:first-child {
+  border-top: 0;
+}
+.earn__date {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-900);
+}
+.earn__who {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.earn__who strong {
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-900);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.earn__who small {
+  overflow: hidden;
+  font-size: 12px;
+  color: var(--ink-500);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.earn__gain {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink-900);
+}
+
+@media (max-width: 767px) {
+  .earn__bento {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .earn__card {
+    padding: 20px;
+  }
+  .earn__month {
+    min-width: 0;
+  }
+}

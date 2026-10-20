@@ -4,6 +4,7 @@ import { Lock, Mail, User } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
 import { CHOSEN_PLAN_KEY, isPlanId } from '../../lib/plans'
 import { ROUTES } from '../../lib/routes'
+import { noSalonPath } from '../../lib/pendingInvite'
 import { Em } from '../../components/ui'
 import { AuthCard, AuthField, AuthLayout, AuthSubmit, FormMessages, GoogleButton } from './AuthLayout'
 
@@ -29,7 +30,7 @@ export default function Cadastro() {
   }, [params])
 
   if (status === 'ready' || status === 'demo') return <Navigate to={ROUTES.dashboard} replace />
-  if (status === 'no-salon') return <Navigate to={ROUTES.createSalon} replace />
+  if (status === 'no-salon') return <Navigate to={noSalonPath()} replace />
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault()

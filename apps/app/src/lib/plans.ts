@@ -35,7 +35,7 @@ export const PLANS: Record<PlanId, PlanInfo> = {
     name: 'Studio',
     cents: 2990,
     audience: 'Equipe pequena',
-    features: ['Tudo do Solo', 'Agenda com várias profissionais', 'Comissões por profissional'],
+    features: ['Tudo do Solo', 'Até 3 profissionais na agenda', 'Até 3 acessos com login', 'Comissões por profissional'],
     trialDays: TRIAL_DAYS,
   },
   salao: {
@@ -43,12 +43,29 @@ export const PLANS: Record<PlanId, PlanInfo> = {
     name: 'Salão',
     cents: 5990,
     audience: 'Equipe maior',
-    features: ['Tudo do Studio', 'Para equipes maiores'],
+    features: ['Tudo do Studio', 'Profissionais e acessos sem limite', 'Perfis de gerente e recepção'],
     trialDays: TRIAL_DAYS,
   },
 }
 
 export const PLAN_IDS = Object.keys(PLANS) as PlanId[]
+
+/**
+ * Limites de equipe por plano (R-26). null = sem limite. O banco aplica os mesmos números
+ * (plan_limits() na migration 20261031000000_team): mudou aqui, muda lá.
+ * Acessos = logins no negócio, contando a dona e os convites ainda em aberto.
+ */
+export const PLAN_LIMITS: Record<PlanId, { professionals: number | null; members: number | null }> = {
+  solo: { professionals: 1, members: 1 },
+  studio: { professionals: 3, members: 3 },
+  salao: { professionals: null, members: null },
+}
+
+/** a equipe de hoje cabe no plano? (trocar para um plano menor exige caber, R-106) */
+export function fitsPlan(plan: PlanId, team: { professionals: number; members: number }): boolean {
+  const limit = PLAN_LIMITS[plan]
+  return (limit.professionals === null || team.professionals <= limit.professionals) && (limit.members === null || team.members <= limit.members)
+}
 
 /** plano escolhido num cartão do site (app.ikizy.com/cadastro?plano=studio): vale para o teste que começa ao criar o negócio */
 export const CHOSEN_PLAN_KEY = 'ikizy:plano-escolhido'

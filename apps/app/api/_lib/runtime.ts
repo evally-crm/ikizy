@@ -62,6 +62,13 @@ export function createDb(): BillingDb {
       return r ? { salonId: r.salon_id as string, role: r.role as string, salonName: r.name as string } : null
     },
 
+    async teamCounts(salonId) {
+      const rows = (await sql`
+        select (select count(*)::int from public.professionals where salon_id = ${salonId} and active) as professionals,
+               (select count(*)::int from public.members where salon_id = ${salonId}) as members`) as Row[]
+      return { professionals: Number(rows[0]?.professionals ?? 0), members: Number(rows[0]?.members ?? 0) }
+    },
+
     async getSubscription(salonId): Promise<SubscriptionRow | null> {
       const rows = (await sql`select * from public.subscriptions where salon_id = ${salonId}`) as Row[]
       const r = rows[0]

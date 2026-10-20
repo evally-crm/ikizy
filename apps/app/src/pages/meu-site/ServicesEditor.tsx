@@ -105,7 +105,7 @@ export function ServicesEditor({
   return (
     <div className="catalog">
       <p className="catalog__intro">
-        Aqui você escolhe a foto e quais serviços aparecem no site. Nome, preço e duração ficam em <Link to={dash('/negocio#servicos')}>Meu negócio</Link>,
+        Aqui você escolhe a foto e quais serviços aparecem no site. Nome, preço e duração ficam na aba <Link to={dash('/negocio#servicos')}>Negócio</Link>,
         valendo para a agenda e para o site.
       </p>
       {CATEGORIES.filter((cat) => services.some((x) => x.category === cat)).map((cat) => {
@@ -122,7 +122,7 @@ export function ServicesEditor({
       })}
       {services.length === 0 && (
         <p className="catalog__empty">
-          Nenhum serviço ainda. Cadastre em <Link to={dash('/negocio#servicos')}>Meu negócio</Link>.
+          Nenhum serviço ainda. Cadastre na aba <Link to={dash('/negocio#servicos')}>Negócio</Link>.
         </p>
       )}
       <Link to={dash('/negocio#servicos')} className="btn btn--ghost catalog__add">

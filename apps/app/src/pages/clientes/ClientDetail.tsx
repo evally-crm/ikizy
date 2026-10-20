@@ -169,7 +169,6 @@ export function ClientDetail({
               </button>
             )}
             <Button
-              variant="accent"
               className="profile__book"
               aria-label={`Agendar ${firstName}`}
               onClick={() => navigate(agenda(`nova=1&cliente=${encodeURIComponent(client.name)}`))}
@@ -199,18 +198,22 @@ export function ClientDetail({
         {/* cliente nova: sem números zerados, só o essencial */}
         {profile.hasVisits && (
           <div className="profile__stats">
-            <div>
-              <p className="card__sub">Total gasto</p>
-              <Money value={client.totalSpent} size="lg" />
-            </div>
+            {book.showValues && (
+              <div>
+                <p className="card__sub">Total gasto</p>
+                <Money value={client.totalSpent} size="lg" />
+              </div>
+            )}
             <div>
               <p className="card__sub">Visitas</p>
               <p className="profile__num">{client.visits}</p>
             </div>
-            <div>
-              <p className="card__sub">Ticket médio</p>
-              <p className="profile__num">{formatBRL(profile.ticket).replace(',00', '')}</p>
-            </div>
+            {book.showValues && (
+              <div>
+                <p className="card__sub">Ticket médio</p>
+                <p className="profile__num">{formatBRL(profile.ticket).replace(',00', '')}</p>
+              </div>
+            )}
             <div>
               <p className="card__sub">Volta a cada</p>
               <p className="profile__num">

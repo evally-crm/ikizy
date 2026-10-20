@@ -16,6 +16,7 @@ import { useMediaQuery } from '../../hooks/useMediaQuery'
 import { formatBRL, formatTime } from '../../lib/format'
 import { agenda } from '../../lib/routes'
 import { ExpenseDialog } from './ExpenseDialog'
+import { roleAccess } from '../../domain/team'
 import './Financeiro.css'
 
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
@@ -38,7 +39,9 @@ export function TodayView({ tabs }: { tabs: ReactNode }) {
   const statement = fin.statementFor(today)
   const dayReceipt = buildDayReceipt(statement, { salonName, now })
   const shares = paymentShares(cash.byMethod.map((m) => ({ method: m.label, total: m.total })))
-  const canLaunch = fin.expensesAvailable && Boolean(currentMonth) && !currentMonth?.closedAt
+  // saídas: só dona e gerente lançam (a recepção vê o caixa do dia)
+  const fullFinance = roleAccess(salon?.role ?? 'owner').finance === 'full'
+  const canLaunch = fullFinance && fin.expensesAvailable && Boolean(currentMonth) && !currentMonth?.closedAt
 
   // /dashboard/financeiro?saida=1 abre o lançamento de saída (atalho do [+] da barra de baixo)
   const [params, setParams] = useSearchParams()
@@ -127,48 +130,48 @@ export function TodayView({ tabs }: { tabs: ReactNode }) {
         </div>
       ) : (
         <>
-          <div className="fm-stats">
-            <div className="fm-stat fm-stat--dark">
-              <span className="fm-stat__label">Recebido hoje</span>
-              <strong className="fm-stat__value">{formatBRL(cash.total)}</strong>
-              <span className="fm-stat__hint">
-                {cash.received.length} {cash.received.length === 1 ? 'atendimento concluído' : 'atendimentos concluídos'}
-              </span>
-            </div>
-            <div className="fm-stat">
-              <span className="fm-stat__label">A receber hoje</span>
-              <strong className="fm-stat__value">{formatBRL(cash.expected)}</strong>
-              <span className="fm-stat__hint">
-                {cash.toReceive.length === 0 ? (
-                  'Nada mais previsto para hoje'
-                ) : (
-                  <>
-                    {cash.toReceive.length} por concluir ·{' '}
-                    <Link to={agenda()} className="textlink">
-                      abrir agenda
-                    </Link>
-                  </>
-                )}
-              </span>
-            </div>
-            <div className="fm-stat">
-              <span className="fm-stat__label">Saídas de hoje</span>
-              <strong className="fm-stat__value">{formatBRL(cash.expensesTotal)}</strong>
-              <span className="fm-stat__hint">
-                {cash.expenses.length === 0
-                  ? 'Nenhuma saída lançada'
-                  : `${cash.expenses.length} ${cash.expenses.length === 1 ? 'lançamento' : 'lançamentos'}`}
-              </span>
-            </div>
-            <div className="fm-stat">
-              <span className="fm-stat__label">Resultado do dia</span>
-              <strong className="fm-stat__value">{formatBRL(statement.net)}</strong>
-              <span className="fm-stat__hint">Depois de comissões, taxas e saídas</span>
-            </div>
-          </div>
-
-          <div className="fm-layout">
+          <div className="fm-layout fm-layout--today">
             <div className="fm-details">
+              <div className="fm-stats">
+                <div className="fm-stat fm-stat--dark">
+                  <span className="fm-stat__label">Recebido hoje</span>
+                  <strong className="fm-stat__value">{formatBRL(cash.total)}</strong>
+                  <span className="fm-stat__hint">
+                    {cash.received.length} {cash.received.length === 1 ? 'atendimento concluído' : 'atendimentos concluídos'}
+                  </span>
+                </div>
+                <div className="fm-stat">
+                  <span className="fm-stat__label">A receber hoje</span>
+                  <strong className="fm-stat__value">{formatBRL(cash.expected)}</strong>
+                  <span className="fm-stat__hint">
+                    {cash.toReceive.length === 0 ? (
+                      'Nada mais previsto para hoje'
+                    ) : (
+                      <>
+                        {cash.toReceive.length} por concluir ·{' '}
+                        <Link to={agenda()} className="textlink">
+                          abrir agenda
+                        </Link>
+                      </>
+                    )}
+                  </span>
+                </div>
+                <div className="fm-stat">
+                  <span className="fm-stat__label">Saídas de hoje</span>
+                  <strong className="fm-stat__value">{formatBRL(cash.expensesTotal)}</strong>
+                  <span className="fm-stat__hint">
+                    {cash.expenses.length === 0
+                      ? 'Nenhuma saída lançada'
+                      : `${cash.expenses.length} ${cash.expenses.length === 1 ? 'lançamento' : 'lançamentos'}`}
+                  </span>
+                </div>
+                <div className="fm-stat">
+                  <span className="fm-stat__label">Resultado do dia</span>
+                  <strong className="fm-stat__value">{formatBRL(statement.net)}</strong>
+                  <span className="fm-stat__hint">Depois de comissões, taxas e saídas</span>
+                </div>
+              </div>
+
               <section className="fm-card">
                 <h2 className="fm-card__title">
                   <CreditCard size={16} aria-hidden="true" /> Formas de pagamento

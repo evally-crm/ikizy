@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { format, parseISO } from 'date-fns'
 import { useAuth } from '../auth/AuthProvider'
+import { roleAccess } from '../domain/team'
 import { isNeonConfigured, neon } from '../lib/neon'
 import { parseAnamnesis, type Anamnesis } from '../lib/anamnesis'
 import type { AppointmentStatus } from '../types'
@@ -142,6 +143,8 @@ export function useClientBook() {
   const canManage = !live || salon?.role === 'owner' || salon?.role === 'manager'
   /** só a dona apaga dados de cliente (LGPD) */
   const canForget = !live || salon?.role === 'owner'
+  /** quanto cada cliente já gastou: só dona e gerente veem (recepção e profissional, não) */
+  const showValues = !live || !salon || roleAccess(salon.role).clientValues
 
   const [clients, setClients] = useState<Client[]>(() => (live ? [] : getClients()))
   const [professionals, setProfessionals] = useState<ProfessionalOption[]>(() => (live ? [] : mockProfessionals))
@@ -307,6 +310,7 @@ export function useClientBook() {
     live,
     canManage,
     canForget,
+    showValues,
     clients,
     professionals,
     loading,

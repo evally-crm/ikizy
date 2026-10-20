@@ -30,7 +30,6 @@ interface ApptRow {
 interface ProRow {
   id: string
   name: string
-  commission_pct: number | string
 }
 
 interface ClientRow {
@@ -103,8 +102,10 @@ export function useFinance() {
       // a coluna de forma de pagamento vem da migration do financeiro; sem ela, seguimos sem esse detalhe
       if (apptRes.error) apptRes = await apptSelect(false)
 
-      const [pros, cls, prods, closings, exps] = await Promise.all([
-        neon.from('professionals').select('id, name, commission_pct').eq('salon_id', salonId),
+      const [pros, commissions, cls, prods, closings, exps] = await Promise.all([
+        neon.from('professionals').select('id, name').eq('salon_id', salonId),
+        // a comissão não é lida direto da tabela: o banco entrega a de todas para dona e gerente e nenhuma para os outros perfis
+        neon.rpc('get_commissions', { p_salon: salonId }),
         neon.from('clients').select('id, name, created_at').eq('salon_id', salonId),
         neon.from('products').select('monthly_spend').eq('salon_id', salonId),
         neon.from('month_closings').select('month, closed_at, snapshot').eq('salon_id', salonId).gte('month', format(first, 'yyyy-MM-dd')),
@@ -139,7 +140,8 @@ export function useFinance() {
         status: r.status,
         paymentMethod: r.payment_method ?? null,
       }))
-      const professionalRates: ProfessionalRate[] = proRows.map((p) => ({ id: p.id, name: p.name, commissionPct: Number(p.commission_pct) }))
+      const pctById = new Map(((commissions.data ?? []) as { professional_id: string; commission_pct: number | string }[]).map((c) => [c.professional_id, Number(c.commission_pct)]))
+      const professionalRates: ProfessionalRate[] = proRows.map((p) => ({ id: p.id, name: p.name, commissionPct: pctById.get(p.id) ?? 0 }))
       const clientsCreated = Object.fromEntries(clientRows.map((c) => [c.id, new Date(c.created_at)]))
       const productsSpend = (prods.data ?? []).reduce((s, p) => s + Number(p.monthly_spend), 0)
 

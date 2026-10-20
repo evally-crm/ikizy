@@ -3,6 +3,8 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthProvider'
 import { useAgenda } from '../../data/AgendaProvider'
 import { useBusiness } from '../../data/business'
+import { useTeam, type TeamInvite, type TeamMember, type TeamProfessional } from '../../data/team'
+import { assignableRoles, invitableRoles, teamUsage, type Role } from '../../domain/team'
 import type { Product, Service } from '../../data/catalog'
 import { openStatus, summarizeBusiness, summarizeHours } from '../../domain/business'
 import { ConfirmDialog } from '../../components/Modal'
@@ -15,6 +17,8 @@ import { MaterialsPanel } from './MaterialsPanel'
 import { ProductDialog } from './ProductDialog'
 import { ServiceDialog } from './ServiceDialog'
 import { ServicesPanel } from './ServicesPanel'
+import { TeamPanel } from './TeamPanel'
+import { InviteDialog, MemberDialog, ProfessionalDialog } from './TeamDialogs'
 import './MeuNegocio.css'
 import { PageLoader } from '../../components/PageLoader'
 
@@ -23,6 +27,7 @@ const TABS = [
   { id: 'horario', label: 'Horário' },
   { id: 'servicos', label: 'Serviços' },
   { id: 'custos', label: 'Materiais' },
+  { id: 'equipe', label: 'Equipe' },
 ] as const
 type TabId = (typeof TABS)[number]['id']
 
@@ -31,6 +36,7 @@ export default function MeuNegocio() {
   const { salon } = useAuth()
   const { professionals, workingHours, reload: reloadAgenda } = useAgenda()
   const biz = useBusiness()
+  const team = useTeam()
   const { hash, state } = useLocation()
   const navigate = useNavigate()
   const canManage = !salon || salon.role === 'owner' || salon.role === 'manager'
@@ -42,6 +48,9 @@ export default function MeuNegocio() {
   const [product, setProduct] = useState<Product | 'new' | null>(null)
   const [removing, setRemoving] = useState<{ kind: 'service' | 'product'; id: string; name: string } | null>(null)
   const [toast, setToast] = useState<string | null>(null)
+  const [pro, setPro] = useState<TeamProfessional | 'new' | null>(null)
+  const [inviting, setInviting] = useState<{ professional: TeamProfessional | null; existing: TeamInvite | null } | null>(null)
+  const [member, setMember] = useState<TeamMember | null>(null)
 
   useEffect(() => {
     if (!toast) return
@@ -54,6 +63,26 @@ export default function MeuNegocio() {
     if (biz.loading || hash !== '#horario' || !canManage) return
     if (!(state as { tab?: boolean } | null)?.tab) setEditingHours(true)
   }, [hash, state, biz.loading, canManage])
+
+  const myRole: Role = salon?.role ?? 'owner'
+  const usage = useMemo(
+    () =>
+      teamUsage(team.plan, {
+        activeProfessionals: team.professionals.filter((p) => p.active).length,
+        members: team.members.length,
+        openInvites: team.invites.length,
+      }),
+    [team.plan, team.professionals, team.members, team.invites],
+  )
+  const invitable = invitableRoles(myRole, team.plan)
+  // mexeu na equipe: a agenda (colunas, nomes) e a lista da equipe recarregam
+  const afterTeam = (message: string | null, ok: string) => {
+    if (!message) {
+      reloadAgenda()
+      setToast(ok)
+    }
+    return message
+  }
 
   const summary = useMemo(() => summarizeBusiness(biz.services, biz.products), [biz.services, biz.products])
   const allHours = useMemo(() => professionals.flatMap((p) => workingHours[p.id] ?? []), [professionals, workingHours])
@@ -86,7 +115,7 @@ export default function MeuNegocio() {
       <PageHeader
         title={
           <>
-            Meu <Em>negócio</Em>
+            Seu <Em>negócio</Em>
           </>
         }
         crumb={weekText}
@@ -98,7 +127,14 @@ export default function MeuNegocio() {
             items={TABS.map((t) => ({
               id: t.id,
               label: t.label,
-              badge: t.id === 'servicos' ? summary.serviceCount || null : t.id === 'custos' ? biz.products.length || null : null,
+              badge:
+                t.id === 'servicos'
+                  ? summary.serviceCount || null
+                  : t.id === 'custos'
+                    ? biz.products.length || null
+                    : t.id === 'equipe'
+                      ? team.professionals.filter((p) => p.active).length || null
+                      : null,
             }))}
           />
         }
@@ -140,6 +176,35 @@ export default function MeuNegocio() {
           {tab === 'servicos' && (
             <ServicesPanel services={biz.services} products={biz.products} canManage={canManage} onNew={() => setService('new')} onOpen={setService} />
           )}
+          {tab === 'equipe' &&
+            (team.loading ? (
+              <PageLoader label="Carregando a equipe…" />
+            ) : team.error ? (
+              <p className="dialog__error" role="alert">
+                {team.error}{' '}
+                <button type="button" className="textlink" onClick={team.reload}>
+                  Tentar de novo
+                </button>
+              </p>
+            ) : (
+              <TeamPanel
+                plan={team.plan}
+                myRole={myRole}
+                myUserId={team.myUserId}
+                professionals={team.professionals}
+                members={team.members}
+                invites={team.invites}
+                usage={usage}
+                invitable={invitable}
+                isOwner={myRole === 'owner'}
+                onNewProfessional={() => setPro('new')}
+                onEditProfessional={setPro}
+                onInvite={(p) => setInviting({ professional: p, existing: null })}
+                onInviteStaff={() => setInviting({ professional: null, existing: null })}
+                onShowInvite={(i) => setInviting({ professional: team.professionals.find((p) => p.id === i.professionalId) ?? null, existing: i })}
+                onManageMember={setMember}
+              />
+            ))}
           {tab === 'custos' && (
             <MaterialsPanel
               products={biz.products}
@@ -175,6 +240,36 @@ export default function MeuNegocio() {
             return message
           }}
           onRemove={product === 'new' ? undefined : () => setRemoving({ kind: 'product', id: product.id, name: product.name })}
+        />
+      )}
+      {pro && (
+        <ProfessionalDialog
+          professional={pro === 'new' ? null : pro}
+          onClose={() => setPro(null)}
+          onSave={async (input) => afterTeam(await team.saveProfessional(input, pro === 'new' ? undefined : pro.id), pro === 'new' ? 'Profissional cadastrada' : 'Profissional salva')}
+          onToggleActive={
+            pro === 'new' ? undefined : async () => afterTeam(await team.setActive(pro.id, !pro.active), pro.active ? 'Profissional desativada' : 'Profissional reativada')
+          }
+        />
+      )}
+      {inviting && (
+        <InviteDialog
+          roles={inviting.professional ? ['professional'] : invitable.filter((r) => r !== 'professional')}
+          professional={inviting.professional}
+          existing={inviting.existing}
+          salonName={salon?.name ?? 'seu negócio'}
+          onCreate={(role) => team.invite(role, inviting.professional?.id ?? null)}
+          onRevoke={async (id) => afterTeam(await team.revokeInvite(id), 'Convite cancelado')}
+          onClose={() => setInviting(null)}
+        />
+      )}
+      {member && (
+        <MemberDialog
+          member={member}
+          roles={assignableRoles(myRole, team.plan, Boolean(member.professionalId))}
+          onChangeRole={async (role) => afterTeam(await team.changeRole(member.userId, role), 'Perfil alterado')}
+          onRemove={async () => afterTeam(await team.removeAccess(member.userId), 'Acesso removido')}
+          onClose={() => setMember(null)}
         />
       )}
       {removing && (

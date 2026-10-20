@@ -20,7 +20,7 @@ const NOW = new Date('2026-10-10T12:00:00Z')
 
 // ---------------------------------------------------------------- fakes
 
-function fakeDb(opts: { member?: Membership | null; sub?: Partial<SubscriptionRow> | null } = {}) {
+function fakeDb(opts: { member?: Membership | null; sub?: Partial<SubscriptionRow> | null; team?: { professionals: number; members: number } } = {}) {
   const calls = { setCustomerId: [] as string[], pix: [] as Parameters<BillingDb['applyPixPayment']>[0][], subs: [] as Parameters<BillingDb['applySubscription']>[0][] }
   const seen = new Set<string>()
   const member = opts.member === undefined ? { salonId: 'salon-1', salonName: 'Studio Teste', role: 'owner' } : opts.member
@@ -42,6 +42,7 @@ function fakeDb(opts: { member?: Membership | null; sub?: Partial<SubscriptionRo
   const db: BillingDb = {
     getMembership: async () => member,
     getSubscription: async () => sub,
+    teamCounts: async () => opts.team ?? { professionals: 1, members: 1 },
     setCustomerId: async (_s, c) => void calls.setCustomerId.push(c),
     findSalonByCustomer: async (c) => (c === 'cus_known' ? 'salon-9' : null),
     applyPixPayment: async (p) => {
@@ -118,6 +119,15 @@ describe('createCheckout', () => {
     assert.deepEqual(s.metadata, { kind: 'pix_prepaid', salon_id: 'salon-1', plan: 'studio', months: '3' })
     assert.equal(s.customer, 'cus_new_1')
     assert.deepEqual(calls.setCustomerId, ['cus_new_1'])
+  })
+
+  it('não troca para um plano em que a equipe não cabe (R-106)', async () => {
+    const { db } = fakeDb({ team: { professionals: 2, members: 2 } })
+    const { stripe, created } = fakeStripe()
+    await assert.rejects(createCheckout(deps(db, stripe), user, { plan: 'solo', method: 'pix', months: 1, from: 'assinatura' }), (e: HttpError) => e.code === 'team_too_big')
+    assert.equal(created.length, 0)
+    await createCheckout(deps(db, stripe), user, { plan: 'studio', method: 'pix', months: 1, from: 'assinatura' })
+    assert.equal(created.length, 1)
   })
 
   it('cartão durante o teste: assinatura que preserva os dias que sobraram', async () => {

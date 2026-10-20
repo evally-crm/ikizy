@@ -11,6 +11,8 @@ export interface Salon {
   name: string
   slug: string
   role: MemberRole
+  /** profissional da agenda ligada a este login (null para quem não atende, ex.: recepção) */
+  professionalId: string | null
 }
 
 /** demo: sem Neon configurado · loading: resolvendo sessão/salão */
@@ -41,6 +43,8 @@ interface AuthState {
   displayName: string
   /** edita o cadastro: nome da pessoa e nome do negócio (só dono/gerente altera o negócio) */
   updateProfile: (userName: string, salonName: string) => Promise<string | null>
+  /** aceita o convite da equipe: liga o login ao negócio (e à profissional) e já abre o sistema */
+  acceptInvite: (token: string) => Promise<string | null>
 }
 
 const AuthContext = createContext<AuthState | null>(null)
@@ -101,7 +105,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .limit(1)
       .maybeSingle()
     const joined = data?.salons as unknown as { id: string; name: string; slug: string } | null
-    setSalon(!error && data && joined ? { ...joined, role: data.role as MemberRole } : null)
+    let professionalId: string | null = null
+    if (!error && joined) {
+      // quem atende tem a própria agenda; a profissional só enxerga a dela
+      const pro = await neon.from('professionals').select('id').eq('salon_id', joined.id).eq('user_id', uid).eq('active', true).limit(1).maybeSingle()
+      professionalId = (pro.data?.id as string | undefined) ?? null
+    }
+    setSalon(!error && data && joined ? { ...joined, role: data.role as MemberRole, professionalId } : null)
     setSalonFor(uid)
   }, [])
 
@@ -270,6 +280,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(null)
         setSalon(null)
         setProfile({})
+      },
+      async acceptInvite(token) {
+        if (!neon || !userId) return 'Entre na sua conta para aceitar o convite.'
+        const { error } = await neon.rpc('accept_invite', { p_token: token })
+        if (error) {
+          const m = error.message
+          if (m.includes('already_member')) return 'Esta conta já faz parte de um negócio. Entre com outro e-mail para aceitar.'
+          if (m.includes('invite_used')) return 'Este convite já foi usado.'
+          if (m.includes('invite_revoked')) return 'Este convite foi cancelado. Peça um novo.'
+          if (m.includes('invite_expired')) return 'Este convite venceu. Peça um novo.'
+          if (m.includes('plan_limit_members')) return 'O plano deste negócio chegou ao limite de acessos. Avise quem te convidou.'
+          if (m.includes('professional_has_access')) return 'Essa profissional já tem acesso por outra conta.'
+          return 'Não foi possível aceitar o convite agora. Tente novamente.'
+        }
+        await loadSalon(userId)
+        return null
       },
       async createSalon(name, slug, setup) {
         // modo demonstração: o cadastro roda de ensaio, nada é gravado

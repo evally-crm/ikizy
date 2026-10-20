@@ -5,7 +5,8 @@ import { useAuth } from '../auth/AuthProvider'
 import { useSalonInfo } from '../hooks/useSalonInfo'
 import { agenda, dash, ROUTES } from '../lib/routes'
 import { ContextMenu, type MenuEntry } from './ContextMenu'
-import { isActive, navItems } from './layout/nav'
+import { isActive, navItems, visibleFor } from './layout/nav'
+import { roleAccess } from '../domain/team'
 
 const copy = (text: string) => void navigator.clipboard?.writeText(text).catch(() => {})
 const open = (url: string) => window.open(url, '_blank', 'noopener,noreferrer')
@@ -22,7 +23,7 @@ const isEditable = (el: Element | null) =>
 export function AppContextMenu() {
   const navigate = useNavigate()
   const { pathname } = useLocation()
-  const { status, signOut } = useAuth()
+  const { status, signOut, salon } = useAuth()
   const { siteUrl } = useSalonInfo()
   const [menu, setMenu] = useState<{ x: number; y: number; entries: MenuEntry[] } | null>(null)
   const close = useCallback(() => setMenu(null), [])
@@ -53,7 +54,7 @@ export function AppContextMenu() {
           { kind: 'item', label: 'Nova cliente', hint: 'K', icon: UserRoundPlus, onSelect: () => navigate(dash('/clientes?nova=1')) },
           { kind: 'sep' },
         )
-        navItems.forEach((item, i) =>
+        visibleFor(navItems, roleAccess(salon?.role ?? 'owner')).forEach((item, i) =>
           entries.push({
             kind: 'item',
             label: item.label,
@@ -90,7 +91,7 @@ export function AppContextMenu() {
     }
     document.addEventListener('contextmenu', onMenu)
     return () => document.removeEventListener('contextmenu', onMenu)
-  }, [pathname, navigate, siteUrl, status, signOut])
+  }, [pathname, navigate, siteUrl, status, signOut, salon?.role])
 
   return menu ? <ContextMenu x={menu.x} y={menu.y} entries={menu.entries} onClose={close} /> : null
 }

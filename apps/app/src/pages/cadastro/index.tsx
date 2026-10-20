@@ -22,6 +22,7 @@ import {
 import { summarizeHours } from '../../domain/business'
 import { CHOSEN_PLAN_KEY } from '../../lib/plans'
 import { ROUTES } from '../../lib/routes'
+import { noSalonPath, readPendingInvite } from '../../lib/pendingInvite'
 import { isReservedSlug, siteHost, slugify } from '../../lib/slug'
 import { DraftPreview } from './AppPreview'
 import { BUILD_TICK_MS, Building, Ready } from './Finale'
@@ -75,6 +76,8 @@ export default function Onboarding() {
   )
 
   if (status === 'signed-out') return <Navigate to={ROUTES.login} replace />
+  // veio de um convite da equipe: entra no negócio de quem convidou em vez de criar um
+  if (status === 'no-salon' && phase === 'ask' && readPendingInvite()) return <Navigate to={noSalonPath()} replace />
   if (status === 'loading') {
     return (
       <div className="splash" role="status" aria-live="polite">
@@ -146,7 +149,7 @@ export default function Onboarding() {
             <Building />
           </Question>
         ) : (
-          <Question key="ready" title="Sua agenda está pronta" subtitle="Você ajusta tudo depois, em Meu negócio. Falta só escolher o plano.">
+          <Question key="ready" title="Sua agenda está pronta" subtitle="Você ajusta tudo depois, na aba Negócio. Falta só escolher o plano.">
             <Ready
               serviceCount={serviceCount(groups)}
               hours={summarizeHours(weekHours(draft.days, draft.start, draft.end))}

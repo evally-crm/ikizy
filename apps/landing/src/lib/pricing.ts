@@ -38,7 +38,7 @@ export const PLANS: LandingPlan[] = [
     hot: true,
     cta: 'Começar com o Studio',
     line: 'Equipe pequena, com comissões',
-    items: ['Equipe pequena', 'Tudo do Solo', 'Agenda com várias profissionais', 'Comissões por profissional'],
+    items: ['Equipe pequena', 'Tudo do Solo', 'Até 3 profissionais, cada uma com seu login', 'Comissões por profissional'],
   },
   {
     id: 'salao',
@@ -46,8 +46,8 @@ export const PLANS: LandingPlan[] = [
     cents: 5990,
     hot: false,
     cta: 'Começar com o Salão',
-    line: 'Equipe maior',
-    items: ['Equipe maior', 'Tudo do Studio', 'Para equipes maiores'],
+    line: 'Equipe maior, sem limite',
+    items: ['Equipe maior', 'Tudo do Studio', 'Profissionais e acessos sem limite', 'Perfis de gerente e recepção'],
   },
 ]
 
