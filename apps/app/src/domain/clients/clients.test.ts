@@ -94,10 +94,10 @@ describe('chamar hoje', () => {
   })
 
   it('quem já tem horário marcado não precisa ser chamada, mas o parabéns vale sempre', () => {
-    const appointments = [{ status: 'confirmado', date: new Date(2026, 9, 20) }]
+    const appointments = [{ status: 'confirmado', date: new Date(2026, 9, 20), service: 'Corte' }]
     assert.equal(callReason(client({ id: '1', lastVisit: daysAgo(60), appointments }), TODAY), null)
     assert.deepEqual(callReason(client({ id: '2', birthday: '10-12', appointments }), TODAY), { kind: 'aniversario' })
-    const past = [{ status: 'cancelado', date: new Date(2026, 9, 20) }]
+    const past = [{ status: 'cancelado', date: new Date(2026, 9, 20), service: 'Corte' }]
     assert.equal(callReason(client({ id: '3', lastVisit: daysAgo(60), appointments: past }), TODAY)?.kind, 'sumida')
   })
 
