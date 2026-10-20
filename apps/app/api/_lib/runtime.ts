@@ -1,7 +1,7 @@
 import { neon } from '@neondatabase/serverless'
 import { createRemoteJWKSet, jwtVerify } from 'jose'
 import Stripe from 'stripe'
-import { HttpError, type BillingDb, type Membership, type SubscriptionRow } from './billing.js'
+import { HttpError, type BillingDb, type Membership, type ReconcileDb, type SubscriptionRow } from './billing.js'
 import type { BookingDb, BookingResult, Slot } from './booking.js'
 import { FROM } from './authEmail.js'
 import type { CronDb } from './cron.js'
@@ -171,6 +171,21 @@ export function createBookingDb(): BookingDb {
     async limited(bucket, max, windowSeconds) {
       const rows = (await sql`select public.hit_rate_limit(${bucket}, ${max}, ${windowSeconds}) as blocked`) as { blocked: boolean }[]
       return rows[0]?.blocked === true
+    },
+  }
+}
+
+/** conferência diária com o Stripe: o mesmo banco do webhook + a lista de assinaturas de cartão conhecidas */
+export function createReconcileDb(): ReconcileDb {
+  const sql = neon(env('DATABASE_URL'))
+  return {
+    ...createDb(),
+    async knownCardSubscriptions() {
+      const rows = (await sql`
+        select stripe_subscription_id from public.subscriptions
+        where stripe_subscription_id is not null
+          and (status <> 'canceled' or access_until > now() - interval '30 days')`) as Row[]
+      return rows.map((r) => r.stripe_subscription_id as string)
     },
   }
 }

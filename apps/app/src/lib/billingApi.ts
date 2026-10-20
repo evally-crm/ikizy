@@ -47,7 +47,12 @@ export async function startCheckout(
   window.location.assign(url)
 }
 
-/** abre o portal do Stripe: trocar cartão, ver faturas, mudar de plano ou cancelar */
+/** troca o plano de quem já paga no cartão: subir cobra a diferença agora; descer vale na próxima cobrança */
+export async function changePlan(plan: PlanId): Promise<{ upgrade: boolean }> {
+  return post<{ upgrade: boolean }>('/api/billing/change-plan', { plan })
+}
+
+/** abre o portal do Stripe: trocar cartão, ver faturas ou cancelar (trocar de plano é pelo app) */
 export async function openPortal(): Promise<void> {
   const { url } = await post<{ url: string }>('/api/billing/portal', {})
   window.location.assign(url)

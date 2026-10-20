@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import { HttpError } from './billing.js'
-import { checkBookingLimits, createBooking, listSlots, shortHash, parseBookingInput, parseSlotsQuery, tooManyFromIp, translateDbError, type BookingDb } from './booking.js'
+import { checkBookingLimits, createBooking, listSlots, shortHash, parseBookingInput, parseSlotsQuery, tooManyFromIp, translateDbError, verifyCaptcha, type BookingDb } from './booking.js'
 
 const SVC = '11111111-1111-4111-8111-111111111111'
 const PRO = '22222222-2222-4222-8222-222222222222'
@@ -142,5 +142,42 @@ describe('limites do pedido (no banco)', () => {
   it('o resumo é estável e diferente para entradas diferentes', async () => {
     assert.equal(await shortHash('a'), await shortHash('a'))
     assert.notEqual(await shortHash('a'), await shortHash('b'))
+  })
+})
+
+describe('verifyCaptcha (Turnstile)', () => {
+  const code = (p: Promise<unknown>) => p.then(() => 'ok', (e) => (e instanceof HttpError ? e.code : 'outro'))
+  const answer = (success: boolean) => {
+    const sent: URLSearchParams[] = []
+    return { sent, post: async (body: URLSearchParams) => (sent.push(body), { success }) }
+  }
+
+  it('sem chave configurada não confere nada (o site funciona como antes)', async () => {
+    const { sent, post } = answer(false)
+    assert.equal(await code(verifyCaptcha('', '1.2.3.4', undefined, post)), 'ok')
+    assert.equal(sent.length, 0)
+  })
+
+  it('com chave: token válido passa; inválido ou ausente é recusado', async () => {
+    const ok = answer(true)
+    assert.equal(await code(verifyCaptcha('tok', '1.2.3.4', 'sec', ok.post)), 'ok')
+    assert.equal(ok.sent[0].get('secret'), 'sec')
+    assert.equal(ok.sent[0].get('response'), 'tok')
+    assert.equal(ok.sent[0].get('remoteip'), '1.2.3.4')
+    assert.equal(await code(verifyCaptcha('tok', '1.2.3.4', 'sec', answer(false).post)), 'captcha')
+    assert.equal(await code(verifyCaptcha('', '1.2.3.4', 'sec', answer(true).post)), 'captcha')
+  })
+
+  it('Cloudflare fora do ar não impede o agendamento', async () => {
+    const down = async () => {
+      throw new Error('timeout')
+    }
+    assert.equal(await code(verifyCaptcha('tok', 'desconhecido', 'sec', down)), 'ok')
+  })
+
+  it('o token vem do pedido e não vai para os dados do agendamento', () => {
+    const base = { slug: 'studio-bela', service: '11111111-1111-4111-8111-111111111111', date: '2026-10-20', minute: 600, name: 'Ana', phone: '11999998888' }
+    assert.equal(parseBookingInput({ ...base, captcha: 'abc' }).captcha, 'abc')
+    assert.equal(parseBookingInput(base).captcha, '')
   })
 })

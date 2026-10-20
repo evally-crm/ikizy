@@ -196,6 +196,41 @@ export async function createCheckout(deps: CheckoutDeps, user: { id: string; ema
   return { url: session.url }
 }
 
+/**
+ * troca de plano de quem já paga no cartão, feita pelo app (o portal do Stripe não troca plano: lá não dá para
+ * conferir a equipe). Subir cobra a diferença proporcional na hora; descer vale a partir da próxima cobrança (R-106).
+ */
+export async function changePlan(deps: CheckoutDeps, user: { id: string }, plan: PlanId) {
+  const { db, stripe } = deps
+  const member = await db.getMembership(user.id)
+  if (!member) throw new HttpError(404, 'no_salon', 'Você ainda não tem um negócio cadastrado.')
+  if (member.role !== 'owner') throw new HttpError(403, 'not_owner', 'Só a dona do negócio pode assinar ou alterar o plano.')
+  const sub = await db.getSubscription(member.salonId)
+  if (!sub?.stripeSubscriptionId || sub.billingMethod !== 'card' || sub.cancelAtPeriodEnd || sub.status === 'canceled') {
+    throw new HttpError(409, 'no_card_subscription', 'Troca de plano direto só para assinatura ativa no cartão.')
+  }
+  if (sub.plan === plan) throw new HttpError(409, 'same_plan', `Você já está no plano ${PLANS[plan].name}.`)
+  if (!fitsPlan(plan, await db.teamCounts(member.salonId))) {
+    throw new HttpError(409, 'team_too_big', `Sua equipe passa do limite do plano ${PLANS[plan].name}. Desative profissionais ou remova acessos em Meu negócio → Equipe antes de trocar.`)
+  }
+
+  const current = await stripe.subscriptions.retrieve(sub.stripeSubscriptionId)
+  const item = current.items.data[0]
+  if (!item) throw new HttpError(500, 'subscription_item_missing', 'Não foi possível trocar o plano agora.')
+  const prices = await stripe.prices.list({ lookup_keys: [priceLookupKey(plan)], active: true, limit: 1 })
+  const price = prices.data[0]
+  if (!price) throw new HttpError(500, 'price_missing', 'Preço do plano não configurado no Stripe.')
+
+  const upgrade = PLANS[plan].cents > PLANS[sub.plan].cents
+  await stripe.subscriptions.update(current.id, {
+    items: [{ id: item.id, price: price.id }],
+    proration_behavior: upgrade ? 'always_invoice' : 'none',
+    metadata: { ...current.metadata, salon_id: member.salonId, plan },
+  })
+  // o banco muda pelo webhook customer.subscription.updated (mesmo caminho de sempre)
+  return { plan, upgrade }
+}
+
 export async function createPortal(deps: CheckoutDeps, user: { id: string }) {
   const { db, stripe, appUrl, portalConfiguration } = deps
   const member = await db.getMembership(user.id)
@@ -271,31 +306,123 @@ export async function handleStripeEvent(event: Stripe.Event, db: BillingDb): Pro
 
     case 'customer.subscription.created':
     case 'customer.subscription.updated':
-    case 'customer.subscription.deleted': {
-      const sub = event.data.object as Stripe.Subscription
-      const customerId = customerIdOf(sub.customer)
-      const salonId = sub.metadata?.salon_id || (customerId ? await db.findSalonByCustomer(customerId) : null)
-      if (!salonId) return
-      const status = mapStatus(sub.status)
-      const plan = planFromSubscription(sub)
-      const end = subscriptionPeriodEnd(sub)
-      if (!status || !plan || !end) return
-
-      await db.applySubscription({
-        salonId,
-        plan,
-        status,
-        accessUntil: addDays(new Date(end * 1000), GRACE_DAYS),
-        onlyShrink: status === 'canceled',
-        customerId,
-        subscriptionId: sub.id,
-        cancelAtPeriodEnd: sub.cancel_at_period_end === true,
-        eventAt: new Date(event.created * 1000),
-      })
+    case 'customer.subscription.deleted':
+      await applyStripeSubscription(event.data.object as Stripe.Subscription, db, new Date(event.created * 1000))
       return
-    }
 
     default:
       return
   }
+}
+
+/** grava no banco o estado de uma assinatura do Stripe (webhook e conferência diária); false se não deu para aplicar */
+export async function applyStripeSubscription(sub: Stripe.Subscription, db: Pick<BillingDb, 'findSalonByCustomer' | 'applySubscription'>, eventAt: Date): Promise<boolean> {
+  const customerId = customerIdOf(sub.customer)
+  const salonId = sub.metadata?.salon_id || (customerId ? await db.findSalonByCustomer(customerId) : null)
+  if (!salonId) return false
+  const status = mapStatus(sub.status)
+  const plan = planFromSubscription(sub)
+  const end = subscriptionPeriodEnd(sub)
+  if (!status || !plan || !end) return false
+
+  await db.applySubscription({
+    salonId,
+    plan,
+    status,
+    accessUntil: addDays(new Date(end * 1000), GRACE_DAYS),
+    onlyShrink: status === 'canceled',
+    customerId,
+    subscriptionId: sub.id,
+    cancelAtPeriodEnd: sub.cancel_at_period_end === true,
+    eventAt,
+  })
+  return true
+}
+
+// ---------------------------------------------------------------- conferência diária com o Stripe
+
+/** quantos dias para trás a conferência olha assinaturas novas e Pix pagos (cobre webhooks perdidos) */
+export const RECONCILE_LOOKBACK_DAYS = 3
+
+export interface ReconcileDb extends Pick<BillingDb, 'findSalonByCustomer' | 'applyPixPayment' | 'applySubscription'> {
+  /** assinaturas de cartão que o banco conhece e ainda podem mudar (não canceladas ou com acesso recente) */
+  knownCardSubscriptions(): Promise<string[]>
+}
+
+interface ListPage<T> {
+  data: T[]
+  has_more: boolean
+}
+
+/** percorre todas as páginas de uma listagem do Stripe */
+async function eachPage<T extends { id: string }>(list: (after?: string) => Promise<ListPage<T>>, fn: (item: T) => Promise<void>) {
+  let after: string | undefined
+  for (;;) {
+    const page = await list(after)
+    for (const item of page.data) await fn(item)
+    if (!page.has_more || page.data.length === 0) return
+    after = page.data[page.data.length - 1].id
+  }
+}
+
+/**
+ * cron diário: refaz no banco o que o Stripe diz, caso algum webhook tenha se perdido.
+ * Assinaturas: as que o banco conhece e as criadas nos últimos dias. Pix: sessões pagas nos últimos dias
+ * (`applyPixPayment` usa a mesma chave do webhook, então nada é somado duas vezes).
+ */
+export async function reconcileStripe(deps: { db: ReconcileDb; stripe: Stripe; now?: Date }) {
+  const { db, stripe } = deps
+  const now = deps.now ?? new Date()
+  const since = Math.floor(addDays(now, -RECONCILE_LOOKBACK_DAYS).getTime() / 1000)
+  const result = { subscriptions: 0, pix: 0, skipped: 0, errors: 0 }
+  const seen = new Set<string>()
+
+  const syncSub = async (sub: Stripe.Subscription) => {
+    if (seen.has(sub.id)) return
+    seen.add(sub.id)
+    try {
+      if (await applyStripeSubscription(sub, db, now)) result.subscriptions++
+      else result.skipped++
+    } catch (error) {
+      result.errors++
+      console.error('reconcile subscription', sub.id, error)
+    }
+  }
+
+  for (const id of await db.knownCardSubscriptions()) {
+    try {
+      await syncSub(await stripe.subscriptions.retrieve(id))
+    } catch (error) {
+      result.errors++
+      console.error('reconcile retrieve', id, error)
+    }
+  }
+
+  await eachPage(
+    (after) => stripe.subscriptions.list({ status: 'all', created: { gte: since }, limit: 100, ...(after ? { starting_after: after } : {}) }),
+    syncSub,
+  )
+
+  await eachPage(
+    (after) => stripe.checkout.sessions.list({ status: 'complete', created: { gte: since }, limit: 100, ...(after ? { starting_after: after } : {}) }),
+    async (s) => {
+      if (s.mode !== 'payment' || s.metadata?.kind !== 'pix_prepaid' || s.payment_status !== 'paid') return
+      const salonId = s.metadata.salon_id
+      const plan = s.metadata.plan
+      const months = Number(s.metadata.months)
+      if (!salonId || !isPlanId(plan) || !isPixMonths(months)) {
+        result.skipped++
+        return
+      }
+      try {
+        const applied = await db.applyPixPayment({ key: `pix:${s.id}`, type: 'reconcile', salonId, plan, months, customerId: customerIdOf(s.customer) })
+        if (applied) result.pix++
+      } catch (error) {
+        result.errors++
+        console.error('reconcile pix', s.id, error)
+      }
+    },
+  )
+
+  return result
 }

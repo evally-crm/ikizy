@@ -6,7 +6,7 @@
  *   ... -- --dry-run                                              (só mostra o que faria, sem chave)
  *
  * Cria: um produto + preço mensal em BRL por plano (identificados por lookup_key) e a configuração do
- * portal do cliente (trocar cartão, mudar de plano, cancelar). A chave nunca é gravada em arquivo.
+ * portal do cliente (trocar cartão, faturas, cancelar; mudar de plano é pelo app). A chave nunca é gravada em arquivo.
  */
 import Stripe from 'stripe'
 import { PLAN_IDS, PLANS, priceLookupKey } from '../src/lib/plans.js'
@@ -30,7 +30,7 @@ async function main() {
   if (dryRun) {
     console.log('Modo simulação (nenhuma chamada ao Stripe).\n')
     for (const id of PLAN_IDS) console.log(`  plano ${PLANS[id].name}: ${brl(PLANS[id].cents)}/mês  lookup_key=${priceLookupKey(id)}`)
-    console.log('  portal do cliente: cancelar no fim do período, trocar cartão, mudar de plano, faturas')
+    console.log('  portal do cliente: cancelar no fim do período, trocar cartão, faturas (mudar de plano é pelo app)')
     if (webhookUrl) console.log(`  webhook: ${webhookUrl}\n    eventos: ${WEBHOOK_EVENTS.join(', ')}`)
     return
   }
@@ -44,10 +44,6 @@ async function main() {
   console.log(`Modo ${live ? 'PRODUÇÃO' : 'teste'}\n`)
   const stripe = new Stripe(key)
 
-  const priceIds: string[] = []
-  let productId = ''
-  const productIds: Record<string, string> = {}
-
   for (const id of PLAN_IDS) {
     const plan = PLANS[id]
     const lookup = priceLookupKey(id)
@@ -56,9 +52,6 @@ async function main() {
 
     if (existing && existing.unit_amount === plan.cents && existing.currency === 'brl') {
       console.log(`✓ ${plan.name}: preço ${existing.id} já existe (${brl(plan.cents)}/mês)`)
-      priceIds.push(existing.id)
-      productId = typeof existing.product === 'string' ? existing.product : existing.product.id
-      productIds[id] = productId
       continue
     }
 
@@ -78,15 +71,19 @@ async function main() {
       metadata: { plan: id },
     })
     console.log(`+ ${plan.name}: preço ${price.id} criado (${brl(plan.cents)}/mês)${existing ? ' (substituiu o valor antigo)' : ''}`)
-    priceIds.push(price.id)
-    productIds[id] = product
   }
 
   // portal do cliente
   const configs = await stripe.billingPortal.configurations.list({ limit: 20 })
   let portal = configs.data.find((c) => c.metadata?.app === 'ikizy' && c.active)
   if (portal) {
-    console.log(`✓ Portal do cliente: ${portal.id} já existe`)
+    // trocar de plano é pelo app (lá a equipe é conferida, R-106): portais antigos perdem essa opção
+    if (portal.features.subscription_update.enabled) {
+      portal = await stripe.billingPortal.configurations.update(portal.id, { features: { subscription_update: { enabled: false } } })
+      console.log(`~ Portal do cliente: ${portal.id} sem troca de plano (agora é pelo app)`)
+    } else {
+      console.log(`✓ Portal do cliente: ${portal.id} já existe`)
+    }
   } else {
     portal = await stripe.billingPortal.configurations.create({
       metadata: { app: 'ikizy' },
@@ -96,12 +93,8 @@ async function main() {
         payment_method_update: { enabled: true },
         customer_update: { enabled: true, allowed_updates: ['email', 'name'] },
         subscription_cancel: { enabled: true, mode: 'at_period_end' },
-        subscription_update: {
-          enabled: true,
-          default_allowed_updates: ['price'],
-          proration_behavior: 'create_prorations',
-          products: PLAN_IDS.map((id, i) => ({ product: productIds[id], prices: [priceIds[i]] })),
-        },
+        // trocar de plano é pelo app, que confere se a equipe cabe no plano (R-106)
+        subscription_update: { enabled: false },
       },
     })
     console.log(`+ Portal do cliente: ${portal.id} criado`)

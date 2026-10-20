@@ -14,7 +14,7 @@ export async function GET(request: Request) {
   try {
     const site = await fetchPublicSite(slug)
     if (!site) return html(renderNotFound(), 404, 'public, s-maxage=30')
-    const page = renderSitePage(site, { canonical: `${appUrl()}/s/${slug}` })
+    const page = renderSitePage(site, { canonical: `${appUrl()}/s/${slug}`, captchaSiteKey: process.env.TURNSTILE_SITE_KEY })
     // cache curto: a edição publicada aparece em até 1 minuto
     return html(page, 200, 'public, s-maxage=60')
   } catch (error) {

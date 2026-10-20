@@ -251,7 +251,7 @@ const DARK_CSS = `
 `
 
 /** monta a página pública completa (HTML) do negócio */
-export function renderSitePage(site: PublicSite, opts: { canonical: string }): string {
+export function renderSitePage(site: PublicSite, opts: { canonical: string; captchaSiteKey?: string }): string {
   const s = site.settings ?? {}
   const { p: pal } = paletteFor(s)
   const fontId = isFontId(s.font) ? s.font : 'moderna'
@@ -356,6 +356,7 @@ export function renderSitePage(site: PublicSite, opts: { canonical: string }): s
 
   const bookingData = JSON.stringify({
     slug: site.slug,
+    ts: opts.captchaSiteKey ?? '',
     wa: (bookLink ?? '').match(/wa\.me\/(\d+)/)?.[1] ?? '',
     showPrices,
     windowDays: Math.min(90, Math.max(1, Number(s.booking_window_days) || 30)),

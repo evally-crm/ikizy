@@ -55,6 +55,8 @@ body:has(dialog.sheet[open]){overflow:hidden}
 .bk-wait{margin:0 0 14px;padding:12px 14px;border-radius:14px;background:#fbf0d9;color:#6b4400;font-size:14px;line-height:1.5;text-align:left}
 .bk-done{text-align:center}
 .bk-done h3{font-size:26px;margin-bottom:8px}
+.bk-ts{display:flex;justify-content:center}
+.bk-ts:not(:empty){padding:8px 20px 0}
 `
 
 export const BOOKING_SCRIPT = `
@@ -64,7 +66,17 @@ export const BOOKING_SCRIPT = `
   var D=JSON.parse(document.getElementById('book-data').textContent);
   var body=document.getElementById('book-body'), foot=document.getElementById('book-foot');
   var TZ='America/Sao_Paulo';
-  var S={off:0,step:0,service:null,date:null,minute:null,pro:'',slots:null,error:'',name:'',phone:'',done:null,busy:false,token:0};
+  var S={off:0,step:0,service:null,date:null,minute:null,pro:'',slots:null,error:'',name:'',phone:'',done:null,busy:false,token:0,captcha:''};
+  // Turnstile (só com a chave configurada na Vercel): carrega uma vez, fora do corpo que é redesenhado
+  var TS=null,tsBox=null;
+  function captchaStart(){
+    if(!D.ts||tsBox)return;
+    tsBox=document.createElement('div');tsBox.className='bk-ts';foot.parentNode.insertBefore(tsBox,foot);
+    var sc=document.createElement('script');sc.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';sc.async=true;
+    sc.onload=function(){if(!window.turnstile)return;TS=window.turnstile.render(tsBox,{sitekey:D.ts,appearance:'interaction-only',language:'pt-br',callback:function(t){S.captcha=t},'expired-callback':function(){S.captcha=''},'error-callback':function(){S.captcha=''}})};
+    document.head.appendChild(sc);
+  }
+  function captchaReset(){S.captcha='';if(TS!=null&&window.turnstile)window.turnstile.reset(TS)}
   var ESC={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'};
   function e(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return ESC[c]})}
   function money(n){return n==null?'':new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:n%1?2:0}).format(n)}
@@ -80,6 +92,7 @@ export const BOOKING_SCRIPT = `
     S.service=id||null;S.step=id?1:0;S.off=0;S.date=null;S.minute=null;S.slots=null;S.error='';S.done=null;S.busy=false;
     render();
     if(!dlg.open)dlg.showModal();
+    captchaStart();
     if(id)pickDay(today());
   }
   function closeSheet(){if(dlg.open)dlg.close()}
@@ -177,17 +190,18 @@ export const BOOKING_SCRIPT = `
     var name=(S.name||'').trim(),digits=(S.phone||'').replace(/\\D/g,'');
     if(name.length<2){S.error='Informe seu nome.';render();return}
     if(digits.length<10||digits.length>13){S.error='Informe um WhatsApp com DDD.';render();return}
+    if(D.ts&&!S.captcha){S.error='Aguarde a verificação de segurança terminar e tente de novo.';render();return}
     S.busy=true;S.error='';render();
     var co=document.getElementById('bk-company');
-    fetch('/api/booking',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({slug:D.slug,service:S.service,professional:S.pro||null,date:S.date,minute:S.minute,name:name,phone:digits,company:co?co.value:''})})
+    fetch('/api/booking',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({slug:D.slug,service:S.service,professional:S.pro||null,date:S.date,minute:S.minute,name:name,phone:digits,company:co?co.value:'',captcha:S.captcha})})
       .then(function(r){return r.json().then(function(j){return {ok:r.ok,status:r.status,j:j}})})
       .then(function(res){
-        S.busy=false;
+        S.busy=false;captchaReset();
         if(res.ok){S.done=res.j.booking;S.step=3;render();return}
         S.error=res.j.message||'Não foi possível agendar agora. Tente de novo.';
         if(res.status===409){S.step=1;S.minute=null;pickDay(S.date);return}
         render();
-      }).catch(function(){S.busy=false;S.error='Sem conexão. Tente de novo.';render()});
+      }).catch(function(){S.busy=false;captchaReset();S.error='Sem conexão. Tente de novo.';render()});
   }
 
   dlg.addEventListener('click',function(ev){

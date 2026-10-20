@@ -63,7 +63,7 @@ export function parseSlotsQuery(url: URL): SlotsQuery {
 }
 
 /** corpo do POST; `honeypot` = campo escondido que só robôs preenchem */
-export function parseBookingInput(body: unknown): BookingInput & { honeypot: boolean } {
+export function parseBookingInput(body: unknown): BookingInput & { honeypot: boolean; captcha: string } {
   if (!body || typeof body !== 'object') throw bad('Pedido inválido.')
   const b = body as Record<string, unknown>
   const common = parseCommon(b.slug, b.service, b.date, b.professional)
@@ -74,7 +74,34 @@ export function parseBookingInput(body: unknown): BookingInput & { honeypot: boo
   const phone = typeof b.phone === 'string' ? b.phone : ''
   const digits = phone.replace(/\D/g, '')
   if (digits.length < 10 || digits.length > 13) throw bad('Informe um WhatsApp com DDD.')
-  return { ...common, minute, name, phone: digits, honeypot: typeof b.company === 'string' && b.company.trim() !== '' }
+  const captcha = typeof b.captcha === 'string' ? b.captcha.slice(0, 2048) : ''
+  return { ...common, minute, name, phone: digits, honeypot: typeof b.company === 'string' && b.company.trim() !== '', captcha }
+}
+
+/**
+ * confere o desafio do Cloudflare Turnstile. Sem `secret` configurado não confere nada (o site funciona
+ * como antes); com ele, pedido sem token válido é recusado.
+ */
+export async function verifyCaptcha(
+  token: string,
+  ip: string,
+  secret: string | undefined,
+  post: (body: URLSearchParams) => Promise<{ success?: boolean }> = (body) =>
+    fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', { method: 'POST', body }).then((r) => r.json() as Promise<{ success?: boolean }>),
+): Promise<void> {
+  if (!secret) return
+  const refuse = () => new HttpError(403, 'captcha', 'Não conseguimos confirmar que você não é um robô. Tente de novo.')
+  if (!token) throw refuse()
+  const body = new URLSearchParams({ secret, response: token })
+  if (ip && ip !== 'desconhecido') body.set('remoteip', ip)
+  let ok = false
+  try {
+    ok = (await post(body)).success === true
+  } catch {
+    // Cloudflare fora do ar: melhor deixar a cliente agendar (os limites por IP e telefone continuam valendo)
+    return
+  }
+  if (!ok) throw refuse()
 }
 
 /** erros com mensagem fixa levantados pelas funções do banco */

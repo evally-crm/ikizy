@@ -6,7 +6,8 @@ import { useSubscription } from '../billing/SubscriptionProvider'
 import { useTeam } from '../data/team'
 import type { ReactNode } from 'react'
 import { Button, Card, Em, Money, Tabs } from '../components/ui'
-import { BillingError, openPortal, startCheckout } from '../lib/billingApi'
+import { ConfirmDialog } from '../components/Modal'
+import { BillingError, changePlan, openPortal, startCheckout } from '../lib/billingApi'
 import { formatBRL } from '../lib/format'
 import {
   PIX_DISCOUNT_PCT,
@@ -36,6 +37,8 @@ export default function Assinatura() {
   const [months, setMonths] = useState<PixMonths>(1)
   const [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [changed, setChanged] = useState<string | null>(null)
+  const [confirming, setConfirming] = useState<PlanId | null>(null)
 
   const isOwner = !salon || salon.role === 'owner'
   // plano menor só se a equipe couber nele (R-106): o servidor confere de novo
@@ -84,6 +87,20 @@ export default function Assinatura() {
 
   const pay = (plan: PlanId, method: BillingMethod) => run(`${plan}-${method}`, () => startCheckout(plan, method, months))
 
+  // cartão ativo: a troca é feita aqui (o servidor confere a equipe); o banco atualiza pelo webhook em segundos
+  const switchTo = (plan: PlanId) =>
+    run(`${plan}-switch`, async () => {
+      setChanged(null)
+      const { upgrade } = await changePlan(plan)
+      setChanged(
+        upgrade
+          ? `Plano trocado para ${PLANS[plan].name}. A diferença proporcional foi cobrada no seu cartão.`
+          : `Plano trocado para ${PLANS[plan].name}. O novo valor vale a partir da próxima cobrança.`,
+      )
+      setBusy(null)
+      for (const wait of [1500, 4000, 8000]) window.setTimeout(() => void refresh(), wait)
+    })
+
   return (
     <div className="page">
       <header className="page__head">
@@ -112,6 +129,11 @@ export default function Assinatura() {
       {returned === 'cancelado' && (
         <p className="billing-note" role="status">
           Pagamento cancelado. Nada foi cobrado.
+        </p>
+      )}
+      {changed && (
+        <p className="billing-note billing-note--ok" role="status">
+          {changed}
         </p>
       )}
       {error && (
@@ -222,9 +244,15 @@ export default function Assinatura() {
               </ul>
 
               {hasLiveCard ? (
-                <Button variant="light" disabled={!isOwner || busy === 'portal'} onClick={() => run('portal', openPortal)}>
-                  {current ? 'Gerenciar assinatura' : 'Trocar de plano'}
-                </Button>
+                current ? (
+                  <Button variant="light" disabled={!isOwner || busy === 'portal'} onClick={() => run('portal', openPortal)}>
+                    Gerenciar assinatura
+                  </Button>
+                ) : (
+                  <Button variant="light" disabled={!isOwner || busy !== null || !fits} onClick={() => setConfirming(id)}>
+                    {busy === `${id}-switch` ? 'Trocando…' : `Trocar para ${plan.name}`}
+                  </Button>
+                )
               ) : (
                 <div className="billing-plan__actions">
                   <Button disabled={!isOwner || busy !== null || !fits} onClick={() => pay(id, 'card')}>
@@ -247,6 +275,20 @@ export default function Assinatura() {
           )
         })}
       </div>
+      )}
+
+      {confirming && sub && (
+        <ConfirmDialog
+          title={`Trocar para o ${PLANS[confirming].name}?`}
+          text={
+            PLANS[confirming].cents > PLANS[sub.plan].cents
+              ? `A diferença proporcional até a próxima cobrança é cobrada agora no seu cartão. Depois, ${formatBRL(PLANS[confirming].cents / 100)} por mês.`
+              : `Nada é cobrado agora. A partir da próxima cobrança, ${formatBRL(PLANS[confirming].cents / 100)} por mês.`
+          }
+          confirmLabel={`Trocar para ${PLANS[confirming].name}`}
+          onClose={() => setConfirming(null)}
+          onConfirm={() => void switchTo(confirming)}
+        />
       )}
     </div>
   )

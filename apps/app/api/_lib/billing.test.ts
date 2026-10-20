@@ -3,13 +3,16 @@ import { describe, it } from 'node:test'
 import type Stripe from 'stripe'
 import {
   HttpError,
+  changePlan,
   createCheckout,
   createPortal,
   handleStripeEvent,
   parseCheckoutInput,
+  reconcileStripe,
   subscriptionPeriodEnd,
   type BillingDb,
   type Membership,
+  type ReconcileDb,
   type SubscriptionRow,
 } from './billing.js'
 import { PLANS as LANDING_PLANS, PIX_DISCOUNT_PCT as LANDING_DISCOUNT, PIX_MONTHS as LANDING_MONTHS, TRIAL_DAYS as LANDING_TRIAL_DAYS, pixTotalCents } from '../../../landing/src/lib/pricing.js'
@@ -207,6 +210,53 @@ describe('createCheckout', () => {
   })
 })
 
+describe('changePlan', () => {
+  const liveCard = { plan: 'studio' as const, status: 'active' as const, billingMethod: 'card' as const, stripeCustomerId: 'cus_1', stripeSubscriptionId: 'sub_1' }
+  const planStripe = () => {
+    const updates: Record<string, unknown>[] = []
+    const stripe = {
+      subscriptions: {
+        retrieve: async () => ({ id: 'sub_1', metadata: { salon_id: 'salon-1', plan: 'studio' }, items: { data: [{ id: 'si_1' }] } }),
+        update: async (_id: string, params: Record<string, unknown>) => void updates.push(params),
+      },
+      prices: { list: async ({ lookup_keys }: { lookup_keys: string[] }) => ({ data: [{ id: `price_${lookup_keys[0]}` }] }) },
+    } as unknown as Stripe
+    return { stripe, updates }
+  }
+  const code = (p: Promise<unknown>) => p.then(() => 'ok', (e) => (e instanceof HttpError ? e.code : 'outro'))
+
+  it('subir cobra a diferença na hora e grava o plano nos metadados', async () => {
+    const { db } = fakeDb({ sub: liveCard })
+    const { stripe, updates } = planStripe()
+    assert.deepEqual(await changePlan(deps(db, stripe), user, 'salao'), { plan: 'salao', upgrade: true })
+    assert.equal(updates[0].proration_behavior, 'always_invoice')
+    assert.deepEqual(updates[0].items, [{ id: 'si_1', price: 'price_ikizy_salao_monthly' }])
+    assert.equal((updates[0].metadata as Record<string, string>).plan, 'salao')
+  })
+
+  it('descer não cobra nada agora: vale na próxima cobrança', async () => {
+    const { db } = fakeDb({ sub: liveCard })
+    const { stripe, updates } = planStripe()
+    await changePlan(deps(db, stripe), user, 'solo')
+    assert.equal(updates[0].proration_behavior, 'none')
+  })
+
+  it('não desce para um plano em que a equipe não cabe (o portal deixava)', async () => {
+    const { db } = fakeDb({ sub: liveCard, team: { professionals: 3, members: 2 } })
+    const { stripe, updates } = planStripe()
+    assert.equal(await code(changePlan(deps(db, stripe), user, 'solo')), 'team_too_big')
+    assert.equal(updates.length, 0)
+  })
+
+  it('só a dona, só com cartão ativo e só para outro plano', async () => {
+    const { stripe } = planStripe()
+    assert.equal(await code(changePlan(deps(fakeDb({ sub: liveCard, member: { salonId: 'salon-1', salonName: 'X', role: 'manager' } }).db, stripe), user, 'salao')), 'not_owner')
+    assert.equal(await code(changePlan(deps(fakeDb({ sub: { ...liveCard, billingMethod: 'pix' } }).db, stripe), user, 'salao')), 'no_card_subscription')
+    assert.equal(await code(changePlan(deps(fakeDb({ sub: { ...liveCard, cancelAtPeriodEnd: true } }).db, stripe), user, 'salao')), 'no_card_subscription')
+    assert.equal(await code(changePlan(deps(fakeDb({ sub: liveCard }).db, stripe), user, 'studio')), 'same_plan')
+  })
+})
+
 describe('createPortal', () => {
   it('abre o portal para quem já tem cliente no Stripe', async () => {
     const { db } = fakeDb({ sub: { stripeCustomerId: 'cus_1' } })
@@ -327,6 +377,94 @@ describe('handleStripeEvent · assinatura no cartão', () => {
     const { db, calls } = fakeDb()
     await handleStripeEvent(ev('charge.refunded', {}), db)
     assert.equal(calls.subs.length + calls.pix.length, 0)
+  })
+})
+
+// ---------------------------------------------------------------- conferência diária com o Stripe
+
+/** Stripe falso para a conferência: assinaturas por id, listagens paginadas de 1 em 1 */
+function reconcileStripeFake(opts: { known?: Record<string, unknown>; recent?: Record<string, unknown>[]; sessions?: Record<string, unknown>[]; failRetrieve?: string } = {}) {
+  const listCalls: Record<string, unknown>[] = []
+  const paged = (items: Record<string, unknown>[]) => async (params: { starting_after?: string; created?: { gte: number } }) => {
+    listCalls.push(params)
+    const start = params.starting_after ? items.findIndex((x) => x.id === params.starting_after) + 1 : 0
+    return { data: items.slice(start, start + 1), has_more: start + 1 < items.length }
+  }
+  return {
+    listCalls,
+    stripe: {
+      subscriptions: {
+        retrieve: async (id: string) => {
+          if (id === opts.failRetrieve) throw new Error('stripe fora do ar')
+          return opts.known?.[id]
+        },
+        list: paged(opts.recent ?? []),
+      },
+      checkout: { sessions: { list: paged(opts.sessions ?? []) } },
+    } as unknown as Stripe,
+  }
+}
+
+const reconcileDb = (known: string[] = []) => {
+  const { db, calls } = fakeDb()
+  return { db: { ...db, knownCardSubscriptions: async () => known } satisfies ReconcileDb, calls }
+}
+
+describe('reconcileStripe', () => {
+  it('reaplica as assinaturas que o banco conhece com o estado atual do Stripe', async () => {
+    const { db, calls } = reconcileDb(['sub_1'])
+    const { stripe } = reconcileStripeFake({ known: { sub_1: subscription({ status: 'past_due' }) } })
+    const r = await reconcileStripe({ db, stripe, now: NOW })
+    assert.equal(r.subscriptions, 1)
+    assert.equal(calls.subs[0].status, 'past_due')
+    assert.equal(calls.subs[0].eventAt.getTime(), NOW.getTime())
+  })
+
+  it('pega assinaturas novas cujo webhook se perdeu, sem aplicar a mesma duas vezes', async () => {
+    const { db, calls } = reconcileDb(['sub_1'])
+    const { stripe } = reconcileStripeFake({
+      known: { sub_1: subscription() },
+      recent: [subscription(), subscription({ id: 'sub_2', metadata: { salon_id: 'salon-2', plan: 'solo' } })],
+    })
+    const r = await reconcileStripe({ db, stripe, now: NOW })
+    assert.deepEqual(calls.subs.map((s) => s.subscriptionId), ['sub_1', 'sub_2'])
+    assert.equal(r.subscriptions, 2)
+  })
+
+  it('Pix pago que não chegou pelo webhook soma os meses; o que já chegou não soma de novo', async () => {
+    const { db, calls } = reconcileDb()
+    // o webhook já aplicou cs_1 (mesma chave), o cs_3 se perdeu
+    await db.applyPixPayment({ key: 'pix:cs_1', type: 'checkout.session.completed', salonId: 'salon-1', plan: 'studio', months: 3, customerId: 'cus_1' })
+    const { stripe } = reconcileStripeFake({
+      sessions: [pixSession(), pixSession({ id: 'cs_3', metadata: { kind: 'pix_prepaid', salon_id: 'salon-3', plan: 'solo', months: '1' } })],
+    })
+    const r = await reconcileStripe({ db, stripe, now: NOW })
+    assert.equal(r.pix, 1)
+    assert.deepEqual(calls.pix.map((p) => p.key), ['pix:cs_1', 'pix:cs_3'])
+    assert.equal(calls.pix[1].type, 'reconcile')
+  })
+
+  it('ignora sessões que não são Pix pago e conta as que têm metadados ruins', async () => {
+    const { db, calls } = reconcileDb()
+    const { stripe } = reconcileStripeFake({
+      sessions: [
+        pixSession({ id: 'cs_a', payment_status: 'unpaid' }),
+        { id: 'cs_b', mode: 'subscription', metadata: { kind: 'card_subscription' } },
+        pixSession({ id: 'cs_c', metadata: { kind: 'pix_prepaid', salon_id: 'salon-1', plan: 'vip', months: '3' } }),
+      ],
+    })
+    const r = await reconcileStripe({ db, stripe, now: NOW })
+    assert.equal(calls.pix.length, 0)
+    assert.equal(r.skipped, 1)
+  })
+
+  it('olha só os últimos dias e uma falha no Stripe não para o resto', async () => {
+    const { db, calls } = reconcileDb(['sub_x', 'sub_1'])
+    const { stripe, listCalls } = reconcileStripeFake({ known: { sub_1: subscription() }, failRetrieve: 'sub_x' })
+    const r = await reconcileStripe({ db, stripe, now: NOW })
+    assert.equal(r.errors, 1)
+    assert.equal(calls.subs.length, 1)
+    assert.equal((listCalls[0].created as { gte: number }).gte, Math.floor((NOW.getTime() - 3 * DAY) / 1000))
   })
 })
 
