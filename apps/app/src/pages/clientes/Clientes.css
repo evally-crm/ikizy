@@ -318,7 +318,7 @@
 
 @media (min-width: 1100px) {
   .crm {
-      grid-template-columns: minmax(300px, 4fr) minmax(0, 8fr);
+      grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
       align-items: start;
     }
   /* a carteira mostra só o que cabe na tela; a lista rola por dentro */
@@ -381,7 +381,6 @@
   align-items: center;
   gap: 12px 16px;
   background: var(--blush);
-  box-shadow: inset 0 0 0 1px var(--pink-300);
 }
 
 .filecta > svg {
@@ -503,46 +502,35 @@
       }
 }
 
-/* filtros em linha, com rolagem quando não cabem */
+/* filtros: botões que quebram linha, cinza sobre o card branco, o escolhido escuro */
 .crm__filters {
-  overflow-x: auto;
-  scrollbar-width: none;
+  flex: none;
+  gap: 6px;
 }
-.crm__filters::-webkit-scrollbar {
-  display: none;
+.crm__filters .chip {
+  min-height: 34px;
+  padding: 0 14px;
+  background: var(--bg);
+  color: var(--ink-700);
+  font-weight: 500;
 }
-/* contagem de cada filtro em selo */
-.crm__filters .tabs__badge {
-  justify-content: center;
+.crm__filters .chip[aria-pressed='true'] {
+  background: var(--brand-900);
+  color: var(--on-solid);
+}
+/* contagem de cada filtro em selo, na cor do próprio texto */
+.crm__badge {
+  display: inline-grid;
+  place-items: center;
   min-width: 20px;
   height: 18px;
   padding: 0 6px;
   border-radius: var(--radius-pill);
-  /* fundo na cor do próprio texto da aba: funciona no claro, no escuro e na aba escolhida */
   background: color-mix(in srgb, currentColor 14%, transparent);
-  color: inherit;
-  font-weight: 500;
-  opacity: 1;
+  font-size: 11px;
 }
 
-
-/* total de contatos ao lado do título e o resumo em linha, sem números grandes */
-.crm__total {
-  display: inline-grid;
-  place-items: center;
-  min-width: 30px;
-  height: 26px;
-  margin-left: 10px;
-  padding: 0 9px;
-  border-radius: var(--radius-pill);
-  background: var(--white);
-  border: 1px solid var(--line);
-  color: var(--ink-700);
-  font-size: 14px;
-  font-weight: 500;
-  letter-spacing: 0;
-  vertical-align: middle;
-}
+/* o resumo em linha, sem números grandes */
 .crm__summary {
   display: inline-flex;
   flex-wrap: wrap;
@@ -556,4 +544,12 @@
 .crm__summary .is-alert {
   color: var(--brand-700);
   font-weight: 500;
+}
+
+/* filtro sem ninguém: no lugar da ficha, um aviso curto */
+.crm__none {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-self: start;
 }

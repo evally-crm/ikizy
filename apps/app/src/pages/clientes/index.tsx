@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Plus } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
@@ -25,6 +25,9 @@ export default function Clientes() {
   const isWide = useMediaQuery('(min-width: 1100px)')
   const [dialog, setDialog] = useState<'new' | 'edit' | 'forget' | null>(null)
   const [params, setParams] = useSearchParams()
+  // quem a lista mostra agora (busca + filtro); null até a lista medir
+  const [visibleIds, setVisibleIds] = useState<string[] | null>(null)
+  const onVisible = useCallback((ids: string[]) => setVisibleIds(ids), [])
 
   // /dashboard/clientes?nova=1 abre o cadastro de cliente (atalho do botão direito)
   useEffect(() => {
@@ -33,7 +36,9 @@ export default function Clientes() {
     setParams({}, { replace: true })
   }, [params, setParams])
 
-  const selected = clients.find((c) => c.id === id) ?? (isWide ? clients[0] : undefined)
+  // no computador a ficha acompanha a lista: se a busca ou o filtro esconde a cliente aberta, abre a primeira que aparece
+  const shown = isWide && visibleIds ? clients.filter((c) => visibleIds.includes(c.id)) : clients
+  const selected = shown.find((c) => c.id === id) ?? (isWide ? shown[0] : clients.find((c) => c.id === id))
   const summary = useMemo(() => summarizeBook(clients, today), [clients, today])
 
   const dialogs = (
@@ -96,11 +101,6 @@ export default function Clientes() {
         title={
           <>
             Seus <Em>contatos</Em>
-            {clients.length > 0 && (
-              <span className="crm__total" aria-label={`${clients.length} contatos`}>
-                {clients.length}
-              </span>
-            )}
           </>
         }
         // a linha do resumo existe desde o início (carregando ou vazia) para o título e o botão não pularem
@@ -147,8 +147,13 @@ export default function Clientes() {
         </Card>
       ) : (
         <div className="crm">
-          <ClientList clients={clients} selectedId={selected?.id} today={today} />
-          {detail(false)}
+          <ClientList clients={clients} selectedId={selected?.id} today={today} onVisible={onVisible} showValues={book.showValues} />
+          {detail(false) || (
+            <Card className="crm__none">
+              <p className="card__title">Nenhuma cliente neste filtro</p>
+              <p className="card__sub">Troque o filtro ou a busca para abrir a ficha de alguém.</p>
+            </Card>
+          )}
         </div>
       )}
       {dialogs}

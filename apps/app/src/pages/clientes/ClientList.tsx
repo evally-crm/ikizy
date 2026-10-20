@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { format } from 'date-fns'
 import { Check, MessageCircle } from 'lucide-react'
@@ -21,7 +21,7 @@ import { BulkMessageDialog } from '../../components/BulkMessageDialog'
 import { MessageDialog } from '../../components/MessageDialog'
 import { useSalonInfo } from '../../hooks/useSalonInfo'
 import { CLIENT_KINDS, markSent, sentKey, wasSent } from '../../lib/messages'
-import { Avatar, Button, Card, SearchField, Tabs, Tag, Tags } from '../../components/ui'
+import { Avatar, Button, Card, SearchField, Tag, Tags } from '../../components/ui'
 import { formatBRL, formatPhone } from '../../lib/format'
 import { dash } from '../../lib/routes'
 import './Clientes.css'
@@ -30,7 +30,21 @@ import './Clientes.css'
  * lista de contatos: busca, filtro por marcação, "Chamar hoje" com a mensagem pronta de cada uma e,
  * quando pedido, seleção de várias para mandar a mesma mensagem
  */
-export function ClientList({ clients, selectedId, today }: { clients: Client[]; selectedId?: string; today: Date }) {
+export function ClientList({
+  clients,
+  selectedId,
+  today,
+  onVisible,
+  showValues = true,
+}: {
+  clients: Client[]
+  selectedId?: string
+  today: Date
+  /** quanto cada cliente gastou (escondido para recepção e profissional) */
+  showValues?: boolean
+  /** quem aparece com a busca e o filtro de agora (a página não deixa aberta uma ficha que sumiu da lista) */
+  onVisible?: (ids: string[]) => void
+}) {
   const [query, setQuery] = useState('')
   // ?filtro=chamar (atalho da Início) abre já no filtro pedido
   const [params] = useSearchParams()
@@ -44,6 +58,7 @@ export function ClientList({ clients, selectedId, today }: { clients: Client[]; 
   const dayKey = format(today, 'yyyy-MM-dd')
 
   const visible = useMemo(() => filterClients(clients, query, filter, today), [clients, query, filter, today])
+  useEffect(() => onVisible?.(visible.map((c) => c.id)), [visible, onVisible])
   const toCall = useMemo(() => countToCall(clients, today), [clients, today])
   const allPicked = visible.length > 0 && visible.every((c) => picked.has(c.id))
   // o número de cada filtro fica num selo ao lado do nome, no lugar dos números grandes
@@ -51,7 +66,6 @@ export function ClientList({ clients, selectedId, today }: { clients: Client[]; 
     () => Object.fromEntries(FILTERS.map((f) => [f.id, f.id === 'chamar' ? toCall : filterClients(clients, '', f.id, today).length])) as Record<ClientFilter, number>,
     [clients, today, toCall],
   )
-  const filterItems = FILTERS.map((f) => ({ id: f.id, label: f.label, badge: counts[f.id] > 0 ? counts[f.id] : undefined }))
 
   const stopPicking = () => {
     setPicking(false)
@@ -80,8 +94,14 @@ export function ClientList({ clients, selectedId, today }: { clients: Client[]; 
     <Card className="crm__list">
       <SearchField value={query} onChange={setQuery} label="Buscar cliente" placeholder="Buscar por nome ou telefone" />
 
-      <div className="crm__filters">
-        <Tabs label="Filtrar clientes" value={filter} onChange={setFilter} items={filterItems} />
+      {/* filtros em botões que quebram linha: na coluna estreita nenhum fica cortado */}
+      <div className="chips crm__filters" role="group" aria-label="Filtrar clientes">
+        {FILTERS.map((f) => (
+          <button key={f.id} type="button" className="chip" aria-pressed={filter === f.id} onClick={() => setFilter(f.id)}>
+            {f.label}
+            {counts[f.id] > 0 && <span className="crm__badge">{counts[f.id]}</span>}
+          </button>
+        ))}
       </div>
 
       {picking ? (
@@ -166,7 +186,7 @@ export function ClientList({ clients, selectedId, today }: { clients: Client[]; 
                       </Tags>
                     )}
                   </span>
-                  {!reason && <span className="clist__spent">{formatBRL(c.totalSpent).replace(',00', '')}</span>}
+                  {!reason && showValues && <span className="clist__spent">{formatBRL(c.totalSpent).replace(',00', '')}</span>}
                 </Link>
                 {reason && !picking && (
                   <button

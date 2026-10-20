@@ -218,14 +218,21 @@
   transform: translateX(-50%);
 }
 .bottomnav__bar {
+  position: relative;
   display: flex;
   flex: 1;
   gap: 2px;
+  /* o dedo corre pela barra sem rolar a página nem abrir o menu do link */
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
   padding: 5px;
   border-radius: var(--radius-pill);
-  /* vidro: translúcido, desfoca o que passa por trás e tem um brilho fino na borda de cima */
+  /* vidro: translúcido, desfoca o que passa por trás e tem um brilho fino na borda de cima;
+     no Chrome/Android, vidro líquido de verdade (--lg: a borda entorta o fundo, ver lib/liquidGlass) */
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.5));
-  backdrop-filter: blur(22px) saturate(180%);
+  backdrop-filter: var(--lg, blur(22px) saturate(180%));
   -webkit-backdrop-filter: blur(22px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.75);
   box-shadow:
@@ -233,12 +240,14 @@
     inset 0 -1px 0 rgba(14, 13, 13, 0.04),
     0 14px 34px -14px rgba(14, 13, 13, 0.28);
 }
+/* itens do mesmo tamanho, só ícone: a lente é que marca onde se está */
 .bottomnav__link {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex: 1 1 0;
   align-items: center;
   justify-content: center;
-  gap: 8px;
   min-width: 0;
   border: 0;
   border-radius: var(--radius-pill);
@@ -246,48 +255,97 @@
   color: var(--ink-500);
   font: inherit;
   cursor: pointer;
-  transition:
-    flex-grow 0.4s var(--ease-fluid, ease),
-    background-color 0.3s,
-    color 0.3s;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.3s;
 }
 .bottomnav__link svg {
   flex: none;
-  transition: stroke-width 0.2s;
+  transition:
+    stroke-width 0.2s,
+    transform 0.35s var(--ease-fluid, ease);
 }
-/* nome só na página atual (os outros seguem com o nome para leitores de tela) */
+/* o nome fica só para leitores de tela */
 .bottomnav__label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
   overflow: hidden;
-  max-width: 0;
-  font-size: 13px;
-  font-weight: 600;
+  clip-path: inset(50%);
   white-space: nowrap;
-  opacity: 0;
-  transition: max-width 0.4s var(--ease-fluid, ease), opacity 0.25s;
 }
-/* página atual: pílula clara, ícone em traço mais grosso (sem preenchimento) e o nome ao lado */
-.bottomnav__link.active {
-  flex-grow: 2.2;
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 2px 10px -4px rgba(14, 13, 13, 0.2);
+/* item sob a lente: ícone escuro e em traço mais grosso */
+.bottomnav__link.is-lit {
   color: var(--ink-900);
 }
-.bottomnav__link.active svg {
+.bottomnav__link.is-lit svg {
   stroke-width: 2.6;
 }
-.bottomnav__link.active .bottomnav__label {
-  max-width: 90px;
-  opacity: 1;
+.bottomnav__bar.is-pressing .bottomnav__link.is-lit svg {
+  transform: scale(1.12);
 }
+
+/* lente: parada é a pílula clara da página atual; com o dedo em cima, cresce e vira vidro que segue o toque */
+.bottomnav__lens {
+  position: absolute;
+  top: 5px;
+  bottom: 5px;
+  left: 0;
+  width: var(--lens-w);
+  border-radius: var(--radius-pill);
+  /* no claro, um cinza translúcido (pílula branca sobre a barra branca sumia) */
+  background: rgba(14, 13, 13, 0.1);
+  box-shadow: inset 0 1px 2px rgba(14, 13, 13, 0.08);
+  transform: translateX(var(--lens-x));
+  pointer-events: none;
+  /* ao pousar, passa um pouco do ponto e volta, como uma gota */
+  transition:
+    transform 0.5s cubic-bezier(0.34, 1.32, 0.5, 1),
+    background-color 0.3s,
+    box-shadow 0.3s;
+}
+.bottomnav__lens.is-hidden {
+  opacity: 0;
+}
+/* com o dedo em cima a lente passa por cima dos ícones, para entortá-los como uma gota de vidro */
+.bottomnav__bar.is-pressing .bottomnav__lens {
+  z-index: 2;
+  background: rgba(255, 255, 255, 0.18);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.85),
+    inset 0 2px 6px rgba(255, 255, 255, 0.7),
+    inset 0 -3px 8px rgba(14, 13, 13, 0.08),
+    0 10px 24px -10px rgba(14, 13, 13, 0.35);
+  backdrop-filter: var(--lg, blur(1.5px) saturate(160%) brightness(1.06));
+  -webkit-backdrop-filter: blur(1.5px) saturate(160%) brightness(1.06);
+  transform: translateX(var(--lens-x)) scale(1.28, 1.42);
+  /* com o dedo em cima, acompanha sem atraso; o fundo vira vidro na hora (se fosse aos poucos, a pílula branca
+     passaria por cima do ícone e ele piscaria) */
+  transition: transform 0.18s var(--ease-fluid, ease);
+}
+
 /* vidro escuro no modo escuro */
 :root[data-theme='dark'] .bottomnav__bar {
   background: linear-gradient(180deg, rgba(44, 43, 47, 0.7), rgba(28, 27, 30, 0.55));
   border-color: transparent;
   box-shadow: 0 14px 34px -14px rgba(0, 0, 0, 0.7);
 }
-:root[data-theme='dark'] .bottomnav__link.active {
+:root[data-theme='dark'] .bottomnav__lens {
   background: rgba(255, 255, 255, 0.12);
   box-shadow: none;
+}
+:root[data-theme='dark'] .bottomnav__bar.is-pressing .bottomnav__lens {
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.28),
+    inset 0 2px 6px rgba(255, 255, 255, 0.12),
+    0 10px 24px -10px rgba(0, 0, 0, 0.6);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bottomnav__lens,
+  .bottomnav__bar.is-pressing .bottomnav__lens {
+    transition-duration: 0.01s;
+  }
 }
 .bottomnav__add {
   display: grid;
@@ -320,16 +378,29 @@
 }
 
 .bottomnav__add {
-  transition: background-color 0.3s var(--ease-fluid), transform 0.15s;
+  transition: background-color 0.3s var(--ease-fluid), color 0.3s, box-shadow 0.3s, transform 0.15s;
 }
 
 .bottomnav__add svg {
   transition: transform 0.4s var(--ease-fluid);
 }
 
+/* aberto, o [+] vira um botão de vidro (o X escuro sobre o fundo entortado), em vez de um disco chapado */
 .bottomnav.is-quick:not(.is-closing) .bottomnav__add {
-  background: var(--solid);
-  box-shadow: 0 12px 26px -10px rgba(14, 13, 13, 0.5);
+  background: rgba(255, 255, 255, 0.3);
+  color: var(--ink-900);
+  backdrop-filter: var(--lg, blur(14px) saturate(180%));
+  -webkit-backdrop-filter: blur(14px) saturate(180%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.7),
+    inset 0 1px 2px rgba(255, 255, 255, 0.8),
+    0 12px 26px -12px rgba(14, 13, 13, 0.4);
+}
+:root[data-theme='dark'] .bottomnav.is-quick:not(.is-closing) .bottomnav__add {
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.16),
+    inset 0 1px 1px rgba(255, 255, 255, 0.22);
 }
 
 .bottomnav.is-quick:not(.is-closing) .bottomnav__add svg {

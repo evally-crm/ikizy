@@ -9,10 +9,13 @@ import { AgendaProvider } from '../../data/AgendaProvider'
 import BillingBanner from '../BillingBanner'
 import { FirstSteps } from '../FirstSteps'
 import { PendingBell, PendingToast } from '../PendingRequests'
-import { isActive, moreItems, navItems } from './nav'
+import { isActive, moreItems, navItems, visibleFor, type NavItem } from './nav'
+import { roleAccess, type RoleAccess } from '../../domain/team'
 import { daysLeft, describeSubscription, isCardTrial, periodEnd } from '../../lib/plans'
 import { agenda, dash, ROUTES } from '../../lib/routes'
 import { Avatar, Button, PageHeaderShell } from '../ui'
+import { GlassDefs, useLiquidGlass } from '../ui/LiquidGlass'
+import { useLensDrag } from '../ui/useLensDrag'
 
 function Logo() {
   return (
@@ -33,11 +36,21 @@ function useCloseOn(open: boolean, close: () => void) {
   }, [open, close])
 }
 
+/** o que o perfil de quem está logada vê (modo demonstração: tudo, como a dona) */
+function useAccess(): RoleAccess {
+  const { salon } = useAuth()
+  return roleAccess(salon?.role ?? 'owner')
+}
+
 /** itens do "Mais" que a pessoa pode ver (assinatura só para a dona) */
 function useMoreItems() {
-  const { salon } = useAuth()
-  const isOwner = !salon || salon.role === 'owner'
-  return moreItems.filter((i) => !i.ownerOnly || isOwner)
+  return visibleFor(moreItems, useAccess())
+}
+
+/** seções do perfil: as quatro primeiras vão para a barra do celular, o resto para as Configurações */
+function useSections(): { all: NavItem[]; bar: NavItem[]; sheet: NavItem[] } {
+  const all = visibleFor(navItems, useAccess())
+  return { all, bar: all.slice(0, 4), sheet: all.slice(4) }
 }
 
 /** linha discreta do teste grátis, no menu do avatar e no "Mais" */
@@ -55,9 +68,10 @@ function TrialLine() {
 
 /** navegação em pílula (desktop) */
 function PillNav() {
+  const { all } = useSections()
   return (
     <nav className="pillnav" aria-label="Navegação principal">
-      {navItems.map(({ to, label }) => (
+      {all.map(({ to, label }) => (
         <NavLink key={to} to={to} end={to === ROUTES.dashboard} className="pillnav__link">
           {label}
         </NavLink>
@@ -163,25 +177,34 @@ function DarkModeRow({ className = 'settings__row' }: { className?: string }) {
   )
 }
 
-/** atalhos do [+]: o que mais se cria no dia a dia */
-const QUICK: { to: string; label: string; icon: LucideIcon }[] = [
+/** atalhos do [+]: o que mais se cria no dia a dia (cada perfil vê só o que pode fazer) */
+const QUICK: { to: string; label: string; icon: LucideIcon; show?: (a: RoleAccess) => boolean }[] = [
   { to: agenda('nova=1'), label: 'Agendamento', icon: CalendarPlus },
   { to: dash('/clientes?nova=1'), label: 'Cliente', icon: UserPlus },
-  { to: dash('/financeiro?saida=1'), label: 'Saída', icon: ReceiptText },
-  { to: dash('/negocio#servicos'), label: 'Serviços', icon: Scissors },
-  { to: dash('/negocio#horario'), label: 'Horário', icon: Clock },
-  { to: dash('/site'), label: 'Meu site', icon: Globe },
+  { to: dash('/financeiro?saida=1'), label: 'Saída', icon: ReceiptText, show: (a) => a.finance === 'full' },
+  { to: dash('/negocio#servicos'), label: 'Serviços', icon: Scissors, show: (a) => a.business },
+  { to: dash('/negocio#horario'), label: 'Horário', icon: Clock, show: (a) => a.business },
+  { to: dash('/site'), label: 'Meu site', icon: Globe, show: (a) => a.site },
 ]
-
-/** na barra do celular cabem as quatro primeiras seções; Meu site e Meu negócio vão para as Configurações */
-const barItems = navItems.slice(0, 4)
-const sheetItems = navItems.slice(4)
 
 /** tempo da animação de fechar o painel do [+] (igual ao CSS) */
 const QUICK_OUT_MS = 260
 
 /** barra flutuante (celular): Início, Agenda, Clientes, Caixa e o [+]; o resto fica no avatar do topo */
 function BottomNav() {
+  const { bar: barItems } = useSections()
+  const access = useAccess()
+  const quickItems = QUICK.filter((q) => !q.show || q.show(access))
+  const { pathname } = useLocation()
+  const navigate = useNavigate()
+  const active = barItems.findIndex((i) => isActive(i.to, pathname))
+  const lens = useLensDrag<HTMLDivElement>({ itemSelector: '.bottomnav__link', selected: active, onPick: (i) => navigate(barItems[i].to) })
+  // vidro líquido: a lente (quando o dedo está nela), a própria barra e o [+] aberto entortam o que passa por trás
+  const lensRef = useRef<HTMLSpanElement>(null)
+  const addRef = useRef<HTMLButtonElement>(null)
+  const lensGlass = useLiquidGlass(lensRef, { bezel: 10, thickness: 16, blur: 0.2, specular: 0.7 })
+  const barGlass = useLiquidGlass(lens.ref, { bezel: 16, thickness: 14, blur: 6, saturation: 1.8, specular: 0.5, refraction: 0.8 })
+  const addGlass = useLiquidGlass(addRef, { bezel: 14, thickness: 18, blur: 4, saturation: 1.8, specular: 0.6 })
   // painel do [+]: a barra se desfaz e vira a grade de atalhos; ao fechar, o caminho inverso
   const [quick, setQuick] = useState<'closed' | 'open' | 'closing'>('closed')
   const quickTimer = useRef<number | undefined>(undefined)
@@ -206,7 +229,7 @@ function BottomNav() {
       <nav className={`bottomnav ${quick !== 'closed' ? 'is-quick' : ''} ${quick === 'closing' ? 'is-closing' : ''}`.replace(/\s+/g, ' ').trim()} aria-label="Navegação principal">
         {quick !== 'closed' && (
           <div className="quick" id="quick-actions" role="menu" aria-label="Criar">
-            {QUICK.map(({ to, label, icon: Icon }, i) => (
+            {quickItems.map(({ to, label, icon: Icon }, i) => (
               <NavLink key={to} to={to} className="quick__item" role="menuitem" style={{ '--i': i } as CSSProperties} onClick={closeQuick}>
                 <span className="quick__icon">
                   <Icon size={22} aria-hidden="true" />
@@ -216,18 +239,41 @@ function BottomNav() {
             ))}
           </div>
         )}
-        {/* pílula de vidro: só ícones; a página atual ganha o ícone preenchido e o nome ao lado. O + fica à parte, sólido */}
-        <div className="bottomnav__bar">
-          {barItems.map(({ to, label, short, icon: Icon }) => (
-            <NavLink key={to} to={to} end={to === ROUTES.dashboard} className="bottomnav__link" title={short ?? label}>
+        {/* pílula de vidro: só ícones; a lente marca a página atual e corre pela barra com o dedo. O + fica à parte, sólido */}
+        {lensGlass.filter}
+        {barGlass.filter}
+        {addGlass.filter}
+        <div
+          ref={lens.ref}
+          className={`bottomnav__bar ${lens.pressing ? 'is-pressing' : ''}`.trim()}
+          style={barGlass.style}
+          {...lens.handlers}
+        >
+          <span
+            ref={lensRef}
+            className={`bottomnav__lens ${lens.ready ? '' : 'is-hidden'}`.trim()}
+            style={{ ...lens.lensStyle, ...lensGlass.style }}
+            aria-hidden="true"
+          />
+          {barItems.map(({ to, label, short, icon: Icon }, i) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={to === ROUTES.dashboard}
+              className={`bottomnav__link ${i === lens.over ? 'is-lit' : ''}`.trim()}
+              title={short ?? label}
+              draggable={false}
+            >
               <Icon size={22} aria-hidden="true" />
               <span className="bottomnav__label">{short ?? label}</span>
             </NavLink>
           ))}
         </div>
         <button
+          ref={addRef}
           type="button"
           className="bottomnav__add"
+          style={addGlass.style}
           aria-label={quick === 'open' ? 'Fechar atalhos' : 'Criar'}
           aria-expanded={quick === 'open'}
           aria-controls="quick-actions"
@@ -244,7 +290,9 @@ function BottomNav() {
 function SettingsButton({ open, onOpen }: { open: boolean; onOpen: () => void }) {
   const { displayName } = useAuth()
   const { pathname } = useLocation()
-  const active = [...sheetItems, ...moreItems].some((i) => isActive(i.to, pathname))
+  const { sheet: sheetItems } = useSections()
+  const more = useMoreItems()
+  const active = [...sheetItems, ...more].some((i) => isActive(i.to, pathname))
   return (
     <button
       type="button"
@@ -259,10 +307,11 @@ function SettingsButton({ open, onOpen }: { open: boolean; onOpen: () => void })
   )
 }
 
-/** Configurações (celular): conta, plano, Meu site, Meu negócio, assinatura, modo escuro e sair */
+/** Configurações (celular): conta, plano, Meu site, Negócio, assinatura, modo escuro e sair */
 function SettingsSheet({ open, onClose, onAccount }: { open: boolean; onClose: () => void; onAccount: () => void }) {
   const { signOut, status, displayName, salon, session } = useAuth()
   const items = useMoreItems()
+  const { sheet: sheetItems } = useSections()
   const sheetIn = usePresence(open)
   useCloseOn(open, onClose)
   const sheet = [...sheetItems, ...items]
@@ -472,6 +521,7 @@ export default function AppShell() {
     <SubscriptionProvider>
     <AgendaProvider>
     <div className="shell">
+      <GlassDefs />
       <header className="topbar">
         <div className="topbar__inner">
           <Logo />

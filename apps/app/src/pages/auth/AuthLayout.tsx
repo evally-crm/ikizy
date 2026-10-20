@@ -1,10 +1,14 @@
-import { useId, useState, type InputHTMLAttributes, type ReactNode } from 'react'
-import { ArrowRight, Eye, EyeOff } from 'lucide-react'
+import { useId, useRef, useState, type InputHTMLAttributes, type ReactNode } from 'react'
+import { Eye, EyeOff } from 'lucide-react'
 import { Card } from '../../components/ui'
+import { useLiquidGlass } from '../../components/ui/LiquidGlass'
 import { HalftoneFace } from './HalftoneFace'
 
 /** `topAction` fica à direita da marca (ex.: link "Criar conta") */
 export function AuthLayout({ children, topAction }: { children: ReactNode; topAction?: ReactNode }) {
+  // no celular o conteúdo fica num cartão de vidro líquido; a borda curva entorta o rosto em pontos que passa por trás
+  const boxRef = useRef<HTMLDivElement>(null)
+  const glass = useLiquidGlass(boxRef, { radius: 32, bezel: 24, thickness: 22, blur: 10, saturation: 1.8, specular: 0.7 })
   return (
     <div className="auth">
       <div className="auth__bg" aria-hidden="true">
@@ -12,7 +16,8 @@ export function AuthLayout({ children, topAction }: { children: ReactNode; topAc
         <span />
       </div>
       <HalftoneFace />
-      <div className="auth__box">
+      {glass.filter}
+      <div className="auth__box" ref={boxRef} style={glass.style}>
         <header className="auth__top">
           <p className="logo auth__logo">
             IKIZY<span className="logo__dot">.</span>
@@ -54,9 +59,8 @@ export function AuthField({
   label,
   hint,
   icon,
-  action,
   ...input
-}: { label: string; hint?: string; icon?: ReactNode; action?: ReactNode } & InputHTMLAttributes<HTMLInputElement>) {
+}: { label: string; hint?: string; icon?: ReactNode } & InputHTMLAttributes<HTMLInputElement>) {
   const id = useId()
   // campos de senha ganham o botão de mostrar/ocultar
   const isPassword = input.type === 'password'
@@ -85,7 +89,6 @@ export function AuthField({
             {visible ? <EyeOff size={18} /> : <Eye size={18} />}
           </button>
         )}
-        {action}
       </span>
       {hint && <p className="field__hint">{hint}</p>}
     </div>
@@ -109,7 +112,7 @@ export function FormMessages({ error, notice }: { error: string | null; notice?:
   )
 }
 
-/** rodapé do formulário: aviso legal à esquerda e o disco escuro com seta (envia o formulário) à direita */
+/** rodapé do formulário: aviso legal à esquerda e a pílula escura que envia o formulário à direita */
 export function AuthSubmit({ label, disabled }: { label: string; disabled?: boolean }) {
   return (
     <div className="auth__foot">
@@ -124,8 +127,8 @@ export function AuthSubmit({ label, disabled }: { label: string; disabled?: bool
         </a>
         .
       </p>
-      <button type="submit" className="auth__go" disabled={disabled} aria-label={label} title={label}>
-        <ArrowRight size={22} aria-hidden="true" />
+      <button type="submit" className="auth__go" disabled={disabled}>
+        {label}
       </button>
     </div>
   )

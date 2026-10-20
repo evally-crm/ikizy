@@ -135,12 +135,11 @@
   gap: 4px;
   min-width: 0;
   padding: 14px 16px;
-  border: 1px solid var(--line);
+  border: 0;
   border-radius: var(--radius-sm);
   background: var(--white);
 }
 .fm-stat--dark {
-  border-color: var(--ink-900);
   background: var(--solid);
   color: var(--on-solid);
 }
@@ -198,7 +197,7 @@
 .fm-card,
 .fm-preview {
   padding: 14px 16px;
-  border: 1px solid var(--line);
+  border: 0;
   border-radius: var(--radius-md);
   background: var(--white);
 }
@@ -791,4 +790,71 @@ button.fb-card:active {
 :root[data-theme='dark'] .fb-split span:first-child,
 :root[data-theme='dark'] .fb-tone--net {
   background: var(--ink-900);
+}
+
+/* caixa de hoje no computador: o recibo ocupa a lateral do topo ao fim;
+   os números ficam na coluna da esquerda e os recebimentos crescem até a altura do recibo */
+.fm-layout--today .fm-stats {
+  grid-column: 1 / -1;
+}
+@media (min-width: 1024px) {
+  .fm-layout--today {
+    align-items: stretch;
+  }
+  .fm-layout--today .fm-details {
+    grid-auto-rows: auto;
+    grid-template-rows: auto auto auto minmax(0, 1fr);
+  }
+  .fm-layout--today .fm-card--wide {
+    align-self: stretch;
+  }
+  .fm-layout--today .fm-preview {
+    position: static;
+  }
+}
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .fm-layout--today .fm-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1280px) {
+  .fm-layout--today .fm-details {
+    grid-template-rows: auto auto minmax(0, 1fr);
+  }
+}
+
+/* mês no computador: o calendário vira um quadro e semanas/pagamentos sobem para o lado dele */
+@media (min-width: 1024px) {
+  .fm-details.fb {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .fm-details.fb > * {
+    grid-column: 1 / -1;
+  }
+  .fm-details.fb > .fb-days {
+    grid-column: 1;
+  }
+  .fm-details.fb > .fb-pair {
+    grid-column: 2;
+    grid-template-columns: minmax(0, 1fr);
+    grid-auto-rows: minmax(0, 1fr);
+  }
+  .fb-days .fb-heat__day {
+    height: auto;
+    aspect-ratio: 1;
+    max-height: 44px;
+  }
+  .fm-details.fb .fb-minibars {
+    margin-top: auto;
+  }
+  /* para onde foi o dinheiro e saídas do mês lado a lado; comissões, quando há equipe, na largura toda */
+  .fm-details.fb {
+    grid-auto-flow: row dense;
+  }
+  .fm-details.fb > .fb-where {
+    grid-column: 1;
+  }
+  .fm-details.fb > .fb-expenses {
+    grid-column: 2;
+  }
 }

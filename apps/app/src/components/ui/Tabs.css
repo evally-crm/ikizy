@@ -14,6 +14,8 @@
   padding: 4px;
   border-radius: var(--radius-pill);
   background: var(--tabs-track);
+  /* com overflow, numa coluna de altura fixa o seletor encolheria até sumir */
+  flex-shrink: 0;
 }
 .tabs::-webkit-scrollbar {
   display: none;
@@ -104,7 +106,58 @@
   }
 }
 
+/* com o dedo em cima: a pílula cresce um pouco, fica por cima das opções e vira vidro (entorta o texto embaixo) */
+.tabs--fill {
+  touch-action: pan-y;
+}
+.tabs.is-pressing {
+  user-select: none;
+  -webkit-user-select: none;
+}
+.tabs.is-pressing .tabs__pill {
+  z-index: 1;
+  background: rgba(255, 255, 255, 0.16);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.85),
+    inset 0 2px 5px rgba(255, 255, 255, 0.6),
+    inset 0 -2px 6px rgba(14, 13, 13, 0.08),
+    0 6px 16px -8px rgba(14, 13, 13, 0.35);
+  backdrop-filter: var(--lg, blur(1px) saturate(160%));
+  -webkit-backdrop-filter: blur(1px) saturate(160%);
+  transform: translateX(var(--pill-x, 0)) scale(1.08, 1.14);
+  pointer-events: none;
+  /* vira vidro na hora: aos poucos, a pílula branca cobriria o texto que acabou de passar por cima */
+  transition:
+    transform 0.16s var(--ease-fluid, cubic-bezier(0.32, 0.72, 0, 1)),
+    width 0.2s var(--ease-fluid, cubic-bezier(0.32, 0.72, 0, 1));
+}
+/* a escolhida perde a pílula enquanto o dedo está fora dela: volta à cor das outras (no escuro, o texto era escuro sobre branco) */
+.tabs.is-pressing .tabs__item[aria-selected='true']:not(.is-lit) {
+  color: var(--tabs-text);
+}
+.tabs.is-pressing .tabs__item.is-lit {
+  color: var(--tabs-text-on-glass, var(--ink-900));
+}
+/* ao soltar, pousa passando um pouco do ponto, como uma gota */
+.tabs.is-ready:not(.is-pressing) .tabs__pill {
+  transition:
+    transform 0.5s cubic-bezier(0.34, 1.3, 0.5, 1),
+    width 0.42s var(--ease-fluid, cubic-bezier(0.32, 0.72, 0, 1)),
+    background-color 0.3s,
+    box-shadow 0.3s;
+}
+:root[data-theme='dark'] .tabs {
+  --tabs-text-on-glass: var(--ink-900);
+}
+:root[data-theme='dark'] .tabs.is-pressing .tabs__pill {
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.28),
+    inset 0 2px 5px rgba(255, 255, 255, 0.12);
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .tabs.is-ready:not(.is-pressing) .tabs__pill,
   .tabs.is-ready .tabs__pill {
     transition: none;
   }

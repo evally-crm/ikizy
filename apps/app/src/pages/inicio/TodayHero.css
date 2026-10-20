@@ -281,3 +281,40 @@
     min-height: 150px;
   }
 }
+
+/* o resumo do dia (número, medidor e números pequenos) é um bloco só */
+.hero__summary {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+}
+
+/* espaço largo (medido na coluna da Início, não na tela): o resumo vira um cartão do mesmo tamanho dos blocos,
+   e os três blocos ficam ao lado dele, sem buraco no meio */
+@container inicio (min-width: 880px) {
+  .hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: stretch;
+    gap: 10px;
+  }
+  .hero__summary {
+    justify-content: space-between;
+    padding: 20px 22px;
+    border-radius: 24px;
+    background: var(--white);
+    box-shadow: var(--shadow-sm);
+  }
+  .hero__row dd {
+    font-size: 26px;
+  }
+  .hero__bento {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+  }
+  .hero__next {
+    grid-row: span 2;
+    min-height: 0;
+  }
+}

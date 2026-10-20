@@ -62,7 +62,7 @@
   /* layout */
   --bottomnav-h: 52px;
   --topbar-h: 76px;
-  --content-max: 1440px;
+  --content-max: 1760px;
   --content-pb: 24px;
   /* altura disponível para telas que cabem na viewport (desktop) */
   --fit-h: calc(100dvh - var(--topbar-h) - 8px - var(--content-pb));

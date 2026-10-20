@@ -79,29 +79,31 @@ export function TodayHero({
 
   return (
     <section className="hero" aria-label="Resumo de hoje">
-      <div className="hero__top">
-        <div>
-          <span className="hero__kicker">Hoje</span>
-          <strong className="hero__value">{formatBRL(summary.expected).replace(',00', '')}</strong>
-          <span className="hero__caption">previsto no dia, sem as faltas</span>
+      <div className="hero__summary">
+        <div className="hero__top">
+          <div>
+            <span className="hero__kicker">Hoje</span>
+            <strong className="hero__value">{formatBRL(summary.expected).replace(',00', '')}</strong>
+            <span className="hero__caption">previsto no dia, sem as faltas</span>
+          </div>
+          <DayGauge load={load} />
         </div>
-        <DayGauge load={load} />
-      </div>
 
-      <dl className="hero__row">
-        <div>
-          <dt>recebido</dt>
-          <dd>{formatBRL(load.received).replace(',00', '')}</dd>
-        </div>
-        <div>
-          <dt>livres</dt>
-          <dd>{hm(load.free)}</dd>
-        </div>
-        <div>
-          <dt>a confirmar</dt>
-          <dd>{summary.awaiting}</dd>
-        </div>
-      </dl>
+        <dl className="hero__row">
+          <div>
+            <dt>recebido</dt>
+            <dd>{formatBRL(load.received).replace(',00', '')}</dd>
+          </div>
+          <div>
+            <dt>livres</dt>
+            <dd>{hm(load.free)}</dd>
+          </div>
+          <div>
+            <dt>a confirmar</dt>
+            <dd>{summary.awaiting}</dd>
+          </div>
+        </dl>
+      </div>
 
       <div className="hero__bento">
         <button type="button" className="hero__next" onClick={() => next && onNext(next)} disabled={!next}>

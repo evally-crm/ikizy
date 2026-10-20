@@ -60,7 +60,7 @@ export default function MeuSite() {
   const [justPublished, setJustPublished] = useState(false)
   const [publishing, setPublishing] = useState(false)
   const [publishError, setPublishError] = useState<string | null>(null)
-  const [fullPref, setFullPref] = useState(true)
+  const [fullPref, setFullPref] = useState(false)
   const [device, setDevice] = useState<Device>(isWide ? 'desktop' : 'mobile')
   const [previewOpen, setPreviewOpen] = useState(false)
   const navigate = useNavigate()
@@ -104,7 +104,7 @@ export default function MeuSite() {
     setJustPublished(true)
     window.setTimeout(() => setJustPublished(false), 2500)
   }
-  // tela cheia: sempre no celular (sem o menu do app); em telas largas é o padrão e o X minimiza só nesta visita
+  // tela cheia: sempre no celular (sem o menu do app); em telas largas abre normal e o botão "Tela cheia" expande
   const full = isWide ? fullPref : true
   useScrollLock(full)
   useEffect(() => {
@@ -190,9 +190,9 @@ export default function MeuSite() {
                 <PublishButton state={publishState} variant="header" onClick={() => void onPublish()} />
               </div>
               {full ? (
-                <button type="button" className="sfull__x" aria-label="Minimizar" title="Minimizar (Esc)" onClick={() => setFullPref(false)}>
-                  <X size={20} aria-hidden="true" />
-                </button>
+                <Button variant="ghost" size="sm" icon aria-label="Minimizar" title="Minimizar (Esc)" onClick={() => setFullPref(false)}>
+                  <X size={18} aria-hidden="true" />
+                </Button>
               ) : (
                 <button type="button" className="sitelink" onClick={() => setFullPref(true)}>
                   <Maximize2 size={14} aria-hidden="true" />

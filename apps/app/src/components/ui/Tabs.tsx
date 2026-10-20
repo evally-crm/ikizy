@@ -1,4 +1,6 @@
 import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { useLiquidGlass } from './LiquidGlass'
+import { useLensDrag } from './useLensDrag'
 import './Tabs.css'
 
 export interface TabItem<T extends string> {
@@ -13,7 +15,8 @@ export interface TabItem<T extends string> {
 /** última posição da pílula de cada seletor (pelo nome): quando a tela troca e o seletor nasce de novo, ele desliza dali */
 const LAST = new Map<string, { x: number; w: number }>()
 
-/** abas em pílula: uma opção ativa por vez (período, mês, seção); a pílula branca desliza até a escolhida */
+/** abas em pílula: uma opção ativa por vez (período, mês, seção); a pílula branca desliza até a escolhida e,
+ * com o dedo em cima, vira uma gota de vidro que corre pelas opções (como a barra do celular) */
 export function Tabs<T extends string>({
   items,
   value,
@@ -29,7 +32,11 @@ export function Tabs<T extends string>({
   /** as abas dividem a largura toda (celular) */
   fill?: boolean
 }) {
-  const ref = useRef<HTMLDivElement>(null)
+  const selected = items.findIndex((i) => i.id === value)
+  const lens = useLensDrag<HTMLDivElement>({ itemSelector: '.tabs__item', selected, onPick: (i) => onChange(items[i].id), deps: [items.length] })
+  const ref = lens.ref
+  const pillRef = useRef<HTMLSpanElement>(null)
+  const glass = useLiquidGlass(pillRef, { bezel: 10, thickness: 16, blur: 0.3, specular: 0.8 })
   const [pill, setPill] = useState<{ x: number; w: number } | null>(null)
   // a primeira medida aparece sem animar (senão a pílula "voa" do canto ao abrir a tela)
   const [ready, setReady] = useState(false)
@@ -68,14 +75,22 @@ export function Tabs<T extends string>({
   return (
     <div
       ref={ref}
-      className={`tabs ${fill ? 'tabs--fill' : ''} ${pill ? 'has-pill' : ''} ${ready ? 'is-ready' : ''}`.replace(/\s+/g, ' ').trim()}
+      className={`tabs ${fill ? 'tabs--fill' : ''} ${pill ? 'has-pill' : ''} ${ready ? 'is-ready' : ''} ${lens.pressing ? 'is-pressing' : ''}`.replace(/\s+/g, ' ').trim()}
       role="tablist"
       aria-label={label}
-      style={pill ? ({ '--pill-x': `${pill.x}px`, '--pill-w': `${pill.w}px` } as CSSProperties) : undefined}
+      style={
+        lens.pressing
+          ? ({ '--pill-x': lens.lensStyle['--lens-x' as keyof CSSProperties], '--pill-w': lens.lensStyle['--lens-w' as keyof CSSProperties] } as CSSProperties)
+          : pill
+            ? ({ '--pill-x': `${pill.x}px`, '--pill-w': `${pill.w}px` } as CSSProperties)
+            : undefined
+      }
+      {...lens.handlers}
     >
-      <span className="tabs__pill" aria-hidden="true" />
+      {glass.filter}
+      <span ref={pillRef} className="tabs__pill" style={glass.style} aria-hidden="true" />
       {items.map((item) => (
-        <button key={item.id} type="button" role="tab" className="tabs__item" aria-selected={item.id === value} aria-label={item.ariaLabel} title={item.ariaLabel} onClick={() => onChange(item.id)}>
+        <button key={item.id} type="button" role="tab" className={`tabs__item ${lens.pressing && items[lens.over] === item ? 'is-lit' : ''}`.trim()} aria-selected={item.id === value} aria-label={item.ariaLabel} title={item.ariaLabel} onClick={() => onChange(item.id)}>
           {item.label}
           {item.badge !== undefined && item.badge !== null && <span className="tabs__badge">{item.badge}</span>}
         </button>

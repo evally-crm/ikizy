@@ -331,7 +331,7 @@ export function MonthView({ tabs }: { tabs: ReactNode }) {
           </div>
 
           {/* para onde foi: barra única dividida, toque para ver cada parte */}
-          <button type="button" className="fb-card fb-row" onClick={() => openDetail('where')}>
+          <button type="button" className="fb-card fb-row fb-where" onClick={() => openDetail('where')}>
             <span className="fb-card__head">
               <span>
                 <PieChart size={14} aria-hidden="true" /> Para onde foi o dinheiro

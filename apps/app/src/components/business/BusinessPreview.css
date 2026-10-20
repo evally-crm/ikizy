@@ -9,9 +9,10 @@
 }
 .bizpreview__label {
   font-size: 12px;
-  color: color-mix(in srgb, var(--white) 60%, transparent);
+  color: color-mix(in srgb, var(--on-solid) 60%, transparent);
 }
 .bizpreview__name {
+  color: inherit;
   font-family: var(--font-sans);
   font-size: 30px;
   font-weight: 400;
@@ -24,7 +25,7 @@
   gap: 6px;
   padding: 4px 12px;
   border-radius: var(--radius-pill);
-  background: color-mix(in srgb, var(--white) 14%, transparent);
+  background: color-mix(in srgb, var(--on-solid) 14%, transparent);
   font-size: 13px;
 }
 .bizpreview__status.is-open {
@@ -46,5 +47,5 @@
   font-size: 14px;
 }
 .bizpreview__list li.is-empty {
-  color: color-mix(in srgb, var(--white) 50%, transparent);
+  color: color-mix(in srgb, var(--on-solid) 50%, transparent);
 }
