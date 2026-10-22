@@ -3,6 +3,7 @@ import { format, parseISO } from 'date-fns'
 import { useAuth } from '../auth/AuthProvider'
 import { roleAccess } from '../domain/team'
 import { isNeonConfigured, neon } from '../lib/neon'
+import { photoFileUrl, uploadPhoto } from '../lib/photoApi'
 import { parseAnamnesis, type Anamnesis } from '../lib/anamnesis'
 import type { AppointmentStatus } from '../types'
 import { DEFAULT_INTERVAL, averageInterval, isForgotten } from '../domain/clients'
@@ -433,7 +434,7 @@ export function useClientPhotos(clientId: string | undefined) {
     void (async () => {
       const { data, error: err } = await neon
         .from('client_photos')
-        .select('id, kind, caption, taken_on, thumb')
+        .select('id, kind, caption, taken_on, thumb, thumb_path')
         .eq('salon_id', salonId)
         .eq('client_id', clientId)
         .order('taken_on', { ascending: false })
@@ -444,15 +445,17 @@ export function useClientPhotos(clientId: string | undefined) {
         setError('Não foi possível carregar as fotos.')
         return
       }
-      setPhotos(
-        ((data ?? []) as { id: string; kind: PhotoKind; caption: string; taken_on: string; thumb: string }[]).map((p) => ({
-          id: p.id,
-          kind: p.kind,
-          caption: p.caption,
-          takenOn: p.taken_on,
-          thumb: p.thumb,
-        })),
-      )
+      const rows = (data ?? []) as { id: string; kind: PhotoKind; caption: string; taken_on: string; thumb: string | null; thumb_path: string | null }[]
+      setPhotos(rows.map((p) => ({ id: p.id, kind: p.kind, caption: p.caption, takenOn: p.taken_on, thumb: p.thumb ?? '' })))
+      // miniaturas na loja de fotos: chegam uma a uma, com o login (são dado sensível, não têm endereço público)
+      for (const p of rows) {
+        if (!p.thumb_path) continue
+        photoFileUrl(p.thumb_path)
+          .then((url) => {
+            if (!cancelled) setPhotos((list) => list.map((x) => (x.id === p.id ? { ...x, thumb: url } : x)))
+          })
+          .catch(() => {})
+      }
     })()
     return () => {
       cancelled = true
@@ -470,20 +473,19 @@ export function useClientPhotos(clientId: string | undefined) {
         setPhotos((list) => sortPhotos([...list, ...made]))
         return null
       }
-      const { data, error: err } = await neon
-        .from('client_photos')
-        .insert(
-          items.map((p) => ({
-            salon_id: salonId,
-            client_id: clientId,
-            kind: p.kind,
-            caption: p.caption,
-            taken_on: p.takenOn,
-            thumb: p.thumb,
-            data: p.data,
-          })),
-        )
-        .select('id')
+      // os arquivos vão para a loja de fotos e o banco guarda os caminhos (sem servidor, a data URL, como antes)
+      const rows = []
+      for (const p of items) {
+        let stored: Awaited<ReturnType<typeof uploadPhoto>>
+        try {
+          stored = await uploadPhoto(salonId, 'client', p.data, p.thumb)
+        } catch (e) {
+          return e instanceof Error ? e.message : 'Não foi possível salvar a foto. Tente de novo.'
+        }
+        const file = stored ? { blob_path: stored.path, thumb_path: stored.thumbPath } : { thumb: p.thumb, data: p.data }
+        rows.push({ salon_id: salonId, client_id: clientId, kind: p.kind, caption: p.caption, taken_on: p.takenOn, ...file })
+      }
+      const { data, error: err } = await neon.from('client_photos').insert(rows).select('id')
       if (err || !data) return friendly(err ?? { message: '' })
       const ids = (data as { id: string }[]).map((r) => r.id)
       setPhotos((list) =>
@@ -510,9 +512,11 @@ export function useClientPhotos(clientId: string | undefined) {
   const loadFull = useCallback(
     async (id: string): Promise<string | null> => {
       if (!live || !neon || !salonId) return localFull[id] ?? null
-      const { data, error: err } = await neon.from('client_photos').select('data').eq('id', id).maybeSingle()
+      const { data, error: err } = await neon.from('client_photos').select('data, blob_path').eq('id', id).maybeSingle()
       if (err || !data) return null
-      return (data as { data: string }).data
+      const row = data as { data: string | null; blob_path: string | null }
+      if (row.blob_path) return photoFileUrl(row.blob_path).catch(() => null)
+      return row.data
     },
     [live, salonId, localFull],
   )

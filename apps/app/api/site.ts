@@ -1,3 +1,4 @@
+import { reportError } from './_lib/monitoring.js'
 import { isReservedSlug } from '../src/lib/slug.js'
 import { renderNotFound, renderSitePage } from './_lib/siteHtml.js'
 import { appUrl, fetchPublicSite } from './_lib/runtime.js'
@@ -18,7 +19,7 @@ export async function GET(request: Request) {
     // cache curto: a edição publicada aparece em até 1 minuto
     return html(page, 200, 'public, s-maxage=60')
   } catch (error) {
-    console.error('site', slug, error)
+    reportError(error, `site ${slug}`)
     return html(renderNotFound(), 500, 'no-store')
   }
 }

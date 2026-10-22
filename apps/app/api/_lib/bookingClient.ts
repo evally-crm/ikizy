@@ -48,6 +48,9 @@ body:has(dialog.sheet[open]){overflow:hidden}
 .bk-field span{display:block;margin-bottom:6px;font-size:14px;font-weight:500;color:var(--ink)}
 .bk-field input{width:100%;min-height:54px;padding:0 16px;border:1px solid var(--line);border-radius:16px;background:var(--panel);font:inherit;font-size:16px;color:var(--ink)}
 .bk-field input:focus{outline:2px solid var(--accent);outline-offset:1px}
+.bk-consent{display:flex;align-items:flex-start;gap:10px;margin:4px 0 14px;font-size:14px;line-height:1.45;color:var(--muted);cursor:pointer}
+.bk-consent input{flex:none;width:20px;height:20px;margin:1px 0 0;accent-color:var(--accent);cursor:pointer}
+.bk-consent a{color:var(--accent);text-decoration:underline}
 .bk-hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
 .bk-err{margin:0 0 12px;padding:12px 14px;border-radius:14px;background:#fdeaea;color:#8a1c1c;font-size:14px}
 .bk-sum{margin:0 0 16px;padding:14px 16px;border-radius:18px;background:var(--soft);line-height:1.5}
@@ -66,7 +69,7 @@ export const BOOKING_SCRIPT = `
   var D=JSON.parse(document.getElementById('book-data').textContent);
   var body=document.getElementById('book-body'), foot=document.getElementById('book-foot');
   var TZ='America/Sao_Paulo';
-  var S={off:0,step:0,service:null,date:null,minute:null,pro:'',slots:null,error:'',name:'',phone:'',done:null,busy:false,token:0,captcha:''};
+  var S={off:0,step:0,service:null,date:null,minute:null,pro:'',slots:null,error:'',name:'',phone:'',consent:false,done:null,busy:false,token:0,captcha:''};
   // Turnstile (só com a chave configurada na Vercel): carrega uma vez, fora do corpo que é redesenhado
   var TS=null,tsBox=null;
   function captchaStart(){
@@ -156,6 +159,7 @@ export const BOOKING_SCRIPT = `
       if(S.error)h+='<p class="bk-err" role="alert">'+e(S.error)+'</p>';
       h+='<label class="bk-field"><span>Seu nome</span><input id="bk-name" name="name" autocomplete="name" maxlength="80" value="'+e(S.name)+'"></label>';
       h+='<label class="bk-field"><span>Seu WhatsApp (com DDD)</span><input id="bk-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" value="'+e(S.phone)+'"></label>';
+      h+='<label class="bk-consent"><input id="bk-consent" type="checkbox"'+(S.consent?' checked':'')+'><span>Autorizo '+e(D.name||'o salão')+' a usar meu nome e WhatsApp para cuidar deste agendamento, como diz a <a href="https://ikizy.com/privacidade" target="_blank" rel="noopener">política de privacidade</a>.</span></label>';
       h+='<div class="bk-hp" aria-hidden="true"><label>Empresa<input id="bk-company" tabindex="-1" autocomplete="off"></label></div>';
       h+='<p class="bk-note">Este é um pedido: o horário só fica confirmado quando o salão responder você pelo WhatsApp.</p>';
     }else{
@@ -190,10 +194,11 @@ export const BOOKING_SCRIPT = `
     var name=(S.name||'').trim(),digits=(S.phone||'').replace(/\\D/g,'');
     if(name.length<2){S.error='Informe seu nome.';render();return}
     if(digits.length<10||digits.length>13){S.error='Informe um WhatsApp com DDD.';render();return}
+    if(!S.consent){S.error='Para pedir o horário, marque a autorização de uso dos seus dados.';render();return}
     if(D.ts&&!S.captcha){S.error='Aguarde a verificação de segurança terminar e tente de novo.';render();return}
     S.busy=true;S.error='';render();
     var co=document.getElementById('bk-company');
-    fetch('/api/booking',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({slug:D.slug,service:S.service,professional:S.pro||null,date:S.date,minute:S.minute,name:name,phone:digits,company:co?co.value:'',captcha:S.captcha})})
+    fetch('/api/booking',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({slug:D.slug,service:S.service,professional:S.pro||null,date:S.date,minute:S.minute,name:name,phone:digits,consent:S.consent,company:co?co.value:'',captcha:S.captcha})})
       .then(function(r){return r.json().then(function(j){return {ok:r.ok,status:r.status,j:j}})})
       .then(function(res){
         S.busy=false;captchaReset();
@@ -222,6 +227,9 @@ export const BOOKING_SCRIPT = `
   dlg.addEventListener('input',function(ev){
     if(ev.target.id==='bk-name')S.name=ev.target.value;
     if(ev.target.id==='bk-phone')S.phone=ev.target.value;
+  });
+  dlg.addEventListener('change',function(ev){
+    if(ev.target.id==='bk-consent'){S.consent=ev.target.checked;if(S.consent&&S.error)S.error=''}
   });
   document.getElementById('book-x').addEventListener('click',closeSheet);
   document.addEventListener('click',function(ev){

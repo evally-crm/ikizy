@@ -305,3 +305,15 @@ describe('estilo da capa', () => {
     for (const id of ['poa', 'xadrez', 'editorial', 'organico']) assert.ok(html.includes('.hero--' + id + ':not(.hero--cover)'))
   })
 })
+
+describe('logo e capa na loja de fotos', () => {
+  it('id de foto vira /api/photo; texto qualquer é ignorado', () => {
+    const id = '55555555-5555-4555-8555-555555555555'
+    const html = page(base({}, { logo: id, cover: id }))
+    assert.ok(html.includes(`<img src="/api/photo?id=${id}" alt="">`))
+    assert.ok(html.includes('class="panel hero hero--cover'))
+    const bad = page(base({}, { logo: 'javascript:alert(1)', cover: '"><script>' }))
+    assert.ok(!bad.includes('javascript:alert'))
+    assert.ok(!bad.includes('class="panel hero hero--cover'))
+  })
+})

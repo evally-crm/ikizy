@@ -74,6 +74,8 @@ export function parseBookingInput(body: unknown): BookingInput & { honeypot: boo
   const phone = typeof b.phone === 'string' ? b.phone : ''
   const digits = phone.replace(/\D/g, '')
   if (digits.length < 10 || digits.length > 13) throw bad('Informe um WhatsApp com DDD.')
+  // LGPD: a cliente precisa autorizar o uso do nome e do WhatsApp antes de o pedido ser gravado
+  if (b.consent !== true) throw bad('Para pedir o horário, autorize o uso dos seus dados.')
   const captcha = typeof b.captcha === 'string' ? b.captcha.slice(0, 2048) : ''
   return { ...common, minute, name, phone: digits, honeypot: typeof b.company === 'string' && b.company.trim() !== '', captcha }
 }

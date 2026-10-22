@@ -1,6 +1,6 @@
 import { useRef, useState, type ChangeEvent } from 'react'
 import { ImagePlus, Trash2 } from 'lucide-react'
-import type { SiteConfig } from '../../data/catalog'
+import { brandUrl, type SiteConfig } from '../../data/catalog'
 import { resizeToDataUrl } from '../../lib/imageResize'
 import { Button } from '../../components/ui'
 import { Group } from './Group'
@@ -74,7 +74,7 @@ export function IdentityFields({ site, setSite }: { site: SiteConfig; setSite: S
   return (
     <Group title="Logo e capa">
       <ImageField
-        value={site.logo}
+        value={brandUrl(site.logo)}
         titleEmpty="Adicione seu logo"
         titleFilled="Seu logo"
         hint="PNG, JPG ou WebP"
@@ -83,7 +83,7 @@ export function IdentityFields({ site, setSite }: { site: SiteConfig; setSite: S
         onClear={() => setSite('logo', '')}
       />
       <ImageField
-        value={site.cover}
+        value={brandUrl(site.cover)}
         wide
         titleEmpty="Adicione uma foto de capa"
         titleFilled="Foto de capa"

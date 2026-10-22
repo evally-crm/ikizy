@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '../auth/AuthProvider'
 import { isNeonConfigured, neon } from '../lib/neon'
+import { uploadPhoto } from '../lib/photoApi'
 
 export { CATEGORIES, PALETTES } from '../lib/siteTheme'
 export type { Category, FontId, PaletteId } from '../lib/siteTheme'
@@ -60,6 +61,10 @@ const PHOTO_BASE = 'https://app.ikizy.com'
 /** o que mostrar como foto: a nova, se houver, senão a já salva */
 export const photoUrl = (item: { photo: string; photoId: string | null }) =>
   item.photo || (item.photoId ? `${PHOTO_BASE}/api/photo?id=${item.photoId}` : '')
+
+/** logo e capa: imagem nova (data URL) como está; já salva (id da foto) pelo mesmo caminho das outras fotos */
+export const brandUrl = (value: string) =>
+  !value ? '' : value.startsWith('data:') ? value : /^[0-9a-f-]{36}$/i.test(value) ? `${PHOTO_BASE}/api/photo?id=${value}` : ''
 
 export interface SiteConfig {
   slug: string
@@ -406,17 +411,39 @@ export function useStudio() {
         if (r.error) return friendlyPublishError(r.error)
       }
 
-      // 3) fotos novas: sobem primeiro, para os serviços e a vitrine apontarem para elas
+      // 3) fotos novas: sobem primeiro, para os serviços, a vitrine, o logo e a capa apontarem para elas.
+      //    O arquivo vai para a loja de fotos; o banco guarda só o caminho (sem servidor, a data URL, como antes)
+      const savePhoto = async (data: string): Promise<string | null> => {
+        if (!neon) return null
+        let stored: Awaited<ReturnType<typeof uploadPhoto>>
+        try {
+          stored = await uploadPhoto(salonId, 'site', data)
+        } catch {
+          return null
+        }
+        const row = stored ? { salon_id: salonId, blob_path: stored.path } : { salon_id: salonId, data }
+        const r = await neon.from('site_photos').insert(row).select('id').single()
+        return r.error || !r.data ? null : (r.data.id as string)
+      }
       const photoOf = new Map<string, string | null>()
       for (const item of [...draft.services, ...draft.showcase]) {
         if (item.photo) {
-          const r = await neon.from('site_photos').insert({ salon_id: salonId, data: item.photo }).select('id').single()
-          if (r.error || !r.data) return 'Não foi possível salvar uma das fotos. Tente com uma imagem menor.'
-          photoOf.set(item.id, r.data.id as string)
+          const id = await savePhoto(item.photo)
+          if (!id) return 'Não foi possível salvar uma das fotos. Tente com uma imagem menor.'
+          photoOf.set(item.id, id)
         } else {
           photoOf.set(item.id, item.photoId)
         }
       }
+      // logo e capa: imagem nova (data URL) vira foto da loja; o que já é id fica como está
+      const brandPhoto = async (value: string): Promise<string | null | false> => {
+        if (!value) return null
+        if (!value.startsWith('data:')) return value
+        return (await savePhoto(value)) ?? false
+      }
+      const logoId = await brandPhoto(site.logo)
+      const coverId = await brandPhoto(site.cover)
+      if (logoId === false || coverId === false) return 'Não foi possível salvar o logo ou a capa. Tente com uma imagem menor.'
 
       // 4) serviços
       const serviceIds = new Map<string, string>()
@@ -507,12 +534,6 @@ export function useStudio() {
         if (r.error) return friendlyPublishError(r.error)
       }
 
-      // fotos que ninguém usa mais (trocadas ou removidas) saem do banco
-      const keepPhotos = [...photoOf.values()].filter((id): id is string => Boolean(id))
-      const clean = neon.from('site_photos').delete().eq('salon_id', salonId)
-      const cleaned = keepPhotos.length ? await clean.not('id', 'in', `(${keepPhotos.join(',')})`) : await clean
-      if (cleaned.error) console.error('limpeza de fotos', cleaned.error)
-
       // 6) textos e opções da página; marcar como publicado liga o site público
       const st = await neon
         .from('site_settings')
@@ -527,8 +548,8 @@ export function useStudio() {
           accent_color: null,
           font: site.font,
           cover_style: site.coverStyle,
-          logo: site.logo || null,
-          cover: site.cover || null,
+          logo: logoId,
+          cover: coverId,
           address: site.address.trim(),
           show_prices: site.showPrices,
           show_team: site.showTeam,
@@ -545,8 +566,15 @@ export function useStudio() {
         return friendlyPublishError(st.error)
       }
 
+      // fotos que ninguém usa mais (trocadas ou removidas) saem do banco; o arquivo na loja sai na limpeza diária.
+      // Fica para depois das opções da página, para o logo e a capa antigos não sumirem se elas falharem
+      const keepPhotos = [...photoOf.values(), logoId, coverId].filter((id): id is string => Boolean(id) && isUuid(id as string))
+      const clean = neon.from('site_photos').delete().eq('salon_id', salonId)
+      const cleaned = keepPhotos.length ? await clean.not('id', 'in', `(${keepPhotos.join(',')})`) : await clean
+      if (cleaned.error) console.error('limpeza de fotos', cleaned.error)
+
       const next: Studio = {
-        site: { ...site, salonName: name },
+        site: { ...site, salonName: name, logo: logoId ?? '', cover: coverId ?? '' },
         products: draft.products.map((p) => ({ ...p, id: productIds.get(p.id) ?? p.id })),
         services: draft.services.map((s) => ({
           ...s,

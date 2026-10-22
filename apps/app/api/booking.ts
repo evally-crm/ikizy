@@ -1,6 +1,7 @@
 import { HttpError } from './_lib/billing.js'
 import { checkBookingLimits, createBooking, listSlots, parseBookingInput, parseSlotsQuery, tooManyFromIp, verifyCaptcha } from './_lib/booking.js'
-import { createBookingDb, fail, json } from './_lib/runtime.js'
+import { notifyNewRequest } from './_lib/notify.js'
+import { appUrl, createBookingDb, createNotifyDb, fail, json, sendEmail } from './_lib/runtime.js'
 
 /** GET /api/booking?slug=&service=&date=YYYY-MM-DD[&professional=] -> { slots: [{ professional_id, professional, minute }] } */
 export async function GET(request: Request) {
@@ -13,7 +14,7 @@ export async function GET(request: Request) {
   }
 }
 
-/** POST { slug, service, professional?, date, minute, name, phone } -> { booking } (pedido fica "pendente" até o salão confirmar) */
+/** POST { slug, service, professional?, date, minute, name, phone, consent: true } -> { booking } (pedido fica "pendente" até o salão confirmar) */
 export async function POST(request: Request) {
   try {
     const ip = (request.headers.get('x-forwarded-for') ?? 'desconhecido').split(',')[0].trim()
@@ -25,6 +26,15 @@ export async function POST(request: Request) {
     const db = createBookingDb()
     await checkBookingLimits(db, ip, input.phone)
     const booking = await createBooking(db, input)
+    // e-mail para a dona (E5); se falhar, o pedido continua gravado e aparece no sininho do app
+    await notifyNewRequest({ db: createNotifyDb(), send: sendEmail, appUrl: appUrl() }, input.slug, {
+      id: booking.id,
+      startsAt: booking.starts_at,
+      service: booking.service,
+      professional: booking.professional || null,
+      clientName: input.name,
+      clientPhone: input.phone,
+    })
     return json({ booking }, 201)
   } catch (error) {
     return fail(error)

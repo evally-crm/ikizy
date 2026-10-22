@@ -13,6 +13,7 @@ const body = (over: Record<string, unknown> = {}) => ({
   minute: 600,
   name: '  Maria   Silva ',
   phone: '(11) 98765-0000',
+  consent: true,
   ...over,
 })
 
@@ -62,6 +63,12 @@ describe('parseBookingInput', () => {
     assert.equal(status(() => parseBookingInput(body({ minute: '600' }))), 400)
     assert.equal(status(() => parseBookingInput(body({ name: 'A' }))), 400)
     assert.equal(status(() => parseBookingInput(body({ phone: '123' }))), 400)
+  })
+
+  it('recusa o pedido sem a autorização de uso dos dados', () => {
+    assert.equal(status(() => parseBookingInput(body({ consent: undefined }))), 400)
+    assert.equal(status(() => parseBookingInput(body({ consent: 'true' }))), 400)
+    assert.equal(status(() => parseBookingInput(body({ consent: false }))), 400)
   })
 
   it('marca como robô quando o campo escondido vem preenchido', () => {
@@ -176,7 +183,7 @@ describe('verifyCaptcha (Turnstile)', () => {
   })
 
   it('o token vem do pedido e não vai para os dados do agendamento', () => {
-    const base = { slug: 'studio-bela', service: '11111111-1111-4111-8111-111111111111', date: '2026-10-20', minute: 600, name: 'Ana', phone: '11999998888' }
+    const base = { slug: 'studio-bela', service: '11111111-1111-4111-8111-111111111111', date: '2026-10-20', minute: 600, name: 'Ana', phone: '11999998888', consent: true }
     assert.equal(parseBookingInput({ ...base, captcha: 'abc' }).captcha, 'abc')
     assert.equal(parseBookingInput(base).captcha, '')
   })

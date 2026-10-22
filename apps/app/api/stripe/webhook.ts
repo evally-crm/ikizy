@@ -1,3 +1,4 @@
+import { reportError } from '../_lib/monitoring.js'
 import { handleStripeEvent } from '../_lib/billing.js'
 import { createDb, env, json, stripe } from '../_lib/runtime.js'
 
@@ -19,7 +20,7 @@ export async function POST(request: Request) {
     return json({ received: true })
   } catch (error) {
     // 500 faz o Stripe tentar de novo mais tarde
-    console.error('webhook', event.type, error)
+    reportError(error, `stripe webhook ${event.type}`)
     return json({ error: 'handler_failed' }, 500)
   }
 }

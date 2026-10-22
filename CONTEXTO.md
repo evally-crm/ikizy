@@ -78,10 +78,19 @@ Toda migration termina com `notify pgrst, 'reload schema';` para a Data API enxe
 ```bash
 cd apps/app
 npx tsc -b              # checagem de tipos REAL do app (o "tsc -p ." não checa nada: a raiz só referencia outros configs)
-npm run test:api        # testes das funções do servidor (node:test via tsx), hoje 81 testes
+npm run test:api        # testes das funções do servidor (node:test via tsx), hoje 143 testes
 npm run typecheck:api   # tipos das funções da Vercel
 npm run build
+npm run test:e2e        # ponta a ponta (Playwright), celular e computador, no modo demonstração: sem banco, nada é gravado
 ```
+
+Ponta a ponta (`apps/app/e2e/`): telas principais sem erro e sem rolagem lateral, agendar, confirmar pedido do site,
+cadastrar cliente, prévia do editor do site e o agendamento da página pública (com a caixa de autorização; a API é simulada).
+O relógio dos testes fica fixo em hoje às 10h de Brasília, porque a demonstração tem um dia fixo de atendimentos.
+Na primeira vez numa máquina nova: `npx playwright install chromium`.
+
+Monitoramento de erros (Sentry): o código está pronto e só liga com `SENTRY_DSN` (servidor) e `VITE_SENTRY_DSN`
+(navegador, precisa de novo deploy) na Vercel. Sem dados pessoais: sem IP, sem corpo dos pedidos, endereço sem `?`.
 
 ---
 
@@ -110,6 +119,7 @@ npm run build
 | `20261029000000_create_salon_setup` | `create_salon_setup()`: cadastro do negócio inteiro numa transação (R-11). Aplicada em 16/10/2026 |
 | `20261030000000_palette_colors` | paletas nas oito cores novas (vermelho, rosa bebê, verde musgo...), aceitando os nomes antigos. Aplicada em 16/10/2026 |
 | `20261031000000_team` | aplicada em 16/10/2026 (testada antes na branch `teste-equipe`, 52 verificações de perfil e limite). Fase 2: `invites` + `create_invite`/`revoke_invite`/`get_invite`/`accept_invite`, `remove_member`, `set_member_role`, `get_team`, `get_commissions`; regras por perfil (profissional só vê os atendimentos e as clientes dela; recepção e profissional não leem saídas, custos, fechamentos nem comissão das outras; `members` só pelas funções); limites por plano (`plan_limits`, travas em `professionals` e `members`, `choose_trial_plan` exige caber); `clients.created_by` |
+| `20261101000000_photo_storage` | aplicada em 20/10/2026 (testada antes numa branch). Fotos fora do banco: `site_photos.blob_path`, `client_photos.blob_path`/`thumb_path` (caminho na loja privada `ikizy-fotos` do Vercel Blob, região gru1, ligada ao `ikizy-app`); o caminho tem de começar por `salons/<id do negócio>/site/` ou `/client/`; logo e capa aceitam o id de uma foto; `get_public_photo()` devolve `blob:<caminho>` para fotos na loja. As linhas antigas em data URL continuam valendo. Rotas: `/api/photos/upload`, `/api/photos/file` (só a equipe do negócio), cron diário `/api/cron/cleanup-photos` |
 
 Regras importantes:
 - Toda tabela tem `salon_id` + RLS. Escrita de catálogo/site só `owner`/`manager`; sem assinatura ativa, escrita bloqueada (políticas restritivas).

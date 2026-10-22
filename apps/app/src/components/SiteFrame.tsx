@@ -2,7 +2,7 @@ import './SiteFrame.css'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Monitor, Smartphone } from 'lucide-react'
 import { renderSitePage, type PublicSite } from '../../api/_lib/siteHtml.ts'
-import { photoUrl, type Studio } from '../data/catalog'
+import { brandUrl, photoUrl, type Studio } from '../data/catalog'
 import { useAgenda } from '../data/AgendaProvider'
 
 export type Device = 'mobile' | 'desktop'
@@ -23,8 +23,8 @@ function toPublicSite(studio: Studio, team: { name: string; role: string }[]): P
       hours: site.hours,
       address: site.address,
       palette: site.palette,
-      logo: site.logo || null,
-      cover: site.cover || null,
+      logo: brandUrl(site.logo) || null,
+      cover: brandUrl(site.cover) || null,
       font: site.font,
       cover_style: site.coverStyle,
       show_prices: site.showPrices,

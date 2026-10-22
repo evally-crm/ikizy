@@ -1,0 +1,6 @@
+.vercel
+.env*
+
+# resultados dos testes de ponta a ponta
+test-results
+playwright-report

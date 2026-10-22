@@ -1,10 +1,14 @@
 import { neon } from '@neondatabase/serverless'
+import { del, get, list, put } from '@vercel/blob'
 import { createRemoteJWKSet, jwtVerify } from 'jose'
 import Stripe from 'stripe'
 import { HttpError, type BillingDb, type Membership, type ReconcileDb, type SubscriptionRow } from './billing.js'
 import type { BookingDb, BookingResult, Slot } from './booking.js'
 import { FROM } from './authEmail.js'
 import type { CronDb } from './cron.js'
+import { reportError } from './monitoring.js'
+import type { NotifyDb, OwnerContact } from './notify.js'
+import type { BlobStore, PhotoStoreDb } from './photoStore.js'
 import type { PlannedReminder, ReminderCandidate, ReminderDb, SendEmail } from './reminders.js'
 import type { PublicSite } from './siteHtml.js'
 
@@ -236,6 +240,91 @@ export function createReminderDb(): ReminderDb {
   }
 }
 
+/** fotos na loja: quem pode gravar e ver, e o que o banco ainda usa */
+export function createPhotoStoreDb(): PhotoStoreDb {
+  const sql = neon(env('DATABASE_URL'))
+  return {
+    async canUpload(userId, salonId, scope) {
+      const roles = scope === 'site' ? ['owner', 'manager'] : ['owner', 'manager', 'reception', 'professional']
+      const rows = (await sql`
+        select 1 from public.members m
+        where m.salon_id = ${salonId}::uuid and m.user_id = ${userId}::uuid
+          and m.role::text = any(${roles}) and public.has_access(m.salon_id)`) as Row[]
+      return rows.length === 1
+    },
+    async isMember(userId, salonId) {
+      const rows = (await sql`select 1 from public.members where salon_id = ${salonId}::uuid and user_id = ${userId}::uuid`) as Row[]
+      return rows.length === 1
+    },
+    async referencedPaths() {
+      const rows = (await sql`
+        select blob_path as p from public.site_photos where blob_path is not null
+        union all select blob_path from public.client_photos where blob_path is not null
+        union all select thumb_path from public.client_photos where thumb_path is not null`) as { p: string }[]
+      return new Set(rows.map((r) => r.p))
+    },
+  }
+}
+
+/** a loja privada "ikizy-fotos" (Vercel Blob); na Vercel autentica sozinha, fora dela usa BLOB_READ_WRITE_TOKEN */
+export const blobStore: BlobStore = {
+  async put(path, image) {
+    await put(path, Buffer.from(image.bytes), { access: 'private', contentType: image.type, addRandomSuffix: false, cacheControlMaxAge: 31536000 })
+  },
+  async list() {
+    const out: { pathname: string; uploadedAt: Date }[] = []
+    let cursor: string | undefined
+    do {
+      const page = await list({ prefix: 'salons/', limit: 1000, cursor })
+      out.push(...page.blobs.map((b) => ({ pathname: b.pathname, uploadedAt: b.uploadedAt })))
+      cursor = page.hasMore ? page.cursor : undefined
+    } while (cursor)
+    return out
+  },
+  async del(paths) {
+    if (paths.length) await del(paths)
+  },
+}
+
+/** lê um arquivo da loja; `ifNoneMatch` devolve 304 quando o navegador já tem a mesma versão */
+export async function readBlob(path: string, ifNoneMatch?: string) {
+  return get(path, { access: 'private', ifNoneMatch })
+}
+
+/** e-mails avulsos para a dona (novo pedido, boas-vindas): quem recebe e o registro no `email_log` */
+export function createNotifyDb(): NotifyDb {
+  const sql = neon(env('DATABASE_URL'))
+  const contact = (r: Row): OwnerContact => ({ salonId: r.id as string, salonName: r.name as string, email: (r.notify_email as string | null) ?? null })
+  return {
+    async ownerBySlug(slug) {
+      const rows = (await sql`
+        select sa.id, sa.name, s.notify_email
+        from public.salons sa left join public.subscriptions s on s.salon_id = sa.id
+        where sa.slug = ${slug}`) as Row[]
+      return rows[0] ? contact(rows[0]) : null
+    },
+    async recentOwnedSalons(userId) {
+      const rows = (await sql`
+        select sa.id, sa.name, s.notify_email
+        from public.members m
+        join public.salons sa on sa.id = m.salon_id
+        left join public.subscriptions s on s.salon_id = sa.id
+        where m.user_id = ${userId} and m.role = 'owner' and sa.created_at > now() - interval '7 days'`) as Row[]
+      return rows.map(contact)
+    },
+    async claim(key, salonId, to, template) {
+      const rows = (await sql`
+        insert into public.email_log (key, salon_id, to_email, template)
+        values (${key}, ${salonId}::uuid, ${to}, ${template})
+        on conflict (key) do nothing returning key`) as Row[]
+      return rows.length === 1
+    },
+    async release(key) {
+      await sql`delete from public.email_log where key = ${key}`
+    },
+  }
+}
+
 /** manda um e-mail transacional pelo Resend (a chave fica só na Vercel) */
 export const sendEmail: SendEmail = async ({ to, subject, html, text }) => {
   const res = await fetch('https://api.resend.com/emails', {
@@ -264,6 +353,6 @@ export const json = (body: unknown, status = 200) =>
 /** converte qualquer erro numa resposta; erros inesperados não vazam detalhes */
 export function fail(error: unknown): Response {
   if (error instanceof HttpError) return json({ error: error.code, message: error.message }, error.status)
-  console.error(error)
+  reportError(error)
   return json({ error: 'internal', message: 'Algo deu errado. Tente novamente em instantes.' }, 500)
 }

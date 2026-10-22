@@ -1,3 +1,4 @@
+import { reportError } from './monitoring.js'
 import type Stripe from 'stripe'
 import {
   GRACE_DAYS,
@@ -385,7 +386,7 @@ export async function reconcileStripe(deps: { db: ReconcileDb; stripe: Stripe; n
       else result.skipped++
     } catch (error) {
       result.errors++
-      console.error('reconcile subscription', sub.id, error)
+      reportError(error, `reconcile subscription ${sub.id}`)
     }
   }
 
@@ -394,7 +395,7 @@ export async function reconcileStripe(deps: { db: ReconcileDb; stripe: Stripe; n
       await syncSub(await stripe.subscriptions.retrieve(id))
     } catch (error) {
       result.errors++
-      console.error('reconcile retrieve', id, error)
+      reportError(error, `reconcile retrieve ${id}`)
     }
   }
 
@@ -419,7 +420,7 @@ export async function reconcileStripe(deps: { db: ReconcileDb; stripe: Stripe; n
         if (applied) result.pix++
       } catch (error) {
         result.errors++
-        console.error('reconcile pix', s.id, error)
+        reportError(error, `reconcile pix ${s.id}`)
       }
     },
   )

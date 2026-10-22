@@ -82,8 +82,9 @@ export function instagramHandle(raw: string | undefined): string | null {
 }
 
 /** logo e capa vêm do banco como data URL; só entra no HTML se tiver exatamente o formato esperado */
+/** logo e capa: data URL antiga ou id de uma foto (servida por /api/photo), com as mesmas travas das outras fotos */
 export function safeLogo(raw: string | null | undefined): string | null {
-  return typeof raw === 'string' && /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(raw) ? raw : null
+  return photoSrc(raw)
 }
 
 const CSS = `
@@ -356,6 +357,7 @@ export function renderSitePage(site: PublicSite, opts: { canonical: string; capt
 
   const bookingData = JSON.stringify({
     slug: site.slug,
+    name,
     ts: opts.captchaSiteKey ?? '',
     wa: (bookLink ?? '').match(/wa\.me\/(\d+)/)?.[1] ?? '',
     showPrices,

@@ -1,3 +1,4 @@
+import { reportError } from '../_lib/monitoring.js'
 import { FROM, parseOtpEvent, renderOtpEmail, verifyNeonWebhook } from '../_lib/authEmail.js'
 import { env, json } from '../_lib/runtime.js'
 
@@ -33,7 +34,7 @@ export async function POST(request: Request) {
     if (!res.ok) throw new Error(`resend ${res.status} ${await res.text()}`)
     return json({ received: true })
   } catch (error) {
-    console.error('neon-auth webhook: envio', error)
+    reportError(error, 'neon-auth webhook: envio')
     return json({ error: 'send_failed' }, 500)
   }
 }
