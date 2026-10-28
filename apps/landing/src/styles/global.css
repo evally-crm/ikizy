@@ -715,8 +715,8 @@ em {
   }
 }
 
-/* ticket de cadastro: duas peças lado a lado (boca em símbolos em fundo vinho + convite).
-   só no desktop, no canto inferior direito do início, por cima do coelho */
+/* ticket de cadastro: duas peças lado a lado (foto dos pincéis + convite).
+   só no desktop, no canto inferior direito do início, por cima do desenho grande */
 .ticket {
   display: none;
 }
@@ -746,9 +746,10 @@ em {
   background: var(--wine);
   color: var(--white);
 }
-.ticket__stub .pixel-mouth {
+.ticket__stub img {
   width: 100%;
   height: 100%;
+  object-fit: cover;
 }
 .ticket__body {
   display: flex;

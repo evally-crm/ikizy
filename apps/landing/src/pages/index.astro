@@ -1,7 +1,7 @@
 ---
 import Base from '../layouts/Base.astro'
 import PixelBunny from '../components/PixelBunny.astro'
-import PixelMouth from '../components/PixelMouth.astro'
+import PixelMorph from '../components/PixelMorph.astro'
 import Perk from '../components/Perk.astro'
 import PlanOption from '../components/PlanOption.astro'
 import { APP_URL, CTA, LINKS } from '../lib/site'
@@ -78,9 +78,9 @@ const faqSchema = {
         </div>
       </div>
 
-      <!-- ticket de cadastro (boca em símbolos + convite) no canto inferior direito, perto do coelho (só no desktop; no celular o cadastro é o botão largo) -->
+      <!-- ticket de cadastro (foto dos pincéis + convite) no canto inferior direito (só no desktop; no celular o cadastro é o botão largo) -->
       <aside class="ticket" aria-label="Teste grátis">
-        <div class="ticket__stub" aria-hidden="true"><PixelMouth step={4} /></div>
+        <div class="ticket__stub" aria-hidden="true"><img src="/img/pinceis.avif" alt="" width="685" height="1034" decoding="async" /></div>
         <div class="ticket__body">
           <p class="ticket__meta">{CTA.hint}</p>
           <p class="ticket__title">Organize sua agenda hoje</p>
@@ -89,7 +89,7 @@ const faqSchema = {
       </aside>
 
       <div class="art" aria-hidden="true">
-        <PixelBunny step={7} accent="#63001f" lift soft />
+        <PixelMorph step={7} accent="#63001f" lift />
       </div>
     </div>
   </section>

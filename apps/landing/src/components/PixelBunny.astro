@@ -1,23 +1,17 @@
 ---
 /**
- * coelho da marca em símbolos, no mesmo estilo do rosto do login: ponto · + · x · quadradinho · quadrado
- * conforme o tom. silhueta da logo oficial: orelha esquerda alta (o traço do k), a direita mais curta (o braço),
- * o recorte do k embaixo dela e a cabeça embaixo, com bochechas mais claras;
- * olhos e boca vazados (sem `accent`, a boca mostra o fundo). respira e ondula de leve.
- * usa a cor do texto; `step` é o tamanho da célula em px (7 no início, 4 no canhoto do ticket);
- * `accent` pinta a boca de outra cor (o vinho no início); `lift` sobe o coelho no desktop para o rosto
- * ficar acima do ticket de cadastro, que cobre o canto de baixo do início; `soft` deixa o coelho mais abstrato,
- * como o rosto do login: borda bem esfumada, manchas de tom e mais pó em volta.
+ * coelho da marca em símbolos, no mesmo estilo do rosto do login (o desenho está em lib/pixelArt.ts).
+ * usa a cor do texto; `step` é o tamanho da célula em px; `accent` pinta a boca de outra cor;
+ * `soft` deixa o coelho mais abstrato, com a borda bem esfumada.
  */
 interface Props {
   class?: string
   step?: number
   accent?: string
-  lift?: boolean
   soft?: boolean
 }
 
-const { class: className, step = 4, accent, lift = false, soft = false } = Astro.props
+const { class: className, step = 4, accent, soft = false } = Astro.props
 ---
 
 <canvas
@@ -26,166 +20,19 @@ const { class: className, step = 4, accent, lift = false, soft = false } = Astro
   data-pixel-bunny
   data-step={step}
   data-accent={accent}
-  data-lift={lift ? '' : undefined}
   data-soft={soft ? '' : undefined}
 ></canvas>
 
 <script>
-  // o coelho num quadro de 14 x 26 unidades (o desenho da logo, BunnyMark.astro, dividido por 10)
-  const W = 14
-  const H = 26
+  import { animate, bunnyField, paintField } from '../lib/pixelArt'
 
-  const smooth = (a: number, b: number, x: number) => {
-    const k = Math.min(1, Math.max(0, (x - a) / (b - a)))
-    return k * k * (3 - 2 * k)
-  }
-  const hash = (a: number, b: number) => {
-    const s = Math.sin(a * 12.9898 + b * 78.233) * 43758.5453
-    return s - Math.floor(s)
-  }
-  /** distância até um retângulo arredondado (negativa dentro) */
-  const box = (x: number, y: number, x0: number, y0: number, x1: number, y1: number, r: number) => {
-    const qx = Math.abs(x - (x0 + x1) / 2) - (x1 - x0) / 2 + r
-    const qy = Math.abs(y - (y0 + y1) / 2) - (y1 - y0) / 2 + r
-    return Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) + Math.min(Math.max(qx, qy), 0) - r
-  }
-
-  /** distância até o contorno do coelho, em unidades do quadro */
-  function shape(x: number, y: number, t: number) {
-    // a orelha direita balança um tiquinho
-    const ear = Math.sin(t * 0.9) * 0.25 * smooth(14, 7, y)
-    return Math.min(
-      box(x, y, 0, 0, 4.2, 14.4, 0.5),
-      box(x - ear, y, 10.5, 7.1, 14, 14, 0.5),
-      box(x, y, 0, 13.8, 10.8, 18, 0.3),
-      box(x, y, 0, 17.6, 14, 26, 2.2),
-    )
-  }
-
-  const isMouth = (x: number, y: number) => Math.abs(x - 6.95) < 0.95 && Math.abs(y - 21.5) < 0.45
-
-  /** tom (0 claro .. 1 cheio): corpo cheio com sombra na borda, bochechas mais claras, olhos e boca vazados */
-  function tone(x: number, y: number, t: number, soft: boolean) {
-    const d = shape(x, y, t)
-    if (d > (soft ? 4 : 2.6)) return 0
-    const edge = soft ? 1.8 : 0.7
-    const body = smooth(edge, -edge, d)
-    // sombreado como no rosto do login: mais cheio perto da borda, mais leve no miolo e no alto das orelhas
-    const inner = smooth(0, -2.4, d)
-    const light = 0.3 * inner + 0.22 * smooth(15, 1, y)
-    const cheek = Math.max(smooth(2.2, 0.6, Math.hypot(x - 2.4, y - 22.4)), smooth(2.2, 0.6, Math.hypot(x - 11.6, y - 22.4))) * 0.3
-    let v = body * (1 - light - cheek)
-    if (soft) {
-      // manchas de tom que andam devagar, como a luz no rosto do login
-      const blot = Math.sin(x * 0.55 + Math.sin(y * 0.3 + t * 0.4) * 1.6) * Math.sin(y * 0.42 - x * 0.2 - t * 0.3)
-      v *= 0.82 + 0.28 * blot
-    }
-    // olhos em +, e a boca, um tracinho
-    const blink = Math.sin(t * 0.5) > 0.985 ? 0 : 1
-    const eye = (cx: number) =>
-      (Math.abs(x - cx) < 0.55 && Math.abs(y - 19.9) < 1.6 * blink + 0.3) || (Math.abs(y - 19.9) < 0.5 && Math.abs(x - cx) < 1.4)
-    if (eye(4.1) || eye(9.8) || isMouth(x, y)) v = 0
-    // pó solto em volta
-    if (d > 0) v = Math.max(v, smooth(soft ? 4 : 1.8, 0, d) * (soft ? 0.34 : 0.26))
-    return v
-  }
-
-  function glyph(ctx: CanvasRenderingContext2D, x: number, y: number, STEP: number, d: number, mix: number) {
-    const m = STEP / 2
-    const g = STEP * 0.3
-    const dot = STEP * 0.13
-    if (d < 0.1) return
-    if (d >= 0.56 && mix < 0.3) d = 0.5
-    if (d < 0.24) return ctx.fillRect(x + m - dot, y + m - dot, dot * 2, dot * 2)
-    ctx.beginPath()
-    if (d < 0.4) {
-      ctx.moveTo(x + m, y + m - g)
-      ctx.lineTo(x + m, y + m + g)
-      ctx.moveTo(x + m - g, y + m)
-      ctx.lineTo(x + m + g, y + m)
-      return ctx.stroke()
-    }
-    if (d < 0.56) {
-      const k = g * 0.9
-      ctx.moveTo(x + m - k, y + m - k)
-      ctx.lineTo(x + m + k, y + m + k)
-      ctx.moveTo(x + m + k, y + m - k)
-      ctx.lineTo(x + m - k, y + m + k)
-      return ctx.stroke()
-    }
-    if (d < 0.72) return ctx.fillRect(x + m - g, y + m - g, g * 2, g * 2)
-    const p = STEP / 8
-    ctx.fillRect(x + p, y + p, STEP - 2 * p, STEP - 2 * p)
-  }
-
-  function start(canvas: HTMLCanvasElement) {
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-    const STEP = Number(canvas.dataset.step) || 4
+  document.querySelectorAll<HTMLCanvasElement>('[data-pixel-bunny]').forEach((canvas) => {
+    const step = Number(canvas.dataset.step) || 4
     const accent = canvas.dataset.accent
-    const k = 4 / STEP // ondas na mesma escala do desenho, em qualquer tamanho de célula
-    const lift = 'lift' in canvas.dataset ? matchMedia('(min-width: 900px)') : null
     const soft = 'soft' in canvas.dataset
-    const still = matchMedia('(prefers-reduced-motion: reduce)').matches
-    let visible = true
-    let last = 0
-
-    const draw = (t: number) => {
-      const dpr = Math.min(devicePixelRatio || 1, 2)
-      const { width, height } = canvas.getBoundingClientRect()
-      if (!width || !height) return
-      const w = Math.round(width * dpr)
-      const h = Math.round(height * dpr)
-      if (canvas.width !== w || canvas.height !== h) {
-        canvas.width = w
-        canvas.height = h
-      }
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-      ctx.clearRect(0, 0, width, height)
-      ctx.lineWidth = STEP * 0.22
-      const ink = getComputedStyle(canvas).color
-      ctx.fillStyle = ctx.strokeStyle = ink
-
-      // o coelho ocupa quase todo o quadro, centrado e respirando
-      const breathe = 1 + Math.sin(t * 0.8) * 0.015
-      const up = lift?.matches
-      const unit = Math.min((width * (soft ? 0.95 : 0.8)) / W, (height * (up ? 0.8 : soft ? 0.95 : 0.82)) / H) * breathe
-      const ox = (width - W * unit) / 2
-      const oy = up ? height * 0.04 : (height - H * unit) / 2
-      for (let row = 0, y = 0; y < height; row++, y += STEP) {
-        for (let col = 0, x = 0; x < width; col++, x += STEP) {
-          const ux = (x + STEP / 2 - ox) / unit + Math.sin(y * 0.08 * k + t * 0.8) * 0.12
-          const uy = (y + STEP / 2 - oy) / unit + Math.sin(x * 0.07 * k - t * 0.6) * 0.12
-          if (accent && isMouth(ux, uy)) {
-            ctx.fillStyle = accent
-            ctx.fillRect(x + STEP / 8, y + STEP / 8, STEP * 0.75, STEP * 0.75)
-            ctx.fillStyle = ink
-            continue
-          }
-          const v = tone(ux, uy, t, soft)
-          if (v <= 0.02) continue
-          const wave = (Math.sin(x * 0.05 * k + Math.sin(y * 0.04 * k + t * 0.6) * 2.4 + t) + 1) / 2
-          const n = hash(row, col)
-          glyph(ctx, x, y, STEP, v * (0.9 + 0.12 * wave) + (n - 0.5) * (soft ? 0.36 : 0.22), hash(col, row))
-        }
-      }
-    }
-
-    if (still) {
-      draw(0)
-      new ResizeObserver(() => draw(0)).observe(canvas)
-      return
-    }
-    new IntersectionObserver((e) => (visible = e[0].isIntersecting)).observe(canvas)
-    const tick = (now: number) => {
-      if (visible && now - last >= 1000 / 30) {
-        last = now
-        draw(now / 1000)
-      }
-      requestAnimationFrame(tick)
-    }
-    requestAnimationFrame(tick)
-  }
-
-  document.querySelectorAll<HTMLCanvasElement>('[data-pixel-bunny]').forEach(start)
+    animate(canvas, (ctx, f) => {
+      const frame = { ...f, step }
+      paintField(ctx, bunnyField(frame, { accent: !!accent, soft }), frame, getComputedStyle(canvas).color, accent)
+    })
+  })
 </script>

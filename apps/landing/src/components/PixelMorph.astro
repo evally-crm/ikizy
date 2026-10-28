@@ -1,0 +1,107 @@
+---
+/**
+ * a boca e o coelho da marca em símbolos, trocando de um para o outro a cada poucos segundos (os desenhos
+ * estão em lib/pixelArt.ts). a troca é como um rádio sintonizando: numa varredura da esquerda para a direita,
+ * a imagem se parte em listras verticais que afinam de um desenho e engrossam do outro, tremendo na vertical,
+ * com chiado e linhas de interferência no meio do caminho. com movimento reduzido fica parado no primeiro.
+ *
+ * usa a cor do texto; `step` é o tamanho da célula em px; `accent` pinta a boca do coelho;
+ * `lift` sobe o coelho no desktop, para o rosto ficar acima do ticket de cadastro.
+ */
+interface Props {
+  class?: string
+  first?: 'mouth' | 'bunny'
+  step?: number
+  accent?: string
+  lift?: boolean
+}
+
+const { class: className, first = 'mouth', step = 7, accent, lift = false } = Astro.props
+---
+
+<canvas
+  class:list={['pixel-morph', className]}
+  aria-hidden="true"
+  data-pixel-morph={first}
+  data-step={step}
+  data-accent={accent}
+  data-lift={lift ? '' : undefined}
+></canvas>
+
+<script>
+  import { animate, bunnyField, hash, mouthField, paintField, smooth, swapProgress, type Field, type Frame } from '../lib/pixelArt'
+
+  document.querySelectorAll<HTMLCanvasElement>('[data-pixel-morph]').forEach((canvas) => {
+    const step = Number(canvas.dataset.step) || 7
+    const accent = canvas.dataset.accent
+    const bunnyFirst = canvas.dataset.pixelMorph === 'bunny'
+    const lift = 'lift' in canvas.dataset ? matchMedia('(min-width: 900px)') : null
+
+    // cada desenho é pintado numa camada do tamanho do canvas; a troca recorta listras das duas
+    const layers = [document.createElement('canvas'), document.createElement('canvas')]
+    const paintLayer = (layer: HTMLCanvasElement, field: Field, frame: Frame, dpr: number, ink: string) => {
+      const c = layer.getContext('2d')
+      if (!c) return
+      c.setTransform(dpr, 0, 0, dpr, 0, 0)
+      c.clearRect(0, 0, frame.width, frame.height)
+      paintField(c, field, frame, ink, accent)
+    }
+
+    animate(canvas, (ctx, f) => {
+      const W = canvas.width
+      const H = canvas.height
+      const dpr = W / f.width
+      const ink = getComputedStyle(canvas).color
+      const frame = { ...f, step }
+      const p = swapProgress(f.t)
+      const mouth = () => mouthField(frame)
+      const bunny = () => bunnyField(frame, { accent: !!accent, soft: true, lift: !!lift?.matches })
+      const [first, second] = bunnyFirst ? [bunny, mouth] : [mouth, bunny]
+
+      // parado num dos desenhos: pinta direto, sem camadas
+      if (p <= 0 || p >= 1) return paintField(ctx, (p <= 0 ? first : second)(), frame, ink, accent)
+
+      for (const layer of layers) {
+        if (layer.width !== W || layer.height !== H) {
+          layer.width = W
+          layer.height = H
+        }
+      }
+      const [a, z] = layers
+      paintLayer(a, first(), frame, dpr, ink)
+      paintLayer(z, second(), frame, dpr, ink)
+      ctx.setTransform(1, 0, 0, 1, 0, 0)
+
+      // listras: perto da frente da varredura cada listra se divide entre os dois desenhos, abre uma fresta
+      // e treme na vertical, como o sinal entrando e saindo
+      const S = Math.max(3, Math.round(6 * dpr))
+      const tick = Math.floor(f.t * 20)
+      const jump = 36 * dpr
+      for (let x = 0, i = 0; x < W; x += S, i++) {
+        const s = (x / W) * 0.75 + hash(i, 3) * 0.25
+        const local = smooth(s - 0.2, s + 0.2, p * 1.5 - 0.25)
+        const noise = Math.exp(-(((local - 0.5) / 0.25) ** 2))
+        const width = Math.min(S, W - x)
+        const gap = Math.round(noise * width * 0.35)
+        const wa = Math.round((width - gap) * (1 - local))
+        const wz = width - gap - wa
+        if (wa > 0) ctx.drawImage(a, x, 0, wa, H, x, Math.round((hash(i, tick) - 0.5) * jump * noise), wa, H)
+        if (wz > 0) ctx.drawImage(z, x + wa + gap, 0, wz, H, x + wa + gap, Math.round((hash(tick, i) - 0.5) * jump * noise), wz, H)
+      }
+
+      // chiado e linhas de interferência, mais fortes no meio da troca
+      const hiss = Math.sin(Math.PI * p)
+      ctx.fillStyle = ink
+      const dots = Math.round(hiss * (W * H) / (900 * dpr * dpr))
+      const dot = Math.max(1, Math.round(1.5 * dpr))
+      for (let j = 0; j < dots; j++) ctx.fillRect(Math.floor(hash(j, tick) * W), Math.floor(hash(tick, j * 7) * H), dot, dot)
+      const lines = Math.round(hiss * 4)
+      for (let j = 0; j < lines; j++) {
+        const y = Math.floor(hash(j * 13, tick) * H)
+        ctx.globalAlpha = 0.25 + hash(tick, j) * 0.35
+        ctx.fillRect(0, y, W, Math.max(1, Math.round(hash(j, tick * 3) * 3 * dpr)))
+      }
+      ctx.globalAlpha = 1
+    })
+  })
+</script>
