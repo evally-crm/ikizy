@@ -1,3 +1,12 @@
+/* fonte do nome ikizy, a mesma da landing: Architype Stedelijk (OnlineWebFonts, CC BY 4.0) */
+@font-face {
+  font-family: 'Architype Stedelijk';
+  src: url('/fonts/architype-stedelijk.woff2') format('woff2'),
+    url('/fonts/architype-stedelijk.woff') format('woff');
+  font-weight: 400;
+  font-display: swap;
+}
+
 :root {
   /* marca */
   --brand-500: #bf0c22;
@@ -51,6 +60,7 @@
   /* tipografia */
   --font-sans: 'Outfit', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-serif: var(--font-sans);
+  --font-logo: 'Architype Stedelijk', var(--font-sans);
   --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
 
   /* raios */

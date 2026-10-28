@@ -1,8 +1,10 @@
 .logo {
   flex: none;
   font-size: 24px;
-  font-weight: 600;
-  letter-spacing: -0.04em;
+  font-family: var(--font-logo);
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: lowercase;
   color: var(--ink-900);
 }
 .logo__dot {

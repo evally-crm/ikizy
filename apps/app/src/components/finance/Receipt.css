@@ -36,11 +36,11 @@
 }
 .receipt__logo {
   margin-bottom: 6px;
-  font-family: var(--font-sans);
   font-size: 28px;
-  font-weight: 600;
-  letter-spacing: -0.04em;
-  text-transform: none;
+  font-family: var(--font-logo);
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: lowercase;
 }
 .receipt__logo span {
   color: var(--brand-500);

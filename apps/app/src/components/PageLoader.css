@@ -11,8 +11,10 @@
 
 .pageloader__logo {
   font-size: 28px;
-  font-weight: 600;
-  letter-spacing: -0.04em;
+  font-family: var(--font-logo);
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: lowercase;
   color: var(--ink-900);
   animation: splash-pulse 1.2s ease-in-out infinite;
 }
