@@ -16,11 +16,12 @@ import { agenda, dash, ROUTES } from '../../lib/routes'
 import { Avatar, Button, PageHeaderShell } from '../ui'
 import { GlassDefs, useLiquidGlass } from '../ui/LiquidGlass'
 import { useLensDrag } from '../ui/useLensDrag'
+import { LogoWord } from '../BunnyMark'
 
 function Logo() {
   return (
     <NavLink to={ROUTES.dashboard} className="logo" aria-label="IKIZY — início">
-      IKIZY<span className="logo__dot">.</span>
+      <LogoWord />
     </NavLink>
   )
 }

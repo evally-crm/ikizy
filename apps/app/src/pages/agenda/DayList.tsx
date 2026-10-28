@@ -6,6 +6,7 @@ import { formatBRL, formatTime } from '../../lib/format'
 import { StatusBadge } from '../../components/ui'
 import type { Appointment } from '../../types'
 import './DayList.css'
+import { EmptyBunny } from '../../components/BunnyMark'
 
 /** desktop: atendimentos do dia selecionado, ao lado do calendário */
 export function DayList({
@@ -41,6 +42,7 @@ export function DayList({
       </div>
       {sorted.length === 0 ? (
         <p className="evcard__empty">
+          {!loading && <EmptyBunny />}
           {loading ? 'Carregando…' : 'Nenhum atendimento neste dia.'}
           {!loading && <span>Clique em "Novo" ou num horário da grade para agendar.</span>}
         </p>

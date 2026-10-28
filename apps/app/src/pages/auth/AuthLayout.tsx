@@ -3,6 +3,7 @@ import { Eye, EyeOff } from 'lucide-react'
 import { Card } from '../../components/ui'
 import { useLiquidGlass } from '../../components/ui/LiquidGlass'
 import { HalftoneFace } from './HalftoneFace'
+import { LogoWord } from '../../components/BunnyMark'
 
 /** `topAction` fica à direita da marca (ex.: link "Criar conta") */
 export function AuthLayout({ children, topAction }: { children: ReactNode; topAction?: ReactNode }) {
@@ -20,7 +21,7 @@ export function AuthLayout({ children, topAction }: { children: ReactNode; topAc
       <div className="auth__box" ref={boxRef} style={glass.style}>
         <header className="auth__top">
           <p className="logo auth__logo">
-            IKIZY<span className="logo__dot">.</span>
+            <LogoWord />
           </p>
           {topAction && <div className="auth__top-action">{topAction}</div>}
         </header>

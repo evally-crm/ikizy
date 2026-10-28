@@ -1,0 +1,39 @@
+---
+/**
+ * tela de carregamento: o coelho da marca em bordô, piscando, até a página terminar de carregar.
+ * os olhos (os "+" da logo) são desenhados por cima na cor do fundo para poderem fechar e abrir.
+ * sem JavaScript ela nem aparece (noscript); fica no máximo 4s, mesmo se algo travar o load.
+ */
+---
+
+<div class="loader" role="status" aria-label="Carregando" data-loader>
+  <svg class="loader__bunny" viewBox="0 0 140 260" aria-hidden="true" focusable="false">
+    <path
+      fill="currentColor"
+      fill-rule="evenodd"
+      d="M0 5Q0 0 5 0H39Q44 0 44 5L35 135Q35 140 40 140H101Q105 140 105 136V76Q105 71 110 71H134Q139 71 139 76V134Q139 139 134 139H112Q108 139 108 143V171Q108 176 113 176H134Q139 176 139 181V240C139 252 105 260 69.5 260S0 252 0 240ZM61 213H78V217H61Z"
+    ></path>
+    <path class="loader__eyes" d="M41 183H47V196H54V202H41V215H34V202H28V196H41ZM98 183H104V196H111V202H98V215H91V202H85V196H98Z"></path>
+  </svg>
+</div>
+<noscript><style>.loader { display: none; }</style></noscript>
+<script is:inline>
+  // some quando a página carrega, mas fica pelo menos o tempo de uma piscada para não ser só um clarão
+  (() => {
+    const el = document.querySelector('[data-loader]')
+    if (!el) return
+    const start = performance.now()
+    let done = false
+    const hide = () => {
+      if (done) return
+      done = true
+      setTimeout(() => {
+        el.classList.add('is-done')
+        setTimeout(() => el.remove(), 500)
+      }, Math.max(0, 900 - (performance.now() - start)))
+    }
+    if (document.readyState === 'complete') hide()
+    else addEventListener('load', hide, { once: true })
+    setTimeout(hide, 4000)
+  })()
+</script>

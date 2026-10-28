@@ -28,7 +28,7 @@
 
 :root {
   /* as cores do IKIZY, iguais às do sistema: cinza, preto, branco e vinho (só em pontos específicos) */
-  --wine: #800513;
+  --wine: #63001f;
   /* vermelho mais vivo, da mesma família do vinho, para aparecer sobre o preto (marca no rodapé) */
   --red: #c8102e;
   --white: #ffffff;
@@ -367,7 +367,13 @@ em {
   letter-spacing: 0;
   color: var(--ink-900);
 }
-.logo span {
+/* o coelho da marca no lugar do k: mesma largura do k da fonte, do alto do pingo do i até um pouco abaixo da linha */
+.logo .bunny-mark {
+  display: inline-block;
+  width: 0.381em;
+  height: 0.708em;
+  margin: 0 0.012em;
+  vertical-align: -0.041em;
   color: var(--wine);
 }
 .nav {
@@ -595,8 +601,8 @@ em {
   letter-spacing: -0.06em;
 }
 .display__main em {
-  /* o "simples" do hero fica preto, na mesma fonte dos destaques */
-  color: var(--ink-900);
+  /* o "simples" do hero fica em bordô, na mesma fonte dos destaques */
+  color: var(--wine);
   letter-spacing: 0;
 }
 .hero2__label {
@@ -690,6 +696,7 @@ em {
 /* boca de pontos (canvas animado no script do fim da página) */
 .art {
   position: relative;
+  color: var(--ink-900);
   align-self: stretch;
   min-height: 320px;
 }
@@ -699,7 +706,7 @@ em {
   width: 100%;
   height: 100%;
 }
-/* celular: a boca sobe para cima do texto */
+/* celular: o coelho sobe para cima do texto */
 @media (max-width: 899px) {
   .art {
     order: -1;
@@ -708,8 +715,8 @@ em {
   }
 }
 
-/* ticket de cadastro: duas peças lado a lado (flor de pixels em fundo vinho + convite).
-   só no desktop, no canto inferior direito do início, por cima da boca */
+/* ticket de cadastro: duas peças lado a lado (boca em símbolos em fundo vinho + convite).
+   só no desktop, no canto inferior direito do início, por cima do coelho */
 .ticket {
   display: none;
 }
@@ -739,7 +746,7 @@ em {
   background: var(--wine);
   color: var(--white);
 }
-.ticket__stub .pixel-flower {
+.ticket__stub .pixel-mouth {
   width: 100%;
   height: 100%;
 }
@@ -803,7 +810,7 @@ em {
   justify-self: start;
   padding: 4px 10px;
   border-radius: var(--radius-pill);
-  background: rgba(128, 5, 19, 0.08);
+  background: rgba(99, 0, 31, 0.08);
   font-size: 12px;
   color: var(--wine);
 }
@@ -838,7 +845,7 @@ em {
   flex-direction: column;
   align-items: center;
   gap: 18px;
-  padding-block: clamp(64px, 10vw, 128px);
+  padding-block: clamp(48px, 7vw, 96px);
   text-align: center;
 }
 .you__title {
@@ -851,23 +858,45 @@ em {
 .you__lead {
   max-width: 60ch;
 }
-/* linha de baixo do título: a palavra que troca, centralizada */
+/* linha de baixo do título: a palavra que troca entre parênteses, tudo na fonte pixelada e centralizado */
 .you__line {
   display: flex;
   justify-content: center;
-}
-/* todas as palavras na mesma célula da grade, centradas: cada uma aparece no lugar, sem deslizar */
-.you__rot {
-  display: grid;
-  justify-items: center;
+  align-items: baseline;
+  gap: 0.22em;
   font-family: var(--font-accent);
   font-weight: 400;
   letter-spacing: 0;
+}
+.you__paren {
+  color: var(--ink-900);
+}
+/* todas as palavras no mesmo ponto, centradas: cada uma aparece no lugar, sem deslizar;
+   o script dá a largura da palavra da vez e os parênteses deslizam junto (sem script, cabe a mais longa) */
+.you__rot {
+  position: relative;
+  display: grid;
+  justify-items: center;
   color: var(--wine);
+  transition: width 0.5s ease 0.15s;
+}
+.you__rot > span {
+  grid-area: 1 / 1;
+}
+.you__rot.is-fit {
+  display: block;
+}
+.you__rot.is-fit::before {
+  content: '\00a0';
+}
+.you__rot.is-fit > span {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  translate: -50% 0;
 }
 /* troca sutil, no lugar: a palavra se desfaz (some com um leve desfoque) e a próxima aparece no mesmo ponto */
 .you__rot > span {
-  grid-area: 1 / 1;
   white-space: nowrap;
   opacity: 0;
   filter: blur(6px);
@@ -1003,112 +1032,121 @@ em {
   margin-top: 0;
 }
 
-/* financeiro: cartão de destaque em vidro fosco (manchas de cor desfocadas por trás), título grande e o círculo "+" no canto */
-.feat--money {
-  isolation: isolate;
-  padding-bottom: 20px;
-  background: #2a2729;
-  color: var(--white);
-  box-shadow: 0 18px 40px -14px rgba(14, 13, 13, 0.45);
+/* cartões alternados: clientes e site em branco com borda fina, agenda e mensagens no cinza chapado */
+.feat--client,
+.feat--site {
+  border: 1px solid var(--line);
+  background: var(--white);
 }
-.feat--money::before {
-  content: '';
-  position: absolute;
-  inset: -30%;
-  z-index: -2;
-  background:
-    radial-gradient(circle at 20% 25%, rgba(120, 112, 116, 0.85), transparent 45%),
-    radial-gradient(circle at 80% 20%, rgba(150, 150, 156, 0.7), transparent 42%),
-    radial-gradient(circle at 70% 85%, rgba(90, 20, 28, 0.5), transparent 48%),
-    radial-gradient(circle at 15% 85%, rgba(14, 13, 13, 0.95), transparent 55%);
-  filter: blur(36px);
-}
-.feat--money::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  border-radius: inherit;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(14, 13, 13, 0.35));
-  -webkit-backdrop-filter: blur(18px) saturate(1.1);
-  backdrop-filter: blur(18px) saturate(1.1);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
-}
-.feat--money h3 {
-  max-width: 10ch;
-  color: var(--white);
-  font-size: clamp(30px, 3.4vw, 46px);
-  line-height: 1;
-}
-.feat--money .feat__was {
-  color: rgba(255, 255, 255, 0.45);
-}
-.feat--money .feat__was span {
-  border-color: rgba(255, 255, 255, 0.25);
-}
-.feat--money .feat__visual {
-  align-items: flex-end;
-  justify-content: flex-start;
-}
-.feat--money .ui--money {
-  background: rgba(255, 255, 255, 0.16);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-  color: var(--white);
-}
-.feat--money .ui--money span {
-  color: rgba(255, 255, 255, 0.6);
-}
-.feat--money .ui__bars i {
-  background: rgba(255, 255, 255, 0.16);
-}
-.feat--money .ui__bars i:nth-child(4) {
-  background: var(--wine);
+.feat--client .ui,
+.feat--site .ui {
+  background: var(--gray-100);
 }
 
-/* card redondo "+ Veja a IKIZY por dentro", no canto inferior direito do cartão preto */
-.feat__plus {
+/* financeiro: como um cartão de produto — a telinha do caixa em vermelho, grande e inclinada, ocupa o cartão;
+   o título vem por cima em faixas brancas (uma por linha), a frase curta no pé e a seta redonda no canto */
+.feat--money {
+  isolation: isolate;
+  min-height: 360px;
+  padding-bottom: 20px;
+  background: var(--gray-200);
+}
+.feat--money h3 {
+  position: relative;
+  z-index: 1;
+  max-width: 9ch;
+  font-size: clamp(32px, 3.6vw, 50px);
+  line-height: 1.12;
+  letter-spacing: -0.04em;
+}
+.feat--money h3 span {
+  padding: 0 0.14em;
+  background: rgba(255, 255, 255, 0.86);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+.feat--money .feat__was {
+  position: relative;
+  z-index: 1;
+}
+.feat--money .feat__visual {
+  position: absolute;
+  right: -14%;
+  bottom: 14%;
+  z-index: -1;
+  margin: 0;
+  zoom: 1;
+  rotate: -9deg;
+}
+.feat--money .ui--money {
+  width: clamp(240px, 22vw, 320px);
+  max-width: none;
+  padding: 22px;
+  border-radius: 26px;
+  background: var(--wine);
+  color: var(--white);
+  box-shadow: 0 30px 50px -20px rgba(99, 0, 31, 0.55), inset 0 0 0 6px rgba(255, 255, 255, 0.12);
+}
+.feat--money .ui--money span {
+  color: rgba(255, 255, 255, 0.75);
+}
+.feat--money .ui--money b {
+  font-family: var(--font-accent);
+  font-size: clamp(30px, 3vw, 42px);
+  letter-spacing: 0;
+  line-height: 1;
+}
+.feat--money .ui__bars {
+  height: 84px;
+  margin-top: 16px;
+}
+.feat--money .ui__bars i {
+  background: rgba(255, 255, 255, 0.28);
+}
+.feat--money .ui__bars i:nth-child(4) {
+  background: var(--white);
+}
+.feat__foot {
+  position: relative;
+  z-index: 1;
+  align-self: flex-start;
+  max-width: 24ch;
+  margin-top: auto;
+  padding: 0 0.3em;
+  background: rgba(255, 255, 255, 0.86);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-500);
+}
+/* seta redonda no canto de baixo: leva para o tour "Veja a IKIZY por dentro" */
+.feat__go {
   position: absolute;
   right: 14px;
   bottom: 14px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  color: var(--white);
-}
-.feat__circle {
   display: grid;
   place-items: center;
-  width: 64px;
-  height: 64px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background: var(--white);
   color: var(--ink-900);
-  font-size: 28px;
-  font-weight: 300;
-  line-height: 1;
   transition: background-color 0.2s, color 0.2s, transform 0.2s;
 }
 @media (min-width: 1024px) {
-  .feat__plus {
-    right: 28px;
-    bottom: 26px;
-    gap: 12px;
-    font-size: 14px;
-  }
-  .feat__circle {
-    width: 96px;
-    height: 96px;
-    font-size: 40px;
+  .feat__go {
+    right: 22px;
+    bottom: 22px;
+    width: 52px;
+    height: 52px;
   }
 }
-.feat__plus:hover .feat__circle,
-.feat__plus:focus-visible .feat__circle {
-  background: var(--wine);
+.feat__go:hover,
+.feat__go:focus-visible {
+  background: var(--ink-900);
   color: var(--white);
-  transform: scale(1.05);
+  transform: rotate(45deg);
 }
 .ui--bubble {
   max-width: 240px;
@@ -1157,37 +1195,124 @@ em {
   border-radius: var(--radius-pill);
 }
 
-/* ---------- como começar: carrossel horizontal com telas reais ---------- */
-.tour__head {
+/* ---------- como começar: etapas em pílulas à esquerda, telas em círculos à direita (a da vez cresce e vira pílula) ---------- */
+.tour__body {
+  display: grid;
+  gap: 24px;
+}
+@media (min-width: 1024px) {
+  .tour__body {
+    grid-template-columns: minmax(220px, 0.32fr) minmax(0, 1fr);
+    align-items: center;
+    gap: clamp(32px, 4vw, 64px);
+  }
+}
+.tour__steps {
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.tour__step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 14px 12px 16px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--gray-100);
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  color: var(--ink-500);
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+.tour__step > span:not(.tour__dot) {
+  flex: 1;
+  min-width: 0;
+}
+.tour__step svg {
+  flex: none;
+  opacity: 0.5;
+}
+.tour__step:hover {
+  background: var(--gray-200);
+  color: var(--ink-900);
+}
+.tour__step[aria-pressed='true'] {
+  background: var(--ink-900);
+  color: var(--white);
+}
+.tour__step[aria-pressed='true'] svg {
+  opacity: 1;
+}
+/* dois pontinhos à esquerda: o da etapa da vez acende */
+.tour__dot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  margin-left: 8px;
+  border-radius: 50%;
+  background: var(--gray-300);
+  box-shadow: -8px 0 0 var(--gray-200);
+  transition: background-color 0.2s;
+}
+.tour__step[aria-pressed='true'] .tour__dot {
+  background: var(--white);
+  box-shadow: -8px 0 0 rgba(255, 255, 255, 0.35);
+}
+
+.tour__stage {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+.tour__bar {
+  display: flex;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: clamp(16px, 3vh, 36px);
 }
-.tour__head .section__head {
-  margin-bottom: 0;
+/* rótulo com um traço em bordô à esquerda */
+.tour__label {
+  padding-left: 12px;
+  border-left: 3px solid var(--wine);
+  font-size: 15px;
+  line-height: 1.1;
+  color: var(--ink-900);
 }
 .tour__nav {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
 }
 .tour__count {
-  min-width: 48px;
   font-size: 14px;
   font-variant-numeric: tabular-nums;
   color: var(--ink-500);
 }
+/* setas e pontinhos juntos numa pílula cinza */
+.tour__pager {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px;
+  border-radius: var(--radius-pill);
+  background: var(--gray-100);
+}
 .tour__arrow {
   display: grid;
   place-items: center;
-  width: 48px;
-  height: 48px;
-  border: 1px solid var(--ink-900);
+  width: 32px;
+  height: 32px;
+  border: 0;
   border-radius: 50%;
-  background: transparent;
+  background: none;
   color: var(--ink-900);
   cursor: pointer;
   transition: background-color 0.15s, color 0.15s, opacity 0.15s;
@@ -1200,65 +1325,118 @@ em {
   opacity: 0.25;
   cursor: default;
 }
-.tour__track {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 78%;
-  gap: 14px;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  scrollbar-width: none;
-  overscroll-behavior-x: contain;
-}
-.tour__track::-webkit-scrollbar {
-  display: none;
-}
-@media (min-width: 640px) {
-  .tour__track {
-    grid-auto-columns: calc((100% - 14px) / 2);
-  }
-}
-@media (min-width: 1024px) {
-  .tour__track {
-    grid-auto-columns: calc((100% - 28px) / 3.2);
-    padding-left: 30%;
-    scroll-padding-left: 30%;
-  }
-}
-.tour__slide {
-  scroll-snap-align: start;
-}
-.tour__slide figure {
+.tour__dots {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  gap: 4px;
 }
-.tour__slide img {
-  width: 100%;
-  height: auto;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-md);
+.tour__dots i {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--gray-300);
+  transition: width 0.3s, background-color 0.3s;
+}
+.tour__dots i.is-on {
+  width: 18px;
+  background: var(--wine);
+}
+
+/* fileira de telas: círculos sobrepostos; quanto mais longe da etapa da vez, menor (data-d = distância) */
+.tour__orbs {
+  /* a fileira inteira mede no máximo ~3,4 × --big (etapa do meio ativa), então cabe na coluna da direita */
+  --big: clamp(140px, 15vw, 230px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--big);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.tour__orb {
+  --s: 0.28;
+  flex: none;
+  width: calc(var(--big) * var(--s));
+  height: calc(var(--big) * var(--s));
+  margin-left: calc(var(--big) * -0.06);
+  overflow: hidden;
+  border: 3px solid var(--white);
+  border-radius: var(--radius-pill);
   background: var(--gray-100);
+  cursor: pointer;
+  transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1), height 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
-.tour__slide figcaption {
+.tour__orb:first-child {
+  margin-left: 0;
+}
+.tour__orb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 30% 20%;
+}
+.tour__orb[data-d='0'] {
+  z-index: 3;
+  width: calc(var(--big) * 1.55);
+  height: var(--big);
+}
+.tour__orb[data-d='1'] {
+  --s: 0.62;
+  z-index: 2;
+}
+.tour__orb[data-d='2'] {
+  --s: 0.44;
+  z-index: 1;
+}
+.tour__orb[data-d='3'] {
+  --s: 0.34;
+}
+
+/* texto da etapa da vez embaixo das telas (todos no mesmo lugar, só o da vez aparece) */
+.tour__caps {
+  display: grid;
+}
+.tour__cap {
+  grid-area: 1 / 1;
+  margin: 0;
+  opacity: 0;
+  transition: opacity 0.35s;
+}
+.tour__cap.is-on {
+  opacity: 1;
+}
+.tour__cap figcaption {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
-  gap: 4px 16px;
-  max-width: 62ch;
+  gap: 2px 14px;
+  max-width: 56ch;
+  margin-inline: auto;
 }
 .tour__n {
   grid-row: span 2;
   font-size: 13px;
   color: var(--wine);
 }
-.tour__slide h3 {
-  font-size: 17px;
+.tour__cap b {
+  font-size: 18px;
   font-weight: 400;
   letter-spacing: -0.03em;
 }
-.tour__slide p {
+.tour__cap figcaption > span:last-child {
   font-size: 14px;
   color: var(--ink-500);
+}
+
+/* computador: a seção fica presa na tela enquanto a rolagem troca as etapas (o script dá a altura e liga a classe) */
+.tour-pin.is-pinned > .tour {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 100vh;
+  min-height: 100svh;
+  padding-top: calc(var(--header-h) + 16px);
 }
 
 /* ---------- planos: título curto e chave à esquerda, lista de escolha e um botão só à direita ---------- */
@@ -1282,7 +1460,7 @@ em {
   align-items: flex-start;
   gap: 22px;
 }
-/* título em duas linhas: a primeira cinza, a segunda preta */
+/* título no padrão da página: "Escolha" fino e "seu plano" na fonte de destaque, em bordô */
 .pricing__title {
   font-size: clamp(40px, 6vw, 76px);
   font-weight: 400;
@@ -1290,9 +1468,8 @@ em {
   letter-spacing: -0.05em;
   color: var(--ink-900);
 }
-.pricing__title span {
+.pricing__title em {
   display: block;
-  color: var(--gray-400);
 }
 .toggle {
   display: inline-flex;
@@ -1481,7 +1658,7 @@ em {
   margin-top: -6px;
   padding: 2px 8px;
   border-radius: var(--radius-pill);
-  background: rgba(128, 5, 19, 0.08);
+  background: rgba(99, 0, 31, 0.08);
   font-size: 11px;
   color: var(--wine);
   transition: opacity 0.16s;
@@ -1507,139 +1684,167 @@ em {
   }
 }
 
-/* ---------- contato: formulário à esquerda, texto à direita, fundo claro ---------- */
+/* ---------- contato: faixa clara com o convite, um campo de e-mail só e o coelho pixelado num brilho bordô ---------- */
 .contact {
+  position: relative;
   display: grid;
-  gap: 40px;
-  align-items: start;
+  align-items: center;
+  gap: 24px;
+  overflow: hidden;
+  padding: clamp(28px, 5vw, 64px) clamp(20px, 5vw, 64px);
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(circle at 82% 50%, rgba(99, 0, 31, 0.14), transparent 42%),
+    linear-gradient(100deg, var(--gray-100) 30%, #f3e9ec);
 }
 @media (min-width: 900px) {
   .contact {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 96px;
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
   }
 }
-.contact__form {
+.contact__text {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 14px;
 }
-/* ---------- campos (componente Field) ---------- */
-/* pílula sem borda; o título fica dentro e sobe ao clicar ou quando já tem texto */
-.field {
-  position: relative;
+.contact__text .lead {
+  max-width: 42ch;
 }
-.field input,
-.field textarea {
-  display: block;
+/* campo e botão juntos numa pílula branca */
+.contact__form {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   width: 100%;
-  height: 60px;
-  padding: 24px 26px 8px;
-  border: 0;
+  max-width: 460px;
+  margin-top: 8px;
+  padding: 6px;
   border-radius: var(--radius-pill);
-  background: var(--gray-100);
+  background: var(--white);
+}
+.contact__form[hidden] {
+  display: none;
+}
+.contact__form input[type='email'] {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 14px;
+  border: 0;
+  background: none;
   font: inherit;
   font-size: 16px;
   color: var(--ink-900);
-  transition: background-color 0.2s;
 }
-.field textarea {
-  height: auto;
-  min-height: 160px;
-  padding: 32px 26px 18px;
-  border-radius: 28px;
-  resize: vertical;
-}
-.field label {
-  position: absolute;
-  top: 30px;
-  left: 26px;
-  font-size: 16px;
-  line-height: 1;
-  color: var(--ink-500);
-  pointer-events: none;
-  transform: translateY(-50%);
-  transform-origin: left center;
-  transition: top 0.2s ease, transform 0.2s ease, color 0.2s;
-}
-.field input:hover,
-.field textarea:hover {
-  background: #efeff1;
-}
-/* sem borda no foco: o fundo escurece e o título fica preto */
-.field input:focus-visible,
-.field textarea:focus-visible {
+.contact__form input[type='email']:focus {
   outline: none;
-  background: var(--gray-200);
 }
-.field :is(input, textarea):is(:focus, :not(:placeholder-shown)) + label {
-  top: 17px;
-  transform: translateY(-50%) scale(0.75);
+.contact__form:focus-within {
+  outline: 2px solid var(--wine);
+  outline-offset: 2px;
 }
-.field--multiline textarea:is(:focus, :not(:placeholder-shown)) + label {
-  top: 18px;
-}
-.field :is(input, textarea):focus + label {
-  color: var(--ink-900);
-}
-/* inválido (só depois que a pessoa mexeu): título vinho e fundo rosado */
-.field :is(input, textarea):user-invalid {
-  background: #fbeef0;
-}
-.field :is(input, textarea):user-invalid + label {
-  color: var(--wine);
-}
-/* preenchimento automático do navegador sem fundo amarelo/azul */
-.field input:-webkit-autofill {
-  -webkit-box-shadow: 0 0 0 60px var(--gray-100) inset;
-  -webkit-text-fill-color: var(--ink-900);
-}
-
-/* ---------- contato ---------- */
 .contact__form .btn {
-  align-self: flex-start;
-  min-height: 60px;
-  padding: 0 34px;
+  flex: none;
+}
+.contact__form .btn:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+/* campo escondido para robôs */
+.contact__trap {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
 }
 .contact__note {
   font-size: 13px;
   color: var(--ink-500);
 }
-.contact__note a,
+.contact__note[data-state='ok'] {
+  font-size: 16px;
+  color: var(--ink-900);
+}
+.contact__note[data-state='error'] {
+  color: var(--wine);
+}
+.contact__login {
+  font-size: 14px;
+  color: var(--ink-500);
+}
 .contact__login a {
   color: var(--ink-900);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
-.contact__text {
-  order: -1;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 16px;
+/* o coelho pixelado em bordô, grande, no brilho do fundo */
+.contact__art {
+  --h: clamp(200px, 26vw, 320px);
+  display: grid;
+  place-items: center;
+  color: var(--wine);
 }
-@media (min-width: 900px) {
-  .contact__text {
-    order: 2;
-    position: sticky;
-    top: 32px;
+/* tamanho explícito: o canvas sozinho fica com os 300px padrão e corta o coelho */
+.contact__art .pixel-bunny {
+  width: calc(var(--h) * 14 / 26);
+  height: var(--h);
+}
+@media (max-width: 899px) {
+  .contact__art {
+    display: none;
   }
 }
-.contact__mail {
-  margin-top: 8px;
-  padding-bottom: 4px;
-  border-bottom: 1px solid var(--ink-900);
-  font-size: clamp(20px, 2.4vw, 28px);
-  letter-spacing: -0.03em;
-  transition: color 0.15s, border-color 0.15s;
-}
-.contact__mail:hover {
+
+/* ---------- tela de carregamento: o coelho bordô no meio da tela, piscando ---------- */
+.loader {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  background: var(--white);
   color: var(--wine);
-  border-color: var(--wine);
+  transition: opacity 0.45s ease, visibility 0.45s;
 }
-.contact__login {
-  font-size: 14px;
-  color: var(--ink-500);
+.loader.is-done {
+  opacity: 0;
+  visibility: hidden;
+}
+.loader__bunny {
+  width: 56px;
+  height: auto;
+  animation: loader-in 0.5s ease both;
+}
+/* os olhos ficam na cor do fundo (como os furos da logo) e fecham rapidinho de tempos em tempos */
+.loader__eyes {
+  fill: var(--white);
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: loader-blink 1.6s ease-in-out 0.3s infinite;
+}
+@keyframes loader-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+@keyframes loader-blink {
+  0%,
+  42%,
+  58%,
+  100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(0.12);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .loader__bunny,
+  .loader__eyes {
+    animation: none;
+  }
 }
 
 /* ---------- páginas internas ---------- */
@@ -1671,99 +1876,96 @@ em {
 .prose a {
   text-decoration: underline;
 }
-/* ---------- perguntas frequentes ---------- */
+/* ---------- perguntas frequentes: título centralizado e as perguntas em cartões cinza, duas colunas, direto na página ---------- */
 .faqs {
-  display: grid;
-  gap: 32px;
-}
-.faqs__side {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 16px;
+  gap: clamp(24px, 4vw, 44px);
 }
-.faqs__list {
-  counter-reset: faq;
-  border-top: 1px solid var(--ink-900);
-}
-.faqs details {
-  counter-increment: faq;
-  border-bottom: 1px solid var(--line);
-}
-.faqs summary {
-  display: grid;
-  grid-template-columns: 40px minmax(0, 1fr) auto;
+.faqs__head {
+  display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 12px;
-  padding: 22px 0;
+  text-align: center;
+}
+.faqs__head .lead {
+  max-width: 64ch;
+}
+.faqs__head .lead a {
+  color: var(--ink-900);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+/* cada cartão tem a própria altura: abrir um não estica o vizinho */
+.faqs__list {
+  display: grid;
+  align-items: start;
+  gap: 12px;
+}
+@media (min-width: 900px) {
+  .faqs__list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+}
+.faqs details {
+  border-radius: var(--radius-md);
+  background: var(--gray-100);
+}
+.faqs summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 18px 18px 22px;
   list-style: none;
   cursor: pointer;
-  font-size: clamp(18px, 1.8vw, 24px);
-  font-weight: 300;
-  letter-spacing: -0.03em;
+  font-size: clamp(16px, 1.4vw, 18px);
+  font-weight: 400;
+  letter-spacing: -0.02em;
   color: var(--ink-900);
 }
 .faqs summary:focus-visible {
   outline: 2px solid var(--wine);
-  outline-offset: 4px;
-  border-radius: 6px;
+  outline-offset: 2px;
+  border-radius: var(--radius-md);
 }
 .faqs summary::-webkit-details-marker {
   display: none;
 }
-.faqs summary::before {
-  content: counter(faq, decimal-leading-zero);
-  font-size: 13px;
-  font-weight: 400;
-  letter-spacing: 0;
-  color: var(--gray-400);
-}
+/* bolinha preta com + (fechada) e − (aberta) */
 .faqs summary::after {
   content: '+';
+  flex: none;
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
-  border: 1px solid var(--line);
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  font-size: 22px;
+  background: var(--ink-900);
+  font-size: 20px;
   font-weight: 300;
   line-height: 1;
-  transition: background-color 0.2s, color 0.2s, transform 0.2s;
+  color: var(--white);
+  transition: background-color 0.2s, transform 0.2s;
 }
 .faqs summary:hover::after {
-  background: var(--gray-100);
+  background: var(--wine);
 }
 .faqs details[open] summary::after {
   content: '\2212';
-  background: var(--ink-900);
-  border-color: var(--ink-900);
-  color: var(--white);
-}
-.faqs details[open] summary {
-  color: var(--wine);
 }
 .faqs details p {
-  max-width: 62ch;
-  padding: 0 52px 24px 52px;
+  padding: 0 22px 20px;
+  font-size: 14px;
+  line-height: 1.55;
   color: var(--ink-500);
 }
-@media (min-width: 900px) {
-  .faqs {
-    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.4fr);
-    gap: 72px;
-    align-items: start;
-  }
-  .faqs__side {
-    position: sticky;
-    top: 32px;
-  }
-}
 
-/* ---------- celular: seções como cartões arredondados (o tour escuro e as perguntas em cinza), com tipografia leve ---------- */
+/* ---------- celular: o tour vira um cartão escuro arredondado, com tipografia leve ---------- */
 @media (max-width: 899px) {
-  .tour,
-  .faq {
+  .tour {
     margin-block: 6px;
     padding: 28px 20px;
     border-radius: var(--radius-lg);
@@ -1781,61 +1983,77 @@ em {
   }
   .tour .eyebrow,
   .tour .tour__count,
-  .tour .tour__slide p {
+  .tour .tour__cap figcaption > span:last-child {
     color: rgba(255, 255, 255, 0.6);
   }
   .tour .tour__n {
     color: var(--red);
   }
+  .tour__label {
+    border-left-color: var(--red);
+    white-space: nowrap;
+    color: var(--white);
+  }
+  /* no celular os pontinhos já mostram a etapa */
+  .tour .tour__count {
+    display: none;
+  }
+  /* etapas numa fileira que rola no dedo */
+  .tour__steps {
+    flex-direction: row;
+    margin-inline: -20px;
+    padding-inline: 20px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tour__steps::-webkit-scrollbar {
+    display: none;
+  }
+  .tour__step {
+    width: auto;
+    background: rgba(255, 255, 255, 0.08);
+    white-space: nowrap;
+    color: rgba(255, 255, 255, 0.6);
+  }
+  .tour__step:hover {
+    background: rgba(255, 255, 255, 0.14);
+    color: var(--white);
+  }
+  .tour__step[aria-pressed='true'] {
+    background: var(--white);
+    color: var(--ink-900);
+  }
+  .tour .tour__step[aria-pressed='true'] .tour__dot {
+    background: var(--red);
+    box-shadow: -8px 0 0 rgba(14, 13, 13, 0.2);
+  }
+  .tour__pager {
+    background: rgba(255, 255, 255, 0.08);
+  }
   .tour__arrow {
-    width: 40px;
-    height: 40px;
-    border-color: rgba(255, 255, 255, 0.35);
     color: var(--white);
   }
   .tour__arrow:hover:not(:disabled) {
     background: var(--white);
     color: var(--ink-900);
   }
-  .tour__slide img {
-    border-color: rgba(255, 255, 255, 0.14);
+  .tour__dots i {
+    background: rgba(255, 255, 255, 0.25);
+  }
+  .tour__dots i.is-on {
+    background: var(--red);
+  }
+  .tour__orbs {
+    --big: min(128px, 30vw);
+  }
+  .tour__orb {
+    border-color: var(--ink-900);
     background: var(--ink-700);
   }
-  .tour__head {
-    align-items: center;
+  .tour__cap figcaption {
+    margin-inline: 0;
   }
 
-  .faq {
-    background: var(--gray-100);
-  }
-  .faqs {
-    gap: 20px;
-  }
-  .faqs__list {
-    border-top: 0;
-  }
-  .faqs details {
-    border-bottom-color: rgba(14, 13, 13, 0.1);
-  }
-  .faqs summary {
-    grid-template-columns: minmax(0, 1fr) auto;
-    padding: 18px 0;
-    font-size: 17px;
-  }
-  .faqs summary::before {
-    display: none;
-  }
-  .faqs summary::after {
-    width: 32px;
-    height: 32px;
-    border-color: transparent;
-    background: var(--white);
-    font-size: 18px;
-  }
-  .faqs details p {
-    padding: 0 0 18px;
-    font-size: 15px;
-  }
 }
 
 /* ---------- footer: preto, texto branco e a marca grande em vermelho ---------- */
@@ -1859,7 +2077,7 @@ em {
 .footer .logo {
   color: var(--white);
 }
-.footer .logo span {
+.footer .logo .bunny-mark {
   color: var(--red);
 }
 .footer p {

@@ -5,6 +5,7 @@ import { formatDuration, type HourInterval } from '../lib/agendaTime'
 import { formatBRL, formatTime } from '../lib/format'
 import type { Appointment, Professional } from '../types'
 import { StatusBadge } from './ui'
+import { EmptyBunny } from './BunnyMark'
 
 /** buraco livre mínimo para aparecer na lista (menos que isso não cabe um atendimento) */
 const MIN_GAP = 30
@@ -188,6 +189,7 @@ export function DayAgenda({
           {(current || done.length > 0) && rows.length > 0 && <p className="dayagenda__label">{isToday ? 'Próximos' : 'Atendimentos'}</p>}
           {rows.length === 0 && !current ? (
             <div className="dayagenda__empty">
+              <EmptyBunny />
               <p>{isPast ? 'Nenhum atendimento neste dia.' : done.length ? 'Nada mais por hoje.' : 'Nenhum atendimento neste dia.'}</p>
               {!isPast && (
                 <button type="button" className="dayagenda__add" onClick={() => onNew(isToday ? Math.ceil(nowMinutes / 15) * 15 : 9 * 60)}>

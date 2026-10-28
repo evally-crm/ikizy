@@ -100,8 +100,8 @@
   overflow: hidden;
   color: var(--on-solid);
   background:
-    radial-gradient(120% 90% at 85% 0%, rgba(191, 12, 34, 0.55), transparent 60%),
-    radial-gradient(90% 80% at 0% 100%, rgba(128, 5, 19, 0.9), transparent 70%),
+    radial-gradient(120% 90% at 85% 0%, rgba(99, 0, 31, 0.55), transparent 60%),
+    radial-gradient(90% 80% at 0% 100%, rgba(76, 0, 24, 0.9), transparent 70%),
     var(--brand-900);
 }
 .card--brand h2,
@@ -864,8 +864,9 @@ button.textlink:disabled {
   color: var(--ink-900);
 }
 
-/* o pontinho do logo segue vermelho: é a marca */
-:root[data-theme='dark'] .logo__dot {
+/* o pontinho e o coelho do logo seguem vermelhos: são a marca */
+:root[data-theme='dark'] .logo__dot,
+:root[data-theme='dark'] .logo__k {
   color: #e0283f;
 }
 

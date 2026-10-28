@@ -130,7 +130,7 @@ export function renderOtpEmail(code: string, email: string, otpType = 'email-ver
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" class="bg-page" style="background-color:#e8e8ea;">
 <tr><td align="center" style="padding:24px 12px;">
   <table role="presentation" width="560" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:560px;">
-    <tr><td bgcolor="#800513" style="background-color:#800513;border-radius:22px;overflow:hidden;">
+    <tr><td bgcolor="#63001f" style="background-color:#63001f;border-radius:22px;overflow:hidden;">
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
         <tr><td style="padding:22px 24px 0;font-family:'Outfit',Arial,Helvetica,sans-serif;font-size:13px;font-weight:500;letter-spacing:4px;color:#ffffff;">IKIZY</td></tr>
         <tr><td style="padding:0;line-height:0;font-size:0;"><img src="https://ikizy.com/email/flor.png" width="560" alt="" style="display:block;width:100%;height:auto;border:0;"></td></tr>
@@ -146,7 +146,7 @@ export function renderOtpEmail(code: string, email: string, otpType = 'email-ver
         <tr><td class="bg-soft" align="center" bgcolor="#f5f5f7" style="background-color:#f5f5f7;border-radius:18px;padding:18px 16px;">
           <div class="t-muted" style="font-size:12px;line-height:18px;color:#6b6668;">Seu código</div>
           <div class="digits t-ink" style="padding:6px 0;font-family:'Architype Stedelijk','Outfit',Arial,Helvetica,sans-serif;font-size:56px;line-height:62px;letter-spacing:6px;color:#0e0d0d;">${esc(code)}</div>
-          <div class="t-muted" style="font-size:12px;line-height:18px;color:#800513;">vale por alguns minutos</div>
+          <div class="t-muted" style="font-size:12px;line-height:18px;color:#63001f;">vale por alguns minutos</div>
         </td></tr>
       </table>
       <p class="t-muted" style="margin:24px 0 0;padding-top:16px;border-top:1px solid rgba(14,13,13,0.12);font-size:13px;line-height:20px;color:#6b6668;">Não foi você? Pode ignorar este e-mail, ninguém entra na conta sem o código. Nunca pedimos esse código por WhatsApp ou telefone.</p>

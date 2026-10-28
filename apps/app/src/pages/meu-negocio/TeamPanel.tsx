@@ -15,6 +15,7 @@ import { PLANS, type PlanId } from '../../lib/plans'
 import { dash } from '../../lib/routes'
 import { Avatar, Button, Panel } from '../../components/ui'
 import './Team.css'
+import { EmptyBunny } from '../../components/BunnyMark'
 
 /**
  * Equipe: quem atende (agenda, comissão) e quem tem login (perfil). No Solo, só o convite para trocar de plano.
@@ -219,7 +220,10 @@ export function TeamPanel({
             ))}
           </ul>
           {staff.length === 0 && staffInvites.length === 0 && (
-            <p className="panel__empty">Ninguém por aqui ainda.</p>
+            <p className="panel__empty panel__empty--bunny">
+              <EmptyBunny />
+              Ninguém por aqui ainda.
+            </p>
           )}
         </Panel>
       )}

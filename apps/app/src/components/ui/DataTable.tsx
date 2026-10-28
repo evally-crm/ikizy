@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import './DataTable.css'
+import { EmptyBunny } from '../BunnyMark'
 
 export interface Column<T> {
   key: string
@@ -28,7 +29,12 @@ export function DataTable<T>({
   /** nome da tabela para leitores de tela */
   caption: string
 }) {
-  if (rows.length === 0 && empty) return <div className="datatable__empty">{empty}</div>
+  if (rows.length === 0 && empty) return (
+      <div className="datatable__empty">
+        <EmptyBunny />
+        {empty}
+      </div>
+    )
   const cellClass = (c: Column<T>) => [c.align === 'right' && 'is-right', c.hideOnMobile && 'is-optional'].filter(Boolean).join(' ') || undefined
   return (
     <div className="datatable">

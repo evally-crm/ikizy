@@ -8,10 +8,10 @@
 }
 
 :root {
-  /* marca */
-  --brand-500: #bf0c22;
-  --brand-700: #800513;
-  --brand-900: #460106;
+  /* marca: o vinho oficial do IKIZY (#63001F) e dois tons mais fundos dele */
+  --brand-500: #63001f;
+  --brand-700: #4c0018;
+  --brand-900: #330010;
 
   /* tons derivados da marca (heatmap, gráficos) */
   --pink-100: #f9e1e5;
@@ -53,9 +53,9 @@
   /* derivados */
   --line: rgba(14, 13, 13, 0.08);
   --line-strong: rgba(14, 13, 13, 0.16);
-  --brand-tint: rgba(191, 12, 34, 0.08);
+  --brand-tint: rgba(99, 0, 31, 0.08);
   --shadow-sm: 0 1px 2px rgba(14, 13, 13, 0.04);
-  --shadow-md: 0 18px 40px -18px rgba(70, 1, 6, 0.28);
+  --shadow-md: 0 18px 40px -18px rgba(51, 0, 16, 0.28);
 
   /* tipografia */
   --font-sans: 'Outfit', system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -150,8 +150,8 @@
   --ink-500: #6b6668;
   --ink-700: #242424;
   --ink-900: #0e0d0d;
-  --brand-500: #bf0c22;
-  --brand-700: #800513;
+  --brand-500: #63001f;
+  --brand-700: #4c0018;
   --line: rgba(14, 13, 13, 0.08);
   --line-strong: rgba(14, 13, 13, 0.16);
   color: var(--ink-900);
