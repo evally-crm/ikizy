@@ -28,6 +28,14 @@
       "dest": "/api/site?slug=$1"
     },
     {
+      "src": "/api/cron/([a-z-]+)",
+      "dest": "/api/cron?job=$1"
+    },
+    {
+      "src": "/api/billing/([a-z-]+)",
+      "dest": "/api/billing?action=$1"
+    },
+    {
       "handle": "filesystem"
     },
     {

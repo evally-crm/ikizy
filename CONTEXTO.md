@@ -62,6 +62,7 @@ Variáveis (só nomes):
 - Para publicar: merge `dev` → `main` com `--no-ff` e push. A usuária pede explicitamente ("leva pra main e publique") antes de cada publicação.
 - Commits em português, no formato `feat(area): ...` / `fix(area): ...`.
 - Acompanhar o deploy: `npx vercel ls ikizy-app --scope dfdudas-projects` (a CLI já está logada).
+- **Limite de 12 funções por deploy** (plano Hobby da Vercel; passar disso faz o deploy falhar no fim, sem erro no log do build). Cada `.ts` fora de `api/_lib/` conta como uma função. Por isso os crons ficam todos em `api/cron.ts` e a cobrança em `api/billing.ts`: `/api/cron/<tarefa>` e `/api/billing/<ação>` são reescritos no `vercel.json`. Rota nova entra como tarefa/ação dessas, ou junto de outra parecida.
 
 ### Migrations
 
