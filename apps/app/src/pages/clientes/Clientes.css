@@ -84,11 +84,14 @@
 }
 
 .clist__meta {
+  display: -webkit-box;
   overflow: hidden;
   font-size: 12px;
   color: var(--ink-500);
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  /* até duas linhas em vez de cortar a última visita */
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 
 /* em "Chamar hoje", a linha diz o motivo */

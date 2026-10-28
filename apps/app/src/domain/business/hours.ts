@@ -7,11 +7,15 @@ export function summarizeHours(list: HourInterval[] | undefined): string[] {
   if (!list || list.length === 0) return []
   const byDay = WEEKDAYS.map((d) => ({
     label: d.label.slice(0, 3),
-    text: list
-      .filter((i) => i.weekday === d.id)
-      .sort((a, b) => a.start - b.start)
-      .map((i) => `${formatTime(i.start)}–${formatTime(i.end)}`)
-      .join(' e '),
+    // vários profissionais com o mesmo horário contam uma vez só
+    text: [
+      ...new Set(
+        list
+          .filter((i) => i.weekday === d.id)
+          .sort((a, b) => a.start - b.start)
+          .map((i) => `${formatTime(i.start)}–${formatTime(i.end)}`),
+      ),
+    ].join(' e '),
   }))
   const out: string[] = []
   let i = 0
