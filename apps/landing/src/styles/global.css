@@ -16,6 +16,16 @@
   }
 */
 
+/* fonte das palavras em destaque: Architype Stedelijk (OnlineWebFonts, CC BY 4.0).
+   não tem letras acentuadas; o ã, ê, ç etc. caem na Outfit, que vem logo depois na pilha */
+@font-face {
+  font-family: 'Architype Stedelijk';
+  src: url('/fonts/architype-stedelijk.woff2') format('woff2'),
+    url('/fonts/architype-stedelijk.woff') format('woff');
+  font-weight: 400;
+  font-display: swap;
+}
+
 :root {
   /* as cores do IKIZY, iguais às do sistema: cinza, preto, branco e vinho (só em pontos específicos) */
   --wine: #800513;
@@ -39,8 +49,8 @@
   --pink-100: var(--gray-100);
   --pink-300: var(--gray-300);
 
-  /* fonte pixelada das palavras em destaque (as que ficam em vinho) */
-  --font-accent: 'Geist Pixel', ui-monospace, 'SFMono-Regular', monospace;
+  /* fonte das palavras em destaque (as que ficam em vinho) */
+  --font-accent: 'Architype Stedelijk', 'Outfit Variable', system-ui, sans-serif;
   --font-sans: 'Lufga', 'Outfit Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
 
   --radius-md: 16px;
@@ -175,12 +185,12 @@ svg {
   top: 12px;
 }
 
-/* destaque dos títulos: fonte pixelada, na cor vinho do IKIZY */
+/* destaque dos títulos: fonte de destaque, na cor vinho do IKIZY */
 em {
   font-family: var(--font-accent);
   font-style: normal;
   font-weight: 400;
-  letter-spacing: -0.03em;
+  letter-spacing: 0;
   text-transform: none;
   color: var(--wine);
 }
@@ -348,11 +358,13 @@ em {
     box-shadow: 0 0 0 1px rgba(14, 13, 13, 0.07), 0 18px 40px -22px rgba(0, 0, 0, 0.25);
   }
 }
+/* o nome ikizy (topo e rodapé) vai na mesma fonte dos destaques */
 .logo {
   flex: none;
+  font-family: var(--font-accent);
   font-size: 30px;
-  font-weight: 500;
-  letter-spacing: -0.06em;
+  font-weight: 400;
+  letter-spacing: 0;
   color: var(--ink-900);
 }
 .logo span {
@@ -583,9 +595,9 @@ em {
   letter-spacing: -0.06em;
 }
 .display__main em {
-  /* o "simples" do hero fica preto, na mesma fonte pixelada dos destaques */
+  /* o "simples" do hero fica preto, na mesma fonte dos destaques */
   color: var(--ink-900);
-  letter-spacing: -0.04em;
+  letter-spacing: 0;
 }
 .hero2__label {
   font-size: 15px;
@@ -850,7 +862,7 @@ em {
   justify-items: center;
   font-family: var(--font-accent);
   font-weight: 400;
-  letter-spacing: -0.03em;
+  letter-spacing: 0;
   color: var(--wine);
 }
 /* troca sutil, no lugar: a palavra se desfaz (some com um leve desfoque) e a próxima aparece no mesmo ponto */
@@ -1880,10 +1892,11 @@ em {
 }
 .footer .footer__mark {
   margin: 12px 0 -0.14em;
+  font-family: var(--font-accent);
   font-size: clamp(110px, 29vw, 440px);
-  font-weight: 500;
+  font-weight: 400;
   line-height: 0.8;
-  letter-spacing: -0.07em;
+  letter-spacing: 0;
   color: var(--red);
   text-align: center;
   user-select: none;
