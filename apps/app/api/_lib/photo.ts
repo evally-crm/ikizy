@@ -8,7 +8,7 @@ export function parsePhotoId(url: URL): string | null {
 }
 
 /** data URL guardada no banco -> bytes e tipo; null se o formato não for o esperado */
-export function decodePhoto(data: string | null | undefined): { type: string; bytes: Uint8Array } | null {
+export function decodePhoto(data: string | null | undefined): { type: string; bytes: Uint8Array<ArrayBuffer> } | null {
   const m = typeof data === 'string' ? DATA_URL.exec(data) : null
   if (!m) return null
   return { type: m[1], bytes: new Uint8Array(Buffer.from(m[2], 'base64')) }
