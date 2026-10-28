@@ -445,11 +445,14 @@
   color: var(--ink-900);
 }
 .pendrow__meta {
+  display: -webkit-box;
   overflow: hidden;
   font-size: 12px;
   color: var(--ink-500);
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  /* até duas linhas em vez de cortar o serviço, o horário e o profissional */
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 
 .pendbanner {

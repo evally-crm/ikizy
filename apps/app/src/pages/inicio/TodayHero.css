@@ -195,12 +195,15 @@
 }
 
 .hero__next small {
+  display: -webkit-box;
   overflow: hidden;
   width: 100%;
   font-size: 12px;
   opacity: 0.8;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  /* até duas linhas em vez de cortar o nome do serviço e do profissional */
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 
 .hero__pill {

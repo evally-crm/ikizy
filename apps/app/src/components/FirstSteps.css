@@ -68,6 +68,12 @@
   stroke: var(--gray-200);
 }
 
+.setup__ring-n {
+  fill: var(--ink-900);
+  font-size: 10px;
+  font-weight: 600;
+}
+
 .setup__ring-fg {
   stroke: var(--brand-500);
   transition: stroke-dashoffset 0.3s ease;
