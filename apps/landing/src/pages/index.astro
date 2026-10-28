@@ -1,10 +1,9 @@
 ---
 import Base from '../layouts/Base.astro'
-import PixelBunny from '../components/PixelBunny.astro'
 import PixelMorph from '../components/PixelMorph.astro'
 import Perk from '../components/Perk.astro'
 import PlanOption from '../components/PlanOption.astro'
-import { APP_URL, CTA, LINKS } from '../lib/site'
+import { CTA, LINKS } from '../lib/site'
 import { PIX_DISCOUNT_PCT, PLANS, TRIAL_DAYS } from '../lib/pricing'
 
 /** especialidades que passam sem parar abaixo do título do "Para quem é", com "você." a cada volta */
@@ -89,7 +88,7 @@ const faqSchema = {
       </aside>
 
       <div class="art" aria-hidden="true">
-        <PixelMorph step={7} accent="#63001f" lift />
+        <PixelMorph step={7} lift />
       </div>
     </div>
   </section>
@@ -289,25 +288,6 @@ const faqSchema = {
       </div>
     </div>
   </section>
-
-  <!-- CONTATO: faixa clara com um campo de e-mail só (vira lead e recebe a apresentação da IKIZY) e o coelho pixelado -->
-  <section id="contato" class="section container" aria-labelledby="contact-title">
-    <div class="contact">
-      <div class="contact__text">
-        <h2 id="contact-title" class="h2">Vamos construir uma <em>rotina melhor?</em></h2>
-        <p class="lead">Deixe seu e-mail e a gente te mostra como a IKIZY deixa o dia a dia do seu negócio mais leve.</p>
-        <form class="contact__form" action={`${APP_URL}/api/lead`} method="post" novalidate data-lead>
-          <label class="sr-only" for="lead-email">Seu e-mail</label>
-          <input id="lead-email" name="email" type="email" autocomplete="email" inputmode="email" placeholder="seu@email.com" required maxlength="254" />
-          <input class="contact__trap" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" />
-          <button type="submit" class="btn btn--primary">Quero conhecer</button>
-        </form>
-        <p class="contact__note" role="status" aria-live="polite" data-lead-note>Sem spam. Só um e-mail com tudo o que a IKIZY faz.</p>
-        <p class="contact__login">Já tem conta? <a href={LINKS.login}>Entrar</a></p>
-      </div>
-      <div class="contact__art" aria-hidden="true"><PixelBunny /></div>
-    </div>
-  </section>
 </Base>
 
 <script is:inline id="pricing-script">
@@ -461,41 +441,5 @@ const faqSchema = {
     wide.addEventListener('change', layout)
     addEventListener('load', layout)
     layout()
-  })()
-</script>
-
-<script is:inline id="contact-script">
-  // "Vamos construir uma rotina melhor?": manda o e-mail para o app (vira lead e recebe a apresentação da IKIZY)
-  (() => {
-    const form = document.querySelector('[data-lead]')
-    if (!form) return
-    const note = document.querySelector('[data-lead-note]')
-    const input = form.querySelector('input[type="email"]')
-    const button = form.querySelector('button')
-    const say = (text, state) => {
-      note.textContent = text
-      note.dataset.state = state
-    }
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault()
-      if (!input.checkValidity()) return (say('Confira o seu e-mail.', 'error'), input.focus())
-      button.disabled = true
-      try {
-        const res = await fetch(form.action, {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ email: input.value, website: form.elements.website.value }),
-        })
-        if (!res.ok) {
-          const body = await res.json().catch(() => null)
-          throw new Error(body?.message || 'Não deu para enviar agora. Tente de novo em instantes.')
-        }
-        form.hidden = true
-        say('Prontinho! Mandamos um e-mail para ' + input.value + '. Dá uma olhada na caixa de entrada.', 'ok')
-      } catch (err) {
-        say(err.message, 'error')
-        button.disabled = false
-      }
-    })
   })()
 </script>

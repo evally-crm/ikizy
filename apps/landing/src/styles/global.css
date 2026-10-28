@@ -705,6 +705,8 @@ em {
   inset: 0;
   width: 100%;
   height: 100%;
+  /* cinza suave, como o rosto do login */
+  opacity: 0.7;
 }
 /* celular: o coelho sobe para cima do texto */
 @media (max-width: 899px) {
@@ -1685,119 +1687,7 @@ em {
   }
 }
 
-/* ---------- contato: faixa clara com o convite, um campo de e-mail só e o coelho pixelado num brilho bordô ---------- */
-.contact {
-  position: relative;
-  display: grid;
-  align-items: center;
-  gap: 24px;
-  overflow: hidden;
-  padding: clamp(28px, 5vw, 64px) clamp(20px, 5vw, 64px);
-  border-radius: var(--radius-lg);
-  background:
-    radial-gradient(circle at 82% 50%, rgba(99, 0, 31, 0.14), transparent 42%),
-    linear-gradient(100deg, var(--gray-100) 30%, #f3e9ec);
-}
-@media (min-width: 900px) {
-  .contact {
-    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
-  }
-}
-.contact__text {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 14px;
-}
-.contact__text .lead {
-  max-width: 42ch;
-}
-/* campo e botão juntos numa pílula branca */
-.contact__form {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  width: 100%;
-  max-width: 460px;
-  margin-top: 8px;
-  padding: 6px;
-  border-radius: var(--radius-pill);
-  background: var(--white);
-}
-.contact__form[hidden] {
-  display: none;
-}
-.contact__form input[type='email'] {
-  flex: 1;
-  min-width: 0;
-  padding: 10px 14px;
-  border: 0;
-  background: none;
-  font: inherit;
-  font-size: 16px;
-  color: var(--ink-900);
-}
-.contact__form input[type='email']:focus {
-  outline: none;
-}
-.contact__form:focus-within {
-  outline: 2px solid var(--wine);
-  outline-offset: 2px;
-}
-.contact__form .btn {
-  flex: none;
-}
-.contact__form .btn:disabled {
-  opacity: 0.6;
-  cursor: progress;
-}
-/* campo escondido para robôs */
-.contact__trap {
-  position: absolute;
-  left: -9999px;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
-}
-.contact__note {
-  font-size: 13px;
-  color: var(--ink-500);
-}
-.contact__note[data-state='ok'] {
-  font-size: 16px;
-  color: var(--ink-900);
-}
-.contact__note[data-state='error'] {
-  color: var(--wine);
-}
-.contact__login {
-  font-size: 14px;
-  color: var(--ink-500);
-}
-.contact__login a {
-  color: var(--ink-900);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-/* o coelho pixelado em bordô, grande, no brilho do fundo */
-.contact__art {
-  --h: clamp(200px, 26vw, 320px);
-  display: grid;
-  place-items: center;
-  color: var(--wine);
-}
-/* tamanho explícito: o canvas sozinho fica com os 300px padrão e corta o coelho */
-.contact__art .pixel-bunny {
-  width: calc(var(--h) * 14 / 26);
-  height: var(--h);
-}
-@media (max-width: 899px) {
-  .contact__art {
-    display: none;
-  }
-}
-
-/* ---------- tela de carregamento: o coelho bordô no meio da tela, piscando ---------- */
+/* ---------- tela de carregamento: o coelho bordô se formando em pixels no meio da tela ---------- */
 .loader {
   position: fixed;
   inset: 0;
@@ -1813,39 +1703,8 @@ em {
   visibility: hidden;
 }
 .loader__bunny {
-  width: 56px;
+  width: 80px;
   height: auto;
-  animation: loader-in 0.5s ease both;
-}
-/* os olhos ficam na cor do fundo (como os furos da logo) e fecham rapidinho de tempos em tempos */
-.loader__eyes {
-  fill: var(--white);
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: loader-blink 1.6s ease-in-out 0.3s infinite;
-}
-@keyframes loader-in {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-}
-@keyframes loader-blink {
-  0%,
-  42%,
-  58%,
-  100% {
-    transform: scaleY(1);
-  }
-  50% {
-    transform: scaleY(0.12);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .loader__bunny,
-  .loader__eyes {
-    animation: none;
-  }
 }
 
 /* ---------- páginas internas ---------- */
@@ -2072,7 +1931,8 @@ em {
 }
 @media (min-width: 768px) {
   .footer__grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
   }
 }
 .footer .logo {
@@ -2154,6 +2014,7 @@ em {
   }
   .footer__grid > nav h4,
   .footer__social h4,
+  .footer__contact h4,
   .footer__col--legal {
     display: none;
   }

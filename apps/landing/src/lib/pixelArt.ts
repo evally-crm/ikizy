@@ -85,8 +85,8 @@ const isMouth = (x: number, y: number) => Math.abs(x - 6.95) < 0.95 && Math.abs(
 /** tom (0 claro .. 1 cheio): corpo cheio com sombra na borda, bochechas mais claras, olhos e boca vazados */
 function bunnyTone(x: number, y: number, t: number, soft: boolean) {
   const d = bunnyShape(x, y, t)
-  if (d > (soft ? 4 : 2.6)) return 0
-  const edge = soft ? 1.8 : 0.7
+  if (d > (soft ? 5 : 2.6)) return 0
+  const edge = soft ? 2.2 : 0.7
   const body = smooth(edge, -edge, d)
   // sombreado como no rosto do login: mais cheio perto da borda, mais leve no miolo e no alto das orelhas
   const inner = smooth(0, -2.4, d)
@@ -96,7 +96,10 @@ function bunnyTone(x: number, y: number, t: number, soft: boolean) {
   if (soft) {
     // manchas de tom que andam devagar, como a luz no rosto do login
     const blot = Math.sin(x * 0.55 + Math.sin(y * 0.3 + t * 0.4) * 1.6) * Math.sin(y * 0.42 - x * 0.2 - t * 0.3)
-    v *= 0.82 + 0.28 * blot
+    const cloud = Math.sin(x * 0.22 + y * 0.12 + Math.sin(y * 0.16 - t * 0.25) * 2.2) * Math.sin(y * 0.2 - x * 0.1 + t * 0.2)
+    // luz vinda da direita: o desenho vai se desfazendo em nuvens de símbolos para esse lado, como o rosto do login
+    const lit = 1.1 - 0.5 * smooth(2, 15, x + Math.sin(y * 0.25 + t * 0.3) * 1.5)
+    v *= (0.72 + 0.3 * blot + 0.2 * cloud) * lit
   }
   // olhos em +, e a boca, um tracinho
   const blink = Math.sin(t * 0.5) > 0.985 ? 0 : 1
@@ -104,7 +107,7 @@ function bunnyTone(x: number, y: number, t: number, soft: boolean) {
     (Math.abs(x - cx) < 0.55 && Math.abs(y - 19.9) < 1.6 * blink + 0.3) || (Math.abs(y - 19.9) < 0.5 && Math.abs(x - cx) < 1.4)
   if (eye(4.1) || eye(9.8) || isMouth(x, y)) v = 0
   // pó solto em volta
-  if (d > 0) v = Math.max(v, smooth(soft ? 4 : 1.8, 0, d) * (soft ? 0.34 : 0.26))
+  if (d > 0) v = Math.max(v, smooth(soft ? 5 : 1.8, 0, d) * (soft ? 0.36 : 0.26))
   return v
 }
 
@@ -166,9 +169,9 @@ function mouthDensity(u: number, v: number, t: number) {
 
 /** a boca aberta no meio do quadro, com volume nos lábios, pó em volta e ondas que fazem os símbolos irem e voltarem */
 export function mouthField({ width, height, t, step }: Frame): Field {
-  const S = Math.min(width * 0.46, height * 0.66)
+  const S = Math.min(width * 0.42, height * 0.62)
   const cx = width / 2
-  const cy = height / 2
+  const cy = height * 0.44
   const k = 7 / step // ondas na mesma escala do desenho, em qualquer tamanho de célula
   return (col, row) => {
     const x = col * step + step / 2
@@ -179,11 +182,14 @@ export function mouthField({ width, height, t, step }: Frame): Field {
     const wave =
       (Math.sin(x * 0.012 * k + Math.sin(y * 0.009 * k + t * 0.6) * 2.4 + t) + Math.sin(y * 0.014 * k - x * 0.007 * k + 1.7 - t * 0.8) * 0.8 + 1.8) / 3.6
     let d = mouthDensity(u, v, t)
+    // manchas largas e luz da direita, como no coelho
+    const cloud = 0.6 + 0.4 * Math.sin(u * 5 + Math.sin(v * 3.5 - t * 0.3) * 1.8) * Math.sin(v * 4.2 - u * 1.5 + t * 0.25) + 0.25 * Math.sin(x * 0.03 * k - t * 0.4)
+    d *= cloud * (1.15 - 0.6 * smooth(-0.6, 0.9, u))
     if (d <= 0.02) {
       // pontinhos e + soltos em volta, como pó
       const e = Math.hypot(u / 1.12, v / 0.78)
       const inMouth = Math.abs(u) < OPEN_W + 0.06 && Math.abs(v) < 0.2
-      if (inMouth || e >= 1.2 || n >= smooth(1.2, 0.85, e) * 0.45 * wave) return 0
+      if (inMouth || e >= 1.5 || n >= smooth(1.5, 0.7, e) * 0.55 * wave) return 0
       d = 0.15 + n * 0.4
     } else {
       // volume dos lábios: mais escuro junto à abertura e brilho no lábio de baixo

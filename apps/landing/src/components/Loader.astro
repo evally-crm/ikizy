@@ -1,24 +1,18 @@
 ---
 /**
- * tela de carregamento: o coelho da marca em bordô, piscando, até a página terminar de carregar.
- * os olhos (os "+" da logo) são desenhados por cima na cor do fundo para poderem fechar e abrir.
+ * tela de carregamento: o coelho da marca em bordô se formando em pixels (quadradinhos que chegam de longe e
+ * encaixam, de baixo para cima) até a página terminar de carregar. o desenho é o da logo (BunnyMark.astro),
+ * lido numa grade de 7 unidades por célula; os olhos e a boca ficam vazados.
  * sem JavaScript ela nem aparece (noscript); fica no máximo 4s, mesmo se algo travar o load.
  */
 ---
 
 <div class="loader" role="status" aria-label="Carregando" data-loader>
-  <svg class="loader__bunny" viewBox="0 0 140 260" aria-hidden="true" focusable="false">
-    <path
-      fill="currentColor"
-      fill-rule="evenodd"
-      d="M0 5Q0 0 5 0H39Q44 0 44 5L35 135Q35 140 40 140H101Q105 140 105 136V76Q105 71 110 71H134Q139 71 139 76V134Q139 139 134 139H112Q108 139 108 143V171Q108 176 113 176H134Q139 176 139 181V240C139 252 105 260 69.5 260S0 252 0 240ZM61 213H78V217H61Z"
-    ></path>
-    <path class="loader__eyes" d="M41 183H47V196H54V202H41V215H34V202H28V196H41ZM98 183H104V196H111V202H98V215H91V202H85V196H98Z"></path>
-  </svg>
+  <canvas class="loader__bunny" aria-hidden="true"></canvas>
 </div>
 <noscript><style>.loader { display: none; }</style></noscript>
 <script is:inline>
-  // some quando a página carrega, mas fica pelo menos o tempo de uma piscada para não ser só um clarão
+  // monta o coelho em pixels; some quando a página carrega, mas fica o tempo de ele se formar
   (() => {
     const el = document.querySelector('[data-loader]')
     if (!el) return
@@ -30,10 +24,87 @@
       setTimeout(() => {
         el.classList.add('is-done')
         setTimeout(() => el.remove(), 500)
-      }, Math.max(0, 900 - (performance.now() - start)))
+      }, Math.max(0, 1200 - (performance.now() - start)))
     }
     if (document.readyState === 'complete') hide()
     else addEventListener('load', hide, { once: true })
     setTimeout(hide, 4000)
+
+    const canvas = el.querySelector('canvas')
+    const U = 7 // unidades da logo por célula
+    const COLS = 20
+    const ROWS = 38
+    const CELL = 5 // px por célula
+    const dpr = Math.min(devicePixelRatio || 1, 2)
+    canvas.width = COLS * CELL * dpr
+    canvas.height = ROWS * CELL * dpr
+    canvas.style.height = ROWS * CELL + 'px'
+    canvas.style.width = COLS * CELL + 'px'
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    // lê a silhueta da logo numa grade: cada célula acesa é um pixel do coelho
+    const probe = document.createElement('canvas')
+    probe.width = COLS
+    probe.height = ROWS
+    const pc = probe.getContext('2d', { willReadFrequently: true })
+    pc.scale(1 / U, 1 / U)
+    pc.fill(
+      new Path2D(
+        'M0 5Q0 0 5 0H39Q44 0 44 5L35 135Q35 140 40 140H101Q105 140 105 136V76Q105 71 110 71H134Q139 71 139 76V134Q139 139 134 139H112Q108 139 108 143V171Q108 176 113 176H134Q139 176 139 181V240C139 252 105 260 69.5 260S0 252 0 240ZM41 183H47V196H54V202H41V215H34V202H28V196H41ZM98 183H104V196H111V202H98V215H91V202H85V196H98ZM61 213H78V217H61Z',
+      ),
+      'evenodd',
+    )
+    const data = pc.getImageData(0, 0, COLS, ROWS).data
+    const rnd = (a, b) => {
+      const s = Math.sin(a * 12.9898 + b * 78.233) * 43758.5453
+      return s - Math.floor(s)
+    }
+    const px = []
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        if (data[(r * COLS + c) * 4 + 3] < 110) continue
+        const ang = rnd(c, r) * Math.PI * 2
+        const dist = 6 + rnd(r, c) * 14
+        px.push({
+          c,
+          r,
+          dx: Math.cos(ang) * dist,
+          dy: Math.sin(ang) * dist,
+          // de baixo para cima, com um sorteio por cima
+          delay: (1 - r / ROWS) * 0.4 + rnd(c * 3, r) * 0.2,
+        })
+      }
+    }
+
+    const ink = getComputedStyle(el).color
+    const ease = (k) => 1 - Math.pow(1 - k, 3)
+    const FLY = 0.4 // s que cada pixel leva para chegar
+    const draw = (t) => {
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      ctx.clearRect(0, 0, COLS * CELL, ROWS * CELL)
+      ctx.fillStyle = ink
+      for (const p of px) {
+        const k = Math.min(1, Math.max(0, (t - p.delay) / FLY))
+        if (k <= 0) continue
+        const e = ease(k)
+        // chega em quadradinhos que crescem; nas células de cima ainda cintila um instante
+        const size = CELL * (0.35 + 0.65 * e)
+        const x = (p.c + p.dx * (1 - e)) * CELL + (CELL - size) / 2
+        const y = (p.r + p.dy * (1 - e)) * CELL + (CELL - size) / 2
+        ctx.globalAlpha = 0.3 + 0.7 * e
+        ctx.fillRect(x, y, size, size)
+      }
+      ctx.globalAlpha = 1
+    }
+
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return draw(9)
+    const t0 = performance.now()
+    const tick = (now) => {
+      const t = (now - t0) / 1000
+      draw(t)
+      if (!done || el.isConnected) requestAnimationFrame(tick)
+    }
+    requestAnimationFrame(tick)
   })()
 </script>

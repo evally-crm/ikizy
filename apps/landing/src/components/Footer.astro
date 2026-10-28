@@ -1,11 +1,11 @@
 ---
-import { CTA, LINKS, NAV, SOCIALS } from '../lib/site'
+import { CONTACT_EMAIL, CTA, LINKS, NAV, SOCIALS } from '../lib/site'
 
 const year = new Date().getFullYear()
 const socials = SOCIALS.filter((s) => s.url)
 ---
 
-<footer class="footer">
+<footer class="footer" id="contato">
   <div class="container">
     <div class="footer__grid">
       <nav aria-label="Rodapé">
@@ -19,6 +19,13 @@ const socials = SOCIALS.filter((s) => s.url)
         <ul>
           <li><a href="/privacidade">Privacidade</a></li>
           <li><a href="/termos">Termos de uso</a></li>
+        </ul>
+      </div>
+      <div class="footer__contact">
+        <h4>Contato</h4>
+        <ul>
+          <li><a href={`mailto:${CONTACT_EMAIL}`}>Entrar em contato</a></li>
+          <li><a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a></li>
         </ul>
       </div>
       {
