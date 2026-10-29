@@ -119,10 +119,19 @@ function copyFor(r: PlannedReminder): Copy {
 }
 
 /** assunto, HTML e texto simples do aviso; `link` é a tela de assinatura do app */
+const SUBTITLES: Record<ReminderKind, string> = {
+  trial: 'Teste grátis.',
+  pix: 'Renovação pendente.',
+  canceled: 'Assinatura cancelada.',
+  past_due: 'Pagamento pendente.',
+  ended: 'Acesso só para consulta.',
+}
+
 export function renderReminderEmail(r: PlannedReminder, link: string) {
   const c = copyFor(r)
   const mail = renderBrandEmail({
     title: c.title,
+    subtitle: SUBTITLES[r.kind],
     paragraphs: [c.lead],
     button: c.button,
     link,

@@ -61,10 +61,11 @@ export function parseOtpEvent(payload: unknown): OtpEvent | null {
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
-const COPY: Record<string, { first: string; rest: string; subject: string; lead: string; reason: string }> = {
+const COPY: Record<string, { first: string; rest: string; sub: string; subject: string; lead: string; reason: string }> = {
   'email-verification': {
     first: 'Confirme',
     rest: 'seu e-mail',
+    sub: 'Código enviado.',
     subject: 'Seu código de confirmação do IKIZY',
     lead: 'Olá! Falta só um passo para abrir a sua agenda no IKIZY. Digite o código abaixo na tela do cadastro.',
     reason: 'foi usado para criar uma conta no IKIZY',
@@ -72,6 +73,7 @@ const COPY: Record<string, { first: string; rest: string; subject: string; lead:
   'forget-password': {
     first: 'Redefina',
     rest: 'sua senha',
+    sub: 'Redefinição solicitada.',
     subject: 'Seu código para redefinir a senha do IKIZY',
     lead: 'Recebemos um pedido para redefinir a senha da sua conta no IKIZY. Digite o código abaixo para continuar.',
     reason: 'pediu para redefinir a senha no IKIZY',
@@ -79,6 +81,7 @@ const COPY: Record<string, { first: string; rest: string; subject: string; lead:
   'sign-in': {
     first: 'Entre',
     rest: 'no IKIZY',
+    sub: 'Acesso solicitado.',
     subject: 'Seu código de acesso ao IKIZY',
     lead: 'Use o código abaixo para entrar na sua conta do IKIZY.',
     reason: 'pediu um código de acesso ao IKIZY',
@@ -103,6 +106,7 @@ export function renderOtpEmail(code: string, email: string, otpType = 'email-ver
   const html = renderShell({
     eyebrow: c.first,
     title: c.rest,
+    subtitle: c.sub,
     preheader: `Seu código IKIZY é ${code}. Ele vale por alguns minutos.`,
     body: `${paragraph(c.lead)}
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 24px;">

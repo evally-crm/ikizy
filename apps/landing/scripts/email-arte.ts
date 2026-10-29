@@ -18,7 +18,7 @@ const WINE = '#63001f'
 const PINK = '#e0b8be'
 
 // ---- coelho de símbolos: um contexto de mentira que anota os traços em SVG
-const W = 560
+const W = 200
 const H = 300
 const STEP = 4
 const parts: string[] = []

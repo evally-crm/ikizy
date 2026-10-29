@@ -54,6 +54,7 @@ export function renderNewRequestEmail(salonName: string, r: NewRequest, link: st
   const when = whenBR(r.startsAt)
   const mail = renderBrandEmail({
     title: 'Novo pedido pelo site',
+    subtitle: 'Falta você confirmar.',
     paragraphs: [`${r.clientName} pediu um horário em ${salonName}. Confirme ou recuse para a cliente saber se pode vir.`],
     details: [
       ['Serviço', r.service],
@@ -81,8 +82,8 @@ export function renderWelcomeEmail(salonName: string, link: string) {
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="#ffffff" style="background-color:#ffffff;border-radius:22px;overflow:hidden;">
       <tr><td style="padding:0;line-height:0;font-size:0;"><img src="${IMG}/tela-${s.shot}.jpg" width="504" alt="Tela: ${escHtml(s.title)}" style="display:block;width:100%;height:auto;border:0;"></td></tr>
       <tr><td style="padding:18px 20px 22px;font-family:${FONT};">
-        <span style="display:inline-block;padding:4px 12px;border-radius:999px;background-color:${WINE};color:#ffffff;font-size:12px;font-weight:700;letter-spacing:1px;">PASSO ${i + 1}</span>
-        <div style="padding-top:10px;font-size:24px;line-height:28px;font-weight:800;letter-spacing:-0.6px;color:${WINE};">${escHtml(s.title)}</div>
+        <span style="display:inline-block;padding:4px 12px;border-radius:999px;background-color:${WINE};color:#ffffff;font-size:12px;font-weight:600;letter-spacing:1px;">PASSO ${i + 1}</span>
+        <div style="padding-top:10px;font-size:24px;line-height:28px;font-weight:500;letter-spacing:-0.6px;color:${WINE};">${escHtml(s.title)}</div>
         <div style="padding-top:6px;font-size:15px;line-height:23px;color:#0e0d0d;">${escHtml(s.text)}</div>
       </td></tr>
     </table>
@@ -90,19 +91,20 @@ export function renderWelcomeEmail(salonName: string, link: string) {
   const body = `${paragraph(`${salonName} já está no IKIZY. Falta pouco para as clientes pedirem horário sozinhas.`)}
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="${PINK}" style="margin:4px 0 26px;background-color:${PINK};border-radius:26px;">
   <tr><td align="center" style="padding:26px 20px 28px;font-family:${FONT};">
-    <div style="font-size:12px;line-height:16px;font-weight:700;letter-spacing:3px;color:${WINE};">SEU TESTE COMEÇOU COM</div>
-    <div class="num" style="padding:6px 0 0;font-size:104px;line-height:100px;font-weight:800;letter-spacing:-5px;color:${WINE};">${TRIAL_DAYS}</div>
-    <div style="font-size:26px;line-height:30px;font-weight:800;letter-spacing:-0.6px;color:${WINE};">DIAS PARA TESTAR TUDO</div>
+    <div style="font-size:12px;line-height:16px;font-weight:600;letter-spacing:3px;color:${WINE};">SEU TESTE COMEÇOU COM</div>
+    <div class="num" style="padding:6px 0 0;font-size:104px;line-height:100px;font-weight:500;letter-spacing:-5px;color:${WINE};">${TRIAL_DAYS}</div>
+    <div style="font-size:26px;line-height:30px;font-weight:500;letter-spacing:-0.6px;color:${WINE};">DIAS PARA TESTAR TUDO</div>
     <div style="padding-top:8px;font-size:14px;line-height:20px;color:${WINE};">sem cadastrar cartão</div>
   </td></tr>
 </table>
-<div style="padding:0 0 14px;font-size:13px;line-height:16px;font-weight:700;letter-spacing:3px;color:${PINK};">PARA COMEÇAR A RECEBER CLIENTES</div>
+<div style="padding:0 0 14px;font-size:13px;line-height:16px;font-weight:600;letter-spacing:3px;color:${PINK};">PARA COMEÇAR A RECEBER CLIENTES</div>
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">${STEPS.map(step).join('')}</table>
 <div style="padding:10px 0 0;">${button('Abrir minha agenda', link)}</div>`
   const footer = `Você recebeu este e-mail porque criou ${salonName} no IKIZY.`
   const html = renderShell({
     eyebrow: 'Bem-vinda',
     title: 'ao IKIZY',
+    subtitle: 'Cadastro concluído.',
     preheader: `${salonName} já está no IKIZY, com ${TRIAL_DAYS} dias para testar tudo.`,
     body,
     footer,

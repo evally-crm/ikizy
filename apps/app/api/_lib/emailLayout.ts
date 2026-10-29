@@ -18,13 +18,26 @@ export interface Shell {
   eyebrow?: string
   /** texto escondido que aparece ao lado do assunto na caixa de entrada */
   preheader?: string
+  /** linha curta abaixo do título, em negrito, ex.: "Pedido recebido." */
+  subtitle?: string
   /** HTML do miolo (já escapado) */
   body: string
   /** por que a pessoa recebeu */
   footer: string
 }
 
+/** título em duas linhas, a primeira branca e a segunda rosa; sem `eyebrow`, divide as palavras ao meio */
+function titleLines(m: Pick<Shell, 'title' | 'eyebrow'>): [string, string] {
+  if (m.eyebrow) return [m.eyebrow, m.title]
+  const words = m.title.trim().split(/\s+/)
+  if (words.length < 2) return [m.title, '']
+  const k = Math.ceil(words.length / 2)
+  return [words.slice(0, k).join(' '), words.slice(k).join(' ')]
+}
+
 export function renderShell(m: Shell): string {
+  const [line1, line2] = titleLines(m)
+  const title = `<span style="display:block;color:#ffffff;">${escHtml(line1)}</span>${line2 ? `<span style="display:block;color:${PINK};">${escHtml(line2)}.</span>` : ''}`
   return `<!doctype html>
 <html lang="pt-BR">
 <head>
@@ -41,7 +54,7 @@ export function renderShell(m: Shell): string {
   }
   @media (max-width: 480px) {
     .pad { padding-left: 20px !important; padding-right: 20px !important; }
-    .big { font-size: 34px !important; line-height: 36px !important; }
+    .big { font-size: 36px !important; line-height: 36px !important; }
     .digits { font-size: 40px !important; }
     .num { font-size: 72px !important; line-height: 72px !important; }
   }
@@ -53,14 +66,20 @@ ${m.preheader ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0
 <tr><td align="center" style="padding:24px 12px;">
   <table role="presentation" width="560" cellspacing="0" cellpadding="0" border="0" class="surface" bgcolor="${WINE}" style="width:100%;max-width:560px;background-color:${WINE};border-radius:28px;overflow:hidden;">
     <tr><td class="pad" style="padding:24px 28px 0;font-family:${FONT};font-size:13px;font-weight:600;letter-spacing:4px;color:#ffffff;">IKIZY</td></tr>
-    <tr><td style="padding:0;line-height:0;font-size:0;"><img src="${IMG}/coelho.png" width="560" alt="" style="display:block;width:100%;height:auto;border:0;"></td></tr>
-    <tr><td class="pad big" style="padding:0 28px 8px;font-family:${FONT};font-size:44px;line-height:46px;font-weight:800;letter-spacing:-1.6px;color:#ffffff;">${m.eyebrow ? `<span style="display:block;color:${PINK};">${escHtml(m.eyebrow)}</span>` : ''}${escHtml(m.title)}</td></tr>
+    <tr><td class="pad" style="padding:8px 28px 0;">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+        <tr>
+          <td valign="middle" class="big" style="font-family:${FONT};font-size:50px;line-height:50px;font-weight:800;letter-spacing:-2px;color:#ffffff;">${title}${m.subtitle ? `<span style="display:block;padding-top:16px;font-size:17px;line-height:22px;font-weight:700;letter-spacing:0;color:#ffffff;">${escHtml(m.subtitle)}</span>` : ''}</td>
+          <td valign="bottom" align="right" width="160" style="width:160px;line-height:0;font-size:0;"><img src="${IMG}/coelho.png" width="160" alt="" style="display:block;width:160px;height:auto;border:0;"></td>
+        </tr>
+      </table>
+    </td></tr>
     <tr><td class="pad" style="padding:14px 28px 8px;font-family:${FONT};">${m.body}</td></tr>
     <tr><td class="pad" style="padding:24px 28px 28px;font-family:${FONT};">
       <table role="presentation" cellspacing="0" cellpadding="0" border="0">
         <tr>
           <td valign="middle" style="padding-right:12px;"><img src="${IMG}/logo-coelho.png" height="44" alt="IKIZY" style="display:block;height:44px;width:auto;border:0;"></td>
-          <td valign="middle" style="font-size:20px;line-height:24px;font-weight:700;color:#ffffff;">a agenda simples<br>do seu salão</td>
+          <td valign="middle" style="font-size:20px;line-height:24px;font-weight:500;color:#ffffff;">a agenda simples<br>do seu salão</td>
         </tr>
       </table>
       <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin-top:18px;">
@@ -80,13 +99,14 @@ ${m.preheader ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0
 
 /** botão branco em pílula, com o texto vinho */
 export const button = (label: string, link: string) =>
-  `<a href="${escHtml(link)}" style="display:inline-block;padding:15px 28px;border-radius:999px;background-color:#ffffff;color:${WINE};font-family:${FONT};font-size:16px;font-weight:700;text-decoration:none;">${escHtml(label)}</a>`
+  `<a href="${escHtml(link)}" style="display:inline-block;padding:15px 28px;border-radius:999px;background-color:#ffffff;color:${WINE};font-family:${FONT};font-size:16px;font-weight:600;text-decoration:none;">${escHtml(label)}</a>`
 
 export const paragraph = (text: string) =>
   `<p style="margin:0 0 22px;font-size:17px;line-height:26px;color:#ffffff;">${escHtml(text)}</p>`
 
 export interface BrandEmail {
   title: string
+  subtitle?: string
   /** parágrafos em texto simples (são escapados) */
   paragraphs: string[]
   /** linhas "rótulo: valor" num quadro, ex.: os dados de um pedido */
@@ -111,6 +131,7 @@ export function renderBrandEmail(m: BrandEmail): { html: string; text: string } 
     : ''
   const html = renderShell({
     title: m.title,
+    subtitle: m.subtitle,
     body: `${m.paragraphs.map(paragraph).join('')}${details}${button(m.button, m.link)}`,
     footer: m.footer,
   })
