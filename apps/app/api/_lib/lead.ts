@@ -68,8 +68,15 @@ export async function captureLead(deps: LeadDeps, input: LeadInput, ip: string):
   }
   if (!deps.notifyTo) return
   try {
-    const text = `Novo contato pela landing: ${input.email}`
-    await deps.send({ to: deps.notifyTo, subject: 'Novo contato na landing da IKIZY', text, html: `<p>${text}</p>` })
+    const mail = renderBrandEmail({
+      title: 'Novo contato na landing',
+      paragraphs: ['Alguém deixou o e-mail no rodapé do site e já recebeu a apresentação do IKIZY.'],
+      details: [['E-mail', input.email]],
+      button: 'Abrir o IKIZY',
+      link: deps.appUrl,
+      footer: 'Você recebeu este aviso porque faz parte da equipe.',
+    })
+    await deps.send({ to: deps.notifyTo, subject: 'Novo contato na landing da IKIZY', ...mail })
   } catch (error) {
     reportError(error, 'lead-notify')
   }
