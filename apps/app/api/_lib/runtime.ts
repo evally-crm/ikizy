@@ -327,11 +327,11 @@ export function createNotifyDb(): NotifyDb {
 }
 
 /** manda um e-mail transacional pelo Resend (a chave fica só na Vercel) */
-export const sendEmail: SendEmail = async ({ to, subject, html, text }) => {
+export const sendEmail: SendEmail = async ({ to, subject, html, text, headers }) => {
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { authorization: `Bearer ${env('RESEND_API_KEY')}`, 'content-type': 'application/json' },
-    body: JSON.stringify({ from: FROM, to: [to], subject, html, text }),
+    body: JSON.stringify({ from: FROM, to: [to], subject, html, text, ...(headers ? { headers } : {}) }),
   })
   if (!res.ok) throw new Error(`resend ${res.status} ${await res.text()}`)
 }
@@ -350,6 +350,9 @@ export function createLeadDb(): LeadDb {
     },
     async welcomed(email) {
       await sql`update public.leads set welcomed_at = now() where email = ${email}`
+    },
+    async unsubscribe(email) {
+      await sql`update public.leads set unsubscribed_at = coalesce(unsubscribed_at, now()) where email = ${email}`
     },
   }
 }
