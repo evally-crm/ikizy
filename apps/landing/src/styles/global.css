@@ -1238,10 +1238,6 @@ em {
   flex: 1;
   min-width: 0;
 }
-.tour__step svg {
-  flex: none;
-  opacity: 0.5;
-}
 .tour__step:hover {
   background: var(--gray-200);
   color: var(--ink-900);
@@ -1249,9 +1245,6 @@ em {
 .tour__step[aria-pressed='true'] {
   background: var(--ink-900);
   color: var(--white);
-}
-.tour__step[aria-pressed='true'] svg {
-  opacity: 1;
 }
 /* dois pontinhos à esquerda: o da etapa da vez acende */
 .tour__dot {
