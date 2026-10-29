@@ -2001,6 +2001,9 @@ em {
   margin-top: 8px;
   font-size: 13px;
 }
+.footer .footer__lead-note:empty {
+  display: none;
+}
 .footer .footer__lead-note[data-state='error'] {
   color: #ffb4b4;
 }
@@ -2054,10 +2057,10 @@ em {
   /* contato, e-mail e Instagram juntos, alinhados à esquerda e na largura toda */
   .footer__contact .footer__lead {
     max-width: none;
-    margin-top: 20px;
+    margin-top: 10px;
   }
   .footer__contact + .footer__social {
-    margin-top: -12px;
+    margin-top: -8px;
   }
   .footer__social a {
     margin-left: -3px;
