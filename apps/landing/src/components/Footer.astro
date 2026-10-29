@@ -26,6 +26,7 @@ const socials = SOCIALS.filter((s) => s.url)
         <ul>
           <li><a href={`mailto:${CONTACT_EMAIL}`}>Entrar em contato</a></li>
           <li><a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a></li>
+          {socials.map((s) => <li><a href={s.url} target="_blank" rel="noopener noreferrer">{s.label} {s.handle}</a></li>)}
         </ul>
         <form class="footer__lead" action={`${APP_URL}/api/lead`} method="post" novalidate data-lead>
           <label class="sr-only" for="lead-email">Seu e-mail</label>
@@ -35,37 +36,6 @@ const socials = SOCIALS.filter((s) => s.url)
         </form>
         <p class="footer__lead-note" role="status" aria-live="polite" data-lead-note></p>
       </div>
-      {
-        socials.length > 0 && (
-          <div class="footer__social">
-            <h4>Redes</h4>
-            <ul>
-              {socials.map((s) => (
-                <li>
-                  <a href={s.url} target="_blank" rel="noopener noreferrer" aria-label={s.label}>
-                    <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                      {s.id === 'instagram' && (
-                        <>
-                          <rect x="3.5" y="3.5" width="17" height="17" rx="5" />
-                          <circle cx="12" cy="12" r="4" />
-                          <circle cx="17.2" cy="6.8" r="0.6" />
-                        </>
-                      )}
-                      {s.id === 'tiktok' && <path d="M14 3.5v11.2a3.7 3.7 0 1 1-3.7-3.7M14 3.5c.3 2.4 1.9 4 4.5 4.2" />}
-                      {s.id === 'whatsapp' && (
-                        <>
-                          <path d="M4 20l1.2-4.1A8 8 0 1 1 8.2 19z" />
-                          <path d="M9.3 8.8c.2 2.7 2.7 5.2 5.4 5.4l1.1-1.3-1.9-.9-.8.6c-.9-.4-1.7-1.2-2.1-2.1l.6-.8-.9-1.9z" />
-                        </>
-                      )}
-                    </svg>
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )
-      }
     </div>
     <!-- celular: cartão claro de convite antes dos direitos -->
     <div class="footer__cta">

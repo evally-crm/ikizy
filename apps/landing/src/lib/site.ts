@@ -22,11 +22,11 @@ export const COMPANY = {
   updatedAt: '7 de outubro de 2026',
 } as const
 
-/** redes da IKIZY no rodapé: só aparecem as que têm endereço preenchido (ex.: 'https://instagram.com/ikizy') */
+/** redes da IKIZY no rodapé, junto do contato: só aparecem as que têm endereço preenchido; `handle` é o que aparece escrito */
 export const SOCIALS = [
-  { id: 'instagram', label: 'Instagram', url: 'https://instagram.com/ikizy.app' },
-  { id: 'tiktok', label: 'TikTok', url: '' },
-  { id: 'whatsapp', label: 'WhatsApp', url: '' },
+  { id: 'instagram', label: 'Instagram', handle: '@ikizy.app', url: 'https://instagram.com/ikizy.app' },
+  { id: 'tiktok', label: 'TikTok', handle: '', url: '' },
+  { id: 'whatsapp', label: 'WhatsApp', handle: '', url: '' },
 ] as const
 
 export const NAV = [
