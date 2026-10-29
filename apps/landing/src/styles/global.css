@@ -1943,6 +1943,15 @@ em {
 .footer a {
   transition: color 0.15s;
 }
+/* contato com ícone: e-mail e redes numa linha, o ícone antes do texto */
+.footer__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.footer__link svg {
+  flex: none;
+}
 .footer a:hover {
   color: var(--red);
 }
