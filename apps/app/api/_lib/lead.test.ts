@@ -63,6 +63,15 @@ describe('lead da landing', () => {
     assert.deepEqual(welcomed, [])
   })
 
+  it('contato novo avisa quem recebe os avisos; repetido não avisa', async () => {
+    const { db } = fakeDb(['velha@salao.com'])
+    const sent: string[] = []
+    const send: SendEmail = async (m) => void sent.push(m.to)
+    await captureLead({ ...deps(db, send), notifyTo: 'equipe@ikizy.com' }, { email: 'nova@salao.com', honeypot: false }, '1.1.1.1')
+    await captureLead({ ...deps(db, send), notifyTo: 'equipe@ikizy.com' }, { email: 'velha@salao.com', honeypot: false }, '1.1.1.1')
+    assert.deepEqual(sent, ['nova@salao.com', 'equipe@ikizy.com'])
+  })
+
   it('a apresentação leva ao cadastro e cita os dias de teste', () => {
     const m = leadWelcomeEmail('https://app.ikizy.com', 30)
     assert.match(m.text, /30 dias/)

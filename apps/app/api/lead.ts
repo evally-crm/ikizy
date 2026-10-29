@@ -27,7 +27,7 @@ export async function POST(request: Request) {
   try {
     const ip = (request.headers.get('x-forwarded-for') ?? 'desconhecido').split(',')[0].trim()
     const input = parseLeadInput(await request.json().catch(() => null))
-    await captureLead({ db: createLeadDb(), send: sendEmail, appUrl: appUrl(), trialDays: TRIAL_DAYS }, input, ip)
+    await captureLead({ db: createLeadDb(), send: sendEmail, appUrl: appUrl(), trialDays: TRIAL_DAYS, notifyTo: process.env.LEAD_NOTIFY_EMAIL || 'maria.eduarda@simpledealers.com.br' }, input, ip)
     return withCors(new Response(null, { status: 204 }), request)
   } catch (error) {
     return withCors(fail(error), request)

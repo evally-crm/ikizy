@@ -50,6 +50,8 @@ export interface LeadDeps {
   send: SendEmail
   appUrl: string
   trialDays: number
+  /** quem recebe o aviso de cada contato novo (opcional) */
+  notifyTo?: string
 }
 
 /** grava o lead e, se for novo, manda a apresentação; falha no envio não derruba o cadastro */
@@ -63,5 +65,12 @@ export async function captureLead(deps: LeadDeps, input: LeadInput, ip: string):
     await deps.db.welcomed(input.email)
   } catch (error) {
     reportError(error, 'lead-email')
+  }
+  if (!deps.notifyTo) return
+  try {
+    const text = `Novo contato pela landing: ${input.email}`
+    await deps.send({ to: deps.notifyTo, subject: 'Novo contato na landing da IKIZY', text, html: `<p>${text}</p>` })
+  } catch (error) {
+    reportError(error, 'lead-notify')
   }
 }

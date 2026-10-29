@@ -1,5 +1,5 @@
 ---
-import { CONTACT_EMAIL, CTA, LINKS, NAV, SOCIALS } from '../lib/site'
+import { APP_URL, CONTACT_EMAIL, CTA, LINKS, NAV, SOCIALS } from '../lib/site'
 
 const year = new Date().getFullYear()
 const socials = SOCIALS.filter((s) => s.url)
@@ -27,6 +27,13 @@ const socials = SOCIALS.filter((s) => s.url)
           <li><a href={`mailto:${CONTACT_EMAIL}`}>Entrar em contato</a></li>
           <li><a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a></li>
         </ul>
+        <form class="footer__lead" action={`${APP_URL}/api/lead`} method="post" novalidate data-lead>
+          <label class="sr-only" for="lead-email">Seu e-mail</label>
+          <input id="lead-email" name="email" type="email" autocomplete="email" inputmode="email" placeholder="seu@email.com" required maxlength="254" />
+          <input class="footer__trap" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" />
+          <button type="submit">Enviar</button>
+        </form>
+        <p class="footer__lead-note" role="status" aria-live="polite" data-lead-note></p>
       </div>
       {
         socials.length > 0 && (
@@ -77,3 +84,39 @@ const socials = SOCIALS.filter((s) => s.url)
   </div>
   <p class="footer__mark" aria-hidden="true">ikizy</p>
 </footer>
+
+<script is:inline>
+  // e-mail do rodapé: manda para o app (vira contato, recebe a apresentação da IKIZY e avisa a equipe)
+  (() => {
+    const form = document.querySelector('[data-lead]')
+    if (!form) return
+    const note = document.querySelector('[data-lead-note]')
+    const input = form.querySelector('input[type="email"]')
+    const button = form.querySelector('button')
+    const say = (text, state) => {
+      note.textContent = text
+      note.dataset.state = state
+    }
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault()
+      if (!input.checkValidity()) return (say('Confira o seu e-mail.', 'error'), input.focus())
+      button.disabled = true
+      try {
+        const res = await fetch(form.action, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ email: input.value, website: form.elements.website.value }),
+        })
+        if (!res.ok) {
+          const body = await res.json().catch(() => null)
+          throw new Error(body?.message || 'Não deu para enviar agora. Tente de novo em instantes.')
+        }
+        form.hidden = true
+        say('Prontinho! Mandamos um e-mail para ' + input.value + '.', 'ok')
+      } catch (err) {
+        say(err.message, 'error')
+        button.disabled = false
+      }
+    })
+  })()
+</script>
