@@ -1851,34 +1851,9 @@ em {
   .tour .tour__count {
     display: none;
   }
-  /* etapas numa fileira que rola no dedo */
+  /* as etapas em pílulas ficam só no computador: no celular o texto embaixo da tela já explica */
   .tour__steps {
-    flex-direction: row;
-    margin-inline: -20px;
-    padding-inline: 20px;
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-  .tour__steps::-webkit-scrollbar {
     display: none;
-  }
-  .tour__step {
-    width: auto;
-    background: rgba(255, 255, 255, 0.08);
-    white-space: nowrap;
-    color: rgba(255, 255, 255, 0.6);
-  }
-  .tour__step:hover {
-    background: rgba(255, 255, 255, 0.14);
-    color: var(--white);
-  }
-  .tour__step[aria-pressed='true'] {
-    background: var(--white);
-    color: var(--ink-900);
-  }
-  .tour .tour__step[aria-pressed='true'] .tour__dot {
-    background: var(--red);
-    box-shadow: -8px 0 0 rgba(14, 13, 13, 0.2);
   }
   .tour__pager {
     background: rgba(255, 255, 255, 0.08);
