@@ -1903,12 +1903,29 @@ em {
   .tour__dots i.is-on {
     background: var(--red);
   }
+  /* uma tela por vez, grande o bastante para ler; trocar pelas etapas, setas ou deslizando o dedo */
   .tour__orbs {
-    --big: min(128px, 30vw);
+    display: block;
+    min-height: 0;
+    touch-action: pan-y;
   }
   .tour__orb {
-    border-color: var(--ink-900);
+    display: none;
+    width: 100%;
+    height: auto;
+    margin: 0;
+    aspect-ratio: 16 / 10;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 18px;
     background: var(--ink-700);
+  }
+  .tour__orb[data-d='0'] {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .tour__orb img {
+    object-position: top left;
   }
   .tour__cap figcaption {
     margin-inline: 0;
