@@ -13,6 +13,7 @@ import { ForgetClientDialog } from './ForgetClientDialog'
 import { ClientList } from './ClientList'
 import './Clientes.css'
 import { PageLoader } from '../../components/PageLoader'
+import { EmptyBunny } from '../../components/BunnyMark'
 
 /** Clientes: a lista de contatos ao lado da ficha da cliente escolhida (no celular, uma de cada vez) */
 export default function Clientes() {
@@ -138,7 +139,8 @@ export default function Clientes() {
       {book.loading ? (
         <PageLoader label="Carregando clientes…" />
       ) : clients.length === 0 ? (
-        <Card className="agenda__empty">
+        <Card className="agenda__empty agenda__empty--center">
+          <EmptyBunny />
           <h2 className="card__title">Cadastre sua primeira cliente</h2>
           <p className="card__sub">Elas também entram aqui sozinhas quando você faz um agendamento novo na agenda.</p>
           <Button onClick={() => setDialog('new')}>

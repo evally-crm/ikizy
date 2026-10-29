@@ -4,6 +4,7 @@ import { previewWeek, reviewGroups, type PreviewWeek } from '../../domain/onboar
 import { formatTime } from '../../lib/format'
 import { siteHost } from '../../lib/slug'
 import './AppPreview.css'
+import { LogoWord } from '../../components/BunnyMark'
 
 export type PreviewPhase = 'blank' | 'building' | 'ready'
 
@@ -36,7 +37,7 @@ export function AppPreview({
     <div className={`apv apv--${phase}`}>
       <div className="apv__top">
         <span className="apv__logo">
-          IKIZY<span className="logo__dot">.</span>
+          <LogoWord />
         </span>
         <nav className="apv__nav">
           {NAV.map((label, i) => (

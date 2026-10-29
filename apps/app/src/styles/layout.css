@@ -1,12 +1,54 @@
 .logo {
   flex: none;
   font-size: 24px;
-  font-weight: 600;
-  letter-spacing: -0.04em;
+  font-family: var(--font-logo);
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: lowercase;
   color: var(--ink-900);
 }
 .logo__dot {
   color: var(--brand-500);
+}
+/* o coelho da marca no lugar do k: mesma largura do k da fonte, do alto do pingo do i até um pouco abaixo da linha */
+.logo__k {
+  display: inline-block;
+  width: 0.381em;
+  height: 0.708em;
+  margin: 0 0.012em;
+  vertical-align: -0.041em;
+  color: var(--brand-500);
+}
+
+/* coelho em traço que preenche as listas vazias */
+.empty-bunny {
+  display: block;
+  width: auto;
+  height: 96px;
+  margin: 4px auto 8px;
+  color: var(--ink-900);
+}
+.empty-bunny__mouth {
+  color: var(--brand-500);
+}
+.agenda__empty > .empty-bunny {
+  margin-inline: 0;
+}
+/* lista vazia sozinha na página: cartão no meio, texto e botão centrados */
+.agenda__empty--center {
+  align-items: center;
+  align-self: center;
+  width: 100%;
+  margin: 8vh auto 0;
+  text-align: center;
+}
+.agenda__empty--center > .empty-bunny {
+  margin-inline: auto;
+}
+.panel__empty--bunny {
+  padding: 12px 0;
+  text-align: center;
+  color: var(--ink-500);
 }
 
 .shell {
@@ -357,7 +399,7 @@
   border-radius: 50%;
   background: var(--brand-500);
   color: var(--on-brand);
-  box-shadow: 0 12px 26px -10px rgba(191, 12, 34, 0.7);
+  box-shadow: 0 12px 26px -10px rgba(99, 0, 31, 0.7);
   cursor: pointer;
 }
 /* ---------- [+] da barra: a barra se desfaz e vira a grade de atalhos ---------- */

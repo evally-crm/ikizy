@@ -6,6 +6,7 @@ import { HttpError, type BillingDb, type Membership, type ReconcileDb, type Subs
 import type { BookingDb, BookingResult, Slot } from './booking.js'
 import { FROM } from './authEmail.js'
 import type { CronDb } from './cron.js'
+import type { LeadDb } from './lead.js'
 import { reportError } from './monitoring.js'
 import type { NotifyDb, OwnerContact } from './notify.js'
 import type { BlobStore, PhotoStoreDb } from './photoStore.js'
@@ -333,6 +334,24 @@ export const sendEmail: SendEmail = async ({ to, subject, html, text }) => {
     body: JSON.stringify({ from: FROM, to: [to], subject, html, text }),
   })
   if (!res.ok) throw new Error(`resend ${res.status} ${await res.text()}`)
+}
+
+/** e-mails deixados na landing (conexão de dono, só no servidor) */
+export function createLeadDb(): LeadDb {
+  const sql = neon(env('DATABASE_URL'))
+  return {
+    async limited(bucket, max, windowSeconds) {
+      const rows = (await sql`select public.hit_rate_limit(${bucket}, ${max}, ${windowSeconds}) as blocked`) as { blocked: boolean }[]
+      return rows[0]?.blocked === true
+    },
+    async save(email) {
+      const rows = (await sql`insert into public.leads (email) values (${email}) on conflict (email) do nothing returning email`) as Row[]
+      return rows.length > 0
+    },
+    async welcomed(email) {
+      await sql`update public.leads set welcomed_at = now() where email = ${email}`
+    },
+  }
 }
 
 /** grava o e-mail da dona para os avisos; só quem é dona do negócio muda a própria assinatura */

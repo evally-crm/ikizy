@@ -29,8 +29,10 @@
 }
 .apv__logo {
   font-size: 17px;
-  font-weight: 600;
-  letter-spacing: -0.04em;
+  font-family: var(--font-logo);
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: lowercase;
   color: var(--ink-700);
 }
 .apv__nav {

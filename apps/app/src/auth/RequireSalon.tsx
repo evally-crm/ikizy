@@ -2,6 +2,7 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { ROUTES } from '../lib/routes'
 import { noSalonPath } from '../lib/pendingInvite'
 import { useAuth } from './AuthProvider'
+import { LogoWord } from '../components/BunnyMark'
 
 /** protege as telas do sistema: exige login e um salão (no modo demo, libera tudo) */
 export default function RequireSalon() {
@@ -12,7 +13,7 @@ export default function RequireSalon() {
     return (
       <div className="splash" role="status" aria-live="polite">
         <span className="splash__logo">
-          IKIZY<span className="logo__dot">.</span>
+          <LogoWord />
         </span>
         <span className="sr-only">Carregando…</span>
       </div>

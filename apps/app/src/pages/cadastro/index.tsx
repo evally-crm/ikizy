@@ -32,6 +32,7 @@ import { StepName, StepYou } from './StepBasics'
 import { StepHours } from './StepHours'
 import { StepServices } from './StepServices'
 import { StepTeam } from './StepTeam'
+import { LogoWord } from '../../components/BunnyMark'
 
 type Phase = 'ask' | 'building' | 'ready'
 
@@ -82,7 +83,7 @@ export default function Onboarding() {
     return (
       <div className="splash" role="status" aria-live="polite">
         <span className="splash__logo">
-          IKIZY<span className="logo__dot">.</span>
+          <LogoWord />
         </span>
         <span className="sr-only">Carregando…</span>
       </div>

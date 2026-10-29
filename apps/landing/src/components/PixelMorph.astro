@@ -1,0 +1,91 @@
+---
+/**
+ * a boca e o coelho da marca em símbolos, trocando de um para o outro a cada poucos segundos (os desenhos
+ * estão em lib/pixelArt.ts). na troca os próprios símbolos viajam: cada célula do desenho que sai é pareada
+ * com uma do que entra (de cima para baixo, da esquerda para a direita) e desliza até lá, trocando de forma
+ * no caminho, até montar o outro desenho. com movimento reduzido fica parado no primeiro.
+ *
+ * usa a cor do texto; `step` é o tamanho da célula em px; `accent` pinta a boca do coelho;
+ * `lift` sobe o coelho no desktop, para o rosto ficar acima do ticket de cadastro.
+ */
+interface Props {
+  class?: string
+  first?: 'mouth' | 'bunny'
+  step?: number
+  accent?: string
+  lift?: boolean
+}
+
+const { class: className, first = 'mouth', step = 7, accent, lift = false } = Astro.props
+---
+
+<canvas
+  class:list={['pixel-morph', className]}
+  aria-hidden="true"
+  data-pixel-morph={first}
+  data-step={step}
+  data-accent={accent}
+  data-lift={lift ? '' : undefined}
+></canvas>
+
+<script>
+  import { ACCENT, animate, bunnyField, glyph, hash, mouthField, paintField, smooth, swapProgress, type Field, type Frame } from '../lib/pixelArt'
+
+  /** as células acesas de um desenho, em ordem de leitura */
+  const cellsOf = (field: Field, { width, height, step }: Frame) => {
+    const out: { x: number; y: number; d: number }[] = []
+    const cols = Math.ceil(width / step)
+    const rows = Math.ceil(height / step)
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < cols; col++) {
+        const d = field(col, row)
+        if (d === ACCENT || d >= 0.1) out.push({ x: col * step, y: row * step, d })
+      }
+    }
+    return out
+  }
+
+  document.querySelectorAll<HTMLCanvasElement>('[data-pixel-morph]').forEach((canvas) => {
+    const step = Number(canvas.dataset.step) || 7
+    const accent = canvas.dataset.accent
+    const bunnyFirst = canvas.dataset.pixelMorph === 'bunny'
+    const lift = 'lift' in canvas.dataset ? matchMedia('(min-width: 900px)') : null
+
+    animate(canvas, (ctx, f) => {
+      const ink = getComputedStyle(canvas).color
+      const frame = { ...f, step }
+      const p = swapProgress(f.t)
+      const mouth = () => mouthField(frame)
+      const bunny = () => bunnyField(frame, { accent: !!accent, soft: true, lift: !!lift?.matches })
+      const [first, second] = bunnyFirst ? [bunny, mouth] : [mouth, bunny]
+
+      // parado num dos desenhos: pinta direto
+      if (p <= 0 || p >= 1) return paintField(ctx, (p <= 0 ? first : second)(), frame, ink, accent)
+
+      const from = cellsOf(first(), frame)
+      const to = cellsOf(second(), frame)
+      const n = Math.max(from.length, to.length)
+      ctx.lineWidth = step * 0.2
+      for (let k = 0; k < n; k++) {
+        const a = from[Math.floor((k * from.length) / n)]
+        const z = to[Math.floor((k * to.length) / n)]
+        // cada símbolo parte num momento e voa em arco leve até a sua casa
+        const q = smooth(0, 1, p * 1.6 - hash(k, 5) * 0.6)
+        const arc = Math.sin(Math.PI * q) * step * 5 * (hash(k, 9) - 0.5)
+        const x = a.x + (z.x - a.x) * q + arc
+        const y = a.y + (z.y - a.y) * q - arc * 0.6
+        const mark = q < 0.5 ? a : z
+        if (mark.d === ACCENT) {
+          if (!accent) continue
+          ctx.fillStyle = accent
+          ctx.fillRect(x + step / 8, y + step / 8, step * 0.75, step * 0.75)
+          continue
+        }
+        const dA = a.d === ACCENT ? 0.8 : a.d
+        const dZ = z.d === ACCENT ? 0.8 : z.d
+        ctx.fillStyle = ctx.strokeStyle = ink
+        glyph(ctx, x, y, step, dA + (dZ - dA) * q, hash(k, 2))
+      }
+    })
+  })
+</script>

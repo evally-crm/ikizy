@@ -78,7 +78,7 @@ for (let row = 0, y = 0; y < H; row++, y += STEP) {
 }
 
 const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W * SCALE}" height="${H * SCALE}" viewBox="0 0 ${W} ${H}">
-<rect width="${W}" height="${H}" fill="#800513"/>
+<rect width="${W}" height="${H}" fill="#63001f"/>
 <g fill="#fff" stroke="#fff" stroke-width="0.9" stroke-linecap="butt">${parts.join('')}</g></svg>`
 
 const out = fileURLToPath(new URL('../public/email/flor.png', import.meta.url))

@@ -54,14 +54,14 @@ function useSiteState(pathname: string) {
 
 /** anel de progresso do botão recolhido */
 function Ring({ done, total }: { done: number; total: number }) {
-  const r = 11
+  const r = 14
   const c = 2 * Math.PI * r
   return (
-    <svg className="setup__ring" width="30" height="30" viewBox="0 0 30 30" aria-hidden="true">
-      <circle cx="15" cy="15" r={r} fill="none" strokeWidth="3" className="setup__ring-bg" />
+    <svg className="setup__ring" width="36" height="36" viewBox="0 0 36 36" aria-hidden="true">
+      <circle cx="18" cy="18" r={r} fill="none" strokeWidth="3" className="setup__ring-bg" />
       <circle
-        cx="15"
-        cy="15"
+        cx="18"
+        cy="18"
         r={r}
         fill="none"
         strokeWidth="3"
@@ -69,8 +69,12 @@ function Ring({ done, total }: { done: number; total: number }) {
         className="setup__ring-fg"
         strokeDasharray={c}
         strokeDashoffset={c * (1 - done / total)}
-        transform="rotate(-90 15 15)"
+        transform="rotate(-90 18 18)"
       />
+      {/* o número dentro do anel: sem ele, no celular, o anel parece um carregamento que nunca termina */}
+      <text x="18" y="21.5" textAnchor="middle" className="setup__ring-n">
+        {done}/{total}
+      </text>
     </svg>
   )
 }

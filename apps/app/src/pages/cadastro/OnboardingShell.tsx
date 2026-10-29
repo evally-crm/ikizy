@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { ArrowLeft } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
 import './OnboardingShell.css'
+import { LogoWord } from '../../components/BunnyMark'
 
 /**
  * Moldura do cadastro: tela cheia e limpa. Logo e "Voltar" à esquerda, a conta e "Sair" à direita,
@@ -31,7 +32,7 @@ export function OnboardingShell({
       <header className="onb__top">
         <div className="onb__left">
           <p className="logo onb__logo">
-            IKIZY<span className="logo__dot">.</span>
+            <LogoWord />
           </p>
           {onBack && (
             <button type="button" className="onb__back" onClick={onBack}>

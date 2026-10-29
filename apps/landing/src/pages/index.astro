@@ -1,14 +1,13 @@
 ---
 import Base from '../layouts/Base.astro'
-import Field from '../components/Field.astro'
-import PixelFlower from '../components/PixelFlower.astro'
+import PixelMorph from '../components/PixelMorph.astro'
 import Perk from '../components/Perk.astro'
 import PlanOption from '../components/PlanOption.astro'
-import { CONTACT_EMAIL, CTA, LINKS } from '../lib/site'
+import { CTA, LINKS } from '../lib/site'
 import { PIX_DISCOUNT_PCT, PLANS, TRIAL_DAYS } from '../lib/pricing'
 
 /** especialidades que passam sem parar abaixo do título do "Para quem é", com "você." a cada volta */
-const crafts = ['lash designers', 'brow designers', 'cabeleireiros(as)', 'nail designers', 'esteticistas', 'maquiadoras']
+const crafts = ['lash designers', 'brow designers', 'cabeleireiras', 'nail designers', 'esteticistas', 'maquiadoras']
 
 /** recursos reais do sistema em cartões de tamanhos diferentes; o "antes" vem da antiga seção "Do caderno ao sistema" e o financeiro é o cartão preto de destaque */
 const features = [
@@ -78,9 +77,9 @@ const faqSchema = {
         </div>
       </div>
 
-      <!-- ticket de cadastro (flor de pixels + convite) no canto inferior direito, perto da boca (só no desktop; no celular o cadastro é o botão largo) -->
+      <!-- ticket de cadastro (foto dos pincéis + convite) no canto inferior direito (só no desktop; no celular o cadastro é o botão largo) -->
       <aside class="ticket" aria-label="Teste grátis">
-        <div class="ticket__stub" aria-hidden="true"><PixelFlower /></div>
+        <div class="ticket__stub" aria-hidden="true"><img src="/img/pinceis.avif" alt="" width="685" height="1034" decoding="async" /></div>
         <div class="ticket__body">
           <p class="ticket__meta">{CTA.hint}</p>
           <p class="ticket__title">Organize sua agenda hoje</p>
@@ -89,7 +88,7 @@ const faqSchema = {
       </aside>
 
       <div class="art" aria-hidden="true">
-        <canvas id="halftone"></canvas>
+        <PixelMorph step={7} lift />
       </div>
     </div>
   </section>
@@ -100,10 +99,12 @@ const faqSchema = {
     <h2 id="you-title" class="you__title">
       A IKIZY é feita para
       <span class="you__line" aria-hidden="true">
+        <span class="you__paren">*(</span>
         <span class="you__rot" data-you-rot>
           {crafts.map((c) => <span>{c}</span>)}
-          <span class="is-in">você.</span>
+          <span class="is-in">você</span>
         </span>
+        <span class="you__paren">)</span>
       </span>
       <span class="sr-only">você: {crafts.join(', ')}.</span>
     </h2>
@@ -124,7 +125,7 @@ const faqSchema = {
         features.map((f) => (
           <li class={`feat feat--${f.ui}`}>
             <p class="feat__was"><span>Antes</span><s>{f.was}</s></p>
-            <h3>{f.title}</h3>
+            <h3>{f.ui === 'money' ? <span>{f.title}</span> : f.title}</h3>
             <div class="feat__visual" aria-hidden="true">
               {f.ui === 'agenda' && (
                 <div class="ui ui--phone">
@@ -157,10 +158,12 @@ const faqSchema = {
               {f.ui === 'site' && <span class="ui ui--url">seu-negocio.ikizy.com</span>}
             </div>
             {f.ui === 'money' && (
-              <a class="feat__plus" href="#como-funciona">
-                <span class="feat__circle" aria-hidden="true">+</span>
-                <span>Veja a IKIZY por dentro</span>
-              </a>
+              <>
+                <p class="feat__foot">Caixa, comissões e o fechamento do mês, sem calculadora</p>
+                <a class="feat__go" href="#como-funciona" aria-label="Veja a IKIZY por dentro">
+                  <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8" fill="none" stroke="currentColor" stroke-width="1.6" /></svg>
+                </a>
+              </>
             )}
           </li>
         ))
@@ -168,47 +171,78 @@ const faqSchema = {
     </ul>
   </section>
 
-  <!-- COMO FUNCIONA (carrossel com telas reais) -->
+  <!-- COMO FUNCIONA: etapas em pílulas à esquerda e as telas em círculos à direita (a da vez é a maior);
+       no computador a seção fica presa e a rolagem passa de uma etapa para a outra -->
+  <div class="tour-pin" data-tour-pin>
   <section id="como-funciona" class="section container tour" aria-labelledby="tour-title">
-    <div class="tour__head">
-      <div class="section__head">
-        <p class="eyebrow">Como começar</p>
-        <h2 id="tour-title" class="h2">Veja a IKIZY <em>por dentro</em></h2>
-      </div>
-      <div class="tour__nav">
-        <span class="tour__count" aria-live="polite" data-tour-count>1 / {tour.length}</span>
-        <button type="button" class="tour__arrow" aria-label="Etapa anterior" data-tour-prev disabled>
-          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="1.6" /></svg>
-        </button>
-        <button type="button" class="tour__arrow" aria-label="Próxima etapa" data-tour-next>
-          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.6" /></svg>
-        </button>
+    <div class="section__head">
+      <p class="eyebrow">Como começar</p>
+      <h2 id="tour-title" class="h2">Veja a IKIZY <em>por dentro</em></h2>
+    </div>
+    <div class="tour__body">
+      <ol class="tour__steps" aria-label="Etapas">
+        {
+          tour.map((t, i) => (
+            <li>
+              <button type="button" class="tour__step" data-tour-step={i} aria-pressed={i === 0 ? 'true' : 'false'}>
+                <span class="tour__dot" aria-hidden="true" />
+                <span>{t.title}</span>
+                <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8" fill="none" stroke="currentColor" stroke-width="1.6" /></svg>
+              </button>
+            </li>
+          ))
+        }
+      </ol>
+      <div class="tour__stage">
+        <div class="tour__bar">
+          <p class="tour__label">Telas do sistema</p>
+          <div class="tour__nav">
+            <span class="tour__count" aria-live="polite" data-tour-count>1 / {tour.length}</span>
+            <div class="tour__pager">
+              <button type="button" class="tour__arrow" aria-label="Etapa anterior" data-tour-prev disabled>
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="1.6" /></svg>
+              </button>
+              <span class="tour__dots" aria-hidden="true">{tour.map((_, i) => <i class={i === 0 ? 'is-on' : ''} />)}</span>
+              <button type="button" class="tour__arrow" aria-label="Próxima etapa" data-tour-next>
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.6" /></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+        <ul class="tour__orbs" role="list" aria-label="Telas do sistema">
+          {
+            tour.map((t, i) => (
+              <li class="tour__orb" data-d={Math.min(i, 4)} data-tour-orb={i}>
+                <img src={t.img} alt={`Tela do sistema IKIZY: ${t.title.toLowerCase()}`} width="1600" height="1000" loading="eager" decoding="async" />
+              </li>
+            ))
+          }
+        </ul>
+        <div class="tour__caps">
+          {
+            tour.map((t, i) => (
+              <figure class={i === 0 ? 'tour__cap is-on' : 'tour__cap'}>
+                <figcaption>
+                  <span class="tour__n">{String(i + 1).padStart(2, '0')}</span>
+                  <b>{t.title}</b>
+                  <span>{t.text}</span>
+                </figcaption>
+              </figure>
+            ))
+          }
+        </div>
       </div>
     </div>
-    <ol class="tour__track" aria-label="Etapas" data-tour-track tabindex="0">
-      {
-        tour.map((t, i) => (
-          <li class="tour__slide" aria-label={`${i + 1} de ${tour.length}`}>
-            <figure>
-              <img src={t.img} alt={`Tela do sistema IKIZY: ${t.title.toLowerCase()}`} width="1600" height="1000" loading={i === 0 ? 'eager' : 'lazy'} decoding="async" />
-              <figcaption>
-                <span class="tour__n">{String(i + 1).padStart(2, '0')}</span>
-                <h3>{t.title}</h3>
-                <p>{t.text}</p>
-              </figcaption>
-            </figure>
-          </li>
-        ))
-      }
-    </ol>
   </section>
+  </div>
 
   <!-- PLANOS -->
   <section id="precos" class="section container" aria-labelledby="price-title">
     <!-- planos: título curto e chave à esquerda; lista de escolha (como num app) e um botão só à direita -->
     <div class="pricing">
       <div class="pricing__head">
-        <h2 id="price-title" class="pricing__title"><span>Escolha</span> seu plano</h2>
+        <p class="eyebrow">Preços</p>
+        <h2 id="price-title" class="pricing__title">Escolha <em>seu plano</em></h2>
         <div class="toggle" data-toggle>
           <button type="button" class="toggle__label is-active" tabindex="-1" data-period="1">Mensal</button>
           <button type="button" role="switch" aria-checked="false" aria-label="Ver preços do plano trimestral" class="toggle__switch" data-switch>
@@ -237,10 +271,10 @@ const faqSchema = {
   <!-- FAQ -->
   <section class="section container faq" aria-labelledby="faq-title">
     <div class="faqs">
-      <div class="faqs__side">
+      <div class="faqs__head">
         <p class="eyebrow">Dúvidas</p>
         <h2 id="faq-title" class="h2">Perguntas <em>frequentes</em></h2>
-        <a class="btn btn--ghost" href="#contato">Falar com a IKIZY</a>
+        <p class="lead">As dúvidas mais comuns de quem está chegando. Não achou a sua? <a href="#contato">Fale com a gente</a>.</p>
       </div>
       <div class="faqs__list">
         {
@@ -254,160 +288,7 @@ const faqSchema = {
       </div>
     </div>
   </section>
-
-  <!-- CONTATO -->
-  <section id="contato" class="section container contact" aria-labelledby="contact-title">
-    <form class="contact__form" data-to={CONTACT_EMAIL} data-contact>
-      <Field label="Nome" name="nome" autocomplete="name" required />
-      <Field label="E-mail" name="email" type="email" autocomplete="email" required />
-      <Field label="Mensagem" name="mensagem" multiline required />
-      <button type="submit" class="btn btn--primary">Enviar mensagem</button>
-      <p class="contact__note" role="status" data-contact-note hidden>
-        Abrimos seu e-mail com a mensagem pronta. Se nada abriu, escreva para <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
-      </p>
-    </form>
-    <div class="contact__text">
-      <p class="eyebrow">Contato</p>
-      <h2 id="contact-title" class="h2">Vamos construir uma <em>rotina melhor?</em></h2>
-      <p class="lead">Quer conhecer a IKIZY, tirar dúvidas ou conversar sobre o seu negócio? Escreva para a gente.</p>
-      <a class="contact__mail" href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
-      <p class="contact__login">Já tem conta? <a href={LINKS.login}>Entrar</a></p>
-    </div>
-  </section>
 </Base>
-
-<script is:inline id="halftone-script">
-  // boca preta em símbolos (ponto, +, x, quadrado), aberta e com bordas esfumadas, se mexendo
-  (() => {
-    const canvas = document.getElementById('halftone')
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    const INK = 'rgb(14, 13, 12)'
-    const still = matchMedia('(prefers-reduced-motion: reduce)').matches
-    let visible = true
-    let last = 0
-
-    const smooth = (a, b, x) => {
-      const k = Math.min(1, Math.max(0, (x - a) / (b - a)))
-      return k * k * (3 - 2 * k)
-    }
-    const bell = (x, w) => Math.exp(-((x / w) ** 2))
-    const hash = (c, r) => {
-      const s = Math.sin(c * 12.9898 + r * 78.233) * 43758.5453
-      return s - Math.floor(s)
-    }
-    const waveAt = (x, y, t) =>
-      (Math.sin(x * 0.012 + Math.sin(y * 0.009 + t * 0.6) * 2.4 + t) + Math.sin(y * 0.014 - x * 0.007 + 1.7 - t * 0.8) * 0.8 + 1.8) / 3.6
-
-    // contornos arredondados em u ∈ [-1, 1]: oval com um leve arco do cupido, e a abertura no meio onde fica a marca
-    const top = (u) => -0.56 * Math.pow(1 - u * u, 0.6) + 0.11 * bell(u, 0.14)
-    const bottom = (u) => 0.58 * Math.pow(1 - u * u, 0.55)
-    const OPEN_W = 0.52
-    const opening = (u, t) => Math.sqrt(Math.max(0, 1 - (u / OPEN_W) ** 2)) * (1 + Math.sin(t * 0.7) * 0.06)
-
-    /** densidade (0..1) da boca: cheia no meio dos lábios, esfumando perto da borda e da abertura */
-    function density(u, v, t) {
-      if (Math.abs(u) >= 1) return 0
-      const o = opening(u, t)
-      const ui = -0.12 * o
-      const li = 0.14 * o
-      const tp = top(u)
-      const bt = bottom(u)
-      if (v < tp - 0.14 || v > bt + 0.14) return 0
-      if (v > ui && v < li) return 0
-      // distância (em u) até a borda mais próxima: de fora ou da abertura
-      const out = Math.min(v - tp, bt - v)
-      const inner = v <= ui ? ui - v : v - li
-      const lipLine = Math.abs(v) < 0.03 && o === 0 ? 0.35 : 0 // fenda entre os lábios perto dos cantos
-      return Math.max(0, smooth(-0.08, 0.26, out) * smooth(-0.01, 0.14, inner) - lipLine)
-    }
-
-    /** símbolo conforme a densidade, como no login: nada · ponto · + · x · quadradinho · quadrado */
-    function glyph(x, y, cell, d, mix) {
-      const m = cell / 2
-      const a = cell * 0.3
-      if (d < 0.1) return
-      if (d >= 0.56 && mix < 0.3) d = 0.5
-      if (d < 0.24) return ctx.fillRect(x + m - 0.9, y + m - 0.9, 1.8, 1.8)
-      ctx.beginPath()
-      if (d < 0.4) {
-        ctx.moveTo(x + m, y + m - a)
-        ctx.lineTo(x + m, y + m + a)
-        ctx.moveTo(x + m - a, y + m)
-        ctx.lineTo(x + m + a, y + m)
-        return ctx.stroke()
-      }
-      if (d < 0.56) {
-        ctx.moveTo(x + m - a * 0.9, y + m - a * 0.9)
-        ctx.lineTo(x + m + a * 0.9, y + m + a * 0.9)
-        ctx.moveTo(x + m + a * 0.9, y + m - a * 0.9)
-        ctx.lineTo(x + m - a * 0.9, y + m + a * 0.9)
-        return ctx.stroke()
-      }
-      if (d < 0.72) return ctx.fillRect(x + m - a, y + m - a, a * 2, a * 2)
-      ctx.fillRect(x + 1, y + 1, cell - 2, cell - 2)
-    }
-
-    function draw(t) {
-      const dpr = Math.min(devicePixelRatio || 1, 2)
-      const { width, height } = canvas.getBoundingClientRect()
-      if (!width || !height) return
-      const w = Math.round(width * dpr)
-      const h = Math.round(height * dpr)
-      if (canvas.width !== w || canvas.height !== h) {
-        canvas.width = w
-        canvas.height = h
-      }
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-      ctx.clearRect(0, 0, width, height)
-
-      const S = Math.min(width * 0.46, height * 0.66)
-      const STEP = 7
-      const cx = width / 2
-      const cy = height / 2
-
-      ctx.lineWidth = 1.3
-      ctx.fillStyle = ctx.strokeStyle = INK
-      for (let row = 0, y = STEP / 2; y < height; row++, y += STEP) {
-        for (let col = 0, x = STEP / 2; x < width; col++, x += STEP) {
-          const u = (x - cx) / S + Math.sin(y * 0.02 + t * 0.8) * 0.01
-          const v = (y - cy) / S + Math.sin(x * 0.017 - t * 0.6) * 0.01
-          const n = hash(row, col)
-          const wave = waveAt(x, y, t)
-          let d = density(u, v, t)
-          if (d <= 0.02) {
-            // pontinhos e + soltos em volta, como pó
-            const e = Math.hypot(u / 1.12, v / 0.78)
-            const inMouth = Math.abs(u) < OPEN_W + 0.06 && Math.abs(v) < 0.2
-            if (!inMouth && e < 1.2 && n < smooth(1.2, 0.85, e) * 0.45 * wave) d = 0.15 + n * 0.4
-            else continue
-          } else {
-            // volume dos lábios: mais escuro junto à abertura, brilho no lábio de baixo, e ondas que fazem os símbolos irem e voltarem
-            const gloss = bell(u - 0.12, 0.25) * bell(v - 0.36, 0.08) * 0.45
-            const rim = bell(Math.abs(v) - 0.16, 0.06) * 0.2
-            d = d * (0.84 + 0.16 * wave) + rim - gloss
-          }
-          glyph(x - STEP / 2, y - STEP / 2, STEP, d + (n - 0.5) * 0.14, hash(col, row))
-        }
-      }
-    }
-
-    if (still) {
-      draw(0)
-      new ResizeObserver(() => draw(0)).observe(canvas)
-      return
-    }
-    new IntersectionObserver((e) => (visible = e[0].isIntersecting)).observe(canvas)
-    const tick = (now) => {
-      if (visible && now - last >= 1000 / 30) {
-        last = now
-        draw(now / 1000)
-      }
-      requestAnimationFrame(tick)
-    }
-    requestAnimationFrame(tick)
-  })()
-</script>
 
 <script is:inline id="pricing-script">
   // planos: escolher na lista troca o botão; o interruptor Mensal/Trimestral troca preços e o selo de economia
@@ -480,6 +361,12 @@ const faqSchema = {
     let i = last
     let visible = false
     let timer = 0
+    // os parênteses abraçam a palavra da vez: a largura acompanha cada troca
+    const fit = () => (rot.style.width = words[i].offsetWidth + 'px')
+    rot.classList.add('is-fit')
+    addEventListener('resize', fit)
+    fit()
+    document.fonts.ready.then(fit)
     const step = () => {
       words[i].classList.remove('is-in')
       words[i].classList.add('is-out')
@@ -487,6 +374,7 @@ const faqSchema = {
       setTimeout(() => prev.classList.remove('is-out'), 500)
       i = (i + 1) % words.length
       words[i].classList.add('is-in')
+      fit()
       timer = setTimeout(tick, i === last ? 2600 : 1400)
     }
     const tick = () => (visible ? step() : (timer = setTimeout(tick, 400)))
@@ -496,53 +384,62 @@ const faqSchema = {
 </script>
 
 <script is:inline id="tour-script">
-  // carrossel do "Como começar": setas avançam e voltam uma etapa; também rola no dedo ou no trackpad
+  // "Veja a IKIZY por dentro": uma etapa por vez; pílulas, setas, círculos e teclado escolhem a etapa.
+  // No computador a seção fica presa e cada trecho de rolagem passa para a próxima etapa.
   (() => {
-    const track = document.querySelector('[data-tour-track]')
-    if (!track) return
-    const prev = document.querySelector('[data-tour-prev]')
-    const next = document.querySelector('[data-tour-next]')
-    const count = document.querySelector('[data-tour-count]')
-    const slides = [...track.children]
-    // etapa mais próxima da borda esquerda, pela posição real de cada card (conta o espaço entre eles)
-    const start = (el) => el.offsetLeft - slides[0].offsetLeft
-    const current = () =>
-      slides.reduce((best, el, k) => (Math.abs(start(el) - track.scrollLeft) < Math.abs(start(slides[best]) - track.scrollLeft) ? k : best), 0)
+    const root = document.querySelector('.tour')
+    const pin = document.querySelector('[data-tour-pin]')
+    if (!root || !pin) return
+    const steps = [...root.querySelectorAll('[data-tour-step]')]
+    const orbs = [...root.querySelectorAll('[data-tour-orb]')]
+    const caps = [...root.querySelectorAll('.tour__cap')]
+    const dots = [...root.querySelectorAll('.tour__dots i')]
+    const prev = root.querySelector('[data-tour-prev]')
+    const next = root.querySelector('[data-tour-next]')
+    const count = root.querySelector('[data-tour-count]')
+    const n = steps.length
+    const wide = matchMedia('(min-width: 1024px) and (prefers-reduced-motion: no-preference)')
+    // um quarto de tela por etapa: a seção inteira segura só uma tela a mais de rolagem
+    const stepPx = () => innerHeight * 0.25
+    let active = 0
+    const show = (i) => {
+      active = i
+      steps.forEach((s, k) => s.setAttribute('aria-pressed', String(k === i)))
+      orbs.forEach((o, k) => (o.dataset.d = Math.min(4, Math.abs(k - i))))
+      caps.forEach((c, k) => c.classList.toggle('is-on', k === i))
+      dots.forEach((d, k) => d.classList.toggle('is-on', k === i))
+      count.textContent = i + 1 + ' / ' + n
+      prev.disabled = i === 0
+      next.disabled = i === n - 1
+    }
+    const pinned = () => pin.classList.contains('is-pinned')
+    const follow = () => {
+      if (!pinned()) return
+      const i = Math.max(0, Math.min(n - 1, Math.round(-pin.getBoundingClientRect().top / stepPx())))
+      if (i !== active) show(i)
+    }
+    const layout = () => {
+      pin.classList.toggle('is-pinned', wide.matches)
+      pin.style.height = pinned() ? pin.firstElementChild.offsetHeight + stepPx() * (n - 1) + 'px' : ''
+      follow()
+    }
     const go = (i) => {
-      const target = slides[Math.max(0, Math.min(slides.length - 1, i))]
-      track.scrollTo({ left: start(target), behavior: 'smooth' })
+      i = Math.max(0, Math.min(n - 1, i))
+      if (pinned()) scrollTo({ top: pin.getBoundingClientRect().top + scrollY + i * stepPx(), behavior: 'smooth' })
+      else show(i)
     }
-    const sync = () => {
-      const atEnd = track.scrollLeft + track.clientWidth >= track.scrollWidth - 4
-      count.textContent = (atEnd ? slides.length : current() + 1) + ' / ' + slides.length
-      prev.disabled = track.scrollLeft < 4
-      next.disabled = atEnd
-    }
-    prev.addEventListener('click', () => go(current() - 1))
-    next.addEventListener('click', () => go(current() + 1))
-    track.addEventListener('scroll', () => requestAnimationFrame(sync), { passive: true })
-    track.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowLeft') (e.preventDefault(), go(current() - 1))
-      if (e.key === 'ArrowRight') (e.preventDefault(), go(current() + 1))
+    steps.forEach((s, k) => s.addEventListener('click', () => go(k)))
+    orbs.forEach((o, k) => o.addEventListener('click', () => go(k)))
+    prev.addEventListener('click', () => go(active - 1))
+    next.addEventListener('click', () => go(active + 1))
+    root.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') (e.preventDefault(), go(active - 1))
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') (e.preventDefault(), go(active + 1))
     })
-    addEventListener('resize', sync)
-    sync()
-  })()
-</script>
-
-<script is:inline id="contact-script">
-  // o formulário abre o e-mail da pessoa já preenchido (não há envio pelo servidor)
-  (() => {
-    const form = document.querySelector('[data-contact]')
-    if (!form) return
-    form.addEventListener('submit', (e) => {
-      e.preventDefault()
-      const d = new FormData(form)
-      const to = form.dataset.to
-      const subject = 'Contato pelo site · ' + d.get('nome')
-      const body = d.get('mensagem') + '\n\n' + d.get('nome') + '\n' + d.get('email')
-      location.href = 'mailto:' + to + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body)
-      form.querySelector('[data-contact-note]').hidden = false
-    })
+    addEventListener('scroll', () => requestAnimationFrame(follow), { passive: true })
+    addEventListener('resize', layout)
+    wide.addEventListener('change', layout)
+    addEventListener('load', layout)
+    layout()
   })()
 </script>

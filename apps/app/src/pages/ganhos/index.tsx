@@ -68,7 +68,7 @@ export default function Ganhos() {
                 </div>
                 <div>
                   <dt>atendido</dt>
-                  <dd>{formatBRL(earnings.gross)}</dd>
+                  <dd>{formatBRL(earnings.gross).replace(',00', '')}</dd>
                 </div>
                 <div>
                   <dt>a fazer no mês</dt>

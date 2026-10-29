@@ -25,6 +25,7 @@ import { Avatar, Button, Card, SearchField, Tag, Tags } from '../../components/u
 import { formatBRL, formatPhone } from '../../lib/format'
 import { dash } from '../../lib/routes'
 import './Clientes.css'
+import { EmptyBunny } from '../../components/BunnyMark'
 
 /**
  * lista de contatos: busca, filtro por marcação, "Chamar hoje" com a mensagem pronta de cada uma e,
@@ -136,7 +137,10 @@ export function ClientList({
       )}
 
       {visible.length === 0 ? (
-        <p className="crm__empty">Nenhuma cliente encontrada.</p>
+        <p className="crm__empty">
+          <EmptyBunny />
+          Nenhuma cliente encontrada.
+        </p>
       ) : (
         <ul className="clist">
           {visible.map((c) => {

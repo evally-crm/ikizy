@@ -22,8 +22,10 @@
 }
 .invoice__logo {
   font-size: 18px;
-  font-weight: 600;
-  letter-spacing: -0.04em;
+  font-family: var(--font-logo);
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: lowercase;
 }
 .invoice__logo span {
   color: var(--brand-500);
