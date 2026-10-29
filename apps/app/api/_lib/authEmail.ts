@@ -113,10 +113,10 @@ export function renderOtpEmail(code: string, email: string, otpType = 'email-ver
   <tr><td align="center" bgcolor="#f5f5f7" style="background-color:#f5f5f7;border-radius:20px;padding:20px 16px;">
     <div style="font-size:12px;line-height:18px;color:#6b6668;">Seu código</div>
     <div class="digits" style="padding:6px 0;font-family:'Architype Stedelijk','Outfit',Arial,Helvetica,sans-serif;font-size:56px;line-height:62px;letter-spacing:6px;color:#0e0d0d;">${esc(code)}</div>
-    <div style="font-size:12px;line-height:18px;color:#63001f;">vale por alguns minutos</div>
+    <div style="font-size:12px;line-height:18px;color:#6b6668;">vale por alguns minutos</div>
   </td></tr>
 </table>
-<p style="margin:0 0 8px;font-size:13px;line-height:20px;color:#e0b8be;">Não foi você? Pode ignorar este e-mail, ninguém entra na conta sem o código. Nunca pedimos esse código por WhatsApp ou telefone.</p>`,
+<p style="margin:0 0 8px;font-size:13px;line-height:20px;color:#a3a3a8;">Não foi você? Pode ignorar este e-mail, ninguém entra na conta sem o código. Nunca pedimos esse código por WhatsApp ou telefone.</p>`,
     footer: `Você recebeu este e-mail porque ${email} ${c.reason}.`,
   })
 
