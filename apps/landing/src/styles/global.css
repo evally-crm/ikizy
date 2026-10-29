@@ -1274,10 +1274,7 @@ em {
   justify-content: space-between;
   gap: 16px;
 }
-/* rótulo com um traço em bordô à esquerda */
 .tour__label {
-  padding-left: 12px;
-  border-left: 3px solid var(--wine);
   font-size: 15px;
   line-height: 1.1;
   color: var(--ink-900);
@@ -1843,7 +1840,6 @@ em {
     color: var(--red);
   }
   .tour__label {
-    border-left-color: var(--red);
     white-space: nowrap;
     color: var(--white);
   }
