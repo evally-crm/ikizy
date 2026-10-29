@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { bestDay, bestWeekIndex, composition, dailyRange, dayTiles, growthPct, marginPct, outflowOf, paymentShares, pct, waffleCounts, weeklyAverage, weeksOf } from './metrics'
+import { bestDay, bestWeekIndex, composition, dailyRange, dayHeat, dayPeak, dayTiles, growthPct, miniBarWidth, profitShown, marginPct, outflowOf, paymentShares, pct, waffleCounts, weeklyAverage, weeksOf } from './metrics'
 import { buildDayReceipt, buildMonthReceipt, receiptSummaryText } from './receipt'
 import { buildDayStatement } from './day'
 import { appt } from './fixtures.test-helpers'
@@ -158,5 +158,25 @@ describe('recibos', () => {
     assert.match(text, /OUTUBRO 2026/)
     assert.match(text, /Lucro líquido: R\$\s700,00/)
     assert.match(text, /Atendimentos: 10/)
+  })
+})
+
+describe('mapa do mês e mini barras', () => {
+  it('dayHeat: futuro, vazio e quatro níveis', () => {
+    assert.equal(dayHeat(null, 100), 'future')
+    assert.equal(dayHeat(0, 100), 0)
+    assert.equal(dayHeat(50, 0), 0)
+    assert.equal(dayHeat(1, 100), 1)
+    assert.equal(dayHeat(100, 100), 4)
+    assert.equal(dayHeat(51, 100), 3)
+  })
+
+  it('dayPeak ignora dias que não chegaram; profitShown nunca é negativo; miniBarWidth tem mínimo', () => {
+    assert.equal(dayPeak([null, 10, 40, 0]), 40)
+    assert.equal(dayPeak([]), 0)
+    assert.equal(profitShown({ net: -50 }), 0)
+    assert.equal(profitShown({ net: 120 }), 120)
+    assert.equal(miniBarWidth(2), 6)
+    assert.equal(miniBarWidth(40), 40)
   })
 })

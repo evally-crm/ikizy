@@ -10,11 +10,15 @@ import {
   buildMonthReceipt,
   cardFeeLabel,
   composition,
+  dayHeat,
+  dayPeak,
   growthPct,
   isWholeMonth,
   marginPct,
+  miniBarWidth,
   monthRange,
   paymentShares,
+  profitShown,
   showsTeam,
   weekBars,
   weeklyAverage,
@@ -44,9 +48,7 @@ const short = (v: number) => formatBRL(v).replace(',00', '')
 
 type Detail = 'gross' | 'net' | 'appts' | 'days' | 'weeks' | 'pay' | 'where' | 'team'
 
-/** intensidade da pílula do dia (0 = sem movimento, 1 a 4 = cada vez mais forte; `future` = ainda não chegou) */
 const WEEKDAYS = ['S', 'T', 'Q', 'Q', 'S', 'S', 'D']
-const heatLevel = (v: number | null, max: number) => (v === null ? 'future' : v <= 0 || max <= 0 ? 0 : Math.max(1, Math.ceil((v / max) * 4)))
 
 /** selo de variação: verde subindo, vermelho caindo */
 function Delta({ value }: { value: number }) {
@@ -175,7 +177,7 @@ export function MonthView({ tabs }: { tabs: ReactNode }) {
   const receiptModel: ReceiptModel = singleDay
     ? buildDayReceipt(fin.statementFor(fromKey), { salonName, now })
     : buildMonthReceipt(month, closedAt, { salonName, now })
-  const dayMax = Math.max(0, ...month.daily.map((v) => v ?? 0))
+  const dayMax = dayPeak(month.daily)
   // o mapa começa na segunda: casas vazias até o dia da semana do primeiro dia
   const heatLead = (range.from.getDay() + 6) % 7
   const topShare = shares[0]
@@ -189,7 +191,7 @@ export function MonthView({ tabs }: { tabs: ReactNode }) {
       label: bestWeek >= 0 ? `na melhor semana (${weeks[bestWeek].label})` : 'sem movimento ainda',
     },
     pay: { value: topShare ? `${topShare.share}%` : '—', label: topShare ? `em ${topShare.method}` : 'nenhum recebimento ainda' },
-    where: { value: formatBRL(month.gross), label: 'entraram no período', text: `Sobrou ${formatBRL(Math.max(month.net, 0))} de lucro.` },
+    where: { value: formatBRL(month.gross), label: 'entraram no período', text: `Sobrou ${formatBRL(profitShown(month))} de lucro.` },
     team: { value: formatBRL(month.commissionsTotal), label: 'em comissões' },
   }
   const receiptLabel = singleDay ? 'Recibo do dia' : partial ? 'Recibo do período' : 'Recibo do mês'
@@ -292,7 +294,7 @@ export function MonthView({ tabs }: { tabs: ReactNode }) {
                 <span key={`lead-${i}`} />
               ))}
               {month.daily.map((v, i) => (
-                <span key={i} className={`fb-heat__day fb-heat__day--${heatLevel(v, dayMax)}`}>
+                <span key={i} className={`fb-heat__day fb-heat__day--${dayHeat(v, dayMax)}`}>
                   {addDays(range.from, i).getDate()}
                 </span>
               ))}
@@ -310,7 +312,7 @@ export function MonthView({ tabs }: { tabs: ReactNode }) {
               <small className="fb-mini__hint">{bestWeek >= 0 ? `melhor: ${weeks[bestWeek].label}` : 'sem movimento ainda'}</small>
               <span className="fb-minibars" aria-hidden="true">
                 {weeks.map((w) => (
-                  <span key={w.label} className={w.future ? 'is-future' : undefined} style={{ '--h': `${Math.max(w.width, 6)}%` } as CSSProperties} />
+                  <span key={w.label} className={w.future ? 'is-future' : undefined} style={{ '--h': `${miniBarWidth(w.width)}%` } as CSSProperties} />
                 ))}
               </span>
             </button>
