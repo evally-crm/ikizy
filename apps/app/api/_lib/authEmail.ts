@@ -61,10 +61,11 @@ export function parseOtpEvent(payload: unknown): OtpEvent | null {
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
-const COPY: Record<string, { first: string; rest: string; subject: string; lead: string; reason: string }> = {
+const COPY: Record<string, { first: string; rest: string; sub: string; subject: string; lead: string; reason: string }> = {
   'email-verification': {
     first: 'Confirme',
     rest: 'seu e-mail',
+    sub: 'Código enviado.',
     subject: 'Seu código de confirmação do IKIZY',
     lead: 'Olá! Falta só um passo para abrir a sua agenda no IKIZY. Digite o código abaixo na tela do cadastro.',
     reason: 'foi usado para criar uma conta no IKIZY',
@@ -72,6 +73,7 @@ const COPY: Record<string, { first: string; rest: string; subject: string; lead:
   'forget-password': {
     first: 'Redefina',
     rest: 'sua senha',
+    sub: 'Redefinição solicitada.',
     subject: 'Seu código para redefinir a senha do IKIZY',
     lead: 'Recebemos um pedido para redefinir a senha da sua conta no IKIZY. Digite o código abaixo para continuar.',
     reason: 'pediu para redefinir a senha no IKIZY',
@@ -79,6 +81,7 @@ const COPY: Record<string, { first: string; rest: string; subject: string; lead:
   'sign-in': {
     first: 'Entre',
     rest: 'no IKIZY',
+    sub: 'Acesso solicitado.',
     subject: 'Seu código de acesso ao IKIZY',
     lead: 'Use o código abaixo para entrar na sua conta do IKIZY.',
     reason: 'pediu um código de acesso ao IKIZY',
@@ -103,16 +106,17 @@ export function renderOtpEmail(code: string, email: string, otpType = 'email-ver
   const html = renderShell({
     eyebrow: c.first,
     title: c.rest,
+    subtitle: c.sub,
     preheader: `Seu código IKIZY é ${code}. Ele vale por alguns minutos.`,
     body: `${paragraph(c.lead)}
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 24px;">
   <tr><td align="center" bgcolor="#f5f5f7" style="background-color:#f5f5f7;border-radius:20px;padding:20px 16px;">
     <div style="font-size:12px;line-height:18px;color:#6b6668;">Seu código</div>
     <div class="digits" style="padding:6px 0;font-family:'Architype Stedelijk','Outfit',Arial,Helvetica,sans-serif;font-size:56px;line-height:62px;letter-spacing:6px;color:#0e0d0d;">${esc(code)}</div>
-    <div style="font-size:12px;line-height:18px;color:#63001f;">vale por alguns minutos</div>
+    <div style="font-size:12px;line-height:18px;color:#6b6668;">vale por alguns minutos</div>
   </td></tr>
 </table>
-<p style="margin:0 0 8px;font-size:13px;line-height:20px;color:#e0b8be;">Não foi você? Pode ignorar este e-mail, ninguém entra na conta sem o código. Nunca pedimos esse código por WhatsApp ou telefone.</p>`,
+<p style="margin:0 0 8px;font-size:13px;line-height:20px;color:#a3a3a8;">Não foi você? Pode ignorar este e-mail, ninguém entra na conta sem o código. Nunca pedimos esse código por WhatsApp ou telefone.</p>`,
     footer: `Você recebeu este e-mail porque ${email} ${c.reason}.`,
   })
 

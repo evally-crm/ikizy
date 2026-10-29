@@ -33,6 +33,7 @@ export function parseLeadInput(body: unknown): LeadInput {
 export function leadWelcomeEmail(appUrl: string, trialDays: number) {
   const { html, text } = renderBrandEmail({
     title: 'Que bom ter você por aqui',
+    subtitle: 'Seu teste grátis te espera.',
     paragraphs: [
       'Oi! Aqui é a IKIZY. Você deixou seu e-mail no nosso site, então vamos direto ao ponto: a gente cuida dos bastidores do seu negócio para você focar no que faz de melhor.',
       'Agenda online, ficha de cada cliente, lembretes prontos para o WhatsApp, caixa e comissões do mês e um site para as clientes pedirem horário sozinhas. Tudo num lugar só, direto no celular.',
@@ -70,6 +71,7 @@ export async function captureLead(deps: LeadDeps, input: LeadInput, ip: string):
   try {
     const mail = renderBrandEmail({
       title: 'Novo contato na landing',
+      subtitle: 'Mais uma pessoa chegou.',
       paragraphs: ['Alguém deixou o e-mail no rodapé do site e já recebeu a apresentação do IKIZY.'],
       details: [['E-mail', input.email]],
       button: 'Abrir o IKIZY',

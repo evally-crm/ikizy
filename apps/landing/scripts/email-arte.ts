@@ -14,11 +14,11 @@ import { bunnyField, paintField } from '../src/lib/pixelArt.ts'
 const dir = fileURLToPath(new URL('../public/email/', import.meta.url))
 const telas = fileURLToPath(new URL('../public/telas/', import.meta.url))
 mkdirSync(dir, { recursive: true })
-const WINE = '#63001f'
-const PINK = '#e0b8be'
+const WINE = '#0e0d0d'
+
 
 // ---- coelho de símbolos: um contexto de mentira que anota os traços em SVG
-const W = 560
+const W = 200
 const H = 300
 const STEP = 4
 const parts: string[] = []
@@ -35,7 +35,7 @@ const ctx = {
   stroke: () => void parts.push(`<path d="${pen.join('')}" fill="none" stroke="#fff" stroke-width="${(STEP * 0.2).toFixed(2)}"/>`),
 }
 const frame = { width: W, height: H, t: 2.2, step: STEP }
-paintField(ctx as never, bunnyField(frame, { accent: true }), frame, '#fff', PINK)
+paintField(ctx as never, bunnyField(frame), frame, '#fff')
 const bunnySvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W * 2}" height="${H * 2}" viewBox="0 0 ${W} ${H}"><rect width="${W}" height="${H}" fill="${WINE}"/>${parts.join('')}</svg>`
 const coelho = await sharp(Buffer.from(bunnySvg)).png({ palette: true, colors: 8 }).toBuffer()
 writeFileSync(dir + 'coelho.png', coelho)

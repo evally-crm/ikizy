@@ -1943,6 +1943,15 @@ em {
 .footer a {
   transition: color 0.15s;
 }
+/* contato com ícone: e-mail e redes numa linha, o ícone antes do texto */
+.footer__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.footer__link svg {
+  flex: none;
+}
 .footer a:hover {
   color: var(--red);
 }
@@ -2029,19 +2038,6 @@ em {
 .footer .footer__cta {
   display: none;
 }
-/* redes: só o contorno do ícone, em branco e sem fundo */
-.footer .footer__social ul {
-  flex-direction: row;
-  gap: 18px;
-}
-.footer__social a {
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  color: var(--white);
-  background: none;
-}
 
 /* celular: links grandes empilhados em cima, depois Sistema e a tagline em letra pequena,
    um cartão claro de convite e, embaixo, direitos e Legal. Fica depois das regras base para vencer na cascata */
@@ -2059,14 +2055,7 @@ em {
     max-width: none;
     margin-top: 10px;
   }
-  .footer__contact + .footer__social {
-    margin-top: -8px;
-  }
-  .footer__social a {
-    margin-left: -3px;
-  }
   .footer__grid > nav h4,
-  .footer__social h4,
   .footer__contact h4,
   .footer__col--legal {
     display: none;
