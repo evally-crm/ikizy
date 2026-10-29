@@ -66,7 +66,7 @@ ${m.preheader ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" class="bg-page" style="background-color:#e8e8ea;">
 <tr><td align="center" style="padding:24px 12px;">
   <table role="presentation" width="560" cellspacing="0" cellpadding="0" border="0" class="surface" bgcolor="${INK}" style="width:100%;max-width:560px;background-color:${INK};border-radius:28px;overflow:hidden;">
-    <tr><td class="pad" style="padding:24px 28px 0;font-family:${FONT};font-size:13px;font-weight:600;letter-spacing:4px;color:#ffffff;">IKIZY</td></tr>
+    <tr><td class="pad" style="padding:24px 28px 0;font-family:${FONT};font-size:13px;font-weight:600;letter-spacing:4px;color:#c8102e;">IKIZY</td></tr>
     <tr><td class="pad" style="padding:8px 28px 0;">
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
         <tr>
