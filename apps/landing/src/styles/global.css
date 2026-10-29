@@ -2051,6 +2051,17 @@ em {
     flex-direction: column;
     gap: 28px;
   }
+  /* contato, e-mail e Instagram juntos, alinhados à esquerda e na largura toda */
+  .footer__contact .footer__lead {
+    max-width: none;
+    margin-top: 20px;
+  }
+  .footer__contact + .footer__social {
+    margin-top: -12px;
+  }
+  .footer__social a {
+    margin-left: -3px;
+  }
   .footer__grid > nav h4,
   .footer__social h4,
   .footer__contact h4,
