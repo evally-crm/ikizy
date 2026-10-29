@@ -13,14 +13,14 @@ export interface TeamUsage {
   access: LimitUse
 }
 
-const use = (used: number, max: number | null): LimitUse => ({ used, max, full: max !== null && used >= max })
+const limitUse = (used: number, max: number | null): LimitUse => ({ used, max, full: max !== null && used >= max })
 
 /** quanto do plano a equipe já usa (R-26) */
 export function teamUsage(plan: PlanId, counts: { activeProfessionals: number; members: number; openInvites: number }): TeamUsage {
   const limit = PLAN_LIMITS[plan]
   return {
-    professionals: use(counts.activeProfessionals, limit.professionals),
-    access: use(counts.members + counts.openInvites, limit.members),
+    professionals: limitUse(counts.activeProfessionals, limit.professionals),
+    access: limitUse(counts.members + counts.openInvites, limit.members),
   }
 }
 

@@ -137,3 +137,19 @@ export function dayTiles(month: MonthClosing): { leading: number; days: DayTile[
   }))
   return { leading: (month.date.getDay() + 6) % 7, days }
 }
+
+/** intensidade da pílula do dia no mapa do mês: `future` = ainda não chegou, 0 = sem movimento, 1 a 4 = cada vez mais forte */
+export function dayHeat(value: number | null, max: number): 'future' | 0 | 1 | 2 | 3 | 4 {
+  if (value === null) return 'future'
+  if (value <= 0 || max <= 0) return 0
+  return Math.max(1, Math.ceil((value / max) * 4)) as 1 | 2 | 3 | 4
+}
+
+/** maior valor diário do mês (0 quando nenhum dia faturou) */
+export const dayPeak = (daily: (number | null)[]): number => Math.max(0, ...daily.map((v) => v ?? 0))
+
+/** lucro para mostrar em texto: nunca negativo */
+export const profitShown = (month: Pick<MonthClosing, 'net'>): number => Math.max(month.net, 0)
+
+/** largura da mini barra de uma semana, em % da trilha, com um mínimo para a semana não sumir */
+export const miniBarWidth = (width: number, minimum = 6): number => Math.max(width, minimum)

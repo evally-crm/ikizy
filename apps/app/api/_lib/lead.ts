@@ -1,3 +1,4 @@
+import { createHmac, timingSafeEqual } from 'node:crypto'
 import { HttpError } from './billing.js'
 import { renderBrandEmail } from './emailLayout.js'
 import { reportError } from './monitoring.js'
@@ -12,6 +13,8 @@ export interface LeadDb {
   save(email: string): Promise<boolean>
   /** marca que a apresentação saiu */
   welcomed(email: string): Promise<void>
+  /** a pessoa pediu para sair da lista */
+  unsubscribe(email: string): Promise<void>
 }
 
 export interface LeadInput {
@@ -29,8 +32,26 @@ export function parseLeadInput(body: unknown): LeadInput {
   return { email, honeypot: typeof b.website === 'string' && b.website.trim() !== '' }
 }
 
+/** assinatura do pedido de saída: só quem recebeu o e-mail (com o link certo) consegue tirar o endereço da lista */
+export const unsubscribeToken = (email: string, secret: string) => createHmac('sha256', secret).update(`unsubscribe:${email}`).digest('hex')
+
+export const unsubscribeUrl = (appUrl: string, email: string, secret: string) =>
+  `${appUrl}/api/lead?e=${encodeURIComponent(email)}&t=${unsubscribeToken(email, secret)}`
+
+/** tira o e-mail da lista; 400 se o link estiver adulterado */
+export async function unsubscribeLead(db: Pick<LeadDb, 'unsubscribe'>, email: string, token: string, secret: string): Promise<void> {
+  if (!secret) throw new HttpError(503, 'unavailable', 'Indisponível no momento. Tente novamente em instantes.')
+  const clean = email.trim().toLowerCase()
+  const expected = Buffer.from(unsubscribeToken(clean, secret))
+  const given = Buffer.from(token)
+  if (!EMAIL.test(clean) || given.length !== expected.length || !timingSafeEqual(given, expected)) {
+    throw new HttpError(400, 'invalid_link', 'Link inválido. Use o link do e-mail mais recente.')
+  }
+  await db.unsubscribe(clean)
+}
+
 /** o e-mail de apresentação: curto, convidativo, com o teste grátis no botão */
-export function leadWelcomeEmail(appUrl: string, trialDays: number) {
+export function leadWelcomeEmail(appUrl: string, trialDays: number, unsubscribe?: string) {
   const { html, text } = renderBrandEmail({
     title: 'Que bom ter você por aqui',
     subtitle: 'Seu teste grátis te espera.',
@@ -42,6 +63,7 @@ export function leadWelcomeEmail(appUrl: string, trialDays: number) {
     button: 'Começar meu teste grátis',
     link: `${appUrl}/cadastro?origem=email-lead`,
     footer: 'Você recebeu este e-mail porque deixou seu endereço em ikizy.com. Se não foi você, é só ignorar.',
+    footerLink: unsubscribe ? { label: 'Não quero receber mais.', url: unsubscribe } : undefined,
   })
   return { subject: 'Sua rotina mais leve começa aqui', html, text }
 }
@@ -53,6 +75,8 @@ export interface LeadDeps {
   trialDays: number
   /** quem recebe o aviso de cada contato novo (opcional) */
   notifyTo?: string
+  /** segredo do link de sair da lista; sem ele o e-mail sai sem o link */
+  secret?: string
 }
 
 /** grava o lead e, se for novo, manda a apresentação; falha no envio não derruba o cadastro */
@@ -62,7 +86,12 @@ export async function captureLead(deps: LeadDeps, input: LeadInput, ip: string):
   const isNew = await deps.db.save(input.email)
   if (!isNew) return
   try {
-    await deps.send({ to: input.email, ...leadWelcomeEmail(deps.appUrl, deps.trialDays) })
+    const unsub = deps.secret ? unsubscribeUrl(deps.appUrl, input.email, deps.secret) : undefined
+    await deps.send({
+      to: input.email,
+      ...leadWelcomeEmail(deps.appUrl, deps.trialDays, unsub),
+      ...(unsub ? { headers: { 'List-Unsubscribe': `<${unsub}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' } } : {}),
+    })
     await deps.db.welcomed(input.email)
   } catch (error) {
     reportError(error, 'lead-email')

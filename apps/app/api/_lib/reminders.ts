@@ -150,7 +150,7 @@ export interface ReminderDb {
   release(key: string): Promise<void>
 }
 
-export type SendEmail = (message: { to: string; subject: string; html: string; text: string }) => Promise<void>
+export type SendEmail = (message: { to: string; subject: string; html: string; text: string; headers?: Record<string, string> }) => Promise<void>
 
 export interface RemindersResult {
   planned: number

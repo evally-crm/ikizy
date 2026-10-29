@@ -25,6 +25,8 @@ export interface Shell {
   body: string
   /** por que a pessoa recebeu */
   footer: string
+  /** link depois do rodapé, ex.: "Não quero receber" */
+  footerLink?: { label: string; url: string }
 }
 
 /** título em duas linhas, a primeira branca e a segunda rosa; sem `eyebrow`, divide as palavras ao meio */
@@ -89,7 +91,7 @@ ${m.preheader ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0
           <td valign="middle" style="font-size:15px;line-height:22px;"><a href="${INSTAGRAM.url}" style="color:#ffffff;text-decoration:none;">${INSTAGRAM.handle}</a></td>
         </tr>
       </table>
-      <p style="margin:18px 0 0;font-size:12px;line-height:18px;color:${GREY};">${escHtml(m.footer)}</p>
+      <p style="margin:18px 0 0;font-size:12px;line-height:18px;color:${GREY};">${escHtml(m.footer)}${m.footerLink ? ` <a href="${escHtml(m.footerLink.url)}" style="color:#ffffff;text-decoration:underline;">${escHtml(m.footerLink.label)}</a>` : ''}</p>
     </td></tr>
   </table>
 </td></tr>
@@ -116,6 +118,7 @@ export interface BrandEmail {
   link: string
   /** rodapé: por que a pessoa recebeu */
   footer: string
+  footerLink?: { label: string; url: string }
 }
 
 /** o trecho de texto simples que fecha todos os e-mails */
@@ -135,6 +138,7 @@ export function renderBrandEmail(m: BrandEmail): { html: string; text: string } 
     subtitle: m.subtitle,
     body: `${m.paragraphs.map(paragraph).join('')}${details}${button(m.button, m.link)}`,
     footer: m.footer,
+    footerLink: m.footerLink,
   })
   const text = [
     ...m.paragraphs.flatMap((p) => [p, '']),
@@ -142,6 +146,7 @@ export function renderBrandEmail(m: BrandEmail): { html: string; text: string } 
     `${m.button}: ${m.link}`,
     '',
     closingText(m.footer),
+    ...(m.footerLink ? [`${m.footerLink.label}: ${m.footerLink.url}`] : []),
   ].join('\n')
   return { html, text }
 }
