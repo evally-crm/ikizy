@@ -24,7 +24,7 @@ export const COMPANY = {
 
 /** redes da IKIZY no rodapé: só aparecem as que têm endereço preenchido (ex.: 'https://instagram.com/ikizy') */
 export const SOCIALS = [
-  { id: 'instagram', label: 'Instagram', url: '' },
+  { id: 'instagram', label: 'Instagram', url: 'https://instagram.com/ikizy.app' },
   { id: 'tiktok', label: 'TikTok', url: '' },
   { id: 'whatsapp', label: 'WhatsApp', url: '' },
 ] as const

@@ -112,6 +112,6 @@ describe('boas-vindas', () => {
   it('texto fala do teste e do primeiro passo', () => {
     const mail = renderWelcomeEmail('Studio Maria', 'https://app.ikizy.com/dashboard')
     assert.match(mail.text, /30 dias/)
-    assert.match(mail.text, /publique o seu site/)
+    assert.match(mail.text, /Publique o seu site/)
   })
 })

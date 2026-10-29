@@ -1238,10 +1238,6 @@ em {
   flex: 1;
   min-width: 0;
 }
-.tour__step svg {
-  flex: none;
-  opacity: 0.5;
-}
 .tour__step:hover {
   background: var(--gray-200);
   color: var(--ink-900);
@@ -1249,9 +1245,6 @@ em {
 .tour__step[aria-pressed='true'] {
   background: var(--ink-900);
   color: var(--white);
-}
-.tour__step[aria-pressed='true'] svg {
-  opacity: 1;
 }
 /* dois pontinhos à esquerda: o da etapa da vez acende */
 .tour__dot {
@@ -1281,10 +1274,7 @@ em {
   justify-content: space-between;
   gap: 16px;
 }
-/* rótulo com um traço em bordô à esquerda */
 .tour__label {
-  padding-left: 12px;
-  border-left: 3px solid var(--wine);
   font-size: 15px;
   line-height: 1.1;
   color: var(--ink-900);
@@ -1850,7 +1840,6 @@ em {
     color: var(--red);
   }
   .tour__label {
-    border-left-color: var(--red);
     white-space: nowrap;
     color: var(--white);
   }
@@ -1858,34 +1847,9 @@ em {
   .tour .tour__count {
     display: none;
   }
-  /* etapas numa fileira que rola no dedo */
+  /* as etapas em pílulas ficam só no computador: no celular o texto embaixo da tela já explica */
   .tour__steps {
-    flex-direction: row;
-    margin-inline: -20px;
-    padding-inline: 20px;
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-  .tour__steps::-webkit-scrollbar {
     display: none;
-  }
-  .tour__step {
-    width: auto;
-    background: rgba(255, 255, 255, 0.08);
-    white-space: nowrap;
-    color: rgba(255, 255, 255, 0.6);
-  }
-  .tour__step:hover {
-    background: rgba(255, 255, 255, 0.14);
-    color: var(--white);
-  }
-  .tour__step[aria-pressed='true'] {
-    background: var(--white);
-    color: var(--ink-900);
-  }
-  .tour .tour__step[aria-pressed='true'] .tour__dot {
-    background: var(--red);
-    box-shadow: -8px 0 0 rgba(14, 13, 13, 0.2);
   }
   .tour__pager {
     background: rgba(255, 255, 255, 0.08);
@@ -2037,6 +2001,9 @@ em {
   margin-top: 8px;
   font-size: 13px;
 }
+.footer .footer__lead-note:empty {
+  display: none;
+}
 .footer .footer__lead-note[data-state='error'] {
   color: #ffb4b4;
 }
@@ -2086,6 +2053,17 @@ em {
     display: flex;
     flex-direction: column;
     gap: 28px;
+  }
+  /* contato, e-mail e Instagram juntos, alinhados à esquerda e na largura toda */
+  .footer__contact .footer__lead {
+    max-width: none;
+    margin-top: 10px;
+  }
+  .footer__contact + .footer__social {
+    margin-top: -8px;
+  }
+  .footer__social a {
+    margin-left: -3px;
   }
   .footer__grid > nav h4,
   .footer__social h4,

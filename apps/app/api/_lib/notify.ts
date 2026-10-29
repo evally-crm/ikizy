@@ -1,5 +1,6 @@
 import { reportError } from './monitoring.js'
-import { renderBrandEmail } from './emailLayout.js'
+import { TRIAL_DAYS } from '../../src/lib/plans.js'
+import { FONT, IMG, PINK, WINE, button, closingText, escHtml, paragraph, renderBrandEmail, renderShell } from './emailLayout.js'
 import type { SendEmail } from './reminders.js'
 
 /** e-mails avulsos para a dona: novo pedido do site (E5) e boas-vindas (E3). Nunca derrubam a ação que os disparou. */
@@ -68,19 +69,55 @@ export function renderNewRequestEmail(salonName: string, r: NewRequest, link: st
   return { subject: `Novo pedido: ${r.service}, ${when}`, ...mail }
 }
 
+/** os três primeiros passos, cada um com uma tela do sistema */
+const STEPS: { shot: string; title: string; text: string }[] = [
+  { shot: 'agenda', title: 'Arrume a agenda', text: 'Confira o horário de atendimento e ajuste os preços dos serviços.' },
+  { shot: 'site', title: 'Publique o seu site', text: 'Depois, ligue o agendamento online para as clientes pedirem horário sozinhas.' },
+  { shot: 'inicio', title: 'Siga o painel', text: 'O painel de primeiros passos, no canto da tela, mostra o que falta.' },
+]
+
 export function renderWelcomeEmail(salonName: string, link: string) {
-  const mail = renderBrandEmail({
-    title: 'Boas-vindas ao IKIZY',
-    paragraphs: [
-      `${salonName} já está no IKIZY, com 30 dias para testar tudo.`,
-      'Para começar a receber clientes: confira o horário de atendimento, ajuste os preços dos serviços e publique o seu site. Depois, ligue o agendamento online para as clientes pedirem horário sozinhas.',
-      'O painel de primeiros passos, no canto da tela, mostra o que falta.',
-    ],
-    button: 'Abrir minha agenda',
-    link,
-    footer: `Você recebeu este e-mail porque criou ${salonName} no IKIZY.`,
+  const step = (s: (typeof STEPS)[number], i: number) => `<tr><td style="padding:0 0 14px;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="#ffffff" style="background-color:#ffffff;border-radius:22px;overflow:hidden;">
+      <tr><td style="padding:0;line-height:0;font-size:0;"><img src="${IMG}/tela-${s.shot}.jpg" width="504" alt="Tela: ${escHtml(s.title)}" style="display:block;width:100%;height:auto;border:0;"></td></tr>
+      <tr><td style="padding:18px 20px 22px;font-family:${FONT};">
+        <span style="display:inline-block;padding:4px 12px;border-radius:999px;background-color:${WINE};color:#ffffff;font-size:12px;font-weight:700;letter-spacing:1px;">PASSO ${i + 1}</span>
+        <div style="padding-top:10px;font-size:24px;line-height:28px;font-weight:800;letter-spacing:-0.6px;color:${WINE};">${escHtml(s.title)}</div>
+        <div style="padding-top:6px;font-size:15px;line-height:23px;color:#0e0d0d;">${escHtml(s.text)}</div>
+      </td></tr>
+    </table>
+  </td></tr>`
+  const body = `${paragraph(`${salonName} já está no IKIZY. Falta pouco para as clientes pedirem horário sozinhas.`)}
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="${PINK}" style="margin:4px 0 26px;background-color:${PINK};border-radius:26px;">
+  <tr><td align="center" style="padding:26px 20px 28px;font-family:${FONT};">
+    <div style="font-size:12px;line-height:16px;font-weight:700;letter-spacing:3px;color:${WINE};">SEU TESTE COMEÇOU COM</div>
+    <div class="num" style="padding:6px 0 0;font-size:104px;line-height:100px;font-weight:800;letter-spacing:-5px;color:${WINE};">${TRIAL_DAYS}</div>
+    <div style="font-size:26px;line-height:30px;font-weight:800;letter-spacing:-0.6px;color:${WINE};">DIAS PARA TESTAR TUDO</div>
+    <div style="padding-top:8px;font-size:14px;line-height:20px;color:${WINE};">sem cadastrar cartão</div>
+  </td></tr>
+</table>
+<div style="padding:0 0 14px;font-size:13px;line-height:16px;font-weight:700;letter-spacing:3px;color:${PINK};">PARA COMEÇAR A RECEBER CLIENTES</div>
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">${STEPS.map(step).join('')}</table>
+<div style="padding:10px 0 0;">${button('Abrir minha agenda', link)}</div>`
+  const footer = `Você recebeu este e-mail porque criou ${salonName} no IKIZY.`
+  const html = renderShell({
+    eyebrow: 'Bem-vinda',
+    title: 'ao IKIZY',
+    preheader: `${salonName} já está no IKIZY, com ${TRIAL_DAYS} dias para testar tudo.`,
+    body,
+    footer,
   })
-  return { subject: `Boas-vindas ao IKIZY, ${salonName}`, ...mail }
+  const text = [
+    `${salonName} já está no IKIZY, com ${TRIAL_DAYS} dias para testar tudo, sem cadastrar cartão.`,
+    '',
+    'Para começar a receber clientes:',
+    ...STEPS.map((s, i) => `${i + 1}. ${s.title}: ${s.text}`),
+    '',
+    `Abrir minha agenda: ${link}`,
+    '',
+    closingText(footer),
+  ].join('\n')
+  return { subject: `Boas-vindas ao IKIZY, ${salonName}`, html, text }
 }
 
 /** manda um e-mail uma vez só (chave no `email_log`); se o envio falhar, libera a chave para uma próxima tentativa */
