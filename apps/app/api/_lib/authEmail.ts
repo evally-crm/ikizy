@@ -4,7 +4,7 @@ import { closingText, paragraph, renderShell } from './emailLayout.js'
 /**
  * E-mails de acesso (código de confirmação) no lugar do texto padrão do Neon Auth.
  * O Neon Auth chama o webhook `send.otp` em vez de mandar o e-mail; aqui a assinatura é conferida e o e-mail sai pelo Resend.
- * O desenho é o de apps/landing/email/verificar-email.html (flor servida em https://ikizy.com/email/flor.png).
+ * O desenho vem de emailLayout.ts (renderShell), igual ao dos demais e-mails do IKIZY.
  */
 
 export const FROM = 'IKIZY <nao-responda@ikizy.com>'

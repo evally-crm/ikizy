@@ -190,8 +190,7 @@ Configuração do Neon Auth (branch `production`):
 Como o e-mail sai:
 - O Neon Auth **não manda** o e-mail padrão: com o webhook `send.otp` ligado ele chama `apps/app/api/neon-auth/webhook.ts`,
   que confere a assinatura Ed25519 (JWKS do Neon) e envia o e-mail pelo Resend com a API `RESEND_API_KEY` (Vercel, Production).
-- O desenho do e-mail está em `apps/app/api/_lib/authEmail.ts` (mesmo visual de `apps/landing/email/verificar-email.html`; a flor vem de
-  `https://ikizy.com/email/flor.png`). Cobre os tipos `email-verification`, `forget-password` e `sign-in`, com texto simples junto.
+- O desenho do e-mail está em `apps/app/api/_lib/authEmail.ts`, sobre a moldura de `apps/app/api/_lib/emailLayout.ts` (a mesma de todos os e-mails: fundo preto, coelho ao lado do título, rodapé com logo e Instagram). As imagens ficam em `apps/landing/public/email/` (geradas por `apps/landing/scripts/email-arte.ts`). Cobre os tipos `email-verification`, `forget-password` e `sign-in`, com texto simples junto.
 - **Cuidado:** não marque `user.before_create` no webhook. É um evento que bloqueia o cadastro e o endpoint não responde `allowed`.
 - Para voltar ao e-mail padrão do Neon (em inglês), desligue o toggle "Enable Webhooks" no console (Auth → Configuration).
 
