@@ -25,7 +25,7 @@ export const PLANS: LandingPlan[] = [
   {
     id: 'solo',
     name: 'Solo',
-    cents: 990,
+    cents: 1990,
     hot: false,
     cta: 'Começar com o Solo',
     line: 'Para quem atende sozinha',
@@ -34,7 +34,7 @@ export const PLANS: LandingPlan[] = [
   {
     id: 'studio',
     name: 'Studio',
-    cents: 2990,
+    cents: 4990,
     hot: true,
     cta: 'Começar com o Studio',
     line: 'Equipe pequena, com comissões',
@@ -43,7 +43,7 @@ export const PLANS: LandingPlan[] = [
   {
     id: 'salao',
     name: 'Salão',
-    cents: 5990,
+    cents: 9990,
     hot: false,
     cta: 'Começar com o Salão',
     line: 'Equipe maior, sem limite',

@@ -25,7 +25,7 @@ export const PLANS: Record<PlanId, PlanInfo> = {
   solo: {
     id: 'solo',
     name: 'Solo',
-    cents: 990,
+    cents: 1990,
     audience: 'Para quem atende sozinha',
     features: ['Agenda e clientes', 'Caixa e fechamento do mês', 'Site com agendamento online'],
     trialDays: TRIAL_DAYS,
@@ -33,7 +33,7 @@ export const PLANS: Record<PlanId, PlanInfo> = {
   studio: {
     id: 'studio',
     name: 'Studio',
-    cents: 2990,
+    cents: 4990,
     audience: 'Equipe pequena',
     features: ['Tudo do Solo', 'Até 3 profissionais na agenda', 'Até 3 acessos com login', 'Comissões por profissional'],
     trialDays: TRIAL_DAYS,
@@ -41,7 +41,7 @@ export const PLANS: Record<PlanId, PlanInfo> = {
   salao: {
     id: 'salao',
     name: 'Salão',
-    cents: 5990,
+    cents: 9990,
     audience: 'Equipe maior',
     features: ['Tudo do Studio', 'Profissionais e acessos sem limite', 'Perfis de gerente e recepção'],
     trialDays: TRIAL_DAYS,

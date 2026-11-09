@@ -118,7 +118,7 @@ describe('createCheckout', () => {
     assert.equal(s.mode, 'payment')
     assert.deepEqual(s.allowed_payment_method_types, ['pix'])
     assert.equal(s.line_items[0].price_data.currency, 'brl')
-    assert.equal(s.line_items[0].price_data.unit_amount, 7625) // 3 meses com 15% de desconto
+    assert.equal(s.line_items[0].price_data.unit_amount, 12725) // 3 meses com 15% de desconto
     assert.deepEqual(s.metadata, { kind: 'pix_prepaid', salon_id: 'salon-1', plan: 'studio', months: '3' })
     assert.equal(s.customer, 'cus_new_1')
     assert.deepEqual(calls.setCustomerId, ['cus_new_1'])
@@ -530,17 +530,17 @@ describe('accessState', () => {
     assert.equal(describeSubscription(info({ accessUntil: new Date(NOW.getTime() - 1000) }), NOW), 'Solo · acesso encerrado')
   })
   it('preços em centavos', () => {
-    assert.equal(pixAmountCents('salao', 1), 5990)
+    assert.equal(pixAmountCents('salao', 1), 9990)
   })
   it('Pix de 3 meses tem 15% de desconto, sempre em centavos inteiros', () => {
-    assert.equal(pixFullCents('studio', 3), 8970)
-    assert.equal(pixAmountCents('solo', 3), 2525)
-    assert.equal(pixAmountCents('studio', 3), 7625)
-    assert.equal(pixAmountCents('salao', 3), 15275)
+    assert.equal(pixFullCents('studio', 3), 14970)
+    assert.equal(pixAmountCents('solo', 3), 5075)
+    assert.equal(pixAmountCents('studio', 3), 12725)
+    assert.equal(pixAmountCents('salao', 3), 25475)
   })
   it('Pix de 1 e 3 meses: valor cheio e com 15% de desconto, sempre em centavos inteiros', () => {
-    assert.equal(pixFullCents('solo', 3), 2970)
-    assert.equal(pixAmountCents('solo', 1), 990)
+    assert.equal(pixFullCents('solo', 3), 5970)
+    assert.equal(pixAmountCents('solo', 1), 1990)
     for (const p of ['solo', 'studio', 'salao'] as const) {
       for (const m of PIX_MONTHS) assert.ok(Number.isInteger(pixAmountCents(p, m)))
     }
