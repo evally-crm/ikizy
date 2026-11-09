@@ -54,7 +54,7 @@ Em produção, o envio de e-mails (verificação e recuperação de senha) exige
 
 ## Cobrança (Stripe)
 
-Planos: **Solo R$ 9,90**, **Studio R$ 29,90** e **Salão R$ 59,90** por mês (valores em `apps/app/src/lib/plans.ts`, a única fonte).
+Planos: **Solo R$ 19,90**, **Studio R$ 49,90** e **Salão R$ 99,90** por mês (valores em `apps/app/src/lib/plans.ts`, a única fonte).
 
 - **Teste:** 30 dias grátis em qualquer plano. Todo salão novo já nasce com o teste (`create_salon()` cria a linha em `subscriptions`).
 - **Cadastro:** e-mail e senha (ou Google) > questionário (`/cadastro/salao`) > plano (`/cadastro/plano`) > dashboard. No passo de plano a dona escolhe o plano e como pagar no fim do teste: cartão (Checkout do Stripe com `trial_end` no fim do teste; nada é cobrado antes) ou Pix (sem cartão, grava com `choose_trial_plan()`). `subscriptions.plan_chosen_at` marca que ela passou por esse passo; sem ele, o dashboard manda de volta para a escolha. O dashboard mostra a contagem dos dias grátis.

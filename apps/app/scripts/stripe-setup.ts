@@ -9,7 +9,7 @@
  * portal do cliente (trocar cartão, faturas, cancelar; mudar de plano é pelo app). A chave nunca é gravada em arquivo.
  */
 import Stripe from 'stripe'
-import { PLAN_IDS, PLANS, priceLookupKey } from '../src/lib/plans.js'
+import { PLAN_IDS, PLANS, priceLookupKey, type PlanId } from '../src/lib/plans.js'
 
 const args = process.argv.slice(2)
 const dryRun = args.includes('--dry-run')
@@ -23,6 +23,15 @@ const WEBHOOK_EVENTS = [
   'customer.subscription.updated',
   'customer.subscription.deleted',
 ] as const satisfies Stripe.WebhookEndpointCreateParams.EnabledEvent[]
+
+/** texto do produto no Checkout, nas faturas e no portal; só cita o que o sistema já faz */
+const PRODUCT_DESCRIPTIONS: Record<PlanId, string> = {
+  solo: 'Sistema de gestão para quem atende sozinha: agenda, clientes, caixa com fechamento do mês e site com agendamento online. Assinatura mensal, 30 dias grátis, cancele quando quiser.',
+  studio:
+    'Sistema de gestão para equipes pequenas: tudo do Solo, mais até 3 profissionais na agenda, 3 acessos com login e comissões por profissional. Assinatura mensal, 30 dias grátis, cancele quando quiser.',
+  salao:
+    'Sistema de gestão para salões com equipe maior: tudo do Studio, mais profissionais e acessos sem limite e perfis de gerente e recepção. Assinatura mensal, 30 dias grátis, cancele quando quiser.',
+}
 
 const brl = (cents: number) => `R$ ${(cents / 100).toFixed(2).replace('.', ',')}`
 
@@ -50,6 +59,12 @@ async function main() {
     const found = await stripe.prices.list({ lookup_keys: [lookup], active: true, limit: 1, expand: ['data.product'] })
     const existing = found.data[0]
 
+    // produto já existente com outro texto: atualiza (a descrição pode mudar, o preço não)
+    if (existing && typeof existing.product !== 'string' && !('deleted' in existing.product) && existing.product.description !== PRODUCT_DESCRIPTIONS[id]) {
+      await stripe.products.update(existing.product.id, { description: PRODUCT_DESCRIPTIONS[id] })
+      console.log(`~ ${plan.name}: descrição do produto atualizada`)
+    }
+
     if (existing && existing.unit_amount === plan.cents && existing.currency === 'brl') {
       console.log(`✓ ${plan.name}: preço ${existing.id} já existe (${brl(plan.cents)}/mês)`)
       continue
@@ -60,7 +75,7 @@ async function main() {
       ? typeof existing.product === 'string'
         ? existing.product
         : existing.product.id
-      : (await stripe.products.create({ name: `IKIZY ${plan.name}`, description: plan.audience, metadata: { plan: id } })).id
+      : (await stripe.products.create({ name: `IKIZY ${plan.name}`, description: PRODUCT_DESCRIPTIONS[id], metadata: { plan: id } })).id
     const price = await stripe.prices.create({
       product,
       currency: 'brl',

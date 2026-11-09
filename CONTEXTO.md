@@ -25,7 +25,7 @@ Módulos do sistema (`app.ikizy.com/dashboard`):
 | Meu site | editor do site público do negócio (detalhado na seção 5) |
 | Assinatura | plano do IKIZY (Stripe: cartão e Pix) |
 
-Planos do IKIZY: Solo R$ 9,90, Studio R$ 29,90, Salão R$ 59,90 (fonte única: `apps/app/src/lib/plans.ts`). Todo salão novo ganha 30 dias de teste em qualquer plano; no cadastro a dona escolhe o plano e se paga no cartão (débito automático no fim do teste) ou por Pix.
+Planos do IKIZY: Solo R$ 19,90, Studio R$ 49,90, Salão R$ 99,90 (fonte única: `apps/app/src/lib/plans.ts`). Todo salão novo ganha 30 dias de teste em qualquer plano; no cadastro a dona escolhe o plano e se paga no cartão (débito automático no fim do teste) ou por Pix.
 
 ---
 
@@ -316,6 +316,7 @@ Hoje: a cliente escolhe serviço, profissional, dia e horário livre, informa no
 |---|---|---|
 | P1 | **Planos por assinatura com cobrança de verdade** | Hoje os planos aparecem no site e a cobrança é por WhatsApp. Próximo passo: assinatura da cliente (cartão recorrente ou Pix mensal), controle de uso ("2 de 2 manutenções no mês") e aviso de vencimento. |
 | ~~P2~~ | **Mensagens prontas no WhatsApp** (feito) | Sem disparo automático, por decisão da usuária: o texto abre no WhatsApp da própria pessoa (wa.me). Tipos em `lib/messages.ts`; card "Mensagens de hoje" no Início (lembretes, pós, faltas, aniversário, prêmio, sumidas), botão Mensagem na agenda e na ficha. O "já enviei" fica só no navegador. Disparo automático (Meta oficial, Z-API ou Evolution) ficou para depois. |
+| P3 | **Envio automático no WhatsApp (Evolution API)** | Adiado até a receita pagar a hospedagem (VPS de ~R$ 20/mês; a Oracle Always Free serve para testar). Cada salão conecta a própria instância por QR code em Configurações; lembrete, pós-atendimento, aniversário e falta saem sozinhos, com `wa.me` como alternativa se a instância cair. Só mensagens transacionais para clientes (a Evolution não é oficial: há risco de bloqueio do número), com limite diário e intervalo entre envios. Recurso opcional, talvez só nos planos Studio e Salão. Alternativa oficial: API da Meta (paga por conversa). |
 | P2 | **Aniversariantes** | Lista do mês com mensagem pronta e cupom. |
 | ~~P2~~ | **Fidelidade** (feito) | Cartão de selos configurável por salão (selos por prêmio e prêmio), selo extra, resgate e desfazer. Próximo: cashback. |
 | P3 | **Venda de produtos com estoque** | A vitrine existe; somar estoque, baixa na venda e alerta de reposição. |
