@@ -21,7 +21,7 @@ export function ShowcaseEditor({
   return (
     <div className="catalog">
       <p className="catalog__intro">
-        Produtos que você vende (óleos, cremes, kits). Aparecem na sua página com foto, preço e um botão para a cliente pedir pelo WhatsApp.
+        Aparecem com foto, preço e um botão para a cliente pedir pelo WhatsApp.
       </p>
       {items.length === 0 && <p className="catalog__empty">Nenhum produto ainda. Comece adicionando o primeiro.</p>}
       <ul className="rows">

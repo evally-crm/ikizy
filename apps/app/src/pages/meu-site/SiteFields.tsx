@@ -1,7 +1,10 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import type { SiteConfig } from '../../data/catalog'
-import { cleanSlug, depositPercent, noticeHours, windowDays } from '../../domain/site'
+import { aboutIdeas, cleanSlug, noticeHours, taglineIdeas, windowDays } from '../../domain/site'
 import { SITE_DOMAIN } from '../../lib/slug'
+import { dash } from '../../lib/routes'
+import OnlineBookingChecklist from '../../components/OnlineBookingChecklist'
 import { Field } from '../../components/ui'
 import { Switch } from '../../components/controls'
 import { Group, SettingRow } from './Group'
@@ -33,8 +36,22 @@ function WholeInput({ id, value, min, max, toValue, onChange }: { id: string; va
   )
 }
 
+/** textos prontos para tocar e usar (o campo continua editável) */
+function Ideas({ ideas, current, onPick }: { ideas: string[]; current: string; onPick: (text: string) => void }) {
+  return (
+    <div className="ideas" role="group" aria-label="Textos prontos">
+      <span className="ideas__label">Prontos para usar</span>
+      {ideas.map((t) => (
+        <button key={t} type="button" className="ideas__item" aria-pressed={current === t} onClick={() => onPick(t)}>
+          {t}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 /** nome, frase de destaque e texto "sobre" */
-export function TextFields({ site, setSite }: { site: SiteConfig; setSite: SetSite }) {
+export function TextFields({ site, setSite, categories = [] }: { site: SiteConfig; setSite: SetSite; categories?: string[] }) {
   return (
     <Group title="Textos da página">
       <Field label="Nome do salão">
@@ -51,6 +68,7 @@ export function TextFields({ site, setSite }: { site: SiteConfig; setSite: SetSi
           </span>
         )}
       </Field>
+      <Ideas ideas={taglineIdeas(categories)} current={site.tagline} onPick={(t) => setSite('tagline', t)} />
       <Field label="Sobre o salão">
         {(id) => (
           <span className="input input--area">
@@ -58,11 +76,12 @@ export function TextFields({ site, setSite }: { site: SiteConfig; setSite: SetSi
           </span>
         )}
       </Field>
+      <Ideas ideas={aboutIdeas(site.salonName, categories)} current={site.about} onPick={(t) => setSite('about', t)} />
     </Group>
   )
 }
 
-/** endereço da página, WhatsApp, Instagram, endereço do salão e horário */
+/** endereço da página, WhatsApp, Instagram e endereço do salão; o horário vem da agenda (um lugar só para mudar) */
 export function ContactFields({ site, setSite, slugReserved }: { site: SiteConfig; setSite: SetSite; slugReserved: boolean }) {
   return (
     <>
@@ -103,31 +122,25 @@ export function ContactFields({ site, setSite, slugReserved }: { site: SiteConfi
             </span>
           )}
         </Field>
-        <Field label="Horário de atendimento">
-          {(id) => (
-            <span className="input">
-              <input id={id} value={site.hours} maxLength={50} onChange={(e) => setSite('hours', e.target.value)} />
-            </span>
-          )}
-        </Field>
+        <SettingRow label="Horário de atendimento" hint={site.hours || 'Ainda sem horário definido'}>
+          <Link className="textlink" to={dash('/negocio#horario')}>
+            Mudar na agenda
+          </Link>
+        </SettingRow>
       </Group>
     </>
   )
 }
 
-/** o que aparece na página: preços, equipe, agendamento online e sinal */
-export function ShowFields({ site, setSite }: { site: SiteConfig; setSite: SetSite }) {
+/** agendamento online (regras e o que falta para abrir) e o que a página mostra */
+export function BookingFields({ site, setSite }: { site: SiteConfig; setSite: SetSite }) {
   return (
     <>
-      <Group title="Na página">
-        <Switch checked={site.showPrices} onChange={(v) => setSite('showPrices', v)} label="Mostrar preços" hint="Desligado, a cliente pede o valor no WhatsApp." />
-        <Switch checked={site.showTeam} onChange={(v) => setSite('showTeam', v)} label="Mostrar a equipe" />
-      </Group>
       <Group title="Agendamento online">
         <Switch
           checked={site.onlineBooking}
           onChange={(v) => setSite('onlineBooking', v)}
-          label="Aceitar agendamentos"
+          label="Aceitar agendamentos pelo site"
           hint="A cliente escolhe serviço, dia e horário livre. O pedido cai na agenda como pendente."
         />
         {site.onlineBooking && (
@@ -144,17 +157,15 @@ export function ShowFields({ site, setSite }: { site: SiteConfig; setSite: SetSi
                 <span aria-hidden="true">dias</span>
               </span>
             </SettingRow>
-            <p className="srow__note">Só aparecem horários dentro do expediente de cada profissional (Agenda › Horário de atendimento).</p>
           </>
         )}
       </Group>
-      <Group title="Sinal">
-        <SettingRow label="Sinal para confirmar" hint="Cobrado via Pix no agendamento online. 0 para não cobrar." htmlFor="site-deposit">
-          <span className="input input--suffix input--mini">
-            <WholeInput id="site-deposit" min={0} max={100} value={site.depositPercent} toValue={depositPercent} onChange={(v) => setSite('depositPercent', v)} />
-            <span aria-hidden="true">%</span>
-          </span>
-        </SettingRow>
+      <Group title="Antes de abrir a agenda">
+        <OnlineBookingChecklist bare whatsapp={site.whatsapp} online={site.onlineBooking} />
+      </Group>
+      <Group title="Na página">
+        <Switch checked={site.showPrices} onChange={(v) => setSite('showPrices', v)} label="Mostrar preços" hint="Desligado, a cliente pede o valor no WhatsApp." />
+        <Switch checked={site.showTeam} onChange={(v) => setSite('showTeam', v)} label="Mostrar a equipe" />
       </Group>
     </>
   )

@@ -36,10 +36,49 @@
   color: var(--ink-500);
 }
 
+/* computador: a prévia é um celular estreito; o editor fica com o resto */
 @media (min-width: 1100px) {
   .studio {
+      grid-template-columns: minmax(0, 1fr) 400px;
+    }
+  /* prévia no tamanho de computador: precisa de mais largura para ser lida */
+  .studio--widepreview {
       grid-template-columns: minmax(0, 7fr) minmax(340px, 5fr);
     }
+  /* prévia escondida: só uma faixa fina para trazer de volta */
+  .studio--nopreview {
+      grid-template-columns: minmax(0, 1fr) 52px;
+    }
+}
+
+.studio__peek {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg, 24px);
+  background: var(--bg);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-700);
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.studio__peek span {
+  writing-mode: vertical-rl;
+}
+
+.studio__peek:hover {
+  background: var(--brand-900);
+  color: var(--on-solid);
+}
+
+.studio__preview > .devtoggle {
+  align-self: center;
 }
 
 @media (min-width: 1100px) and (min-height: 700px) {
@@ -166,126 +205,118 @@
   outline-offset: 2px;
 }
 
-/* estilo da capa: miniaturas com as cores da paleta (--bg e --accent vêm do estilo inline) */
+/* capa: lisa, seis texturas e a foto própria; as texturas vêm desenhadas em estilo inline com as cores da paleta */
 .coverpick {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
 }
 
 .coverpick__opt {
-  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 8px 8px 10px;
-  border-radius: 18px;
+  gap: 6px;
+  padding: 6px 6px 8px;
+  border: 0;
+  border-radius: 16px;
   /* fundo neutro: o --bg herdado é o fundo da paleta e deixava os cartões rosados */
   background: var(--page-bg);
+  font: inherit;
+  text-align: left;
   cursor: pointer;
-  transition: background-color 0.15s, box-shadow 0.15s;
-}
-
-.coverpick__opt input {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  cursor: pointer;
+  transition: background-color 0.15s;
 }
 
 .coverpick__opt strong {
-  margin-top: 6px;
   padding: 0 4px;
   font-size: 13px;
   font-weight: 500;
   color: var(--ink-900);
 }
 
-.coverpick__opt small {
-  padding: 0 4px;
-  font-size: 12px;
-  line-height: 1.3;
-  color: var(--ink-500);
-}
-
-/* escolhido: como o item aberto do trilho, branco com sombra leve, e um certo no canto da miniatura */
-.coverpick__opt:has(input:checked) {
+.coverpick__opt[aria-checked="true"] {
   background: var(--white);
-  box-shadow: inset 0 0 0 1px var(--line), var(--shadow-sm);
+  box-shadow: inset 0 0 0 1.5px var(--ink-900);
 }
 
-.coverpick__opt:has(input:checked) strong {
+.coverpick__opt[aria-checked="true"] strong {
   font-weight: 600;
 }
 
-.coverpick__check {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  display: grid;
-  place-items: center;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: var(--white);
-  color: var(--ink-900);
-  box-shadow: var(--shadow-sm);
-  opacity: 0;
-  transition: opacity 0.15s;
-}
-
-.coverpick__opt:has(input:checked) .coverpick__check {
-  opacity: 1;
-}
-
-.coverpick__opt:has(input:focus-visible) {
+.coverpick__opt:focus-visible {
   outline: 2px solid var(--brand-500);
   outline-offset: 2px;
 }
 
 .coverpick__tile {
   position: relative;
-  display: block;
-  height: 64px;
-  border-radius: 12px;
-  background: var(--accent);
+  display: grid;
+  place-items: center;
+  height: 56px;
+  overflow: hidden;
+  border-radius: 11px;
+  box-shadow: inset 0 0 0 1px var(--line);
+  color: var(--ink-500);
 }
 
 .coverpick__tile--sobrio {
   background:
-    radial-gradient(90% 80% at 88% 8%, color-mix(in srgb, var(--accent) 55%, white) 0%, transparent 60%),
-    radial-gradient(70% 70% at 0% 100%, color-mix(in srgb, var(--accent) 70%, black) 0%, transparent 70%),
-    var(--accent);
+    radial-gradient(45% 75% at 18% 35%, color-mix(in srgb, var(--accent) 55%, transparent) 0%, transparent 70%),
+    radial-gradient(45% 80% at 92% 55%, color-mix(in srgb, var(--accent) 70%, white) 0%, transparent 70%),
+    color-mix(in srgb, var(--accent) 22%, white);
 }
 
-.coverpick__tile--poa {
-  background:
-    radial-gradient(circle, color-mix(in srgb, var(--accent) 45%, transparent) 1.5px, transparent 2px) 0 0 / 12px 12px,
-    white;
-  box-shadow: inset 0 0 0 1px var(--line);
+.coverpick__tile--foto {
+  background: var(--white);
+  border: 1.5px dashed var(--line);
+  box-shadow: none;
 }
 
-.coverpick__tile--xadrez {
-  background:
-    linear-gradient(90deg, color-mix(in srgb, var(--accent) 30%, transparent) 50%, transparent 50%) 0 0 / 20px 20px,
-    linear-gradient(color-mix(in srgb, var(--accent) 30%, transparent) 50%, transparent 50%) 0 0 / 20px 20px,
-    white;
-  box-shadow: inset 0 0 0 1px var(--line);
+.coverpick__tile img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
-.coverpick__tile--editorial {
-  background:
-    radial-gradient(70% 90% at 100% 0%, color-mix(in srgb, white 20%, transparent) 0%, transparent 60%),
-    black;
+.coverpick__check {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--ink-900);
+  color: var(--white);
+  opacity: 0;
+  transition: opacity 0.15s;
 }
 
-.coverpick__tile--organico {
-  border-radius: 20px 20px 36px 20px;
-  background:
-    radial-gradient(60% 70% at 88% 6%, color-mix(in srgb, var(--accent) 38%, transparent) 0%, transparent 70%),
-    radial-gradient(55% 60% at 4% 100%, color-mix(in srgb, var(--accent) 26%, transparent) 0%, transparent 72%),
-    white;
-  box-shadow: inset 0 0 0 1px var(--line);
+.coverpick__opt[aria-checked="true"] .coverpick__check {
+  opacity: 1;
+}
+
+.coverpick__remove {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  margin-top: 10px;
+  padding: 6px 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  color: var(--ink-500);
+  cursor: pointer;
+}
+
+.coverpick__remove:hover {
+  color: var(--ink-900);
 }
 
 /* catálogo (serviços e produtos) */
@@ -302,6 +333,160 @@
 
 .catalog__add {
   align-self: flex-start;
+}
+
+.catalog__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+}
+
+.catalog__head .catalog__intro {
+  flex: 1 1 220px;
+  margin: 0;
+}
+
+/* serviços prontos: chips de área e uma lista de "+ nome" */
+.sugg {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 20px;
+  background: var(--bg);
+}
+
+.sugg__head h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink-900);
+}
+
+.sugg__head p {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--ink-500);
+}
+
+.sugg__areas .chip {
+  min-height: 36px;
+  padding: 0 14px;
+}
+
+.sugg__more {
+  color: var(--ink-500);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.sugg__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sugg__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 14px 0 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--white);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-900);
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.sugg__item small {
+  font-weight: 400;
+  color: var(--ink-500);
+}
+
+.sugg__item:hover:not(:disabled) {
+  border-color: var(--brand-900);
+  background: var(--brand-900);
+  color: var(--on-solid);
+}
+
+.sugg__item:hover:not(:disabled) small {
+  color: inherit;
+  opacity: 0.75;
+}
+
+.sugg__item--more {
+  padding: 0 14px;
+  border-style: dashed;
+  background: transparent;
+  color: var(--ink-500);
+}
+
+.sugg__item:disabled {
+  opacity: 0.5;
+  cursor: progress;
+}
+
+.sugg__all {
+  align-self: flex-start;
+}
+
+.sugg__empty {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-500);
+}
+
+/* serviço: o nome abre a edição; o preço se digita na linha */
+.row__label--btn {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.row__label--btn:hover strong {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.row__label--btn small {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+
+.row__label--btn .badge {
+  padding: 1px 8px;
+  font-size: 11px;
+}
+
+.row__price {
+  flex: none;
+  width: 112px;
+}
+
+/* celular: foto e nome numa linha, preço e "No site" embaixo */
+@media (max-width: 479px) {
+  .row__top > .row__label--btn {
+      flex: 1 1 calc(100% - 70px);
+    }
+  .row__price {
+      flex: 1;
+      width: auto;
+    }
 }
 
 .rows {
@@ -607,6 +792,95 @@
 
 .logofield .chevbtn {
   margin-left: auto;
+}
+
+.logofield__thumb--round {
+  border-radius: 50%;
+}
+
+/* tipo de perfil: dois cartões com um desenho do topo do site */
+.profilepick {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.profilepick__opt {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--white);
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.profilepick__opt input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.profilepick__opt strong {
+  margin-top: 8px;
+  padding: 0 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-900);
+}
+
+.profilepick__opt small {
+  padding: 0 4px;
+  font-size: 12px;
+  line-height: 1.3;
+  color: var(--ink-500);
+}
+
+.profilepick__opt:has(input:checked) {
+  border-color: var(--ink-900);
+  outline: 1px solid var(--ink-900);
+}
+
+.profilepick__opt:has(input:focus-visible) {
+  outline: 2px solid var(--brand-500);
+  outline-offset: 2px;
+}
+
+.profilepick__check {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--ink-900);
+  color: var(--white);
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.profilepick__opt:has(input:checked) .profilepick__check {
+  opacity: 1;
+}
+
+.profilepick__icon {
+  display: grid;
+  place-items: center;
+  height: 64px;
+  border-radius: 12px;
+  background: var(--bg);
+  color: var(--ink-700);
+}
+
+.profilepick__opt:has(input:checked) .profilepick__icon {
+  background: var(--brand-900);
+  color: var(--on-solid);
 }
 
 .swatch--font {
@@ -1182,5 +1456,106 @@ button.sitelink {
 @media (min-width: 1100px) {
   .sdock {
     display: none;
+  }
+}
+
+/* textos prontos embaixo dos campos */
+.ideas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: -4px;
+}
+
+.ideas__label {
+  flex-basis: 100%;
+  font-size: 12px;
+  color: var(--ink-500);
+}
+
+.ideas__item {
+  max-width: 100%;
+  padding: 8px 12px;
+  border: 1px dashed var(--line-strong, var(--line));
+  border-radius: 14px;
+  background: var(--white);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--ink-700);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.ideas__item:hover {
+  border-color: var(--brand-900);
+  color: var(--ink-900);
+}
+
+.ideas__item[aria-pressed='true'] {
+  border-style: solid;
+  border-color: var(--brand-900);
+  color: var(--ink-900);
+}
+
+/* marca de pendência no menu: bolinha = falta preencher, certo verde-escuro = pronto */
+.rail__btn {
+  position: relative;
+}
+
+.rail__mark {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--warning);
+}
+
+.rail__mark.is-done {
+  display: none;
+}
+
+/* placar ao lado de Publicar */
+.readiness {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: var(--radius-pill);
+  background: var(--warning-soft);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--warning);
+  white-space: nowrap;
+}
+
+/* a área que rola é o próprio .parts: de cima para baixo (com column-reverse o topo ficava fora do alcance) e o menu
+   preso no alto no celular */
+.studio__body.parts {
+  display: flex;
+  flex-direction: column;
+}
+
+.studio__body.parts > .rail {
+  order: -1;
+}
+
+@media (max-width: 639px) {
+  .studio__body.parts > .rail {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+}
+
+@media (min-width: 640px) {
+  .studio__body.parts {
+    flex-direction: row;
+  }
+  .studio__body.parts > .rail {
+    order: 0;
   }
 }

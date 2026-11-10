@@ -606,6 +606,25 @@ export function useStudio() {
 
   const discard = useCallback(() => setDraft(published), [published])
 
+  /**
+   * serviço já gravado no banco (criado ou alterado pelo próprio editor): entra igual na versão publicada e no
+   * rascunho, para não contar como alteração pendente. Foto e "No site" de um serviço que já existia continuam do rascunho.
+   */
+  const syncService = useCallback((saved: Omit<Service, 'visible' | 'photo' | 'photoId'>) => {
+    const apply = (list: Service[]) =>
+      list.some((s) => s.id === saved.id)
+        ? list.map((s) => (s.id === saved.id ? { ...s, ...saved } : s))
+        : [...list, { ...saved, visible: true, photo: '', photoId: null }]
+    setPublished((p) => ({ ...p, services: apply(p.services) }))
+    setDraft((d) => ({ ...d, services: apply(d.services) }))
+  }, [])
+
+  /** serviço apagado no banco: sai das duas versões */
+  const dropService = useCallback((id: string) => {
+    setPublished((p) => ({ ...p, services: p.services.filter((s) => s.id !== id) }))
+    setDraft((d) => ({ ...d, services: d.services.filter((s) => s.id !== id) }))
+  }, [])
+
   // guarda o rascunho enquanto houver alteração não publicada (só depois de carregar, para não apagar o guardado)
   useEffect(() => {
     if (loading) return
@@ -625,5 +644,5 @@ export function useStudio() {
     return () => window.removeEventListener('beforeunload', onBefore)
   }, [dirty])
 
-  return { draft, setDraft, dirty, publish, discard, loading, error, isLive, publishedSlug: published.site.slug }
+  return { draft, setDraft, dirty, publish, discard, syncService, dropService, loading, error, isLive, publishedSlug: published.site.slug }
 }

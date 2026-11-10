@@ -61,7 +61,7 @@ export default function OnlineBookingChecklist({ whatsapp, online, bare = false 
     {
       id: 'whatsapp',
       title: 'WhatsApp do salão',
-      detail: whatsapp.trim() ? 'É por ele que o cliente fala com você e você responde aos pedidos.' : 'Preencha o WhatsApp aqui na aba Página.',
+      detail: whatsapp.trim() ? 'É por ele que o cliente fala com você e você responde aos pedidos.' : 'Preencha o WhatsApp em Contato.',
       state: whatsapp.trim() ? 'ok' : 'todo',
     },
     {
@@ -69,7 +69,7 @@ export default function OnlineBookingChecklist({ whatsapp, online, bare = false 
       title: 'Aceitar agendamentos online',
       detail: online
         ? 'Ligado: a cliente já pode pedir horário pela sua página.'
-        : 'Ligue em "O que mostrar", mais abaixo, para a cliente poder pedir horário.',
+        : 'Ligue "Aceitar agendamentos pelo site", aqui em cima.',
       state: online ? 'ok' : 'todo',
     },
   ]

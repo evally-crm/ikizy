@@ -69,7 +69,7 @@ describe('renderSitePage', () => {
   it('traz nome, destaque em itálico, serviços, plano com etiqueta Novidade e equipe', () => {
     const html = page(base())
     assert.match(html, /<title>Studio Maria Beauty · Cuidado de verdade, do esmalte ao olhar<\/title>/)
-    assert.match(html, /<h1>Cuidado de verdade, do esmalte ao <em>olhar<\/em><\/h1>/)
+    assert.match(html, /<h1 class="is-long">Studio Maria Beauty<\/h1>/)
     assert.match(html, /Alongamento em gel/)
     assert.match(html, /<span class="tag">Novidade<\/span>/)
     assert.match(html, /Alongamento por assinatura/)
@@ -240,7 +240,7 @@ describe('renderSitePage', () => {
     ]
     const html = page(site)
     assert.match(html, /id="produtos"/)
-    assert.match(html, /<a href="#produtos">Produtos<\/a>/)
+    assert.match(html, /<a class="tile" href="#produtos">[\s\S]*?Produtos<\/a>/)
     assert.match(html, new RegExp(`<img class="item__img" src="/api/photo\\?id=${PHOTO}" alt="Óleo de cutícula"`))
     assert.match(html, /R\$\s35,50/)
     assert.match(html, /Tenho%20interesse%20no%20produto%20%22%C3%93leo%20de%20cut%C3%ADcula%22/)
@@ -280,29 +280,106 @@ describe('renderSitePage', () => {
   })
 })
 
-describe('estilo da capa', () => {
-  const hero = (html: string) => html.match(/<section class="panel hero[^"]*"/)?.[0] ?? ''
+describe('topo em link na bio', () => {
+  it('atalhos só para as seções que o negócio tem', () => {
+    const tiles = page(base()).match(/<nav class="tiles"[\s\S]*?<\/nav>/)?.[0] ?? ''
+    assert.ok(tiles.includes('style="--n:3"'))
+    assert.ok(tiles.includes('href="#servicos"'))
+    assert.ok(tiles.includes('href="#planos"'))
+    assert.ok(tiles.includes('href="#equipe"'))
+    assert.ok(!tiles.includes('href="#produtos"'))
+  })
 
-  it('cada estilo vira uma classe na capa sem foto', () => {
-    for (const id of ['poa', 'xadrez', 'editorial', 'organico']) {
+  const actions = (html: string) => html.match(/<div class="card__actions">[\s\S]*?<\/div>/)?.[0] ?? ''
+
+  it('ícones Lucide em traço; mais grosso só na fonte forte', () => {
+    const tile = (font: string) => page(base({}, { font })).match(/<a class="tile" href="#servicos">([\s\S]*?)<\/a>/)?.[1] ?? ''
+    const moderna = tile('moderna')
+    assert.match(moderna, /^<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"/)
+    assert.equal(tile('elegante'), moderna)
+    assert.match(tile('forte'), /stroke-width="2.6"/)
+  })
+
+  it('cartão de perfil: nome, etiquetas das áreas e do horário e a frase', () => {
+    const html = page(base())
+    assert.match(html, /<div class="card__id"><h1 class="is-long">Studio Maria Beauty<\/h1><div class="card__tags"><span class="pill">Unhas<\/span><span class="pill">Cílios<\/span><span class="pill">Seg a Sáb · 09h às 19h<\/span><\/div>/)
+    assert.match(html, /<p class="card__text">Cuidado de verdade, do esmalte ao olhar<\/p>/)
+  })
+
+  it('com logo: cartão com a logo redonda', () => {
+    const logo = 'data:image/png;base64,iVBORw0KGgo='
+    const html = page(base({}, { logo }))
+    assert.ok(html.includes('<section class="panel bio">'))
+    assert.ok(html.includes(`<span class="card__avatar"><img src="${logo}" alt=""></span>`))
+  })
+
+  it('sem logo: perfil dividido, só com a capa e os dados ao lado', () => {
+    const html = page(base())
+    assert.ok(html.includes('<section class="panel bio bio--split">'))
+    assert.ok(!html.includes('card__avatar"'))
+  })
+
+  it('sem frase, o texto do cartão usa o sobre', () => {
+    assert.match(page(base({}, { tagline: '' })), /<p class="card__text">Um espaço pequeno e acolhedor\.<\/p>/)
+  })
+
+  it('botão de agendar e botões redondos de WhatsApp e Instagram', () => {
+    const row = actions(page(base()))
+    assert.match(row, /class="btn card__cta"[^>]*><svg[\s\S]*?<\/svg>Agendar<\/a>/)
+    assert.ok(row.includes('href="https://wa.me/5511987650000'))
+    assert.ok(row.includes('aria-label="Falar no WhatsApp"'))
+    assert.ok(row.includes('aria-label="Instagram @studiomariabeauty"'))
+  })
+
+  it('endereço numa linha que abre o mapa; sem endereço, a linha some', () => {
+    assert.match(
+      page(base({}, { address: 'Rua das Flores, 120' })),
+      /<a class="card__place" href="https:\/\/www\.google\.com\/maps\/search\/\?api=1&amp;query=[^"]+" rel="noopener"><svg[\s\S]*?<\/svg><span>Rua das Flores, 120<\/span><\/a>/,
+    )
+    assert.ok(!page(base()).includes('class="card__place"'))
+  })
+
+  it('sem barra no topo: a página abre direto na capa', () => {
+    const html = page(base())
+    assert.ok(!html.includes('<header'))
+    assert.match(html, /<main class="wrap">\n<section class="panel bio[ "]/)
+  })
+
+  it('sem nada para mostrar, não monta atalhos nem botões', () => {
+    const html = page(base({ services: [], plans: [], team: [] }, { whatsapp: '', instagram: '' }))
+    assert.ok(!html.includes('class="tiles"'))
+    assert.ok(!html.includes('class="card__actions"'))
+  })
+})
+
+describe('estilo da capa', () => {
+  const hero = (html: string) => html.match(/<div class="hero[^"]*"/)?.[0] ?? ''
+
+  it('cada textura vira uma classe na capa sem foto', () => {
+    for (const id of ['poa', 'onca', 'zebra', 'xadrez', 'listras']) {
       assert.match(hero(page(base({}, { cover_style: id }))), new RegExp('hero--' + id))
     }
   })
 
   it('sóbrio, vazio e valor desconhecido ficam sem classe de estilo', () => {
-    for (const v of ['sobrio', '', 'neon', undefined]) {
-      assert.equal(hero(page(base({}, { cover_style: v }))), '<section class="panel hero"')
+    // editorial e orgânico saíram do editor: quem tinha volta para a capa lisa
+    for (const v of ['sobrio', '', 'neon', 'editorial', 'organico', 'terrazzo', undefined]) {
+      assert.equal(hero(page(base({}, { cover_style: v }))), '<div class="hero"')
     }
   })
 
   it('a foto de capa passa na frente do estilo', () => {
     const cover = 'data:image/png;base64,iVBORw0KGgo='
-    assert.equal(hero(page(base({}, { cover_style: 'poa', cover }))), '<section class="panel hero hero--cover"')
+    assert.equal(hero(page(base({}, { cover_style: 'poa', cover }))), '<div class="hero hero--cover"')
   })
 
-  it('a folha de estilos traz os cinco estilos usando só variáveis da paleta', () => {
-    const html = page(base({}, { cover_style: 'xadrez' }))
-    for (const id of ['poa', 'xadrez', 'editorial', 'organico']) assert.ok(html.includes('.hero--' + id + ':not(.hero--cover)'))
+  it('só a textura escolhida entra na página, desenhada nas cores da paleta', () => {
+    const html = page(base({}, { cover_style: 'onca', palette: 'azul' }))
+    const rule = html.match(/\.bio>\.hero--onca\{background:[^}]+\}/)?.[0] ?? ''
+    assert.ok(rule.includes('data:image/svg+xml'))
+    assert.ok(rule.includes('%230259ba'), 'usa o azul da paleta')
+    assert.ok(!html.includes('hero--zebra'))
+    assert.ok(!page(base({}, { cover_style: 'sobrio' })).includes('data:image/svg+xml'))
   })
 })
 
@@ -311,9 +388,9 @@ describe('logo e capa na loja de fotos', () => {
     const id = '55555555-5555-4555-8555-555555555555'
     const html = page(base({}, { logo: id, cover: id }))
     assert.ok(html.includes(`<img src="/api/photo?id=${id}" alt="">`))
-    assert.ok(html.includes('class="panel hero hero--cover'))
+    assert.ok(html.includes('class="hero hero--cover'))
     const bad = page(base({}, { logo: 'javascript:alert(1)', cover: '"><script>' }))
     assert.ok(!bad.includes('javascript:alert'))
-    assert.ok(!bad.includes('class="panel hero hero--cover'))
+    assert.ok(!bad.includes('class="hero hero--cover'))
   })
 })
