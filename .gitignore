@@ -31,3 +31,6 @@ desktop.ini
 !.env.example
 supabase/.temp/
 .neon
+
+.vercel
+.env*

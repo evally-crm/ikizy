@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { createPortal } from 'react-dom'
+import { Check, X } from 'lucide-react'
 import { useOverlay } from '../hooks/useOverlay'
 import { Button } from './ui'
 
@@ -31,6 +32,37 @@ export function Modal({
       </div>
     </div>,
     document.body,
+  )
+}
+
+/** aviso de resultado (deu certo / deu errado) no lugar de uma faixa solta na página; um botão só para fechar */
+export function NoticeDialog({
+  tone,
+  title,
+  text,
+  closeLabel = 'Entendi',
+  onClose,
+}: {
+  tone: 'ok' | 'error'
+  title: string
+  text: string
+  closeLabel?: string
+  onClose: () => void
+}) {
+  const Icon = tone === 'ok' ? Check : X
+  return (
+    <Modal label={title} onClose={onClose}>
+      <div className="notice">
+        <span className={`notice__icon notice__icon--${tone}`} aria-hidden="true">
+          <Icon size={26} strokeWidth={2.4} />
+        </span>
+        <h2 className="notice__title">{title}</h2>
+        <p className="notice__text">{text}</p>
+      </div>
+      <div className="dialog__actions">
+        <Button onClick={onClose}>{closeLabel}</Button>
+      </div>
+    </Modal>
   )
 }
 
