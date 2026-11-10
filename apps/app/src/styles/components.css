@@ -909,9 +909,9 @@ button.textlink:disabled {
 /* seletores no escuro: faixa grafite e a pílula branca, sem virar uma barra branca enorme */
 :root[data-theme='dark'] .tabs {
   --tabs-track: var(--bg);
-  --tabs-pill: var(--ink-900);
+  --tabs-pill: var(--gray-300);
   --tabs-text: var(--ink-500);
-  --tabs-text-on: var(--page-bg);
+  --tabs-text-on: var(--ink-900);
 }
 
 :root[data-theme='dark'] .tabs__item:not([aria-selected='true']):hover {
