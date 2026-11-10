@@ -205,15 +205,15 @@ em{font-family:inherit;font-style:normal;color:var(--accent-ink)}
 .contact .hero__cta{margin-top:22px}
 
 .thumb{flex:none;width:52px;height:52px;border-radius:14px;object-fit:cover;background:var(--panel)}
-.shop{display:grid;gap:12px;grid-template-columns:repeat(2,minmax(0,1fr))}
+.shop{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
 @media(min-width:720px){.shop{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}}
 .item{display:flex;flex-direction:column;gap:6px;min-width:0;padding:10px 10px 16px;border-radius:24px;background:var(--soft)}
-.item__img{display:block;width:100%;aspect-ratio:1;border-radius:18px;object-fit:cover;background:var(--panel)}
+.item__img{display:block;width:100%;height:auto;aspect-ratio:1;border-radius:18px;object-fit:cover;background:var(--panel)}
 .item__ph{display:grid;place-items:center;width:100%;aspect-ratio:1;border-radius:18px;background:var(--panel);color:var(--accent-ink);font-size:42px;font-family:var(--display)}
 .item h3{padding:6px 6px 0;font-size:19px}
 .item p{margin:0;padding:0 6px;color:var(--muted);font-size:14px;line-height:1.4}
 .item .price{padding:0 6px;font-size:18px}
-.item .btn{margin:6px 6px 0;min-height:44px;font-size:14px}
+.item .btn{margin:6px 6px 0;min-height:44px;padding-inline:12px;font-size:14px;white-space:nowrap;text-align:center}
 footer{padding:18px 0 28px;text-align:center;color:var(--muted);font-size:13px}
 .float{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));z-index:30;transform:translateX(-50%);width:min(420px,calc(100% - 28px))}
 @media(min-width:720px){.float{width:auto;left:auto;right:24px;transform:none}}
@@ -362,7 +362,8 @@ export function renderSitePage(site: PublicSite, opts: { canonical: string; capt
   const talkLink = whatsappLink(s.whatsapp, `Olá! Vim pelo site do ${name}.`)
   const round = (href: string, icon: string, label: string) => `<a class="round" href="${esc(href)}" rel="noopener" aria-label="${esc(label)}">${icon}</a>`
   const rounds = [
-    talkLink ? round(talkLink, ICONS.whatsapp, 'Falar no WhatsApp') : '',
+    // sem agendamento online o botão principal já é o WhatsApp, então o redondo não repete
+    talkLink && online ? round(talkLink, ICONS.whatsapp, 'Falar no WhatsApp') : '',
     insta ? round(`https://instagram.com/${insta}`, ICONS.instagram, `Instagram @${insta}`) : '',
   ]
     .filter(Boolean)
@@ -371,8 +372,8 @@ export function renderSitePage(site: PublicSite, opts: { canonical: string; capt
   const placeHtml = address && mapLink ? `<a class="card__place" href="${esc(mapLink)}" rel="noopener">${ICONS.mapa}<span>${esc(address)}</span></a>` : ''
   const cta = online
     ? `<button type="button" class="btn card__cta" data-book="">${ICONS.agenda}Agendar</button>`
-    : bookLink
-      ? `<a class="btn card__cta" href="${esc(bookLink)}" rel="noopener">${ICONS.agenda}Agendar</a>`
+    : talkLink
+      ? `<a class="btn card__cta" href="${esc(talkLink)}" rel="noopener">${ICONS.whatsapp}Chamar no WhatsApp</a>`
       : ''
 
   const description = (about || `${name}: ${tagline}`).slice(0, 160)
@@ -468,11 +469,11 @@ export function renderSitePage(site: PublicSite, opts: { canonical: string; capt
 <footer>Página criada com <a href="https://ikizy.com">IKIZY</a></footer>${
     online
       ? '<button type="button" class="btn float is-off" data-book="">Agendar horário</button>'
-      : bookLink
-        ? `<a class="btn float is-off" href="${esc(bookLink)}" rel="noopener">Agendar pelo WhatsApp</a>`
+      : talkLink
+        ? `<a class="btn float is-off" href="${esc(talkLink)}" rel="noopener">Chamar no WhatsApp</a>`
         : ''
   }${online ? bookingWidget : ''}${
-    online || bookLink
+    online || talkLink
       ? // o botão flutuante começa escondido e só aparece quando o "Agendar" do topo sai da tela; sem o observador ele fica sempre visível
         `<script>(function(){var c=document.querySelector('.card__cta'),f=document.querySelector('.float');if(!f)return;if(!c||!('IntersectionObserver' in window)){f.classList.remove('is-off');return}new IntersectionObserver(function(e){f.classList.toggle('is-off',e[0].isIntersecting)}).observe(c)})()</script>`
       : ''

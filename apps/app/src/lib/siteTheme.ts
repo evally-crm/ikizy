@@ -149,7 +149,8 @@ export function coverPattern(id: CoverStyleId, p: Palette, scale = 1): string | 
       )
     case 'zebra':
       // listras na cor da paleta (antes eram sempre pretas)
-      return tile(500, 500, `<path fill='${a}' fill-rule='evenodd' d='${ZEBRA}'/>`, p.panel, 340)
+      // uma imagem só, cobrindo a capa inteira (sem repetir, então não aparece emenda)
+      return `${svgUrl(500, 500, `<path fill='${a}' fill-rule='evenodd' d='${ZEBRA}'/>`)} center/cover no-repeat,${p.panel}`
     default:
       return null
   }
