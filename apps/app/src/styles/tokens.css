@@ -49,6 +49,7 @@
   --success-soft: #e3f4ea;
   --warning: #9a6200;
   --warning-soft: #fbf0d9;
+  --danger-soft: #fde8ea;
 
   /* derivados */
   --line: rgba(14, 13, 13, 0.08);
@@ -127,6 +128,7 @@
   --success-soft: #15301f;
   --warning: #e8b04a;
   --warning-soft: #33280f;
+  --danger-soft: #3a1c22;
 
   --line: rgba(255, 255, 255, 0.08);
   --line-strong: rgba(255, 255, 255, 0.16);

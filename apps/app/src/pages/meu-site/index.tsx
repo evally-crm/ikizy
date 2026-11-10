@@ -336,7 +336,7 @@ export default function MeuSite() {
             <div className="studio__previewbar">
               <p className="studio__label">
                 Prévia
-                {dirty && <Tag tone="aniversario">Não publicada</Tag>}
+                {dirty && <Tag tone="aconfirmar">Não publicada</Tag>}
               </p>
               <button type="button" className="chevbtn" aria-label="Esconder prévia" title="Esconder prévia" onClick={() => togglePreview(true)}>
                 <PanelRightClose size={16} aria-hidden="true" />
