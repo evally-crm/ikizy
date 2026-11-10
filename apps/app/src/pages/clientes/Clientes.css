@@ -104,10 +104,9 @@
   color: color-mix(in srgb, var(--white) 65%, transparent);
 }
 
-/* escuro: o escolhido não vira um bloco branco (some o avatar e o selo); fica um tom acima, com a marca ao lado */
+/* escuro: o escolhido não vira um bloco branco (some o avatar e o selo); fica um tom acima */
 :root[data-theme='dark'] .clist__item.is-active {
   background: var(--gray-200);
-  box-shadow: inset 3px 0 0 var(--brand-500);
   color: var(--ink-900);
 }
 :root[data-theme='dark'] .clist__item.is-active .clist__meta {
