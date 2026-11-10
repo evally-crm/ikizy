@@ -66,7 +66,9 @@ function toIntervals(days: Record<number, Day>): { intervals: HourInterval[]; er
 
 export function WorkingHoursDialog({ onClose, notify }: { onClose: () => void; notify: (message: string) => void }) {
   const { professionals, workingHours, hoursAvailable, saveHours } = useAgenda()
-  const [proId, setProId] = useState(professionals[0]?.id ?? '')
+  // a profissional escolhida; sem escolha (ou se a lista só chegou depois de abrir a janela), vale a primeira da lista
+  const [picked, setProId] = useState('')
+  const proId = professionals.some((p) => p.id === picked) ? picked : (professionals[0]?.id ?? '')
   // rascunho por profissional: trocar de aba não perde o que foi editado
   const [drafts, setDrafts] = useState<Record<string, Record<number, Day>>>({})
   const [busy, setBusy] = useState(false)
@@ -144,6 +146,12 @@ export function WorkingHoursDialog({ onClose, notify }: { onClose: () => void; n
             </button>
           ))}
         </div>
+      )}
+
+      {!pro && (
+        <p className="dialog__error" role="alert">
+          Nenhuma profissional encontrada neste salão, então não há de quem definir o horário. Se você já tinha uma cadastrada, feche e recarregue a página; se continuar assim, cadastre a profissional na Agenda.
+        </p>
       )}
 
       {pro && (
