@@ -302,7 +302,7 @@ describe('topo em link na bio', () => {
 
   it('cartão de perfil: nome, etiquetas das áreas e do horário e a frase', () => {
     const html = page(base())
-    assert.match(html, /<div class="card__id"><h1 class="is-long">Studio Maria Beauty<\/h1><div class="card__tags"><span class="pill">Unhas<\/span><span class="pill">Cílios<\/span><span class="pill">Seg a Sáb · 09h às 19h<\/span><\/div>/)
+    assert.match(html, /<div class="card__id"><h1 class="is-long">Studio Maria Beauty<\/h1><\/div><\/div><div class="card__tags"><span class="pill">Unhas<\/span><span class="pill">Cílios<\/span><span class="pill">Seg a Sáb · 09h às 19h<\/span><\/div>/)
     assert.match(html, /<p class="card__text">Cuidado de verdade, do esmalte ao olhar<\/p>/)
   })
 
@@ -380,6 +380,12 @@ describe('estilo da capa', () => {
     assert.ok(rule.includes('%230259ba'), 'usa o azul da paleta')
     assert.ok(!html.includes('hero--zebra'))
     assert.ok(!page(base({}, { cover_style: 'sobrio' })).includes('data:image/svg+xml'))
+  })
+
+  it('a zebra acompanha a cor da paleta (rosa -> listras rosa, sem preto)', () => {
+    const rule = page(base({}, { cover_style: 'zebra', palette: 'rosa' })).match(/\.bio>\.hero--zebra\{background:[^}]+\}/)?.[0] ?? ''
+    assert.ok(rule.includes('%23e52877'), 'usa o rosa da paleta')
+    assert.ok(!rule.includes('%23290715'), 'não usa mais o preto da tinta')
   })
 })
 

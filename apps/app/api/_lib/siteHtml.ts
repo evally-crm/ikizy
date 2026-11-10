@@ -140,7 +140,7 @@ em{font-family:inherit;font-style:normal;color:var(--accent-ink)}
 .bio--split .card h1{font-size:clamp(34px,9.5vw,56px);line-height:1.02;letter-spacing:-.035em}
 @media(min-width:720px){.bio--split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;align-items:stretch}.bio--split>.hero,.bio--split>.hero--cover{min-height:500px}.bio--split .card{display:flex;flex-direction:column;justify-content:center;padding:36px 40px;border-radius:28px;background:var(--soft)}.bio--split .tiles{grid-column:1/-1;max-width:none;width:100%;margin-top:0}}
 .card h1{font-size:clamp(34px,9.6vw,48px);line-height:1;letter-spacing:-.025em;overflow-wrap:anywhere}.card h1.is-long{font-size:clamp(24px,6.6vw,36px);line-height:1.05}
-.card__tags{display:flex;gap:6px;margin-top:8px;overflow-x:auto;scrollbar-width:none}.card__tags::-webkit-scrollbar{display:none}.pill{flex:none}
+.card__tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
 .pill{padding:3px 11px;border-radius:999px;background:color-mix(in srgb,var(--accent) 14%,var(--panel));color:var(--accent-ink);font-size:12px;font-weight:500;white-space:nowrap}
 .pill:nth-child(even){background:color-mix(in srgb,var(--ink) 7%,var(--panel));color:var(--text)}
 .card__text{margin:16px 0 0;color:var(--muted);font-size:15px;line-height:1.5}
@@ -439,9 +439,9 @@ export function renderSitePage(site: PublicSite, opts: { canonical: string; capt
 <main class="wrap">
 <section class="panel bio${logo ? '' : ' bio--split'}"><div class="hero${cover ? ' hero--cover' : coverStyle ? ` hero--${coverStyle}` : ''}">${cover ? `<img class="hero__img" src="${esc(cover)}" alt="">` : ''}</div><div class="card"><div class="card__head">${
     logo ? `<span class="card__avatar"><img src="${logo}" alt=""></span>` : ''
-  }<div class="card__id"><h1${name.length > 14 ? ' class="is-long"' : ''}>${esc(name)}</h1>${
+  }<div class="card__id"><h1${name.length > 14 ? ' class="is-long"' : ''}>${esc(name)}</h1></div></div>${
     pills.length ? `<div class="card__tags">${pills.map((p) => `<span class="pill">${esc(p)}</span>`).join('')}</div>` : ''
-  }</div></div>${cardText ? `<p class="card__text">${esc(cardText)}</p>` : ''}${placeHtml}${
+  }${cardText ? `<p class="card__text">${esc(cardText)}</p>` : ''}${placeHtml}${
     cta || rounds ? `<div class="card__actions">${cta}${rounds}</div>` : ''
   }</div>${tilesHtml}</section>${
     about ? `<section class="panel about"><p class="eyebrow">Sobre nós</p><p>${esc(about)}</p></section>` : ''
