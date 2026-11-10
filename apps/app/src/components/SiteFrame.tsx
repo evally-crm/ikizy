@@ -29,12 +29,13 @@ function toPublicSite(studio: Studio, team: { name: string; role: string }[]): P
       cover_style: site.coverStyle,
       show_prices: site.showPrices,
       show_team: site.showTeam,
-      // na prévia o agendamento não roda (não há script), então não mostramos o botão da janela
-      online_booking: false,
+      // a prévia não roda script (a janela de horários não abre), mas mostra os botões como a página real: "Agendar" com o agendamento ligado
+      online_booking: site.onlineBooking,
     },
+    professionals: team.map((p, i) => ({ id: `previa-${i}`, name: p.name })),
     services: services
       .filter((s) => s.visible && s.name.trim())
-      .map((s) => ({ name: s.name, category: s.category, duration: s.duration, price: site.showPrices ? s.price : null, photo: photoUrl(s) || null })),
+      .map((s) => ({ id: s.id, name: s.name, category: s.category, duration: s.duration, price: site.showPrices ? s.price : null, photo: photoUrl(s) || null })),
     showcase: studio.showcase
       .filter((x) => x.visible && x.name.trim())
       .map((x) => ({ name: x.name, description: x.description, price: site.showPrices ? x.price : null, photo: photoUrl(x) || null })),
