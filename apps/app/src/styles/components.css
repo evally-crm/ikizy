@@ -190,64 +190,47 @@
 }
 
 /* ---------- badge ---------- */
-/* padrão único das etiquetas: sucesso (verde), alerta (âmbar), ruim (vermelho), neutro (cinza) e escuro.
+/* padrão único das etiquetas: só contorno fino e texto na cor, sem fundo nem bolinha.
+   Tons: sucesso (verde), alerta (âmbar), ruim (vermelho), neutro (cinza), escuro e marca.
    Os nomes antigos (confirmado, pendente, cancelado...) são apelidos dos mesmos tons. */
 .badge {
+  --badge: var(--ink-500);
   display: inline-flex;
   align-items: center;
   flex: none;
-  gap: 6px;
-  padding: 3px 10px;
+  padding: 2px 10px;
   border-radius: var(--radius-pill);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--badge) 45%, transparent);
+  background: transparent;
+  color: var(--badge);
   font-size: 12px;
   font-weight: 500;
-  line-height: 1.4;
+  line-height: 1.5;
   white-space: nowrap;
 }
 .badge--success,
 .badge--confirmado,
 .badge--up {
-  background: var(--success-soft);
-  color: var(--success);
+  --badge: var(--success);
 }
 .badge--warning,
 .badge--pendente {
-  background: var(--warning-soft);
-  color: var(--warning);
+  --badge: var(--warning);
 }
 .badge--danger,
 .badge--cancelado,
 .badge--faltou {
-  background: var(--danger-soft);
-  color: var(--danger);
-}
-/* bolinha na frente dos três tons de estado */
-.badge--success::before,
-.badge--confirmado::before,
-.badge--up::before,
-.badge--warning::before,
-.badge--pendente::before,
-.badge--danger::before,
-.badge--cancelado::before,
-.badge--faltou::before {
-  content: '';
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
+  --badge: var(--danger);
 }
 .badge--neutral,
 .badge--concluido {
-  background: var(--gray-200);
-  color: var(--ink-500);
+  --badge: var(--ink-500);
 }
 .badge--atendimento {
-  background: var(--brand-500);
-  color: var(--on-brand);
+  --badge: var(--brand-500);
 }
 .badge--dark {
-  background: var(--solid);
-  color: var(--on-solid);
+  --badge: var(--ink-900);
 }
 
 /* ---------- avatar ---------- */
