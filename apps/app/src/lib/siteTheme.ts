@@ -129,7 +129,6 @@ const svgUrl = (w: number, h: number, body: string) =>
  */
 export function coverPattern(id: CoverStyleId, p: Palette, scale = 1): string | null {
   const a = p.accent
-  const k = p.ink
   /** `shown`: tamanho do ladrilho na tela (as estampas vêm num quadro de 500, mas aparecem menores) */
   const tile = (w: number, h: number, body: string, base: string, shown = w) => `${svgUrl(w, h, body)} 0 0/${shown * scale}px ${(shown * h * scale) / w}px,${base}`
   switch (id) {
@@ -149,7 +148,9 @@ export function coverPattern(id: CoverStyleId, p: Palette, scale = 1): string | 
         300,
       )
     case 'zebra':
-      return tile(500, 500, `<path fill='${k}' fill-rule='evenodd' d='${ZEBRA}'/>`, p.panel, 340)
+      // listras na cor da paleta (antes eram sempre pretas)
+      // uma imagem só, cobrindo a capa inteira (sem repetir, então não aparece emenda)
+      return `${svgUrl(500, 500, `<path fill='${a}' fill-rule='evenodd' d='${ZEBRA}'/>`)} center/cover no-repeat,${p.panel}`
     default:
       return null
   }

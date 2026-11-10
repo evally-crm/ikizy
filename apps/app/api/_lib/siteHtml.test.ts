@@ -89,7 +89,8 @@ describe('renderSitePage', () => {
   it('"Quero este plano" e "Agendar" abrem o WhatsApp com mensagem pronta', () => {
     const html = page(base())
     assert.match(html, /href="https:\/\/wa\.me\/5511987650000\?text=Ol%C3%A1!%20Tenho%20interesse%20no%20plano%20%22Alongamento%20por%20assinatura%22/)
-    assert.match(html, /Agendar pelo WhatsApp/)
+    assert.match(html, /Chamar no WhatsApp/)
+    assert.doesNotMatch(html, /card__cta[^>]*>(<svg[\s\S]*?<\/svg>)?Agendar</)
     assert.match(html, /Quero este plano/)
   })
 
@@ -302,7 +303,7 @@ describe('topo em link na bio', () => {
 
   it('cartão de perfil: nome, etiquetas das áreas e do horário e a frase', () => {
     const html = page(base())
-    assert.match(html, /<div class="card__id"><h1 class="is-long">Studio Maria Beauty<\/h1><div class="card__tags"><span class="pill">Unhas<\/span><span class="pill">Cílios<\/span><span class="pill">Seg a Sáb · 09h às 19h<\/span><\/div>/)
+    assert.match(html, /<div class="card__id"><h1 class="is-long">Studio Maria Beauty<\/h1><\/div><\/div><div class="card__tags"><span class="pill">Unhas<\/span><span class="pill">Cílios<\/span><span class="pill">Seg a Sáb · 09h às 19h<\/span><\/div>/)
     assert.match(html, /<p class="card__text">Cuidado de verdade, do esmalte ao olhar<\/p>/)
   })
 
@@ -323,11 +324,11 @@ describe('topo em link na bio', () => {
     assert.match(page(base({}, { tagline: '' })), /<p class="card__text">Um espaço pequeno e acolhedor\.<\/p>/)
   })
 
-  it('botão de agendar e botões redondos de WhatsApp e Instagram', () => {
+  it('sem agendamento online o botão principal é o WhatsApp (nada de "Agendar") e sobra o Instagram redondo', () => {
     const row = actions(page(base()))
-    assert.match(row, /class="btn card__cta"[^>]*><svg[\s\S]*?<\/svg>Agendar<\/a>/)
-    assert.ok(row.includes('href="https://wa.me/5511987650000'))
-    assert.ok(row.includes('aria-label="Falar no WhatsApp"'))
+    assert.match(row, /class="btn card__cta" href="https:\/\/wa\.me\/5511987650000[^"]*" rel="noopener"><svg[\s\S]*?<\/svg>Chamar no WhatsApp<\/a>/)
+    assert.ok(!row.includes('>Agendar<'))
+    assert.ok(!row.includes('aria-label="Falar no WhatsApp"'), 'o redondo do WhatsApp não repete o botão principal')
     assert.ok(row.includes('aria-label="Instagram @studiomariabeauty"'))
   })
 
@@ -380,6 +381,13 @@ describe('estilo da capa', () => {
     assert.ok(rule.includes('%230259ba'), 'usa o azul da paleta')
     assert.ok(!html.includes('hero--zebra'))
     assert.ok(!page(base({}, { cover_style: 'sobrio' })).includes('data:image/svg+xml'))
+  })
+
+  it('a zebra acompanha a cor da paleta (rosa -> listras rosa, sem preto)', () => {
+    const rule = page(base({}, { cover_style: 'zebra', palette: 'rosa' })).match(/\.bio>\.hero--zebra\{background:[^}]+\}/)?.[0] ?? ''
+    assert.ok(rule.includes('%23e52877'), 'usa o rosa da paleta')
+    assert.ok(!rule.includes('%23290715'), 'não usa mais o preto da tinta')
+    assert.ok(rule.includes('center/cover no-repeat'), 'uma imagem só, sem repetir')
   })
 })
 
