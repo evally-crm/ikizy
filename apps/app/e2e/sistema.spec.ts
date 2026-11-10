@@ -119,8 +119,10 @@ test('cadastrar uma cliente e achar na busca', async ({ page }) => {
 test('editor do site mostra a prévia com o nome do negócio', async ({ page }) => {
   await page.goto('/dashboard/site')
   await expect(page.getByRole('heading', { name: 'Meu site' })).toBeVisible()
-  await expect(page.getByRole('tab', { name: 'Página' })).toHaveAttribute('aria-selected', 'true')
-  const preview = page.getByRole('button', { name: 'Prévia' })
+  // menu das partes: abre em Perfil
+  await expect(page.getByRole('navigation', { name: 'Partes do site' }).getByRole('button', { name: /^Perfil/ })).toHaveAttribute('aria-current', 'true')
+  // só o botão "Prévia" do celular (no computador há "Esconder prévia", que fecharia a prévia)
+  const preview = page.getByRole('button', { name: 'Prévia', exact: true })
   if (await preview.isVisible()) await preview.click()
   await expect(page.frameLocator('iframe').first().getByText('Studio Maria Beauty').first()).toBeVisible()
 })

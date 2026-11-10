@@ -84,8 +84,8 @@ describe('fontes', () => {
 })
 
 describe('estilos da capa', () => {
-  it('são cinco e só aceita os conhecidos', () => {
-    assert.equal(Object.keys(COVER_STYLES).length, 5)
-    assert.ok(isCoverStyleId('poa') && !isCoverStyleId('foto') && !isCoverStyleId(undefined))
+  it('lisa e cinco texturas; só aceita os conhecidos', () => {
+    assert.equal(Object.keys(COVER_STYLES).length, 6)
+    assert.ok(isCoverStyleId('onca') && !isCoverStyleId('editorial') && !isCoverStyleId('foto') && !isCoverStyleId(undefined))
   })
 })

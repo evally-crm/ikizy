@@ -131,11 +131,11 @@ export function useBusiness() {
     [live, salonId],
   )
 
-  /** cria (sem `id`) ou altera um serviço */
-  const saveService = useCallback(
-    async (input: ServiceInput, id?: string): Promise<string | null> => {
+  /** cria (sem `id`) ou altera um serviço e devolve o serviço como ficou (ou o erro) */
+  const storeService = useCallback(
+    async (input: ServiceInput, id?: string): Promise<{ error: string } | { error: null; saved: ServiceInput & { id: string } }> => {
       const name = input.name.trim().replace(/\s+/g, ' ')
-      if (name.length < 2) return 'Dê um nome ao serviço.'
+      if (name.length < 2) return { error: 'Dê um nome ao serviço.' }
       const fields = {
         name: name.slice(0, 80),
         category: input.category,
@@ -144,29 +144,35 @@ export function useBusiness() {
         monthly_volume: Math.max(0, Math.round(input.monthlyVolume)),
         product_id: input.productId,
       }
+      const clean = { ...input, name: fields.name, price: fields.price, duration: fields.duration }
       if (live && neon && salonId) {
         if (id) {
           const r = await neon.from('services').update(fields).eq('id', id).eq('salon_id', salonId).select('id')
-          if (r.error) return friendly(r.error)
-          if (!r.data?.length) return 'Só quem é dona ou gerente pode alterar isso.'
-          setServices((list) => list.map((s) => (s.id === id ? { ...s, ...input, name: fields.name, duration: fields.duration } : s)))
-        } else {
-          const r = await neon.from('services').insert({ ...fields, salon_id: salonId, visible: true }).select('id').single()
-          if (r.error || !r.data) return friendly(r.error ?? { message: '' })
-          setServices((list) => [...list, { ...input, name: fields.name, duration: fields.duration, id: r.data.id as string, visible: true, photo: '', photoId: null }])
+          if (r.error) return { error: friendly(r.error) }
+          if (!r.data?.length) return { error: 'Só quem é dona ou gerente pode alterar isso.' }
+          setServices((list) => list.map((s) => (s.id === id ? { ...s, ...clean } : s)))
+          return { error: null, saved: { ...clean, id } }
         }
-        return null
+        const r = await neon.from('services').insert({ ...fields, salon_id: salonId, visible: true }).select('id').single()
+        if (r.error || !r.data) return { error: friendly(r.error ?? { message: '' }) }
+        const newIdDb = r.data.id as string
+        setServices((list) => [...list, { ...clean, id: newIdDb, visible: true, photo: '', photoId: null }])
+        return { error: null, saved: { ...clean, id: newIdDb } }
       }
       const d = readDemo()
+      const savedId = id ?? newId('s')
       const list = id
-        ? d.services.map((s) => (s.id === id ? { ...s, ...input, name: fields.name, duration: fields.duration } : s))
-        : [...d.services, { ...input, name: fields.name, duration: fields.duration, id: newId('s'), visible: true, photo: '', photoId: null }]
+        ? d.services.map((s) => (s.id === id ? { ...s, ...clean } : s))
+        : [...d.services, { ...clean, id: savedId, visible: true, photo: '', photoId: null }]
       writeDemo({ ...d, services: list })
       setServices(list)
-      return null
+      return { error: null, saved: { ...clean, id: savedId } }
     },
     [live, salonId],
   )
+
+  /** cria (sem `id`) ou altera um serviço; devolve a mensagem de erro, ou null quando salvou */
+  const saveService = useCallback(async (input: ServiceInput, id?: string) => (await storeService(input, id)).error, [storeService])
 
   /** atendimentos já feitos guardam o nome do serviço: apagar não muda o histórico */
   const removeService = useCallback(
@@ -233,5 +239,5 @@ export function useBusiness() {
     [live, salonId],
   )
 
-  return { details, services, products, loading, error, reload, saveDetails, saveService, removeService, saveProduct, removeProduct }
+  return { details, services, products, loading, error, reload, saveDetails, storeService, saveService, removeService, saveProduct, removeProduct }
 }

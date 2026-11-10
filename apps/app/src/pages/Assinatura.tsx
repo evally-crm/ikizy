@@ -6,7 +6,7 @@ import { useSubscription } from '../billing/SubscriptionProvider'
 import { useTeam } from '../data/team'
 import type { ReactNode } from 'react'
 import { Button, Card, Em, Money, Tabs } from '../components/ui'
-import { ConfirmDialog } from '../components/Modal'
+import { ConfirmDialog, NoticeDialog } from '../components/Modal'
 import { BillingError, changePlan, openPortal, startCheckout } from '../lib/billingApi'
 import { formatBRL } from '../lib/format'
 import {
@@ -33,7 +33,7 @@ const longDate = new Intl.DateTimeFormat('pt-BR', { day: 'numeric', month: 'long
 export default function Assinatura() {
   const { sub, state, loading, failed, refresh } = useSubscription()
   const { salon } = useAuth()
-  const [params] = useSearchParams()
+  const [params, setParams] = useSearchParams()
   const [months, setMonths] = useState<PixMonths>(1)
   const [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -45,6 +45,8 @@ export default function Assinatura() {
   const team = useTeam()
   const teamSize = { professionals: team.professionals.filter((p) => p.active).length, members: team.members.length }
   const returned = params.get('retorno')
+  // fechar o aviso tira ?retorno= do endereço, para ele não voltar ao recarregar a página
+  const closeReturn = () => setParams({}, { replace: true })
 
   // ao abrir a tela, relê a assinatura: se a primeira leitura veio vazia, aqui ela se corrige sozinha
   useEffect(() => {
@@ -119,28 +121,26 @@ export default function Assinatura() {
         )}
       </header>
 
-      {returned === 'ok' && (
-        <p className="billing-note billing-note--ok" role="status">
-          {sub?.method
-            ? 'Tudo certo! Recebemos seu pagamento e sua assinatura está confirmada.'
-            : 'Pagamento enviado. Estamos confirmando e atualizando o seu plano, isso leva só alguns segundos.'}
+      {/* o webhook pode levar alguns segundos: enquanto isso, só uma linha discreta */}
+      {returned === 'ok' && !sub?.method && (
+        <p className="billing-note" role="status">
+          Pagamento enviado. Estamos confirmando e atualizando o seu plano, isso leva só alguns segundos.
         </p>
+      )}
+
+      {returned === 'ok' && sub?.method && (
+        <NoticeDialog
+          tone="ok"
+          title="Pagamento confirmado"
+          text="Recebemos seu pagamento e a sua assinatura está ativa. Obrigada por escolher a IKIZY."
+          onClose={closeReturn}
+        />
       )}
       {returned === 'cancelado' && (
-        <p className="billing-note" role="status">
-          Pagamento cancelado. Nada foi cobrado.
-        </p>
+        <NoticeDialog tone="error" title="Pagamento cancelado" text="Nada foi cobrado. Quando quiser, é só escolher o plano de novo." onClose={closeReturn} />
       )}
-      {changed && (
-        <p className="billing-note billing-note--ok" role="status">
-          {changed}
-        </p>
-      )}
-      {error && (
-        <p className="billing-note billing-note--error" role="alert">
-          {error}
-        </p>
-      )}
+      {changed && <NoticeDialog tone="ok" title="Plano atualizado" text={changed} onClose={() => setChanged(null)} />}
+      {error && <NoticeDialog tone="error" title="Não deu certo" text={error} closeLabel="Fechar" onClose={() => setError(null)} />}
 
       {!loading && sub && (
         <Card variant={state === 'expired' ? 'dark' : 'soft'} className="billing-status">

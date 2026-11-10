@@ -40,7 +40,11 @@ export interface MessageContext {
   salonName: string
   /** endereço do site do salão (para agendar) */
   siteUrl?: string
+  /** endereço do salão; vai com link do mapa nas mensagens de horário marcado */
+  address?: string
   service?: string
+  /** nome de quem vai atender */
+  professional?: string
   /** yyyy-MM-dd */
   date?: string
   /** minutos desde 00:00 */
@@ -51,36 +55,62 @@ const firstName = (name: string) => name.trim().split(/\s+/)[0] ?? ''
 const hhmm = (m: number) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`
 const day = (iso: string) => format(parseISO(iso), "EEEE, d 'de' MMMM", { locale: ptBR })
 
-/** texto da mensagem; o salão pode editar antes de abrir o WhatsApp */
+/** bloco com os dados do horário, um por linha, para a cliente bater o olho */
+function details(service: string, when: string, professional?: string) {
+  const lines = [`Serviço: ${service}`]
+  if (professional?.trim()) lines.push(`Profissional: ${professional.trim()}`)
+  if (when) lines.push(`📅 ${when}`)
+  return lines.join('\n')
+}
+
+/** link do Google Maps (o mesmo do site): a cliente toca e abre a rota */
+export function mapsUrl(salonName: string, address: string) {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${salonName} ${address}`.trim())}`
+}
+
+/** endereço com link do mapa, no fim das mensagens de horário marcado; vazio sem endereço */
+function location(salonName: string, address?: string) {
+  const clean = address?.trim()
+  return clean ? `\n\n📍 Endereço: ${clean}\n${mapsUrl(salonName, clean)}` : ''
+}
+
+/**
+ * texto da mensagem; o salão pode editar antes de abrir o WhatsApp.
+ * Tom cordial e direto, que serve para qualquer negócio e quem quer que envie: sem gênero de quem escreve
+ * ("obrigada/obrigado"), sem promessa de brinde, data por extenso, pedido de resposta simples e poucos emojis.
+ */
 export function renderMessage(kind: MessageKind, ctx: MessageContext): string {
   const nome = firstName(ctx.clientName)
-  const salao = ctx.salonName || 'o salão'
   const servico = ctx.service ?? 'seu atendimento'
-  const quando = ctx.date ? `${day(ctx.date)}${ctx.start !== undefined ? ` às ${hhmm(ctx.start)}` : ''}` : ''
   const hora = ctx.start !== undefined ? hhmm(ctx.start) : ''
-  const agendar = ctx.siteUrl ? `\n\nPara agendar é só tocar aqui: ${ctx.siteUrl}` : ''
+  const quando = ctx.date ? `${day(ctx.date)}${hora ? `, às ${hora}` : ''}` : ''
+  const horario = details(servico, quando, ctx.professional)
+  const agendar = ctx.siteUrl ? `\n\nSe preferir, agende pelo link: ${ctx.siteUrl}` : ''
+  const local = location(ctx.salonName, ctx.address)
+  // o nome do negócio vai como assinatura: "no Studio" / "na Clínica" não tem como acertar sozinho
+  const assinatura = ctx.salonName.trim() ? `\n\n${ctx.salonName.trim()}` : ''
 
   switch (kind) {
     case 'confirmacao':
-      return `Oi, ${nome}! Tudo bem? 😊\n\nSeu horário está marcado aqui no ${salao}:\n📅 ${quando}\n💅 ${servico}\n\nPode me confirmar se está tudo certo?`
+      return `Olá, ${nome}! Tudo bem?\n\nSeu horário está reservado:\n\n${horario}\n\nPor favor, responda SIM para confirmar. Se precisar remarcar, é só avisar por aqui.${local}${assinatura}`
     case 'recusa':
-      return `Oi, ${nome}! Recebi seu pedido de ${servico} para ${quando}, mas infelizmente não vou conseguir te atender nesse horário. 😕\n\nPosso te sugerir outro? Me fala o melhor dia para você.${agendar}`
+      return `Olá, ${nome}! Tudo bem?\n\nRecebemos seu pedido de ${servico} para ${quando}, mas infelizmente esse horário não está disponível.\n\nResponda com os dias e períodos que ficam melhores para você, e encontramos outra opção.${agendar}${assinatura}`
     case 'lembrete':
-      return `Oi, ${nome}! Passando para lembrar do seu horário amanhã:\n📅 ${quando}\n💅 ${servico}\n\nVocê confirma? Se precisar remarcar, é só me avisar por aqui. 💕`
+      return `Olá, ${nome}! Tudo bem?\n\nPassando para lembrar do seu horário de amanhã:\n\n${horario}\n\nPodemos confirmar sua presença? É só responder SIM.\nCaso não possa comparecer, avise por aqui com antecedência para reagendarmos.${local}${assinatura}`
     case 'hoje':
-      return `Oi, ${nome}! Tudo certo para hoje às ${hora}? Já estamos te esperando aqui no ${salao}. ✨\n\nQualquer imprevisto, me avisa por aqui.`
+      return `Olá, ${nome}! Seu horário é hoje, às ${hora}. Estamos à sua espera!\n\nSe surgir algum imprevisto, avise por aqui.${local}${assinatura}`
     case 'pos':
-      return `Oi, ${nome}! Obrigada por vir hoje. 💕\n\nEspero que tenha amado o resultado! Qualquer dúvida sobre os cuidados, é só me chamar.\n\nSe puder, me conta o que achou? Sua opinião me ajuda muito.`
+      return `Olá, ${nome}! Agradecemos pela visita hoje.\n\nEsperamos que tenha gostado do resultado. Se tiver qualquer dúvida sobre os cuidados em casa, é só chamar por aqui.\n\nSua opinião é muito importante: pode contar como foi a sua experiência?${assinatura}`
     case 'falta':
-      return `Oi, ${nome}! Senti sua falta hoje no horário das ${hora}. Aconteceu alguma coisa?\n\nSe quiser, já vejo um novo horário para você.`
+      return `Olá, ${nome}! Tudo bem?\n\nNotamos que você não conseguiu vir ao horário de hoje, às ${hora}. Se quiser, podemos reagendar: é só responder com o melhor dia para você.${agendar}${assinatura}`
     case 'manutencao':
-      return `Oi, ${nome}! Já está chegando a hora da sua manutenção. 💅\n\nQuer que eu reserve um horário para você esta semana?${agendar}`
+      return `Olá, ${nome}! Tudo bem?\n\nEstá chegando o momento da sua manutenção. Quer reservar um horário? É só responder com o dia e o período de sua preferência.${agendar}${assinatura}`
     case 'sumida':
-      return `Oi, ${nome}! Faz um tempinho que você não vem e estou com saudade. 💕\n\nPreparei um carinho para a sua volta. Vamos marcar um horário?${agendar}`
+      return `Olá, ${nome}! Tudo bem?\n\nFaz um tempo desde a sua última visita. Quando quiser voltar, será um prazer atender você. É só responder por aqui para reservar um horário.${agendar}${assinatura}`
     case 'aniversario':
-      return `Feliz aniversário, ${nome}! 🎉🎂\n\nQue seu ano seja lindo. Para comemorar, tem um presente te esperando aqui no ${salao} no seu próximo atendimento. 💕`
+      return `Feliz aniversário, ${nome}! 🎉\n\nDesejamos a você um novo ano cheio de saúde, alegria e momentos especiais.${assinatura}`
     case 'livre':
-      return `Oi, ${nome}! `
+      return `Olá, ${nome}! `
   }
 }
 

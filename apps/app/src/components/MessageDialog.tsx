@@ -13,6 +13,7 @@ import {
   type MessageKind,
 } from '../lib/messages'
 import { useSalonInfo } from '../hooks/useSalonInfo'
+import { useAgenda } from '../data/AgendaProvider'
 import type { Appointment } from '../types'
 import { Button } from './ui'
 import { Modal } from './Modal'
@@ -35,13 +36,15 @@ export function MessageDialog({
   onClose: () => void
 }) {
   const [kind, setKind] = useState<MessageKind>(initial)
-  const [text, setText] = useState(() => renderMessage(initial, context))
+  // texto que a pessoa mexeu; até lá segue o modelo, que pode ganhar o endereço do salão depois de abrir
+  const [edited, setEdited] = useState<string | null>(null)
+  const text = edited ?? renderMessage(kind, context)
   const [copied, setCopied] = useState(false)
   const href = whatsappHref(phone, text)
 
   const choose = (k: MessageKind) => {
     setKind(k)
-    setText(renderMessage(k, context))
+    setEdited(null)
     setCopied(false)
   }
 
@@ -78,7 +81,7 @@ export function MessageDialog({
         <label className="field">
           <span className="field__label">Texto (pode ajustar antes de enviar)</span>
           <span className="input msg__input">
-            <textarea value={text} onChange={(e) => setText(e.target.value)} rows={8} maxLength={1000} />
+            <textarea value={text} onChange={(e) => setEdited(e.target.value)} rows={8} maxLength={1000} />
           </span>
         </label>
 
@@ -121,7 +124,9 @@ export function MessageDialog({
 
 /** mensagem sobre um horário da agenda, já com a sugestão certa para o momento */
 export function AppointmentMessageDialog({ appointment, onClose }: { appointment: Appointment; onClose: () => void }) {
-  const { salonName, siteUrl } = useSalonInfo()
+  const { salonName, siteUrl, address } = useSalonInfo()
+  const { professionals } = useAgenda()
+  const professional = professionals.find((p) => p.id === appointment.professionalId)?.name
   const now = new Date()
   const today = format(now, 'yyyy-MM-dd')
   const initial = suggestForAppointment(appointment.status, appointment.date, today, format(addDays(now, 1), 'yyyy-MM-dd'))
@@ -134,7 +139,9 @@ export function AppointmentMessageDialog({ appointment, onClose }: { appointment
         clientName: appointment.client,
         salonName,
         siteUrl,
+        address,
         service: appointment.service,
+        professional,
         date: appointment.date,
         start: appointment.start,
       }}

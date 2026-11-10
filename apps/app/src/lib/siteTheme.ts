@@ -1,5 +1,7 @@
 /** paletas, fontes e categorias do site do negócio; usado pelo app (prévia) e pelo servidor (página pública), sem React */
 
+import { LEOPARD_DARK, LEOPARD_LIGHT, ZEBRA } from './coverPrints.js'
+
 // ---------------------------------------------------------------- paletas (cores fixas, já combinadas e testadas)
 
 export type PaletteId = 'vermelho' | 'rosa-bebe' | 'verde-musgo' | 'rosa' | 'roxo' | 'azul' | 'preto' | 'marrom'
@@ -99,20 +101,59 @@ export const isFontId = (v: unknown): v is FontId => typeof v === 'string' && v 
 
 // ---------------------------------------------------------------- estilo da capa (o que fica atrás do título)
 
-export type CoverStyleId = 'sobrio' | 'poa' | 'xadrez' | 'editorial' | 'organico'
+export type CoverStyleId = 'sobrio' | 'poa' | 'onca' | 'zebra' | 'xadrez' | 'listras'
 
-/** cinco estilos fixos; todos usam as cores da paleta escolhida, então combinam com qualquer uma */
-export const COVER_STYLES: Record<CoverStyleId, { label: string; hint: string }> = {
-  sobrio: { label: 'Sóbrio', hint: 'Cor lisa com degradê suave' },
-  poa: { label: 'Poá', hint: 'Bolinhas delicadas' },
-  xadrez: { label: 'Xadrez', hint: 'Vichy com cartão no centro' },
-  editorial: { label: 'Editorial', hint: 'Fundo escuro e título grande' },
-  organico: { label: 'Orgânico', hint: 'Formas suaves' },
+/** capa sem foto: lisa (degradê) ou uma das cinco texturas, todas desenhadas nas cores da paleta escolhida */
+export const COVER_STYLES: Record<CoverStyleId, { label: string }> = {
+  sobrio: { label: 'Lisa' },
+  poa: { label: 'Poá' },
+  onca: { label: 'Onça' },
+  zebra: { label: 'Zebra' },
+  xadrez: { label: 'Xadrez' },
+  listras: { label: 'Listras' },
 }
 
 export const DEFAULT_COVER_STYLE: CoverStyleId = 'sobrio'
 
 export const isCoverStyleId = (v: unknown): v is CoverStyleId => typeof v === 'string' && v in COVER_STYLES
+
+const svgUrl = (w: number, h: number, body: string) =>
+  `url("data:image/svg+xml,${`<svg xmlns='http://www.w3.org/2000/svg' width='${w}' height='${h}' viewBox='0 0 ${w} ${h}'>${body}</svg>`
+    .replace(/#/g, '%23')
+    .replace(/</g, '%3C')
+    .replace(/>/g, '%3E')}")`
+
+/**
+ * fundo CSS de uma textura nas cores da paleta (o mesmo desenho na página pública e na miniatura do editor).
+ * `scale` encolhe o desenho para caber nas miniaturas. Lisa não tem desenho: devolve null.
+ */
+export function coverPattern(id: CoverStyleId, p: Palette, scale = 1): string | null {
+  const a = p.accent
+  const k = p.ink
+  /** `shown`: tamanho do ladrilho na tela (as estampas vêm num quadro de 500, mas aparecem menores) */
+  const tile = (w: number, h: number, body: string, base: string, shown = w) => `${svgUrl(w, h, body)} 0 0/${shown * scale}px ${(shown * h * scale) / w}px,${base}`
+  switch (id) {
+    case 'poa':
+      return tile(32, 32, `<g fill='${a}' fill-opacity='.55'><circle cx='8' cy='8' r='3.6'/><circle cx='24' cy='24' r='3.6'/></g>`, p.bg)
+    case 'xadrez':
+      return tile(48, 48, `<g fill='${a}' fill-opacity='.2'><rect width='24' height='48'/><rect width='48' height='24'/></g>`, p.panel)
+    case 'listras':
+      return tile(40, 40, `<rect width='14' height='40' fill='${a}' fill-opacity='.24'/><rect x='24' width='3' height='40' fill='${a}' fill-opacity='.4'/>`, p.panel)
+    case 'onca':
+      // estampa da Vecteezy (ver coverPrints): manchas na cor da paleta, em dois tons
+      return tile(
+        500,
+        500,
+        `<g fill='${a}'><path d='${LEOPARD_DARK}'/><path fill-opacity='.45' d='${LEOPARD_LIGHT}'/></g>`,
+        p.panel,
+        300,
+      )
+    case 'zebra':
+      return tile(500, 500, `<path fill='${k}' fill-rule='evenodd' d='${ZEBRA}'/>`, p.panel, 340)
+    default:
+      return null
+  }
+}
 
 // mesma ordem do enum service_category no banco; "Outros" fica por último na página e no painel
 export const CATEGORIES = ['Unhas', 'Cílios', 'Sobrancelha', 'Cabelo', 'Estética', 'Outros'] as const

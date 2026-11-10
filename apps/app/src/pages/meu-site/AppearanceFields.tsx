@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react'
 import { Check } from 'lucide-react'
 import { PALETTES, type PaletteId, type SiteConfig } from '../../data/catalog'
-import { COVER_STYLES, FONTS, type CoverStyleId, type FontId } from '../../lib/siteTheme'
+import { FONTS, type FontId } from '../../lib/siteTheme'
 import { Group } from './Group'
 import type { SetSite } from './types'
 import './MeuSite.css'
@@ -27,26 +27,6 @@ export function PaletteOptions({ site, setSite }: { site: SiteConfig; setSite: S
   )
 }
 
-/** estilo da capa: o que fica atrás do título; a miniatura usa as cores da paleta escolhida */
-export function CoverStyleOptions({ site, setSite }: { site: SiteConfig; setSite: SetSite }) {
-  return (
-    <div className="coverpick" style={paletteVars(site.palette)}>
-      {(Object.keys(COVER_STYLES) as CoverStyleId[]).map((id) => (
-        <label key={id} className="coverpick__opt">
-          <input type="radio" name="coverStyle" checked={site.coverStyle === id} onChange={() => setSite('coverStyle', id)} />
-          <span className={`coverpick__tile coverpick__tile--${id}`} aria-hidden="true">
-            <span className="coverpick__check">
-              <Check size={14} strokeWidth={2.75} />
-            </span>
-          </span>
-          <strong>{COVER_STYLES[id].label}</strong>
-          <small>{COVER_STYLES[id].hint}</small>
-        </label>
-      ))}
-    </div>
-  )
-}
-
 /** fonte dos títulos: blocos "Aa" escritos na própria fonte, com o nome embaixo */
 export function FontOptions({ site, setSite }: { site: SiteConfig; setSite: SetSite }) {
   return (
@@ -65,7 +45,7 @@ export function FontOptions({ site, setSite }: { site: SiteConfig; setSite: SetS
   )
 }
 
-/** aparência: paleta, estilo da capa e fonte */
+/** aparência: paleta e fonte (a capa fica em Perfil) */
 export function AppearanceFields({ site, setSite }: { site: SiteConfig; setSite: SetSite }) {
   return (
     <>
@@ -73,13 +53,6 @@ export function AppearanceFields({ site, setSite }: { site: SiteConfig; setSite:
         <fieldset className="field">
           <legend className="sr-only">Paleta de cores</legend>
           <PaletteOptions site={site} setSite={setSite} />
-        </fieldset>
-      </Group>
-      <Group title="Estilo da capa">
-        <fieldset className="field">
-          <legend className="sr-only">Estilo da capa</legend>
-          <CoverStyleOptions site={site} setSite={setSite} />
-          <p className="field__hint">Vale quando a capa não tem foto. Se você enviar uma foto, ela passa na frente.</p>
         </fieldset>
       </Group>
       <Group title="Fonte dos títulos">
