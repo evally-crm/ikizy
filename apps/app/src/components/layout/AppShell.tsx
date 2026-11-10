@@ -384,8 +384,11 @@ function ProfileDialog({ onClose }: { onClose: () => void }) {
   const { displayName, salon, session, updateProfile, signOut } = useAuth()
   const { sub } = useSubscription()
   const navigate = useNavigate()
-  const [userName, setUserName] = useState(displayName)
-  const [salonName, setSalonName] = useState(salon?.name ?? '')
+  // só o que a pessoa digitou fica guardado; sem isso vale o dado atual, que pode chegar depois de a janela abrir
+  const [userEdit, setUserName] = useState<string | null>(null)
+  const [salonEdit, setSalonName] = useState<string | null>(null)
+  const userName = userEdit ?? displayName
+  const salonName = salonEdit ?? salon?.name ?? ''
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const canEditSalon = !salon || salon.role === 'owner' || salon.role === 'manager'

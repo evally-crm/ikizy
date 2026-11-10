@@ -74,16 +74,22 @@ export function NewAppointmentDialog({
   notify: (message: string) => void
 }) {
   const { professionals, clients, services, appointments, workingHours, create } = useAgenda()
-  const first = services.find((s) => s.id === initial.serviceId) ?? services[0]
+  // profissional, serviço, duração e valor guardam só o que a pessoa escolheu; o resto vem da lista, que pode chegar
+  // depois de a janela abrir (por exemplo ao recarregar a página), e por isso é lido a cada desenho
   const [clientName, setClientName] = useState(initial.clientName ?? '')
   const [phone, setPhone] = useState('')
-  const [professionalId, setProfessionalId] = useState(initial.professionalId ?? professionals[0]?.id ?? '')
-  const [serviceId, setServiceId] = useState(first?.id ?? 'outro')
+  const [pickedPro, setProfessionalId] = useState<string | null>(initial.professionalId ?? null)
+  const professionalId = pickedPro && professionals.some((p) => p.id === pickedPro) ? pickedPro : (professionals[0]?.id ?? '')
+  const [pickedService, setServiceId] = useState<string | null>(initial.serviceId ?? null)
+  const serviceId = pickedService === 'outro' ? 'outro' : (services.find((s) => s.id === pickedService)?.id ?? services[0]?.id ?? 'outro')
+  const first = services.find((s) => s.id === serviceId)
   const [customService, setCustomService] = useState('')
   const [date, setDate] = useState(initial.date)
   const [start, setStart] = useState<number | null>(initial.start)
-  const [duration, setDuration] = useState(first?.duration ?? 60)
-  const [price, setPrice] = useState(first && first.price ? String(first.price).replace('.', ',') : '')
+  const [durationEdit, setDuration] = useState<number | null>(null)
+  const duration = durationEdit ?? first?.duration ?? 60
+  const [priceEdit, setPrice] = useState<string | null>(null)
+  const price = priceEdit ?? (first && first.price ? String(first.price).replace('.', ',') : '')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -95,8 +101,9 @@ export function NewAppointmentDialog({
     setServiceId(id)
     const s = services.find((x) => x.id === id)
     if (s) {
-      setDuration(s.duration)
-      setPrice(s.price ? String(s.price).replace('.', ',') : '')
+      // volta para a duração e o valor do serviço escolhido
+      setDuration(null)
+      setPrice(null)
     }
   }
 
