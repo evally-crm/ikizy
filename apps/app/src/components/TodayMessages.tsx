@@ -37,7 +37,7 @@ interface Item {
  * `clientsOnly`: só aniversário e sumidas ("Chamar hoje"), para quando cada atendimento já tem o próprio botão de mensagem.
  */
 export function TodayMessages({ clientsOnly = false }: { clientsOnly?: boolean }) {
-  const { appointments } = useAgenda()
+  const { appointments, professionals } = useAgenda()
   const { clients } = useClientBook()
   const salon = useSalonInfo()
   const [open, setOpen] = useState<Item | null>(null)
@@ -54,7 +54,8 @@ export function TodayMessages({ clientsOnly = false }: { clientsOnly?: boolean }
     const push = (kind: MessageKind, id: string, item: Omit<Item, 'key' | 'kind'>) => list.push({ key: sentKey(kind, id, today), kind, ...item })
 
     for (const a of clientsOnly ? [] : ofAppointments) {
-      const ctx = { clientName: a.client, service: a.service, date: a.date, start: a.start }
+      const professional = professionals.find((p) => p.id === a.professionalId)?.name
+      const ctx = { clientName: a.client, service: a.service, professional, date: a.date, start: a.start }
       const base = { kinds: APPOINTMENT_KINDS, name: a.client, phone: a.phone, context: ctx }
       const open = a.status === 'pendente' || a.status === 'confirmado'
       const future = a.date > today || (a.date === today && a.start >= nowMinutes)
@@ -77,7 +78,7 @@ export function TodayMessages({ clientsOnly = false }: { clientsOnly?: boolean }
       }
     }
     return list
-  }, [appointments, clients, today, tomorrow, nowMinutes, now, clientsOnly])
+  }, [appointments, professionals, clients, today, tomorrow, nowMinutes, now, clientsOnly])
 
   const pending = items.filter((i) => !wasSent(i.key)).length
   if (clientsOnly && items.length === 0) return null
