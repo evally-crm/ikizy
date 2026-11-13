@@ -10,7 +10,7 @@ export class BillingError extends Error {
   }
 }
 
-async function post<T>(path: string, body: unknown): Promise<T> {
+export async function post<T>(path: string, body: unknown): Promise<T> {
   const { data } = (await neon?.auth.getSession()) ?? { data: { session: null } }
   const token = data.session?.access_token
   if (!token) throw new BillingError('unauthenticated', 'Entre na sua conta para continuar.')
@@ -29,7 +29,7 @@ async function post<T>(path: string, body: unknown): Promise<T> {
   if (!res.ok) {
     // no ambiente local as funções de servidor não existem (/api devolve a própria página)
     if (res.status === 404 || res.status === 405) {
-      throw new BillingError('unavailable', 'O pagamento não está disponível neste ambiente.')
+      throw new BillingError('unavailable', 'Isso não está disponível neste ambiente.')
     }
     throw new BillingError(payload?.error ?? 'error', payload?.message ?? 'Não foi possível continuar agora. Tente novamente.')
   }

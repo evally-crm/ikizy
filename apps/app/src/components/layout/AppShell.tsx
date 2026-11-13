@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState, type CSSProperties, type Form
 import { usePresence } from '../../hooks/usePresence'
 import { useAppTheme, useTheme } from '../../lib/theme'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { CalendarPlus, ChevronRight, Clock, CreditCard, Globe, LogOut, Moon, Plus, ReceiptText, Scissors, UserPlus, UserRound, X, type LucideIcon } from 'lucide-react'
+import { CalendarPlus, ChevronRight, Clock, CreditCard, Globe, LogOut, Moon, Plus, ReceiptText, Scissors, ShieldCheck, Trash2, UserPlus, UserRound, X, type LucideIcon } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
 import { SubscriptionProvider, useSubscription } from '../../billing/SubscriptionProvider'
 import { AgendaProvider } from '../../data/AgendaProvider'
@@ -14,6 +14,7 @@ import { roleAccess, type RoleAccess } from '../../domain/team'
 import { daysLeft, describeSubscription, isCardTrial, periodEnd } from '../../lib/plans'
 import { agenda, dash, ROUTES } from '../../lib/routes'
 import { Avatar, Button, PageHeaderShell } from '../ui'
+import { DeleteAccountDialog } from '../DeleteAccountDialog'
 import { GlassDefs, useLiquidGlass } from '../ui/LiquidGlass'
 import { useLensDrag } from '../ui/useLensDrag'
 import { LogoWord } from '../BunnyMark'
@@ -83,7 +84,7 @@ function PillNav() {
 
 /** avatar do topo (desktop): abre o menu da conta */
 function UserMenu({ onAccount }: { onAccount: () => void }) {
-  const { salon, displayName, signOut, status } = useAuth()
+  const { salon, displayName, signOut, status, isAdmin } = useAuth()
   const items = useMoreItems()
   const [open, setOpen] = useState(false)
   const pop = usePresence(open)
@@ -116,6 +117,12 @@ function UserMenu({ onAccount }: { onAccount: () => void }) {
               {label}
             </NavLink>
           ))}
+          {isAdmin && (
+            <NavLink to={dash('/admin')} className="popover__item" role="menuitem">
+              <ShieldCheck size={18} aria-hidden="true" />
+              Master
+            </NavLink>
+          )}
           <DarkModeRow className="popover__item" />
           <button
             type="button"
@@ -310,12 +317,12 @@ function SettingsButton({ open, onOpen }: { open: boolean; onOpen: () => void })
 
 /** Configurações (celular): conta, plano, Meu site, Negócio, assinatura, modo escuro e sair */
 function SettingsSheet({ open, onClose, onAccount }: { open: boolean; onClose: () => void; onAccount: () => void }) {
-  const { signOut, status, displayName, salon, session } = useAuth()
+  const { signOut, status, displayName, salon, session, isAdmin } = useAuth()
   const items = useMoreItems()
   const { sheet: sheetItems } = useSections()
   const sheetIn = usePresence(open)
   useCloseOn(open, onClose)
-  const sheet = [...sheetItems, ...items]
+  const sheet = [...sheetItems, ...items, ...(isAdmin ? [{ to: dash('/admin'), label: 'Master', icon: ShieldCheck }] : [])]
 
   if (!sheetIn.mounted) return null
   return (
@@ -381,7 +388,8 @@ function SettingsSheet({ open, onClose, onAccount }: { open: boolean; onClose: (
 
 /** editar cadastro: nome da pessoa e do negócio */
 function ProfileDialog({ onClose }: { onClose: () => void }) {
-  const { displayName, salon, session, updateProfile, signOut } = useAuth()
+  const { displayName, salon, session, updateProfile, signOut, deleteAccount } = useAuth()
+  const [deleting, setDeleting] = useState(false)
   const { sub } = useSubscription()
   const navigate = useNavigate()
   // só o que a pessoa digitou fica guardado; sem isso vale o dado atual, que pode chegar depois de a janela abrir
@@ -394,10 +402,11 @@ function ProfileDialog({ onClose }: { onClose: () => void }) {
   const canEditSalon = !salon || salon.role === 'owner' || salon.role === 'manager'
 
   useEffect(() => {
+    if (deleting) return
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
+  }, [onClose, deleting])
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -409,6 +418,7 @@ function ProfileDialog({ onClose }: { onClose: () => void }) {
   }
 
   return (
+    <>
     <div className="overlay" onClick={onClose}>
       <form
         className="dialog"
@@ -508,8 +518,27 @@ function ProfileDialog({ onClose }: { onClose: () => void }) {
             <LogOut size={16} aria-hidden="true" /> Sair da conta
           </button>
         )}
+        {session && (
+          <button type="button" className="dialog__delete" onClick={() => setDeleting(true)}>
+            <Trash2 size={15} aria-hidden="true" /> Excluir conta
+          </button>
+        )}
       </form>
     </div>
+      {deleting && (
+        <DeleteAccountDialog
+          title="Excluir sua conta?"
+          text={
+            salon?.role === 'owner'
+              ? `Isso apaga de vez o ${salon.name}: clientes, agenda, caixa, fotos, site e os acessos da equipe. A assinatura é cancelada na hora, sem novas cobranças. Não dá para desfazer.`
+              : 'Seu login é apagado e você sai do negócio. Os atendimentos continuam na agenda do negócio. Não dá para desfazer.'
+          }
+          expected={salon?.role === 'owner' ? salon.name : 'excluir'}
+          onDelete={deleteAccount}
+          onClose={() => setDeleting(false)}
+        />
+      )}
+    </>
   )
 }
 

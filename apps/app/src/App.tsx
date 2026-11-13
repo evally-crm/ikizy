@@ -5,6 +5,7 @@ import RequireSalon from './auth/RequireSalon'
 import { AppContextMenu } from './components/AppContextMenu'
 import AppShell from './components/layout/AppShell'
 import { ROUTES } from './lib/routes'
+import Admin from './pages/admin'
 import Agenda from './pages/agenda'
 import Assinatura from './pages/Assinatura'
 import Cadastro from './pages/auth/Cadastro'
@@ -63,6 +64,8 @@ export default function App() {
             <Route element={<RequireRole allow={(a) => a.billing} />}>
               <Route path="assinatura" element={<Assinatura />} />
             </Route>
+            {/* acesso master da IKIZY: a própria tela confere com o servidor (ADMIN_EMAILS) */}
+            <Route path="admin" element={<Admin />} />
             <Route path="*" element={<Navigate to={ROUTES.dashboard} replace />} />
           </Route>
         </Route>

@@ -3,7 +3,7 @@
  *   coelho.png        o coelho de símbolos da landing (src/lib/pixelArt.ts), branco sobre vinho, com a boca rosa
  *   logo-coelho.png   o coelho da logo, branco, para o rodapé
  *   instagram.png     ícone do Instagram, branco
- *   tela-*.jpg        telas do sistema para o e-mail de boas-vindas
+ * As telas do sistema do e-mail de boas-vindas (tela-*.jpg) saem de scripts/capturar-telas.mjs.
  * Uso: npx tsx scripts/email-arte.ts
  */
 import sharp from 'sharp'
@@ -12,7 +12,6 @@ import { fileURLToPath } from 'node:url'
 import { bunnyField, paintField } from '../src/lib/pixelArt.ts'
 
 const dir = fileURLToPath(new URL('../public/email/', import.meta.url))
-const telas = fileURLToPath(new URL('../public/telas/', import.meta.url))
 mkdirSync(dir, { recursive: true })
 const WINE = '#0e0d0d'
 
@@ -48,10 +47,4 @@ writeFileSync(dir + 'logo-coelho.png', logo)
 // ---- instagram
 const insta = await sharp(Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="5.2"/><circle cx="12" cy="12" r="4.1"/><circle cx="17.3" cy="6.7" r="0.6" fill="#fff"/></svg>`)).png().toBuffer()
 writeFileSync(dir + 'instagram.png', insta)
-
-// ---- telas do sistema, cortadas em 16:10 e reduzidas
-for (const n of ['inicio', 'agenda', 'site']) {
-  const jpg = await sharp(telas + n + '.webp').resize({ width: 1040 }).jpeg({ quality: 82, mozjpeg: true }).toBuffer()
-  writeFileSync(dir + `tela-${n}.jpg`, jpg)
-}
 console.log('ok', { coelho: coelho.length, logo: logo.length, insta: insta.length })

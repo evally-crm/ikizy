@@ -1,0 +1,26 @@
+.admin__stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+@media (min-width: 900px) {
+  .admin__stats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+.admin .searchfield {
+  margin-bottom: 14px;
+}
+.admin__who {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  min-width: 0;
+}
+.admin__who small {
+  color: var(--ink-500);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
