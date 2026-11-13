@@ -4,6 +4,7 @@ import { createRemoteJWKSet, jwtVerify } from 'jose'
 import Stripe from 'stripe'
 import { HttpError, type BillingDb, type Membership, type ReconcileDb, type SubscriptionRow } from './billing.js'
 import type { BookingDb, BookingResult, Slot } from './booking.js'
+import type { AccountDb } from './account.js'
 import { FROM } from './authEmail.js'
 import type { CronDb } from './cron.js'
 import type { LeadDb } from './lead.js'
@@ -355,6 +356,83 @@ export function createLeadDb(): LeadDb {
       await sql`update public.leads set unsubscribed_at = coalesce(unsubscribed_at, now()) where email = ${email}`
     },
   }
+}
+
+/** excluir conta e acesso master (conexão de dono, só no servidor) */
+export function createAccountDb(): AccountDb {
+  const sql = neon(env('DATABASE_URL'))
+  return {
+    getMembership: createDb().getMembership,
+    async stripeCustomer(salonId) {
+      const rows = (await sql`select stripe_customer_id from public.subscriptions where salon_id = ${salonId}::uuid`) as Row[]
+      return (rows[0]?.stripe_customer_id as string | null | undefined) ?? null
+    },
+    async deleteSalon(salonId) {
+      // os atendimentos travam a remoção de clientes e profissionais (on delete restrict): saem primeiro, na mesma transação
+      await sql.transaction([
+        sql`delete from public.appointments where salon_id = ${salonId}::uuid`,
+        sql`delete from public.salons where id = ${salonId}::uuid`,
+      ])
+    },
+    async leaveSalon(salonId, userId) {
+      await sql.transaction([
+        sql`update public.professionals set user_id = null where salon_id = ${salonId}::uuid and user_id = ${userId}::uuid`,
+        sql`delete from public.members where salon_id = ${salonId}::uuid and user_id = ${userId}::uuid`,
+      ])
+    },
+    async deleteUser(userId) {
+      // sessões e contas (senha, Google) caem junto (on delete cascade no neon_auth)
+      await sql`delete from neon_auth."user" where id = ${userId}::uuid`
+    },
+    async ownerOf(salonId) {
+      const rows = (await sql`select user_id from public.members where salon_id = ${salonId}::uuid and role = 'owner' limit 1`) as Row[]
+      return (rows[0]?.user_id as string | undefined) ?? null
+    },
+    async emailVerified(userId) {
+      const rows = (await sql`select "emailVerified" as ok from neon_auth."user" where id = ${userId}::uuid`) as Row[]
+      return rows[0]?.ok === true
+    },
+    async listSalons() {
+      const rows = (await sql`
+        select sa.id, sa.name, sa.slug, sa.created_at,
+               u.email as owner_email, u.name as owner_name,
+               s.plan, s.status, s.access_until, s.billing_method,
+               (select count(*)::int from public.clients c where c.salon_id = sa.id and c.forgotten_at is null) as clients,
+               (select count(*)::int from public.appointments a where a.salon_id = sa.id) as appointments,
+               (select count(*)::int from public.members m2 where m2.salon_id = sa.id) as members
+        from public.salons sa
+        left join public.members m on m.salon_id = sa.id and m.role = 'owner'
+        left join neon_auth."user" u on u.id = m.user_id
+        left join public.subscriptions s on s.salon_id = sa.id
+        order by sa.created_at desc`) as Row[]
+      const iso = (v: unknown) => (v ? new Date(v as string).toISOString() : null)
+      return rows.map((r) => ({
+        id: r.id as string,
+        name: r.name as string,
+        slug: r.slug as string,
+        createdAt: iso(r.created_at) as string,
+        ownerEmail: (r.owner_email as string | null) ?? null,
+        ownerName: (r.owner_name as string | null) ?? null,
+        plan: (r.plan as string | null) ?? null,
+        status: (r.status as string | null) ?? null,
+        accessUntil: iso(r.access_until),
+        method: (r.billing_method as string | null) ?? null,
+        clients: Number(r.clients ?? 0),
+        appointments: Number(r.appointments ?? 0),
+        members: Number(r.members ?? 0),
+      }))
+    },
+  }
+}
+
+/** apaga da loja tudo que começa com o prefixo (ex.: salons/<negócio>/) */
+export async function deleteBlobPrefix(prefix: string): Promise<void> {
+  let cursor: string | undefined
+  do {
+    const page = await list({ prefix, limit: 1000, cursor })
+    if (page.blobs.length) await del(page.blobs.map((b) => b.url))
+    cursor = page.hasMore ? page.cursor : undefined
+  } while (cursor)
 }
 
 /** grava o e-mail da dona para os avisos; só quem é dona do negócio muda a própria assinatura */

@@ -999,3 +999,21 @@ button.textlink:disabled {
   box-shadow: none;
   background: var(--brand-tint);
 }
+
+/* excluir conta: discreto, abaixo do Sair */
+.dialog__delete {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 40px;
+  border: 0;
+  background: transparent;
+  font-size: 13px;
+  color: var(--ink-500);
+}
+.dialog__delete:hover {
+  color: var(--brand-500);
+  text-decoration: underline;
+}

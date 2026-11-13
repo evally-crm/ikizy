@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { isNeonConfigured, neon, type NeonSession as Session } from '../lib/neon'
-import { syncNotifyEmail } from '../lib/billingApi'
+import { BillingError, syncNotifyEmail } from '../lib/billingApi'
+import { deleteAccount as deleteAccountApi, fetchIsAdmin } from '../lib/accountApi'
 import { dash, ROUTES } from '../lib/routes'
 import { STARTER_HOURS, type SalonSetup } from '../lib/segments'
 
@@ -45,6 +46,10 @@ interface AuthState {
   updateProfile: (userName: string, salonName: string) => Promise<string | null>
   /** aceita o convite da equipe: liga o login ao negócio (e à profissional) e já abre o sistema */
   acceptInvite: (token: string) => Promise<string | null>
+  /** apaga a conta de vez (dona: o negócio inteiro e a assinatura) e sai */
+  deleteAccount: () => Promise<string | null>
+  /** acesso master da IKIZY (lista de e-mails no servidor) */
+  isAdmin: boolean
 }
 
 const AuthContext = createContext<AuthState | null>(null)
@@ -126,6 +131,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void loadSalon(userId)
   }, [userId, sessionReady, loadSalon])
 
+  // master da IKIZY: o servidor decide (ADMIN_EMAILS); sem login, nunca
+  const [adminFor, setAdminFor] = useState<string | null>(null)
+  useEffect(() => {
+    if (!userId) return
+    let alive = true
+    void fetchIsAdmin().then((admin) => alive && setAdminFor(admin ? userId : null))
+    return () => {
+      alive = false
+    }
+  }, [userId])
+  const isAdmin = Boolean(userId && adminFor === userId)
+
   // a dona deixa o e-mail guardado no servidor para os avisos de teste e de cobrança
   const ownedSalonId = salon?.role === 'owner' ? salon.id : null
   useEffect(() => {
@@ -162,6 +179,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       session,
       salon: shownSalon,
       displayName,
+      isAdmin,
+      async deleteAccount() {
+        if (!neon) return 'No modo demonstração não há conta para excluir.'
+        try {
+          await deleteAccountApi()
+        } catch (e) {
+          return e instanceof BillingError ? e.message : 'Não foi possível excluir a conta agora. Tente novamente.'
+        }
+        try {
+          await neon.auth.signOut()
+        } catch {
+          // o login já não existe: só limpa aqui
+        }
+        setSession(null)
+        setSalon(null)
+        setProfile({})
+        return null
+      },
       async updateProfile(userName, salonName) {
         const person = userName.trim()
         const business = salonName.trim()
@@ -350,7 +385,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return null
       },
     }),
-    [status, session, salon, shownSalon, displayName, userId, loadSalon, sessionName, sendCode],
+    [status, session, salon, shownSalon, displayName, isAdmin, userId, loadSalon, sessionName, sendCode],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
