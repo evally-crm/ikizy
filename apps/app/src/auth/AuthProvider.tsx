@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { isNeonConfigured, neon, type NeonSession as Session } from '../lib/neon'
 import { BillingError, syncNotifyEmail } from '../lib/billingApi'
-import { deleteAccount as deleteAccountApi, fetchIsAdmin } from '../lib/accountApi'
+import { cancelDeletion as cancelDeletionApi, deleteAccount as deleteAccountApi, fetchMe } from '../lib/accountApi'
 import { dash, ROUTES } from '../lib/routes'
 import { STARTER_HOURS, type SalonSetup } from '../lib/segments'
 
@@ -46,8 +46,15 @@ interface AuthState {
   updateProfile: (userName: string, salonName: string) => Promise<string | null>
   /** aceita o convite da equipe: liga o login ao negócio (e à profissional) e já abre o sistema */
   acceptInvite: (token: string) => Promise<string | null>
-  /** apaga a conta de vez (dona: o negócio inteiro e a assinatura) e sai; o servidor confere o texto digitado */
+  /**
+   * pede a exclusão da conta; o servidor confere o texto digitado. Dona: agenda para daqui a 7 dias (continua logada,
+   * com `deletionAt` preenchido). Equipe: apaga na hora e sai.
+   */
   deleteAccount: (confirmation: string) => Promise<string | null>
+  /** a dona desiste da exclusão agendada */
+  cancelDeletion: () => Promise<string | null>
+  /** quando a exclusão pedida pela dona acontece (null = nada agendado) */
+  deletionAt: Date | null
   /** acesso master da IKIZY (lista de e-mails no servidor) */
   isAdmin: boolean
   /** false enquanto o servidor ainda não respondeu se é master (a tela do master espera, não redireciona) */
@@ -135,17 +142,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // master da IKIZY: o servidor decide (ADMIN_EMAILS); sem login, nunca
   // `adminCheck` guarda de quem é a resposta: enquanto ela não chega, a tela do master espera em vez de mandar a pessoa embora
-  const [adminCheck, setAdminCheck] = useState<{ uid: string; admin: boolean } | null>(null)
+  const [me, setMe] = useState<{ uid: string; admin: boolean; deletionAt: Date | null } | null>(null)
   useEffect(() => {
     if (!userId) return
     let alive = true
-    void fetchIsAdmin().then((admin) => alive && setAdminCheck({ uid: userId, admin }))
+    void fetchMe().then((m) => alive && setMe({ uid: userId, ...m }))
     return () => {
       alive = false
     }
   }, [userId])
-  const isAdmin = Boolean(userId && adminCheck?.uid === userId && adminCheck.admin)
-  const adminChecked = !userId || adminCheck?.uid === userId
+  const isAdmin = Boolean(userId && me?.uid === userId && me.admin)
+  const adminChecked = !userId || me?.uid === userId
+  const deletionAt = userId && me?.uid === userId ? me.deletionAt : null
 
   // a dona deixa o e-mail guardado no servidor para os avisos de teste e de cobrança
   const ownedSalonId = salon?.role === 'owner' ? salon.id : null
@@ -185,12 +193,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       displayName,
       isAdmin,
       adminChecked,
+      deletionAt,
+      async cancelDeletion() {
+        try {
+          await cancelDeletionApi()
+        } catch (e) {
+          return e instanceof BillingError ? e.message : 'Não foi possível cancelar agora. Tente novamente.'
+        }
+        setMe((m) => (m ? { ...m, deletionAt: null } : m))
+        return null
+      },
       async deleteAccount(confirmation) {
         if (!neon) return 'No modo demonstração não há conta para excluir.'
+        let result
         try {
-          await deleteAccountApi(confirmation)
+          result = await deleteAccountApi(confirmation)
         } catch (e) {
           return e instanceof BillingError ? e.message : 'Não foi possível excluir a conta agora. Tente novamente.'
+        }
+        // dona: a exclusão só acontece daqui a 7 dias, então segue logada (com o aviso e o botão de desistir)
+        if ('scheduled' in result) {
+          setMe((m) => (m ? { ...m, deletionAt: new Date(result.scheduled) } : m))
+          return null
         }
         try {
           await neon.auth.signOut()
@@ -390,7 +414,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return null
       },
     }),
-    [status, session, salon, shownSalon, displayName, isAdmin, adminChecked, userId, loadSalon, sessionName, sendCode],
+    [status, session, salon, shownSalon, displayName, isAdmin, adminChecked, deletionAt, userId, loadSalon, sessionName, sendCode],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

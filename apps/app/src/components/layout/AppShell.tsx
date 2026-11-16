@@ -7,6 +7,7 @@ import { useAuth } from '../../auth/AuthProvider'
 import { SubscriptionProvider, useSubscription } from '../../billing/SubscriptionProvider'
 import { AgendaProvider } from '../../data/AgendaProvider'
 import BillingBanner from '../BillingBanner'
+import DeletionBanner from '../DeletionBanner'
 import { FirstSteps } from '../FirstSteps'
 import { PendingBell, PendingToast } from '../PendingRequests'
 import { isActive, moreItems, navItems, visibleFor, type NavItem } from './nav'
@@ -382,6 +383,7 @@ export default function AppShell() {
         </div>
       </header>
       <main className="content">
+        <DeletionBanner />
         <BillingBanner />
         <PageHeaderShell.Provider
           value={

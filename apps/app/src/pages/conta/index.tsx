@@ -14,7 +14,7 @@ import './Conta.css'
 
 /** /dashboard/conta: o perfil de quem está logada — dados, plano, segurança, aparência e exclusão da conta */
 export default function Conta() {
-  const { displayName, salon, session, status, updateProfile, signOut, deleteAccount, sendPasswordReset, isAdmin } = useAuth()
+  const { displayName, salon, session, status, updateProfile, signOut, deleteAccount, cancelDeletion, deletionAt, sendPasswordReset, isAdmin } = useAuth()
   const { sub } = useSubscription()
   const access = roleAccess(salon?.role ?? 'owner')
   const isOwner = !salon || salon.role === 'owner'
@@ -33,6 +33,9 @@ export default function Conta() {
   const [saved, setSaved] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [resetSent, setResetSent] = useState(false)
+  const [scheduledNotice, setScheduledNotice] = useState(false)
+  const [cancelBusy, setCancelBusy] = useState(false)
+  const [cancelError, setCancelError] = useState<string | null>(null)
 
   const onSave = async (e: FormEvent) => {
     e.preventDefault()
@@ -240,12 +243,38 @@ export default function Conta() {
             </section>
           )}
 
-          {!demo && session && (
+          {!demo && session && isOwner && deletionAt && (
+            <section className="conta__card conta__danger">
+              <h2 className="conta__title">Exclusão agendada</h2>
+              <p className="conta__hint">
+                Sua conta e o negócio serão apagados em <strong>{deletionAt.toLocaleDateString('pt-BR')}</strong>. Até lá nada muda e você pode desistir.
+              </p>
+              {cancelError && (
+                <p className="dialog__error" role="alert">
+                  {cancelError}
+                </p>
+              )}
+              <Button
+                disabled={cancelBusy}
+                onClick={async () => {
+                  setCancelBusy(true)
+                  setCancelError(null)
+                  const message = await cancelDeletion()
+                  setCancelBusy(false)
+                  setCancelError(message)
+                }}
+              >
+                {cancelBusy ? 'Cancelando…' : 'Cancelar exclusão'}
+              </Button>
+            </section>
+          )}
+
+          {!demo && session && !(isOwner && deletionAt) && (
             <section className="conta__card conta__danger">
               <h2 className="conta__title">Excluir conta</h2>
               <p className="conta__hint">
                 {isOwner
-                  ? 'Apaga de vez o negócio, as clientes, a agenda, o caixa, as fotos e o site, e remove o acesso da equipe. A assinatura é cancelada na hora. Não dá para desfazer.'
+                  ? 'Você tem 7 dias para desistir. Depois, apagamos de vez o negócio, as clientes, a agenda, o caixa, as fotos e o site, e removemos o acesso da equipe. A assinatura no cartão deixa de renovar já.'
                   : 'Seu login é apagado e você sai do negócio. Os atendimentos continuam na agenda. Não dá para desfazer.'}
               </p>
               <Button variant="light" className="conta__delete" onClick={() => setDeleting(true)}>
@@ -261,7 +290,7 @@ export default function Conta() {
           title="Excluir sua conta?"
           text={
             isOwner && salon
-              ? `Isso apaga de vez o ${salon.name}: clientes, agenda, caixa, fotos, site e os acessos da equipe. A assinatura é cancelada na hora, sem novas cobranças. Não dá para desfazer.`
+              ? `Daqui a 7 dias vamos apagar de vez o ${salon.name}: clientes, agenda, caixa, fotos, site e os acessos da equipe. Até lá você pode desistir. A renovação da assinatura no cartão é pausada agora, e esta data vale mesmo se você não entrar mais.`
               : 'Seu login é apagado e você sai do negócio. Os atendimentos continuam na agenda do negócio. Não dá para desfazer.'
           }
           expected={isOwner && salon ? salon.name : 'excluir'}
@@ -270,8 +299,20 @@ export default function Conta() {
               ? `Você pagou por Pix e tem acesso até ${prepaidUntil.toLocaleDateString('pt-BR')}. Esse valor não é devolvido ao excluir.`
               : undefined
           }
-          onDelete={deleteAccount}
+          onDelete={async (typed) => {
+            const message = await deleteAccount(typed)
+            if (!message && isOwner) setScheduledNotice(true)
+            return message
+          }}
           onClose={() => setDeleting(false)}
+        />
+      )}
+      {scheduledNotice && (
+        <NoticeDialog
+          tone="ok"
+          title="Exclusão agendada"
+          text={`Enviamos um e-mail para ${email ?? 'você'}. Em 7 dias a conta e o negócio serão apagados. Até lá, é só tocar em "Cancelar exclusão" para desistir.`}
+          onClose={() => setScheduledNotice(false)}
         />
       )}
       {resetSent && (

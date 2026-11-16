@@ -2,11 +2,14 @@
  * Aplica as migrations de neon/migrations/ que ainda não estão em public.schema_migrations, em ordem,
  * cada uma dentro de begin ... commit (rollback se der erro).
  *
- *   npm run db:migrate              -> só lista o que falta (não muda nada)
- *   npm run db:migrate -- --aplicar -> aplica
+ *   npm run db:migrate                    -> lista o que falta na PRODUÇÃO (não muda nada)
+ *   npm run db:migrate -- --aplicar       -> aplica na PRODUÇÃO
+ *   npm run db:migrate:dev                -> lista o que falta na branch "dev" do Neon
+ *   npm run db:migrate:dev -- --aplicar   -> aplica na branch "dev" (teste sempre aqui antes)
  *
- * Usa DATABASE_URL_UNPOOLED (ou DATABASE_URL) do .env.local da raiz. Para testar antes, aponte para uma
- * branch do Neon: DATABASE_URL_UNPOOLED=postgres://...branch... npm run db:migrate -- --aplicar
+ * Produção: DATABASE_URL_UNPOOLED (ou DATABASE_URL) do .env.local da raiz. Branch dev: o mesmo, do .env.dev.local da raiz
+ * (criado por `neon connection-string dev`, ver CONTEXTO.md). Uma variável de ambiente com o mesmo nome vence o arquivo.
+ * O script sempre diz em qual banco está mexendo.
  */
 import { readdirSync, readFileSync, existsSync } from 'node:fs'
 import { join, resolve } from 'node:path'
@@ -18,21 +21,30 @@ const dir = join(root, 'neon/migrations')
 /** migrations aplicadas à mão antes da tabela de controle existir (a fase1 registra todas elas) */
 const BEFORE_CONTROL = '20261024000000_fase1'
 
+const dev = process.argv.includes('--dev')
+
 function envUrl(): string {
   const fromEnv = process.env.DATABASE_URL_UNPOOLED ?? process.env.DATABASE_URL
   if (fromEnv) return fromEnv
-  const file = join(root, '.env.local')
+  const file = join(root, dev ? '.env.dev.local' : '.env.local')
   if (existsSync(file)) {
     for (const line of readFileSync(file, 'utf8').split('\n')) {
       const m = line.match(/^(DATABASE_URL_UNPOOLED|DATABASE_URL)=(.*)$/)
       if (m) return m[2].trim().replace(/^["']|["']$/g, '')
     }
   }
-  throw new Error('Defina DATABASE_URL_UNPOOLED (ou rode `neon env pull` para criar o .env.local da raiz).')
+  throw new Error(
+    dev
+      ? 'Crie o .env.dev.local na raiz com DATABASE_URL_UNPOOLED da branch dev (ver CONTEXTO.md, "Banco de desenvolvimento").'
+      : 'Defina DATABASE_URL_UNPOOLED (ou rode `neon env pull` para criar o .env.local da raiz).',
+  )
 }
 
 const apply = process.argv.includes('--aplicar')
-const pool = new Pool({ connectionString: envUrl() })
+const url = envUrl()
+// diz sempre onde está mexendo: o endereço do servidor (sem usuário nem senha) e se é a branch dev ou a produção
+console.log(`Banco: ${dev ? 'branch DEV' : 'PRODUÇÃO'} (${new URL(url).hostname.split('.')[0]})`)
+const pool = new Pool({ connectionString: url })
 const client = await pool.connect()
 
 try {

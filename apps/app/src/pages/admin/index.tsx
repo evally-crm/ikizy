@@ -11,7 +11,7 @@ import { Button, Em, PageHeader } from '../../components/ui'
 import { DataTable, type Column } from '../../components/ui/DataTable'
 import { SearchField } from '../../components/ui/SearchField'
 import { StatTile } from '../../components/ui/StatTile'
-import { adminDeleteSalon, adminSalons, type AdminSalon } from '../../lib/accountApi'
+import { adminDeleteSalon, adminLog, adminSalons, type AdminSalon, type AuditRow } from '../../lib/accountApi'
 import { BillingError } from '../../lib/billingApi'
 import { isPlanId, PLANS } from '../../lib/plans'
 import { ROUTES } from '../../lib/routes'
@@ -24,6 +24,26 @@ const STATUS: Record<string, { label: string; tone: string }> = {
   canceled: { label: 'Cancelado', tone: 'neutral' },
 }
 
+/** o que cada linha do registro quer dizer, em português */
+function actionLabel(r: AuditRow): string {
+  switch (r.action) {
+    case 'admin.delete_salon':
+      return 'Master apagou o negócio'
+    case 'owner.request_deletion':
+      return 'Dona pediu a exclusão (7 dias)'
+    case 'owner.cancel_deletion':
+      return 'Dona desistiu da exclusão'
+    case 'system.purge_salon':
+      return r.details.reason === 'retention' ? 'Apagado: 90 dias sem acesso' : 'Apagado: exclusão pedida venceu'
+    case 'system.purge_orphan_logins':
+      return `Logins largados apagados (${String(r.details.count ?? 0)})`
+    default:
+      return r.action
+  }
+}
+const who = (r: AuditRow) => (r.actorKind === 'system' ? 'Automático' : (r.actorEmail ?? r.actorKind))
+const stamp = (iso: string) => format(new Date(iso), 'dd/MM/yyyy HH:mm', { locale: ptBR })
+
 const day = (iso: string) => format(new Date(iso), 'dd/MM/yyyy', { locale: ptBR })
 const planName = (plan: string | null) => (plan && isPlanId(plan) ? PLANS[plan].name : '—')
 
@@ -31,6 +51,7 @@ const planName = (plan: string | null) => (plan && isPlanId(plan) ? PLANS[plan].
 export default function Admin() {
   const { isAdmin, adminChecked } = useAuth()
   const [salons, setSalons] = useState<AdminSalon[] | null>(null)
+  const [log, setLog] = useState<AuditRow[]>([])
   const [error, setError] = useState<string | null>(null)
   const [query, setQuery] = useState('')
   const [target, setTarget] = useState<AdminSalon | null>(null)
@@ -40,6 +61,8 @@ export default function Admin() {
     try {
       setSalons(await adminSalons())
       setError(null)
+      // o registro é um extra: se falhar, a lista de negócios continua valendo
+      setLog(await adminLog().catch(() => []))
     } catch (e) {
       setError(e instanceof BillingError ? e.message : 'Não foi possível carregar os negócios.')
       setSalons([])
@@ -93,6 +116,7 @@ export default function Admin() {
           <span className="admin__who">
             <strong>{planName(s.plan)}</strong>
             {st && <span className={`badge badge--${st.tone}`}>{st.label}</span>}
+            {s.deletionScheduledAt && <span className="badge badge--danger">Exclusão em {format(new Date(s.deletionScheduledAt), 'dd/MM', { locale: ptBR })}</span>}
           </span>
         )
       },
@@ -110,6 +134,26 @@ export default function Admin() {
         </Button>
       ),
     },
+  ]
+
+  const logColumns: Column<AuditRow>[] = [
+    { key: 'at', label: 'Quando', render: (r) => stamp(r.at) },
+    { key: 'what', label: 'O que aconteceu', render: (r) => actionLabel(r) },
+    {
+      key: 'salon',
+      label: 'Negócio',
+      hideOnMobile: true,
+      render: (r) =>
+        r.salonName ? (
+          <span className="admin__who">
+            <strong>{r.salonName}</strong>
+            <small>{r.salonSlug}.ikizy.com</small>
+          </span>
+        ) : (
+          '—'
+        ),
+    },
+    { key: 'who', label: 'Quem', hideOnMobile: true, render: (r) => <small>{who(r)}</small> },
   ]
 
   return (
@@ -143,6 +187,16 @@ export default function Admin() {
           <SearchField value={query} onChange={setQuery} label="Buscar negócio" placeholder="Buscar por nome, endereço ou e-mail" />
 
           <DataTable caption="Negócios" columns={columns} rows={rows} rowKey={(s) => s.id} empty={<p>Nenhum negócio encontrado.</p>} />
+
+          <h2 className="admin__title">Registro de ações</h2>
+          <p className="admin__hint">Quem apagou ou pediu para apagar o quê, e as limpezas automáticas. Os últimos 100 registros.</p>
+          <DataTable
+            caption="Registro de ações"
+            columns={logColumns}
+            rows={log}
+            rowKey={(r) => String(r.id)}
+            empty={<p>Nenhuma ação registrada ainda.</p>}
+          />
         </>
       )}
 

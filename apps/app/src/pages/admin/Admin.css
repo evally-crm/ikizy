@@ -24,3 +24,14 @@
   font-size: 12px;
   overflow-wrap: anywhere;
 }
+
+.admin__title {
+  margin: 28px 0 4px;
+  font-size: 18px;
+  font-weight: 500;
+}
+.admin__hint {
+  margin: 0 0 14px;
+  color: var(--ink-500);
+  font-size: 14px;
+}

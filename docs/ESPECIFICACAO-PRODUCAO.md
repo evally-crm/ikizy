@@ -618,6 +618,7 @@ Rodam como Vercel Cron Jobs chamando rotas `/api/cron/*` protegidas por `CRON_SE
 | `daily-summary` | diário 19h | resumo de amanhã para quem ativou | E6 |
 | `site-offline` | diário | tira do ar sites de negócios sem acesso há mais de 7 dias | R-104 |
 | `data-retention` | diário | aviso aos 83 dias e exclusão aos 90 dias sem acesso | R-107, E12 |
+| `housekeeping` (feito em 16/11/2026, no lugar de `data-retention`) | diário | exclusões pedidas que venceram os 7 dias, retenção (aviso aos 83 e exclusão aos 90 dias), logins largados e convites vencidos; teto de 5 negócios por execução; registra em `audit_log` | R-107 |
 | `cleanup` | semanal | fotos órfãs no storage, convites vencidos, `rate_limits` antigos, `push_subscriptions` que falham | — |
 | `reconcile-stripe` | diário | confere assinaturas com o Stripe (caso um webhook se perca) | — |
 
