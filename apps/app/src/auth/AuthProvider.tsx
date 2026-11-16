@@ -50,7 +50,7 @@ interface AuthState {
    * pede a exclusão da conta; o servidor confere o texto digitado. Dona: agenda para daqui a 7 dias (continua logada,
    * com `deletionAt` preenchido). Equipe: apaga na hora e sai.
    */
-  deleteAccount: (confirmation: string) => Promise<string | null>
+  deleteAccount: (confirmation: string, why?: { reason?: string; comment?: string }) => Promise<string | null>
   /** a dona desiste da exclusão agendada */
   cancelDeletion: () => Promise<string | null>
   /** quando a exclusão pedida pela dona acontece (null = nada agendado) */
@@ -203,11 +203,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setMe((m) => (m ? { ...m, deletionAt: null } : m))
         return null
       },
-      async deleteAccount(confirmation) {
+      async deleteAccount(confirmation, why) {
         if (!neon) return 'No modo demonstração não há conta para excluir.'
         let result
         try {
-          result = await deleteAccountApi(confirmation)
+          result = await deleteAccountApi(confirmation, why)
         } catch (e) {
           return e instanceof BillingError ? e.message : 'Não foi possível excluir a conta agora. Tente novamente.'
         }

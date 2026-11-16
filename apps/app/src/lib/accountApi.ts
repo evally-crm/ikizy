@@ -3,9 +3,28 @@ import { post, postFile } from './billingApi'
 /** a dona recebe a data da exclusão (7 dias); quem é da equipe é apagado na hora */
 export type DeleteResult = { deleted: true } | { scheduled: string }
 
-/** pede a exclusão da conta; o servidor confere o texto digitado */
-export async function deleteAccount(confirmation: string): Promise<DeleteResult> {
-  return post<DeleteResult>('/api/account/delete', { confirmation })
+/** pede a exclusão da conta; o servidor confere o texto digitado. `why` (opcional) é o motivo marcado e um comentário curto */
+export async function deleteAccount(confirmation: string, why?: { reason?: string; comment?: string }): Promise<DeleteResult> {
+  return post<DeleteResult>('/api/account/delete', { confirmation, ...why })
+}
+
+/** o que a tela "Excluir conta" mostra antes de confirmar */
+export interface AccountSummary {
+  role: string | null
+  salonName: string | null
+  clients: number
+  appointments: number
+  members: number
+  deletionAt: string | null
+}
+
+/** quanto o negócio tem (só a dona recebe os números); null se não deu para carregar */
+export async function fetchSummary(): Promise<AccountSummary | null> {
+  try {
+    return await post<AccountSummary>('/api/account/summary', {})
+  } catch {
+    return null
+  }
 }
 
 /** baixa uma cópia dos dados do negócio (ZIP com planilhas): só a dona; o navegador salva o arquivo */

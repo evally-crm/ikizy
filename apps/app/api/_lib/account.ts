@@ -70,6 +70,8 @@ export interface AccountDb {
   salonInfo(salonId: string): Promise<SalonInfo | null>
   /** e-mails de quem tem login no negócio; precisa ser lido ANTES de apagar */
   contactsOf(salonId: string): Promise<{ ownerEmail: string | null; memberEmails: string[] }>
+  /** quanto há no negócio (para a dona ver o que vai perder antes de confirmar) */
+  salonCounts(salonId: string): Promise<{ clients: number; appointments: number; members: number }>
   scheduleDeletion(salonId: string, requestedAt: Date, scheduledAt: Date, resumeBilling: boolean): Promise<void>
   cancelDeletion(salonId: string): Promise<void>
   /** negócios cujo prazo de exclusão já passou */
@@ -117,6 +119,18 @@ export interface User {
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
+
+/** motivos que a dona pode marcar ao pedir a exclusão (opcional; vira dado de melhoria do produto, sem nome de cliente) */
+export const REASONS = ['nao-uso', 'caro', 'faltam-recursos', 'dificil', 'outro-sistema', 'fechei', 'outro'] as const
+export type Reason = (typeof REASONS)[number]
+
+/** lê o motivo e o comentário do corpo do pedido: o que não for da lista é ignorado, e o comentário tem teto de 300 letras */
+export function parseReason(body: unknown): { reason: Reason | null; comment: string | null } {
+  const b = (body ?? {}) as { reason?: unknown; comment?: unknown }
+  const reason = REASONS.find((r) => r === b.reason) ?? null
+  const comment = typeof b.comment === 'string' ? b.comment.trim().slice(0, 300) : ''
+  return { reason, comment: reason && comment ? comment : null }
+}
 
 /** o que quem não é dona digita para confirmar (a dona digita o nome do negócio; o master, o endereço dele) */
 export const CONFIRM_WORD = 'excluir'
@@ -177,7 +191,7 @@ export async function deleteAccount(deps: AccountDeps, user: User, body: unknown
   const typed = (body as { confirmation?: unknown } | null)?.confirmation
   if (!same(typed, isOwner ? member.salonName : CONFIRM_WORD)) throw mismatch()
 
-  if (isOwner) return requestDeletion(deps, user, member)
+  if (isOwner) return requestDeletion(deps, user, member, parseReason(body))
 
   if (member) await deps.db.leaveSalon(member.salonId, user.id)
   await deps.db.deleteUser(user.id)
@@ -185,7 +199,7 @@ export async function deleteAccount(deps: AccountDeps, user: User, body: unknown
   return { deleted: true }
 }
 
-async function requestDeletion(deps: AccountDeps, user: User, member: Membership): Promise<DeleteResult> {
+async function requestDeletion(deps: AccountDeps, user: User, member: Membership, why: { reason: Reason | null; comment: string | null }): Promise<DeleteResult> {
   const info = await deps.db.salonInfo(member.salonId)
   if (!info) throw new HttpError(404, 'not_found', 'Negócio não encontrado.')
   // pedido repetido: devolve a data que já está valendo, sem mexer em nada
@@ -208,7 +222,7 @@ async function requestDeletion(deps: AccountDeps, user: User, member: Membership
     salonId: member.salonId,
     salonName: info.name,
     salonSlug: info.slug,
-    details: { scheduledAt: scheduledAt.toISOString(), billingPaused: resume },
+    details: { scheduledAt: scheduledAt.toISOString(), billingPaused: resume, ...(why.reason ? { reason: why.reason } : {}), ...(why.comment ? { comment: why.comment } : {}) },
   })
   await notify(deps, user.email, renderScheduledEmail(info.name, scheduledAt, `${deps.appUrl}/dashboard/conta`))
   return { scheduled: scheduledAt.toISOString() }
@@ -238,6 +252,27 @@ export async function cancelDeletion(deps: AccountDeps, user: User): Promise<{ c
     salonSlug: info.slug,
   })
   return { cancelled: true }
+}
+
+export interface AccountSummary {
+  role: Membership['role'] | null
+  salonName: string | null
+  /** só para a dona: quanto o negócio tem hoje */
+  clients: number
+  appointments: number
+  members: number
+  /** quando a exclusão acontece (null = nada agendado) */
+  deletionAt: string | null
+}
+
+/** o que a tela "Excluir conta" mostra antes de a pessoa confirmar: o que ela vai perder */
+export async function accountSummary(db: AccountDb, userId: string): Promise<AccountSummary> {
+  const member = await db.getMembership(userId)
+  const empty = { clients: 0, appointments: 0, members: 0, deletionAt: null }
+  if (!member) return { role: null, salonName: null, ...empty }
+  if (member.role !== 'owner') return { role: member.role as Membership['role'], salonName: member.salonName, ...empty }
+  const [counts, info] = await Promise.all([db.salonCounts(member.salonId), db.salonInfo(member.salonId)])
+  return { role: 'owner', salonName: member.salonName, ...counts, deletionAt: info?.deletionScheduledAt?.toISOString() ?? null }
 }
 
 /** a dona logada: quando a exclusão dela acontece (null = nada agendado ou não é dona) */

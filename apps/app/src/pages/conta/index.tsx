@@ -1,10 +1,9 @@
 import { useState, type FormEvent } from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import { ChevronRight, CreditCard, Download, KeyRound, LogOut, Mail, ShieldCheck, Store, Trash2 } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
 import { useSubscription } from '../../billing/SubscriptionProvider'
 import { DarkModeRow } from '../../components/DarkModeRow'
-import { DeleteAccountDialog } from '../../components/DeleteAccountDialog'
 import { NoticeDialog } from '../../components/Modal'
 import { Avatar, Button, Em, PageHeader } from '../../components/ui'
 import { roleAccess, ROLE_LABEL } from '../../domain/team'
@@ -16,8 +15,9 @@ import './Conta.css'
 
 /** /dashboard/conta: o perfil de quem está logada — dados, plano, segurança, aparência e exclusão da conta */
 export default function Conta() {
-  const { displayName, salon, session, status, updateProfile, signOut, deleteAccount, cancelDeletion, deletionAt, sendPasswordReset, isAdmin } = useAuth()
+  const { displayName, salon, session, status, updateProfile, signOut, cancelDeletion, deletionAt, sendPasswordReset, isAdmin } = useAuth()
   const { sub } = useSubscription()
+  const navigate = useNavigate()
   const access = roleAccess(salon?.role ?? 'owner')
   const isOwner = !salon || salon.role === 'owner'
   const canEditSalon = !salon || salon.role === 'owner' || salon.role === 'manager'
@@ -33,12 +33,10 @@ export default function Conta() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
-  const [deleting, setDeleting] = useState(false)
-  const [resetSent, setResetSent] = useState(false)
+    const [resetSent, setResetSent] = useState(false)
   const [exporting, setExporting] = useState(false)
   const [exportError, setExportError] = useState<string | null>(null)
   const [exported, setExported] = useState(false)
-  const [scheduledNotice, setScheduledNotice] = useState(false)
   const [cancelBusy, setCancelBusy] = useState(false)
   const [cancelError, setCancelError] = useState<string | null>(null)
 
@@ -57,8 +55,6 @@ export default function Conta() {
     }
   }
 
-  // Pix já pago e ainda dentro do período: o valor não volta ao excluir (só o cartão é cancelado no Stripe)
-  const prepaidUntil = isOwner && sub?.method === 'pix' && sub.status === 'active' && sub.accessUntil.getTime() > Date.now() ? sub.accessUntil : null
   const exportData = async () => {
     setExporting(true)
     setExportError(null)
@@ -319,7 +315,7 @@ export default function Conta() {
                   ? 'Você tem 7 dias para desistir. Depois, apagamos de vez o negócio, as clientes, a agenda, o caixa, as fotos e o site, e removemos o acesso da equipe. A assinatura no cartão deixa de renovar já.'
                   : 'Seu login é apagado e você sai do negócio. Os atendimentos continuam na agenda. Não dá para desfazer.'}
               </p>
-              <Button variant="light" className="conta__delete" onClick={() => setDeleting(true)}>
+              <Button variant="light" className="conta__delete" onClick={() => navigate(dash('/conta/excluir'))}>
                 <Trash2 size={16} aria-hidden="true" /> Excluir minha conta
               </Button>
             </section>
@@ -327,46 +323,6 @@ export default function Conta() {
         </div>
       </div>
 
-      {deleting && (
-        <DeleteAccountDialog
-          title="Excluir sua conta?"
-          text={
-            isOwner && salon
-              ? `Daqui a 7 dias vamos apagar de vez o ${salon.name}: clientes, agenda, caixa, fotos, site e os acessos da equipe. Até lá você pode desistir. A renovação da assinatura no cartão é pausada agora, e esta data vale mesmo se você não entrar mais.`
-              : 'Seu login é apagado e você sai do negócio. Os atendimentos continuam na agenda do negócio. Não dá para desfazer.'
-          }
-          expected={isOwner && salon ? salon.name : 'excluir'}
-          before={
-            isOwner ? (
-              <p className="dialog__text">
-                Antes de excluir, que tal levar uma cópia dos seus dados?{' '}
-                <button type="button" className="linklike" disabled={exporting} onClick={() => void exportData()}>
-                  {exporting ? 'Preparando…' : exported ? 'Baixar de novo' : 'Baixar meus dados'}
-                </button>
-              </p>
-            ) : undefined
-          }
-          warning={
-            prepaidUntil
-              ? `Você pagou por Pix e tem acesso até ${prepaidUntil.toLocaleDateString('pt-BR')}. Esse valor não é devolvido ao excluir.`
-              : undefined
-          }
-          onDelete={async (typed) => {
-            const message = await deleteAccount(typed)
-            if (!message && isOwner) setScheduledNotice(true)
-            return message
-          }}
-          onClose={() => setDeleting(false)}
-        />
-      )}
-      {scheduledNotice && (
-        <NoticeDialog
-          tone="ok"
-          title="Exclusão agendada"
-          text={`Enviamos um e-mail para ${email ?? 'você'}. Em 7 dias a conta e o negócio serão apagados. Até lá, é só tocar em "Cancelar exclusão" para desistir.`}
-          onClose={() => setScheduledNotice(false)}
-        />
-      )}
       {resetSent && (
         <NoticeDialog
           tone="ok"

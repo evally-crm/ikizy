@@ -1,6 +1,7 @@
 import {
   adminAuditLog,
   adminDeleteSalon,
+  accountSummary,
   adminListSalons,
   cancelDeletion,
   deleteAccount,
@@ -47,7 +48,7 @@ const ACTIONS: Record<string, (user: User, body: unknown) => Promise<unknown>> =
     return { ok: true }
   },
   /**
-   * { confirmation } -> pede a exclusão se o texto bater (dona: o nome do negócio; equipe: "excluir").
+   * { confirmation, reason?, comment? } -> pede a exclusão se o texto bater (dona: o nome do negócio; equipe: "excluir").
    * Dona: agenda para daqui a 7 dias ({ scheduled }); equipe: apaga na hora ({ deleted }).
    */
   delete: (user, body) => deleteAccount(createAccountDeps(), user, body),
@@ -62,6 +63,8 @@ const ACTIONS: Record<string, (user: User, body: unknown) => Promise<unknown>> =
       },
     })
   },
+  /** o que a tela "Excluir conta" mostra antes de confirmar: quanto o negócio tem e quando a exclusão acontece */
+  summary: (user) => accountSummary(createAccountDb(), user.id),
   /** a dona desiste da exclusão agendada */
   'cancel-delete': (user) => cancelDeletion(createAccountDeps(), user),
   /** -> { admin, deletionAt }: se quem está logada é master e quando a exclusão dela acontece (null = nada agendado) */

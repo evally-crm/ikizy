@@ -17,6 +17,7 @@ import Onboarding from './pages/cadastro'
 import Plano from './pages/cadastro/Plano'
 import Clientes from './pages/clientes'
 import Conta from './pages/conta'
+import ExcluirConta from './pages/conta/Excluir'
 import Convite from './pages/convite'
 import Financeiro from './pages/financeiro'
 import Ganhos from './pages/ganhos'
@@ -49,6 +50,7 @@ export default function App() {
             <Route index element={<Inicio />} />
             <Route path="agenda" element={<Agenda />} />
             <Route path="conta" element={<Conta />} />
+            <Route path="conta/excluir" element={<ExcluirConta />} />
             <Route path="clientes" element={<Clientes />} />
             <Route path="clientes/:id" element={<Clientes />} />
             <Route element={<RequireRole allow={(a) => a.finance !== 'none'} />}>

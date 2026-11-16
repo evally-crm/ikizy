@@ -441,6 +441,13 @@ export function createAccountDb(): AccountDb {
         memberEmails: rows.filter((r) => r.role !== 'owner').map((r) => r.email as string),
       }
     },
+    async salonCounts(salonId) {
+      const rows = (await sql`
+        select (select count(*)::int from public.clients where salon_id = ${salonId}::uuid and forgotten_at is null) as clients,
+               (select count(*)::int from public.appointments where salon_id = ${salonId}::uuid) as appointments,
+               (select count(*)::int from public.members where salon_id = ${salonId}::uuid) as members`) as Row[]
+      return { clients: Number(rows[0]?.clients ?? 0), appointments: Number(rows[0]?.appointments ?? 0), members: Number(rows[0]?.members ?? 0) }
+    },
     async scheduleDeletion(salonId, requestedAt, scheduledAt, resumeBilling) {
       await sql`
         update public.salons set deletion_requested_at = ${requestedAt.toISOString()}::timestamptz,
