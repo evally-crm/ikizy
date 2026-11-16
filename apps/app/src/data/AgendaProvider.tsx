@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { addMonths, format, startOfMonth } from 'date-fns'
 import { useAuth } from '../auth/AuthProvider'
+import { track } from '../lib/analytics'
 import { isNeonConfigured, neon } from '../lib/neon'
 import type { Appointment, AppointmentStatus, PaymentMethod, Professional } from '../types'
 import { appointments as mockAppointments, professionals as mockProfessionals } from './mock'
@@ -378,6 +379,7 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
         .single()
       if (err || !data) return friendly(err ?? { message: '' })
       setAppointments((list) => [...list, fromRow(data as unknown as Row)])
+      track('agendamento_criado', { cliente_nova: !input.clientId })
       return null
     },
     [live, salonId],

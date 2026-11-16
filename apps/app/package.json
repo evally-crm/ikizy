@@ -29,6 +29,7 @@
     "date-fns": "^4.4.0",
     "jose": "^6.2.5",
     "lucide-react": "^1.52.0",
+    "posthog-js": "^1.450.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.4",

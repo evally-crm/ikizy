@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { format, parseISO } from 'date-fns'
 import { useAuth } from '../auth/AuthProvider'
 import { roleAccess } from '../domain/team'
+import { track } from '../lib/analytics'
 import { isNeonConfigured, neon } from '../lib/neon'
 import { photoFileUrl, uploadPhoto } from '../lib/photoApi'
 import { parseAnamnesis, type Anamnesis } from '../lib/anamnesis'
@@ -235,6 +236,7 @@ export function useClientBook() {
         .single()
       if (err || !data) return { id: null, error: friendly(err ?? { message: '' }) }
       reload()
+      track('cliente_cadastrada')
       return { id: data.id as string, error: null }
     },
     [live, salonId, professionals, reload],

@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { isNeonConfigured, neon, type NeonSession as Session } from '../lib/neon'
+import { identifyUser, resetAnalytics, track } from '../lib/analytics'
 import { BillingError, syncNotifyEmail } from '../lib/billingApi'
 import { cancelDeletion as cancelDeletionApi, deleteAccount as deleteAccountApi, fetchMe } from '../lib/accountApi'
 import { dash, ROUTES } from '../lib/routes'
@@ -155,6 +156,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const adminChecked = !userId || me?.uid === userId
   const deletionAt = userId && me?.uid === userId ? me.deletionAt : null
 
+  // métricas de uso: liga os eventos à conta (só o id) e ao negócio
+  const salonId = salon?.id ?? null
+  const salonRole = salon?.role ?? null
+  useEffect(() => {
+    if (userId) identifyUser(userId, salonId && salonRole ? { id: salonId, role: salonRole } : null)
+  }, [userId, salonId, salonRole])
+
   // a dona deixa o e-mail guardado no servidor para os avisos de teste e de cobrança
   const ownedSalonId = salon?.role === 'owner' ? salon.id : null
   useEffect(() => {
@@ -224,6 +232,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(null)
         setSalon(null)
         setProfile({})
+        resetAnalytics()
         return null
       },
       async updateProfile(userName, salonName) {
@@ -270,6 +279,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // devolve 'session_not_found': a conta existe, falta só o código que já foi enviado
           if (error.code === 'session_not_found') {
             await sendCode(email)
+            track('conta_criada', { metodo: 'email' })
             return { error: null, needsConfirmation: true }
           }
           // e-mail já cadastrado (ex.: conta criada antes de terminar o questionário): com a senha certa, só entra e segue
@@ -291,6 +301,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         if (data.session) setSession(data.session)
         else await sendCode(email)
+        track('conta_criada', { metodo: 'email' })
         return { error: null, needsConfirmation: !data.session }
       },
       async verifyEmailCode(email, code) {
@@ -411,6 +422,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         }
         await loadSalon(userId)
+        track('negocio_criado', { plano: setup?.plan ?? null, servicos: setup?.services.length ?? 0 })
         return null
       },
     }),

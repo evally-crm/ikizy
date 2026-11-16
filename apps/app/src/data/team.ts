@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '../auth/AuthProvider'
 import { useSubscription } from '../billing/SubscriptionProvider'
+import { track } from '../lib/analytics'
 import { isNeonConfigured, neon } from '../lib/neon'
 import { isPlanId, type PlanId } from '../lib/plans'
 import type { Role } from '../domain/team'
@@ -187,6 +188,7 @@ export function useTeam() {
         const { data, error: err } = await neon.rpc('create_invite', { p_salon: salonId, p_role: role, p_professional: professionalId })
         if (err || typeof data !== 'string') return { error: friendly(err ?? { message: '' }) }
         reload()
+        track('convite_criado', { perfil: role })
         return { token: data }
       }
       const token = Array.from({ length: 64 }, () => '0123456789abcdef'[Math.floor(Math.random() * 16)]).join('')
