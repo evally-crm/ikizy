@@ -30,7 +30,7 @@ meu site e configurações ficam em "Mais").
 
 ```bash
 npm install
-npm run dev            # app em http://localhost:5173
+npm run dev            # app em http://localhost:5173 (usa a branch `dev` do Neon, sem dados reais; ver CONTEXTO.md)
 npm run dev:landing    # landing em http://localhost:4321
 npm run build          # compila app e landing
 ```

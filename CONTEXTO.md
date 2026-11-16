@@ -70,9 +70,24 @@ Ficam em `neon/migrations/`. Desde `20261024000000_fase1` o banco tem a tabela `
 `npm run db:migrate` (em `apps/app`) lista o que falta; `npm run db:migrate -- --aplicar` aplica em ordem, cada uma em
 `begin ... commit`. Usa `DATABASE_URL_UNPOOLED` do `.env.local` da raiz.
 
-**Sempre testar antes numa branch do Neon** (cópia da produção): criar a branch, apontar
-`DATABASE_URL_UNPOOLED=<url da branch>` e rodar o script; conferir; só então aplicar na produção.
+**Sempre testar antes na branch `dev` do Neon** (ver "Banco de desenvolvimento" abaixo): `npm run db:migrate:dev -- --aplicar`,
+conferir, e só então `npm run db:migrate -- --aplicar` na produção. O script diz sempre em qual banco está mexendo ("branch DEV" ou "PRODUÇÃO").
 Toda migration termina com `notify pgrst, 'reload schema';` para a Data API enxergar colunas novas.
+
+### Banco de desenvolvimento (branch `dev` do Neon)
+
+Criada em 16/11/2026 (`br-lucky-star-b68ny7u5`, endpoint `ep-old-dream-b6e5t7dn`, mesmo projeto `lingering-base-71670281`). Tem o schema
+da produção (30 migrations) e **nenhum dado real**: o projeto tem a role legada `anonymous`, que não permite branch só com a estrutura, então
+foi criada como cópia e os dados pessoais (logins, negócios, clientes, atendimentos) foram apagados na hora, com trava de endereço. Tem Neon Auth
+e Data API próprios, com endereços diferentes dos da produção.
+
+- `npm run dev` (em `apps/app`) lê `apps/app/.env.development.local` (login e Data API da branch dev) e **não toca a produção**. `npm run build` e o deploy não usam esse arquivo.
+- `npm run db:migrate:dev` lê `.env.dev.local` na raiz (`DATABASE_URL_UNPOOLED` da branch). Os dois arquivos são `*.local`, ficam fora do git. Para recriar: `neon connection-string dev --project-id lingering-base-71670281 --role-name neondb_owner --database-name neondb` (e `--pooled`), e os endereços de `neon neon-auth status` / `neon data-api get` com `--branch dev`.
+- Neon Auth da dev: webhook de e-mail **desligado** (o copiado apontava para a produção) e confirmação de e-mail **desligada**, então contas de teste entram direto, sem código. O fluxo do código por e-mail só se testa em produção. `localhost` liberado.
+- Conta de teste: `dona.teste@ikizy.test` (a senha está em `.env.dev.local`, em `TESTE_SENHA`).
+- As funções `/api/*` (Stripe, fotos, excluir conta, master) não rodam no `npm run dev`; para elas use o deploy de preview ou `vercel dev` com as variáveis da branch.
+- Para refazer a dev a partir da produção: `neon branches reset --help` (a cópia traz o que a produção tem; apague os dados pessoais de novo, como na criação).
+- Migration nova: aplicar na dev, testar o app contra ela, só então na produção.
 
 ### Verificações antes de commitar
 
@@ -343,6 +358,6 @@ Hoje: a cliente escolhe serviço, profissional, dia e horário livre, informa no
 | P2 | **Indique e ganhe** | Como o "Give $30, get $30" da GlossGenius: link de indicação, crédito na assinatura das duas. Crescimento barato. |
 | P2 | **Testes de ponta a ponta** | Playwright para o fluxo cadastro → site → agendamento; hoje há só testes das funções do servidor (81). |
 | P2 | **Monitoramento de erros** | Sentry (ou similar) no app e nas funções da Vercel. |
-| P3 | **Branch de banco para desenvolvimento** | Hoje o `localhost` usa o banco de produção. Usar uma branch do Neon para dev/preview e aplicar migrations primeiro nela. |
+| ~~P3~~ | **Branch de banco para desenvolvimento** (feito) | Feita em 16/11/2026: o `npm run dev` usa a branch `dev` do Neon, sem dados reais. Falta conferir para onde o preview da Vercel aponta (as variáveis de Preview não foram revisadas). Ver "Banco de desenvolvimento" na seção 3. |
 | P3 | **LGPD** | Termo de consentimento no agendamento, exportar/apagar dados da cliente. |
 | P3 | **Ferramenta de migrations** | Registrar quais já foram aplicadas (tabela de controle) em vez de aplicar à mão. |
