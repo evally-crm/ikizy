@@ -13,6 +13,7 @@ import type { NotifyDb, OwnerContact } from './notify.js'
 import type { BlobStore, PhotoStoreDb } from './photoStore.js'
 import type { PlannedReminder, ReminderCandidate, ReminderDb, SendEmail } from './reminders.js'
 import type { PublicSite } from './siteHtml.js'
+import { throttle, type LimitKey } from './throttle.js'
 
 /** lê uma variável de ambiente obrigatória (configurada na Vercel, nunca no código) */
 export function env(name: string): string {
@@ -142,6 +143,21 @@ export function createDb(): BillingDb {
           and (last_event_at is null or last_event_at <= ${p.eventAt.toISOString()}::timestamptz)`
     },
   }
+}
+
+/** limite por pessoa nas rotas com login: chame logo depois do `authenticate`; passou do limite, responde 429 */
+export function limitUser(userId: string, key: LimitKey): Promise<void> {
+  const sql = neon(env('DATABASE_URL'))
+  return throttle(
+    {
+      async limited(bucket, max, windowSeconds) {
+        const rows = (await sql`select public.hit_rate_limit(${bucket}, ${max}, ${windowSeconds}) as blocked`) as { blocked: boolean }[]
+        return rows[0]?.blocked === true
+      },
+    },
+    userId,
+    key,
+  )
 }
 
 /** dados da página pública; null se o slug não existe ou o site ainda não foi publicado */

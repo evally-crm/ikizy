@@ -1,5 +1,5 @@
 import { parseUpload, uploadPhoto } from '../_lib/photoStore.js'
-import { authenticate, blobStore, createPhotoStoreDb, fail, json } from '../_lib/runtime.js'
+import { authenticate, blobStore, createPhotoStoreDb, fail, json, limitUser } from '../_lib/runtime.js'
 
 /**
  * POST { salonId, scope: 'site'|'client', image: dataURL, thumb?: dataURL } -> { path, thumbPath }
@@ -8,6 +8,7 @@ import { authenticate, blobStore, createPhotoStoreDb, fail, json } from '../_lib
 export async function POST(request: Request) {
   try {
     const user = await authenticate(request)
+    await limitUser(user.id, 'photos:upload')
     const input = parseUpload(await request.json().catch(() => null))
     const result = await uploadPhoto({ db: createPhotoStoreDb(), store: blobStore }, user.id, input)
     return json(result, 201)

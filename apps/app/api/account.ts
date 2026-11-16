@@ -1,6 +1,7 @@
 import { adminDeleteSalon, adminListSalons, deleteAccount, isAdmin, parseAdminEmails, type AccountDeps } from './_lib/account.js'
 import { HttpError } from './_lib/billing.js'
 import { sendWelcome } from './_lib/notify.js'
+import type { LimitKey } from './_lib/throttle.js'
 import {
   appUrl,
   authenticate,
@@ -9,6 +10,7 @@ import {
   deleteBlobPrefix,
   fail,
   json,
+  limitUser,
   sendEmail,
   setNotifyEmail,
   stripe,
@@ -56,9 +58,11 @@ const ACTIONS: Record<string, (user: User, body: unknown) => Promise<unknown>> =
 /** POST /api/account/<ação> */
 export async function POST(request: Request) {
   try {
-    const action = ACTIONS[new URL(request.url).searchParams.get('action') ?? '']
+    const name = new URL(request.url).searchParams.get('action') ?? ''
+    const action = ACTIONS[name]
     if (!action) throw new HttpError(404, 'not_found', 'Ação não encontrada.')
     const user = await authenticate(request)
+    await limitUser(user.id, `account:${name}` as LimitKey)
     const body = await request.json().catch(() => null)
     return json(await action(user, body))
   } catch (error) {
