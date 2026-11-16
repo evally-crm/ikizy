@@ -1,0 +1,143 @@
+/* tela Minha conta: no computador, perfil e atalhos à esquerda, dados e segurança à direita; no celular, uma coluna só */
+.conta__grid {
+  display: grid;
+  gap: 14px;
+  align-items: start;
+}
+@media (min-width: 900px) {
+  .conta__grid {
+    grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
+    gap: 18px;
+  }
+  .conta__side {
+    position: sticky;
+    top: 88px;
+  }
+}
+.conta__side,
+.conta__main {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.conta__hero {
+  display: grid;
+  gap: 16px;
+  padding: 22px;
+  border-radius: var(--radius-lg);
+  background: var(--white);
+  box-shadow: var(--shadow-sm);
+}
+.conta__hero .avatar--lg {
+  width: 64px;
+  height: 64px;
+  font-size: 28px;
+}
+.conta__who {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+}
+.conta__who strong {
+  font-size: 20px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.conta__who small {
+  margin-bottom: 6px;
+  color: var(--ink-500);
+  font-size: 13.5px;
+  overflow-wrap: anywhere;
+}
+.conta__salon {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  font-size: 14.5px;
+}
+.conta__salon > svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--ink-500);
+}
+.conta__salon small {
+  display: block;
+  color: var(--ink-500);
+  font-size: 12.5px;
+}
+
+.conta__card {
+  padding: 22px;
+  border-radius: var(--radius-lg);
+  background: var(--white);
+  box-shadow: var(--shadow-sm);
+}
+.conta__title {
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 500;
+}
+.conta__hint {
+  margin: 0 0 18px;
+  color: var(--ink-500);
+  font-size: 14px;
+  line-height: 1.45;
+}
+.conta__actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 20px;
+}
+.conta__saved {
+  color: var(--ink-500);
+  font-size: 13.5px;
+}
+.conta__flat {
+  margin-top: 10px;
+  padding: 0;
+  box-shadow: none;
+  background: none;
+}
+.conta__flat li {
+  padding: 0;
+}
+.conta__sub {
+  display: block;
+  margin-top: 2px;
+  color: var(--ink-500);
+  font-size: 12.5px;
+  overflow-wrap: anywhere;
+}
+.conta .settings__row > svg:last-child:not(:first-child) {
+  flex: none;
+}
+
+/* zona de perigo: sem fundo rosado, só o contorno e o texto no vermelho da marca */
+.conta__danger {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--brand-500) 35%, transparent);
+}
+.conta__danger .conta__title {
+  color: var(--brand-500);
+}
+.conta__delete.btn {
+  background: transparent;
+  color: var(--brand-500);
+  box-shadow: inset 0 0 0 1px var(--brand-500);
+}
+@media (max-width: 767px) {
+  .conta__hero,
+  .conta__card {
+    padding: 18px;
+  }
+  .conta__actions .btn {
+    flex: 1;
+  }
+}

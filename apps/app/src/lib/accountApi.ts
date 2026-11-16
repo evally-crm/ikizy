@@ -1,8 +1,8 @@
 import { post } from './billingApi'
 
 /** apaga a conta: a dona leva junto o negócio inteiro e a assinatura; quem é da equipe só sai */
-export async function deleteAccount(): Promise<void> {
-  await post('/api/account/delete', { confirm: true })
+export async function deleteAccount(confirmation: string): Promise<void> {
+  await post('/api/account/delete', { confirmation })
 }
 
 /** quem está logada é master da IKIZY? (sem servidor, ou com falha, é sempre não) */
@@ -36,6 +36,6 @@ export async function adminSalons(): Promise<AdminSalon[]> {
   return salons
 }
 
-export async function adminDeleteSalon(salonId: string): Promise<void> {
-  await post('/api/account/admin-delete', { salonId })
+export async function adminDeleteSalon(salonId: string, confirmation: string): Promise<void> {
+  await post('/api/account/admin-delete', { salonId, confirmation })
 }

@@ -392,6 +392,20 @@ export function createAccountDb(): AccountDb {
       const rows = (await sql`select "emailVerified" as ok from neon_auth."user" where id = ${userId}::uuid`) as Row[]
       return rows[0]?.ok === true
     },
+    async salonInfo(salonId) {
+      const rows = (await sql`select name, slug from public.salons where id = ${salonId}::uuid`) as Row[]
+      return rows[0] ? { name: rows[0].name as string, slug: rows[0].slug as string } : null
+    },
+    async contactsOf(salonId) {
+      const rows = (await sql`
+        select m.role, u.email
+        from public.members m join neon_auth."user" u on u.id = m.user_id
+        where m.salon_id = ${salonId}::uuid and u.email is not null`) as Row[]
+      return {
+        ownerEmail: (rows.find((r) => r.role === 'owner')?.email as string | undefined) ?? null,
+        memberEmails: rows.filter((r) => r.role !== 'owner').map((r) => r.email as string),
+      }
+    },
     async listSalons() {
       const rows = (await sql`
         select sa.id, sa.name, sa.slug, sa.created_at,

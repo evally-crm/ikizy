@@ -1017,3 +1017,14 @@ button.textlink:disabled {
   color: var(--brand-500);
   text-decoration: underline;
 }
+
+/* aviso dentro de uma janela (ex.: Pix já pago não é devolvido): contorno e texto na cor da marca, sem fundo rosado */
+.dialog__warn {
+  margin: 12px 0 16px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--brand-500) 45%, transparent);
+  color: var(--brand-500);
+  font-size: 13.5px;
+  line-height: 1.4;
+}

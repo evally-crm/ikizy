@@ -16,6 +16,7 @@ import VerificarEmail from './pages/auth/VerificarEmail'
 import Onboarding from './pages/cadastro'
 import Plano from './pages/cadastro/Plano'
 import Clientes from './pages/clientes'
+import Conta from './pages/conta'
 import Convite from './pages/convite'
 import Financeiro from './pages/financeiro'
 import Ganhos from './pages/ganhos'
@@ -47,6 +48,7 @@ export default function App() {
           <Route element={<AppShell />}>
             <Route index element={<Inicio />} />
             <Route path="agenda" element={<Agenda />} />
+            <Route path="conta" element={<Conta />} />
             <Route path="clientes" element={<Clientes />} />
             <Route path="clientes/:id" element={<Clientes />} />
             <Route element={<RequireRole allow={(a) => a.finance !== 'none'} />}>

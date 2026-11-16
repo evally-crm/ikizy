@@ -25,6 +25,7 @@ const deps = (): AccountDeps => ({
     await stripe().customers.del(id)
   },
   deletePhotos: deleteBlobPrefix,
+  send: sendEmail,
 })
 
 const admins = () => parseAdminEmails(process.env.ADMIN_EMAILS)
@@ -42,13 +43,13 @@ const ACTIONS: Record<string, (user: User, body: unknown) => Promise<unknown>> =
     for (const salon of await db.recentOwnedSalons(user.id).catch(() => [])) await sendWelcome(notify, salon)
     return { ok: true }
   },
-  /** { confirm: true } -> apaga a conta (dona: o negócio inteiro e a assinatura) */
+  /** { confirmation } -> apaga a conta se o texto bater (dona: o nome do negócio; equipe: "excluir"); leva o negócio e a assinatura junto */
   delete: (user, body) => deleteAccount(deps(), user, body),
   /** -> { admin } se quem está logada é master */
   me: async (user) => ({ admin: await isAdmin(createAccountDb(), admins(), user) }),
   /** master: todos os negócios */
   'admin-salons': (user) => adminListSalons(deps(), admins(), user),
-  /** master: { salonId } -> apaga o negócio e o login da dona */
+  /** master: { salonId, confirmation: endereço do negócio } -> apaga o negócio e o login da dona */
   'admin-delete': (user, body) => adminDeleteSalon(deps(), admins(), user, body),
 }
 
