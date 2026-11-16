@@ -1046,3 +1046,48 @@ button.textlink:disabled {
   opacity: 0.6;
   cursor: default;
 }
+
+/* trocar senha e aparelhos conectados (Minha conta) */
+.secur__check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.secur__list {
+  display: grid;
+  gap: 4px;
+  margin: 12px 0 18px;
+  padding: 0;
+  list-style: none;
+}
+.secur__device {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 6px 0;
+}
+.secur__device + .secur__device {
+  border-top: 1px solid var(--line);
+}
+.secur__icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--gray-200);
+  color: var(--ink-900);
+}
+.secur__who {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+.secur__who small {
+  color: var(--ink-500);
+  font-size: 12.5px;
+}

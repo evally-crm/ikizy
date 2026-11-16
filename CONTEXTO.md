@@ -82,6 +82,13 @@ Toda migration termina com `notify pgrst, 'reload schema';` para a Data API enxe
 - O que `fetchMe` (`POST /api/account/me`) devolve: `{ admin, deletionAt }`.
 - **Exportar os dados** (`POST /api/account/export`, só a dona, 5 por hora): ZIP com `LEIA-ME.txt`, uma planilha por assunto (`;` e UTF-8 com marca, rótulos em português) e `dados.json`. Lista fechada de tabelas em `EXPORT_TABLES` (`runtime.ts`), sempre filtradas pelo negócio da dona; nada de Stripe, convites nem tokens. **Imagens não vão** (fotos e assinaturas; só a lista das fotos): o ZIP tem de caber nos 4,5 MB da resposta da função; se passar, sai sem o JSON e, se ainda passar, 413. O ZIP é montado em `api/_lib/export.ts` (sem biblioteca). Cada pedido grava `owner.export_data` no `audit_log`. Na Minha conta há o cartão "Seus dados" e um atalho no diálogo de excluir. Tabela nova com `salon_id` não entra sozinha: acrescente em `EXPORT_TABLES` e em `SHEETS`.
 
+### Segurança da conta e ajuda (16/11/2026)
+
+- Em Minha conta: **Alterar senha** (atual, nova e repetir; opção de sair dos outros aparelhos), **Aparelhos conectados** (lista as sessões, mostra "Este aparelho", encerra uma ou todas as outras) e "Esqueci a senha" (link por e-mail). Tudo chama o Better Auth do Neon Auth direto, em `src/lib/security.ts` (chamadas) e `src/lib/deviceInfo.ts` (partes puras, com teste). Quem entra só pelo Google não vê "Alterar senha" (`hasPasswordLogin`).
+- Pegadinhas do adaptador do Neon: `getSession().session.token` é um **JWT**, não o token da sessão da lista, então o aparelho de agora se acha pelo **`id`** da sessão; e a senha atual errada chega como `invalid_credentials` (401).
+- **Trocar o e-mail não existe de propósito**: o servidor de login do Neon responde `CHANGE_EMAIL_DISABLED` (e o por código também), e o `neon neon-auth config` não tem controle para ligar. Contornar escrevendo em `neon_auth."user"` seria mexer em tabela gerenciada; ficou como decisão pendente.
+- **Ajuda**: item no menu do avatar e nas Configurações abre `mailto:contato@ikizy.com` (o e-mail de contato da landing, `src/lib/support.ts`) com assunto e o contexto de quem pede.
+
 ### Redes sociais (WhatsApp e Instagram)
 
 - Os logos vivem em `src/components/BrandIcons.tsx` (app) e em `iconSet` de `api/_lib/siteHtml.ts` (página pública); o caminho do WhatsApp é um só, em `src/lib/social.ts`. O lucide não traz marcas, por isso não usar `MessageCircle`/`AtSign` para WhatsApp/Instagram.

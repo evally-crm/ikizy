@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState, type CSSProperties } from 're
 import { usePresence } from '../../hooks/usePresence'
 import { useAppTheme } from '../../lib/theme'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { CalendarPlus, ChevronRight, Clock, CreditCard, Globe, LogOut, Plus, ReceiptText, Scissors, ShieldCheck, UserPlus, UserRound, X, type LucideIcon } from 'lucide-react'
+import { CalendarPlus, ChevronRight, Clock, CreditCard, Globe, LifeBuoy, LogOut, Plus, ReceiptText, Scissors, ShieldCheck, UserPlus, UserRound, X, type LucideIcon } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
 import { SubscriptionProvider, useSubscription } from '../../billing/SubscriptionProvider'
 import { AgendaProvider } from '../../data/AgendaProvider'
@@ -16,6 +16,7 @@ import { daysLeft, describeSubscription, isCardTrial, periodEnd } from '../../li
 import { agenda, dash, ROUTES } from '../../lib/routes'
 import { Avatar, Button, PageHeaderShell } from '../ui'
 import { DarkModeRow } from '../DarkModeRow'
+import { supportHref } from '../../lib/support'
 import { GlassDefs, useLiquidGlass } from '../ui/LiquidGlass'
 import { useLensDrag } from '../ui/useLensDrag'
 import { LogoWord } from '../BunnyMark'
@@ -85,7 +86,7 @@ function PillNav() {
 
 /** avatar do topo (desktop): abre o menu da conta */
 function UserMenu() {
-  const { salon, displayName, signOut, status, isAdmin } = useAuth()
+  const { salon, displayName, signOut, status, isAdmin, session } = useAuth()
   const items = useMoreItems()
   const [open, setOpen] = useState(false)
   const pop = usePresence(open)
@@ -125,6 +126,10 @@ function UserMenu() {
             </NavLink>
           )}
           <DarkModeRow className="popover__item" />
+          <a className="popover__item" role="menuitem" href={supportHref({ name: displayName, email: session?.user.email, salon: salon?.name })}>
+            <LifeBuoy size={18} aria-hidden="true" />
+            Ajuda
+          </a>
           <NavLink to={dash('/conta')} className="popover__item" role="menuitem">
             <UserRound size={18} aria-hidden="true" />
             Minha conta
@@ -340,6 +345,13 @@ function SettingsSheet({ open, onClose }: { open: boolean; onClose: () => void }
         <ul className="settings__list">
           <li>
             <DarkModeRow />
+          </li>
+          <li>
+            <a className="settings__row" href={supportHref({ name: displayName, email: session?.user.email, salon: salon?.name })}>
+              <LifeBuoy size={19} aria-hidden="true" />
+              <span>Ajuda</span>
+              <ChevronRight size={17} aria-hidden="true" />
+            </a>
           </li>
         </ul>
 

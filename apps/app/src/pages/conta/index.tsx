@@ -1,15 +1,17 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
-import { ChevronRight, CreditCard, Download, KeyRound, LogOut, Mail, ShieldCheck, Store, Trash2 } from 'lucide-react'
+import { ChevronRight, CreditCard, Download, KeyRound, LogOut, Mail, MonitorSmartphone, ShieldCheck, Store, Trash2 } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
 import { useSubscription } from '../../billing/SubscriptionProvider'
 import { DarkModeRow } from '../../components/DarkModeRow'
+import { ChangePasswordDialog, DevicesDialog } from '../../components/SecurityDialogs'
 import { NoticeDialog } from '../../components/Modal'
 import { Avatar, Button, Em, PageHeader } from '../../components/ui'
 import { roleAccess, ROLE_LABEL } from '../../domain/team'
 import { daysLeft, describeSubscription, isCardTrial, periodEnd } from '../../lib/plans'
 import { downloadMyData } from '../../lib/accountApi'
 import { BillingError } from '../../lib/billingApi'
+import { hasPasswordLogin } from '../../lib/security'
 import { dash } from '../../lib/routes'
 import './Conta.css'
 
@@ -34,6 +36,19 @@ export default function Conta() {
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
     const [resetSent, setResetSent] = useState(false)
+  const [changingPassword, setChangingPassword] = useState(false)
+  const [passwordChanged, setPasswordChanged] = useState(false)
+  const [showDevices, setShowDevices] = useState(false)
+  // quem entra só pelo Google não tem senha para trocar; enquanto não sabemos, a linha fica escondida
+  const [hasPassword, setHasPassword] = useState<boolean | null>(null)
+  useEffect(() => {
+    if (status !== 'ready') return
+    let alive = true
+    void hasPasswordLogin().then((v) => alive && setHasPassword(v))
+    return () => {
+      alive = false
+    }
+  }, [status])
   const [exporting, setExporting] = useState(false)
   const [exportError, setExportError] = useState<string | null>(null)
   const [exported, setExported] = useState(false)
@@ -252,7 +267,29 @@ export default function Conta() {
             <section className="conta__card">
               <h2 className="conta__title">Segurança</h2>
               <ul className="settings__list conta__flat">
-                {email && (
+                {hasPassword && (
+                  <li>
+                    <button type="button" className="settings__row" onClick={() => setChangingPassword(true)}>
+                      <KeyRound size={19} aria-hidden="true" />
+                      <span>
+                        Alterar senha
+                        <small className="conta__sub">Troque a senha que você usa para entrar</small>
+                      </span>
+                      <ChevronRight size={17} aria-hidden="true" />
+                    </button>
+                  </li>
+                )}
+                <li>
+                  <button type="button" className="settings__row" onClick={() => setShowDevices(true)}>
+                    <MonitorSmartphone size={19} aria-hidden="true" />
+                    <span>
+                      Aparelhos conectados
+                      <small className="conta__sub">Veja onde sua conta está aberta e encerre o que não reconhece</small>
+                    </span>
+                    <ChevronRight size={17} aria-hidden="true" />
+                  </button>
+                </li>
+                {email && hasPassword !== false && (
                   <li>
                     <button
                       type="button"
@@ -262,10 +299,10 @@ export default function Conta() {
                         void sendPasswordReset(email)
                       }}
                     >
-                      <KeyRound size={19} aria-hidden="true" />
+                      <Mail size={19} aria-hidden="true" />
                       <span>
-                        Redefinir senha
-                        <small className="conta__sub">Enviamos um link para {email}</small>
+                        Esqueci a senha
+                        <small className="conta__sub">Enviamos um link para criar outra em {email}</small>
                       </span>
                       <Mail size={17} aria-hidden="true" />
                     </button>
@@ -323,6 +360,17 @@ export default function Conta() {
         </div>
       </div>
 
+      {changingPassword && (
+        <ChangePasswordDialog
+          onClose={() => setChangingPassword(false)}
+          onDone={() => {
+            setChangingPassword(false)
+            setPasswordChanged(true)
+          }}
+        />
+      )}
+      {passwordChanged && <NoticeDialog tone="ok" title="Senha alterada" text="Na próxima vez, entre com a nova senha." onClose={() => setPasswordChanged(false)} />}
+      {showDevices && <DevicesDialog onClose={() => setShowDevices(false)} />}
       {resetSent && (
         <NoticeDialog
           tone="ok"
