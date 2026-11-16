@@ -332,6 +332,34 @@ describe('topo em link na bio', () => {
     assert.ok(row.includes('aria-label="Instagram @studiomariabeauty"'))
   })
 
+  it('o Instagram abre com https e www, no botão redondo, na linha de contato e nos dados da busca', () => {
+    const html = page(base())
+    assert.match(actions(html), /<a class="round" href="https:\/\/www\.instagram\.com\/studiomariabeauty\/" rel="noopener" aria-label="Instagram @studiomariabeauty">/)
+    assert.ok(html.includes('<a href="https://www.instagram.com/studiomariabeauty/" rel="noopener">@studiomariabeauty</a>'))
+    assert.ok(html.includes('"sameAs":["https://www.instagram.com/studiomariabeauty/"]'))
+    assert.equal(html.includes('href="https://instagram.com/'), false)
+  })
+
+  it('o Instagram funciona colado de qualquer jeito (sem https, com www, com link completo)', () => {
+    for (const pasted of ['instagram.com/studiomariabeauty', 'www.instagram.com/studiomariabeauty/', 'https://instagram.com/studiomariabeauty?hl=pt', '@studiomariabeauty']) {
+      const html = page(base({}, { instagram: pasted }))
+      assert.ok(html.includes('href="https://www.instagram.com/studiomariabeauty/"'), pasted)
+    }
+    // endereço que não é um perfil: nada de link quebrado
+    const none = page(base({}, { instagram: 'www.instagram.com' }))
+    assert.equal(none.includes('instagram.com/'), false)
+  })
+
+  it('WhatsApp e Instagram usam os logos das redes, não ícones genéricos', () => {
+    const html = page(base({}, {}))
+    // logo do WhatsApp (balão com o telefone, preenchido) e contorno do Instagram (quadrado arredondado, círculo e ponto)
+    assert.ok(html.includes('<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382'))
+    assert.ok(html.includes('<rect x="3" y="3" width="18" height="18" rx="5.2"/><circle cx="12" cy="12" r="4.1"/>'))
+    // os antigos (balão de conversa e câmera do lucide) saíram
+    assert.equal(html.includes('M2.992 16.342'), false)
+    assert.equal(html.includes('M13.997 4a2 2 0 0 1 1.76'), false)
+  })
+
   it('endereço numa linha que abre o mapa; sem endereço, a linha some', () => {
     assert.match(
       page(base({}, { address: 'Rua das Flores, 120' })),

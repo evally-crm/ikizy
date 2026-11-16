@@ -13,7 +13,7 @@
     "stripe:setup": "tsx scripts/stripe-setup.ts",
     "db:migrate": "tsx scripts/migrate.ts",
     "db:migrate:dev": "tsx scripts/migrate.ts --dev",
-    "test:domain": "tsx --test \"src/domain/**/*.test.ts\"",
+    "test:domain": "tsx --test \"src/domain/**/*.test.ts\" \"src/lib/**/*.test.ts\"",
     "test": "npm run test:api && npm run test:domain",
     "check:conventions": "node scripts/check-conventions.mjs",
     "test:e2e": "playwright test",

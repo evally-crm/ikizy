@@ -1,4 +1,5 @@
-import { AtSign, Clock, MapPin, MessageCircle } from 'lucide-react'
+import { Clock, MapPin } from 'lucide-react'
+import { InstagramIcon, WhatsAppIcon } from '../BrandIcons'
 import type { OpenStatus } from '../../domain/business'
 import { formatTime } from '../../lib/format'
 import './BusinessPreview.css'
@@ -19,8 +20,8 @@ function statusText(status: OpenStatus) {
 export function BusinessPreview({ data, status }: { data: BusinessPreviewData; status: OpenStatus }) {
   const contact = [
     { icon: MapPin, text: data.address, empty: 'Endereço ainda não informado' },
-    { icon: MessageCircle, text: data.whatsapp, empty: 'WhatsApp ainda não informado' },
-    { icon: AtSign, text: data.instagram, empty: 'Instagram ainda não informado' },
+    { icon: WhatsAppIcon, text: data.whatsapp, empty: 'WhatsApp ainda não informado' },
+    { icon: InstagramIcon, text: data.instagram, empty: 'Instagram ainda não informado' },
   ]
   return (
     <div className="bizpreview">

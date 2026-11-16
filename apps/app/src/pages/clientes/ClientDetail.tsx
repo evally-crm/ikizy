@@ -2,17 +2,19 @@ import { useState, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { AlertTriangle, ArrowLeft, AtSign, Briefcase, Cake, CalendarCheck, CalendarPlus, FileSignature, Heart, MessageCircle, Pencil, Phone, Trash2, History } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, Briefcase, Cake, CalendarCheck, CalendarPlus, FileSignature, Heart, Pencil, Phone, Trash2, History } from 'lucide-react'
 import type { Client } from '../../data/clients'
 import { useClientBook, useClientNotes, useClientPhotos } from '../../data/useClientBook'
 import { TAG_LABEL, awaitsConfirmation, clientProfile, lastVisitLabel, type ReturnState } from '../../domain/clients'
 import { AddPhotosDialog, PhotoViewer, PhotosCard } from '../../components/ClientPhotos'
 import { AnamnesisDialog, AnamnesisSummary, CareCard, HistoryCard, NotesCard, PersonalCard } from '../../components/ClientFile'
+import { InstagramIcon, WhatsAppIcon } from '../../components/BrandIcons'
 import { MessageDialog } from '../../components/MessageDialog'
 import { Avatar, Button, Card, Money, Tabs, Tag, Tags } from '../../components/ui'
 import { useSalonInfo } from '../../hooks/useSalonInfo'
 import { answeredCount } from '../../lib/anamnesis'
 import { formatBRL } from '../../lib/format'
+import { instagramHandle, instagramUrl } from '../../lib/social'
 import { CLIENT_KINDS, type MessageKind } from '../../lib/messages'
 import { agenda, dash } from '../../lib/routes'
 import './Clientes.css'
@@ -116,7 +118,7 @@ export function ClientDetail({
       icon: <Cake size={14} aria-hidden="true" />,
       text: format(new Date(2000, Number(client.birthday.slice(0, 2)) - 1, Number(client.birthday.slice(3))), "dd 'de' MMM", { locale: ptBR }),
     },
-    client.instagram && { icon: <AtSign size={14} aria-hidden="true" />, text: client.instagram, href: `https://instagram.com/${client.instagram}` },
+    client.instagram && { icon: <InstagramIcon size={14} />, text: client.instagram, href: instagramUrl(instagramHandle(client.instagram) ?? client.instagram) },
     client.referral && { icon: <Heart size={14} aria-hidden="true" />, text: client.referral },
     client.occupation && { icon: <Briefcase size={14} aria-hidden="true" />, text: client.occupation },
   ].filter(Boolean) as { icon: ReactNode; text: string; href?: string }[]
@@ -153,7 +155,7 @@ export function ClientDetail({
           </div>
           <div className="profile__actions">
             <button type="button" className="roundbtn" aria-label={`Mensagem no WhatsApp para ${firstName}`} onClick={() => setMessage(profile.suggested)}>
-              <MessageCircle size={18} />
+              <WhatsAppIcon size={18} />
             </button>
             {digits && (
               <a className="roundbtn" href={`tel:${digits}`} aria-label={`Ligar para ${firstName}`}>

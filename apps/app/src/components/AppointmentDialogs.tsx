@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from 'react'
 import { format, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { MessageCircle, Pencil, X } from 'lucide-react'
+import { Pencil, X } from 'lucide-react'
+import { WhatsAppIcon } from './BrandIcons'
 import { useAgenda, type NewAppointment } from '../data/AgendaProvider'
 import { findConflict } from '../domain/agenda'
 import { formatDuration } from '../lib/agendaTime'
@@ -407,7 +408,7 @@ export function AppointmentDialog({
                   onClose()
                 }}
               >
-                <MessageCircle size={16} aria-hidden="true" /> Mensagem
+                <WhatsAppIcon size={16} /> Mensagem
               </Button>
             )}
             {open && (

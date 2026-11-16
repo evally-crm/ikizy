@@ -1,5 +1,9 @@
 import { CATEGORIES, FONTS, coverPattern, fontHref, isCoverStyleId, isFontId, paletteFor } from '../../src/lib/siteTheme.js'
+import { instagramHandle, instagramUrl, WHATSAPP_PATH } from '../../src/lib/social.js'
 import { BOOKING_CSS, BOOKING_SCRIPT } from './bookingClient.js'
+
+// aceita @usuario, usuario, instagram.com/usuario, www.instagram.com/usuario e o link completo (ver src/lib/social.ts)
+export { instagramHandle }
 
 /** formato devolvido por public.get_public_site(): só o que pode ser exibido ao público */
 export interface PublicSite {
@@ -69,16 +73,6 @@ export function whatsappLink(raw: string | undefined, text: string): string | nu
   else if (digits.length === 10 || digits.length === 11) number = `55${digits}`
   else return null
   return `https://wa.me/${number}?text=${encodeURIComponent(text)}`
-}
-
-/** @usuario -> usuario; aceita link do Instagram colado; só letras, números, ponto e sublinhado */
-export function instagramHandle(raw: string | undefined): string | null {
-  const cleaned = (raw ?? '')
-    .trim()
-    .replace(/^https?:\/\/(www\.)?instagram\.com\//i, '')
-    .replace(/^@/, '')
-    .replace(/[/?#].*$/, '')
-  return /^[A-Za-z0-9._]{1,30}$/.test(cleaned) ? cleaned : null
 }
 
 /** logo e capa vêm do banco como data URL; só entra no HTML se tiver exatamente o formato esperado */
@@ -229,19 +223,21 @@ const ICON_PATHS = {
   planos: '<path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z"/><path d="M5 21h14"/>',
   produtos: '<path d="M16 10a4 4 0 0 1-8 0"/><path d="M3.103 6.034h17.794"/><path d="M3.4 5.467a2 2 0 0 0-.4 1.2V20a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6.667a2 2 0 0 0-.4-1.2l-2-2.667A2 2 0 0 0 17 2H7a2 2 0 0 0-1.6.8z"/>',
   equipe: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><path d="M16 3.128a4 4 0 0 1 0 7.744"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/>',
-  whatsapp: '<path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719"/>',
   mapa: '<path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>',
   agenda: '<path d="M16 18h6"/><path d="M16 2v3"/><path d="M19 15v6"/><path d="M21 11.5V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2h8.3"/><path d="M3 9h18"/><path d="M8 2v3"/>',
-  instagram: '<path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"/><circle cx="12" cy="13" r="3"/>',
 } as const
-type IconName = keyof typeof ICON_PATHS
-const iconSet = (bold: boolean) =>
-  Object.fromEntries(
+type IconName = keyof typeof ICON_PATHS | 'whatsapp' | 'instagram'
+const iconSet = (bold: boolean): Record<IconName, string> => ({
+  ...(Object.fromEntries(
     Object.entries(ICON_PATHS).map(([k, d]) => [
       k,
       `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${bold ? 2.6 : 1.8}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`,
     ]),
-  ) as Record<IconName, string>
+  ) as Record<keyof typeof ICON_PATHS, string>),
+  // logos das redes (não os ícones de contorno do resto): o balão com o telefone do WhatsApp e o contorno do Instagram
+  whatsapp: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="${WHATSAPP_PATH}"/></svg>`,
+  instagram: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${bold ? 2.4 : 1.9}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5.2"/><circle cx="12" cy="12" r="4.1"/><circle cx="17.3" cy="6.7" r="1.05" fill="currentColor" stroke="none"/></svg>`,
+})
 
 /** capa sem foto e sem estilo (sóbrio) nas paletas claras: manchas desfocadas em tons da cor do negócio, atrás do cartão */
 const SOFT_HERO_CSS = `
@@ -364,7 +360,7 @@ export function renderSitePage(site: PublicSite, opts: { canonical: string; capt
   const rounds = [
     // sem agendamento online o botão principal já é o WhatsApp, então o redondo não repete
     talkLink && online ? round(talkLink, ICONS.whatsapp, 'Falar no WhatsApp') : '',
-    insta ? round(`https://instagram.com/${insta}`, ICONS.instagram, `Instagram @${insta}`) : '',
+    insta ? round(instagramUrl(insta), ICONS.instagram, `Instagram @${insta}`) : '',
   ]
     .filter(Boolean)
     .join('')
@@ -387,7 +383,7 @@ export function renderSitePage(site: PublicSite, opts: { canonical: string; capt
     url: opts.canonical,
     ...(s.whatsapp ? { telephone: s.whatsapp } : {}),
     ...(address ? { address } : {}),
-    ...(insta ? { sameAs: [`https://instagram.com/${insta}`] } : {}),
+    ...(insta ? { sameAs: [instagramUrl(insta)] } : {}),
   }).replace(/</g, '\\u003c')
 
   const bookingData = JSON.stringify({
@@ -407,7 +403,7 @@ export function renderSitePage(site: PublicSite, opts: { canonical: string; capt
 
   const contactCards = [
     s.whatsapp && bookLink ? `<div class="info"><small>WhatsApp</small><a href="${esc(bookLink)}" rel="noopener">${esc(s.whatsapp)}</a></div>` : '',
-    insta ? `<div class="info"><small>Instagram</small><a href="https://instagram.com/${esc(insta)}" rel="noopener">@${esc(insta)}</a></div>` : '',
+    insta ? `<div class="info"><small>Instagram</small><a href="${esc(instagramUrl(insta))}" rel="noopener">@${esc(insta)}</a></div>` : '',
     hours ? `<div class="info"><small>Horário</small><span>${esc(hours)}</span></div>` : '',
     address && mapLink ? `<div class="info"><small>Endereço</small><a href="${esc(mapLink)}" rel="noopener">${esc(address)}</a></div>` : '',
   ]
