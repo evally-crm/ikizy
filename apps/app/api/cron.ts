@@ -1,11 +1,15 @@
 import { HttpError, reconcileStripe } from './_lib/billing.js'
 import { assertCronAuthorized, runExpireRequests } from './_lib/cron.js'
+import { runHousekeeping } from './_lib/housekeeping.js'
 import { cleanupPhotos } from './_lib/photoStore.js'
+import { parseAdminEmails } from './_lib/account.js'
 import { runReminders } from './_lib/reminders.js'
 import {
   appUrl,
   blobStore,
+  createAccountDeps,
   createCronDb,
+  createHousekeepingDb,
   createPhotoStoreDb,
   createReconcileDb,
   createReminderDb,
@@ -26,6 +30,9 @@ const JOBS: Record<string, () => Promise<unknown>> = {
   'reconcile-stripe': () => reconcileStripe({ db: createReconcileDb(), stripe: stripe() }),
   /** 4h de Brasília: apaga da loja as fotos que o banco não usa mais (trocadas, removidas, clientes apagadas) */
   'cleanup-photos': () => cleanupPhotos({ db: createPhotoStoreDb(), store: blobStore }),
+  /** 7h de Brasília: apaga as exclusões pedidas que venceram os 7 dias, os negócios sem acesso há 90 dias (com aviso antes) e logins largados */
+  housekeeping: () =>
+    runHousekeeping({ ...createAccountDeps(), hk: createHousekeepingDb(), protectEmails: [...parseAdminEmails(process.env.ADMIN_EMAILS)] }),
 }
 
 /** GET /api/cron/<tarefa> (cron diário da Vercel) */

@@ -43,6 +43,7 @@ export function DeleteAccountDialog({
     const message = await onDelete(typed)
     setBusy(false)
     if (message) setError(message)
+    else onClose()
   }
 
   return (

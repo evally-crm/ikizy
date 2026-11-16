@@ -4,7 +4,8 @@ import { createRemoteJWKSet, jwtVerify } from 'jose'
 import Stripe from 'stripe'
 import { HttpError, type BillingDb, type Membership, type ReconcileDb, type SubscriptionRow } from './billing.js'
 import type { BookingDb, BookingResult, Slot } from './booking.js'
-import type { AccountDb } from './account.js'
+import type { AccountDb, AccountDeps, AuditEntry } from './account.js'
+import type { HousekeepingDb, RetentionCandidate } from './housekeeping.js'
 import { FROM } from './authEmail.js'
 import type { CronDb } from './cron.js'
 import type { LeadDb } from './lead.js'
@@ -374,21 +375,31 @@ export function createLeadDb(): LeadDb {
   }
 }
 
-/** excluir conta e acesso master (conexão de dono, só no servidor) */
+/** excluir conta, acesso master e limpeza (conexão de dono, só no servidor) */
 export function createAccountDb(): AccountDb {
   const sql = neon(env('DATABASE_URL'))
+  const iso = (v: unknown) => (v ? new Date(v as string).toISOString() : null)
+  const insertAudit = (e: AuditEntry) => sql`
+    insert into public.audit_log (actor_kind, actor_id, actor_email, action, salon_id, salon_name, salon_slug, details)
+    values (${e.actorKind}, ${e.actorId ?? null}::uuid, ${e.actorEmail ?? null}, ${e.action}, ${e.salonId ?? null}::uuid,
+            ${e.salonName ?? null}, ${e.salonSlug ?? null}, ${JSON.stringify(e.details ?? {})}::jsonb)`
   return {
     getMembership: createDb().getMembership,
     async stripeCustomer(salonId) {
       const rows = (await sql`select stripe_customer_id from public.subscriptions where salon_id = ${salonId}::uuid`) as Row[]
       return (rows[0]?.stripe_customer_id as string | null | undefined) ?? null
     },
-    async deleteSalon(salonId) {
+    async cardSubscription(salonId) {
+      const rows = (await sql`
+        select stripe_subscription_id, cancel_at_period_end from public.subscriptions
+        where salon_id = ${salonId}::uuid and billing_method = 'card' and stripe_subscription_id is not null and status in ('active', 'trialing', 'past_due')`) as Row[]
+      const r = rows[0]
+      return r ? { subscriptionId: r.stripe_subscription_id as string, cancelAtPeriodEnd: r.cancel_at_period_end === true } : null
+    },
+    async deleteSalon(salonId, audit) {
       // os atendimentos travam a remoção de clientes e profissionais (on delete restrict): saem primeiro, na mesma transação
-      await sql.transaction([
-        sql`delete from public.appointments where salon_id = ${salonId}::uuid`,
-        sql`delete from public.salons where id = ${salonId}::uuid`,
-      ])
+      const steps = [sql`delete from public.appointments where salon_id = ${salonId}::uuid`, sql`delete from public.salons where id = ${salonId}::uuid`]
+      await sql.transaction(audit ? [insertAudit(audit), ...steps] : steps)
     },
     async leaveSalon(salonId, userId) {
       await sql.transaction([
@@ -409,8 +420,15 @@ export function createAccountDb(): AccountDb {
       return rows[0]?.ok === true
     },
     async salonInfo(salonId) {
-      const rows = (await sql`select name, slug from public.salons where id = ${salonId}::uuid`) as Row[]
-      return rows[0] ? { name: rows[0].name as string, slug: rows[0].slug as string } : null
+      const rows = (await sql`select name, slug, deletion_scheduled_at, deletion_resume_billing from public.salons where id = ${salonId}::uuid`) as Row[]
+      const r = rows[0]
+      if (!r) return null
+      return {
+        name: r.name as string,
+        slug: r.slug as string,
+        deletionScheduledAt: r.deletion_scheduled_at ? new Date(r.deletion_scheduled_at as string) : null,
+        resumeBilling: r.deletion_resume_billing === true,
+      }
     },
     async contactsOf(salonId) {
       const rows = (await sql`
@@ -422,9 +440,45 @@ export function createAccountDb(): AccountDb {
         memberEmails: rows.filter((r) => r.role !== 'owner').map((r) => r.email as string),
       }
     },
+    async scheduleDeletion(salonId, requestedAt, scheduledAt, resumeBilling) {
+      await sql`
+        update public.salons set deletion_requested_at = ${requestedAt.toISOString()}::timestamptz,
+               deletion_scheduled_at = ${scheduledAt.toISOString()}::timestamptz, deletion_resume_billing = ${resumeBilling}
+        where id = ${salonId}::uuid`
+    },
+    async cancelDeletion(salonId) {
+      await sql`
+        update public.salons set deletion_requested_at = null, deletion_scheduled_at = null, deletion_resume_billing = false
+        where id = ${salonId}::uuid`
+    },
+    async dueDeletions(now) {
+      const rows = (await sql`
+        select id, name, slug from public.salons
+        where deletion_scheduled_at is not null and deletion_scheduled_at <= ${now.toISOString()}::timestamptz
+        order by deletion_scheduled_at`) as Row[]
+      return rows.map((r) => ({ salonId: r.id as string, name: r.name as string, slug: r.slug as string }))
+    },
+    async audit(entry) {
+      await insertAudit(entry)
+    },
+    async listAudit(limit) {
+      const rows = (await sql`
+        select id, at, actor_kind, actor_email, action, salon_name, salon_slug, details
+        from public.audit_log order by id desc limit ${limit}`) as Row[]
+      return rows.map((r) => ({
+        id: Number(r.id),
+        at: iso(r.at) as string,
+        actorKind: r.actor_kind as string,
+        actorEmail: (r.actor_email as string | null) ?? null,
+        action: r.action as string,
+        salonName: (r.salon_name as string | null) ?? null,
+        salonSlug: (r.salon_slug as string | null) ?? null,
+        details: (r.details as Record<string, unknown>) ?? {},
+      }))
+    },
     async listSalons() {
       const rows = (await sql`
-        select sa.id, sa.name, sa.slug, sa.created_at,
+        select sa.id, sa.name, sa.slug, sa.created_at, sa.deletion_scheduled_at,
                u.email as owner_email, u.name as owner_name,
                s.plan, s.status, s.access_until, s.billing_method,
                (select count(*)::int from public.clients c where c.salon_id = sa.id and c.forgotten_at is null) as clients,
@@ -435,7 +489,6 @@ export function createAccountDb(): AccountDb {
         left join neon_auth."user" u on u.id = m.user_id
         left join public.subscriptions s on s.salon_id = sa.id
         order by sa.created_at desc`) as Row[]
-      const iso = (v: unknown) => (v ? new Date(v as string).toISOString() : null)
       return rows.map((r) => ({
         id: r.id as string,
         name: r.name as string,
@@ -450,8 +503,81 @@ export function createAccountDb(): AccountDb {
         clients: Number(r.clients ?? 0),
         appointments: Number(r.appointments ?? 0),
         members: Number(r.members ?? 0),
+        deletionScheduledAt: iso(r.deletion_scheduled_at),
       }))
     },
+  }
+}
+
+/** limpeza diária: o que o banco precisa responder (conexão de dono, só no servidor) */
+export function createHousekeepingDb(): HousekeepingDb {
+  const sql = neon(env('DATABASE_URL'))
+  return {
+    async retentionCandidates(now) {
+      const rows = (await sql`
+        select sa.id, sa.name, sa.slug, s.status, s.access_until, s.notify_email,
+               (select l.sent_at from public.email_log l where l.key = 'retention-warn:' || sa.id::text) as warned_at
+        from public.salons sa join public.subscriptions s on s.salon_id = sa.id
+        where s.status <> 'active' and sa.deletion_scheduled_at is null
+          and s.access_until < ${now.toISOString()}::timestamptz - interval '83 days'`) as Row[]
+      return rows.map(
+        (r): RetentionCandidate => ({
+          salonId: r.id as string,
+          name: r.name as string,
+          slug: r.slug as string,
+          status: r.status as string,
+          accessUntil: new Date(r.access_until as string),
+          notifyEmail: (r.notify_email as string | null) ?? null,
+          warnedAt: r.warned_at ? new Date(r.warned_at as string) : null,
+        }),
+      )
+    },
+    async claimWarning(salonId, to) {
+      const rows = (await sql`
+        insert into public.email_log (key, salon_id, to_email, template)
+        values (${'retention-warn:' + salonId}, ${salonId}::uuid, ${to}, 'retention_warn')
+        on conflict (key) do nothing returning key`) as Row[]
+      return rows.length === 1
+    },
+    async releaseWarning(salonId) {
+      await sql`delete from public.email_log where key = ${'retention-warn:' + salonId}`
+    },
+    async orphanLogins(now, protectEmails, limit) {
+      const rows = (await sql`
+        select u.id from neon_auth."user" u
+        where not exists (select 1 from public.members m where m.user_id = u.id)
+          and not exists (select 1 from public.professionals p where p.user_id = u.id)
+          and lower(u.email) <> all (${protectEmails.map((e) => e.toLowerCase())}::text[])
+          and ((not u."emailVerified" and u."createdAt" < ${now.toISOString()}::timestamptz - interval '7 days')
+            or u."createdAt" < ${now.toISOString()}::timestamptz - interval '90 days')
+        order by u."createdAt" limit ${limit}`) as Row[]
+      return rows.map((r) => r.id as string)
+    },
+    async deleteUsers(ids) {
+      if (!ids.length) return 0
+      const rows = (await sql`delete from neon_auth."user" where id = any(${ids}::uuid[]) returning id`) as Row[]
+      return rows.length
+    },
+    async deleteStaleInvites(now) {
+      const rows = (await sql`delete from public.invites where expires_at < ${now.toISOString()}::timestamptz - interval '30 days' returning id`) as Row[]
+      return rows.length
+    },
+  }
+}
+
+/** tudo que excluir conta, o master e a limpeza diária usam, ligado aos serviços de verdade (Stripe, loja de fotos, e-mail) */
+export function createAccountDeps(): AccountDeps {
+  return {
+    db: createAccountDb(),
+    deleteCustomer: async (id) => {
+      await stripe().customers.del(id)
+    },
+    setCancelAtPeriodEnd: async (subscriptionId, value) => {
+      await stripe().subscriptions.update(subscriptionId, { cancel_at_period_end: value })
+    },
+    deletePhotos: deleteBlobPrefix,
+    send: sendEmail,
+    appUrl: appUrl(),
   }
 }
 

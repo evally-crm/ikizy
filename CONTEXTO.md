@@ -74,6 +74,13 @@ Ficam em `neon/migrations/`. Desde `20261024000000_fase1` o banco tem a tabela `
 conferir, e só então `npm run db:migrate -- --aplicar` na produção. O script diz sempre em qual banco está mexendo ("branch DEV" ou "PRODUÇÃO").
 Toda migration termina com `notify pgrst, 'reload schema';` para a Data API enxergar colunas novas.
 
+### Exclusão de conta, retenção e registro (16/11/2026)
+
+- **Dona** pede em Minha conta digitando o nome do negócio; o servidor confere o texto. O negócio fica "agendado" por **7 dias** (`GRACE_DAYS`), a renovação no cartão é pausada (cancela no fim do período; volta se ela desistir) e ela recebe um e-mail. Faixa vermelha em todas as telas com "Cancelar exclusão". **Equipe** apaga na hora ("excluir"). **Master** apaga na hora, digitando o endereço do negócio, com registro.
+- **Limpeza diária** (`/api/cron/housekeeping`, 7h de Brasília, `api/_lib/housekeeping.ts`): apaga as exclusões vencidas; apaga negócios sem acesso há **90 dias** (aviso 7 dias antes, R-107; sem e-mail para avisar, apaga aos 90); apaga logins que nunca viraram negócio (não confirmados há 7 dias, ou confirmados e parados há 90; nunca os e-mails de `ADMIN_EMAILS`) e convites vencidos há 30 dias. Assinatura `active` nunca é apagada. **Teto de 5 negócios apagados por execução** (o excesso vai para o monitoramento e fica para o dia seguinte).
+- Tudo que apaga ou agenda grava uma linha em `audit_log`; o master vê em `/dashboard/admin` (Registro de ações).
+- O que `fetchMe` (`POST /api/account/me`) devolve: `{ admin, deletionAt }`.
+
 ### Banco de desenvolvimento (branch `dev` do Neon)
 
 Criada em 16/11/2026 (`br-lucky-star-b68ny7u5`, endpoint `ep-old-dream-b6e5t7dn`, mesmo projeto `lingering-base-71670281`). Tem o schema
@@ -86,6 +93,8 @@ e Data API próprios, com endereços diferentes dos da produção.
 - Neon Auth da dev: webhook de e-mail **desligado** (o copiado apontava para a produção) e confirmação de e-mail **desligada**, então contas de teste entram direto, sem código. O fluxo do código por e-mail só se testa em produção. `localhost` liberado.
 - Conta de teste: `dona.teste@ikizy.test` (a senha está em `.env.dev.local`, em `TESTE_SENHA`).
 - As funções `/api/*` (Stripe, fotos, excluir conta, master) não rodam no `npm run dev`; para elas use o deploy de preview ou `vercel dev` com as variáveis da branch.
+- `npm run test:dev-db` (em `apps/app`) roda um teste de integração com Postgres de verdade, só na dev (aborta se o banco não for a dev): exclusão com espera, desistência, limpeza diária, retenção de 90 dias, logins largados, registro do master e permissões das colunas. Apaga o que cria.
+- O negócio de teste `Studio Teste` (`studio-teste`) pertence à conta de teste da dev.
 - Para refazer a dev a partir da produção: `neon branches reset --help` (a cópia traz o que a produção tem; apague os dados pessoais de novo, como na criação).
 - Migration nova: aplicar na dev, testar o app contra ela, só então na produção.
 
@@ -136,6 +145,7 @@ Monitoramento de erros (Sentry): o código está pronto e só liga com `SENTRY_D
 | `20261030000000_palette_colors` | paletas nas oito cores novas (vermelho, rosa bebê, verde musgo...), aceitando os nomes antigos. Aplicada em 16/10/2026 |
 | `20261031000000_team` | aplicada em 16/10/2026 (testada antes na branch `teste-equipe`, 52 verificações de perfil e limite). Fase 2: `invites` + `create_invite`/`revoke_invite`/`get_invite`/`accept_invite`, `remove_member`, `set_member_role`, `get_team`, `get_commissions`; regras por perfil (profissional só vê os atendimentos e as clientes dela; recepção e profissional não leem saídas, custos, fechamentos nem comissão das outras; `members` só pelas funções); limites por plano (`plan_limits`, travas em `professionals` e `members`, `choose_trial_plan` exige caber); `clients.created_by` |
 | `20261101000000_photo_storage` | aplicada em 20/10/2026 (testada antes numa branch). Fotos fora do banco: `site_photos.blob_path`, `client_photos.blob_path`/`thumb_path` (caminho na loja privada `ikizy-fotos` do Vercel Blob, região gru1, ligada ao `ikizy-app`); o caminho tem de começar por `salons/<id do negócio>/site/` ou `/client/`; logo e capa aceitam o id de uma foto; `get_public_photo()` devolve `blob:<caminho>` para fotos na loja. As linhas antigas em data URL continuam valendo. Rotas: `/api/photos/upload`, `/api/photos/file` (só a equipe do negócio), cron diário `/api/cron/cleanup-photos` |
+| `20261116000000_account_lifecycle` | **aplicada só na branch `dev` (16/11/2026); a produção ainda não.** Ciclo de vida da conta: `salons.deletion_requested_at` / `deletion_scheduled_at` / `deletion_resume_billing` (exclusão com 7 dias de espera, só o servidor mexe: o `authenticated` passou a poder atualizar apenas `name` e `slug` em `salons`) e `audit_log` (quem apagou ou pediu para apagar o quê; não aponta para `salons`, sobrevive ao negócio; sem acesso para `anonymous`/`authenticated`). Testada com `npm run test:dev-db` (Postgres de verdade na dev). Aplicar na produção **antes** do deploy do código que a usa |
 
 Regras importantes:
 - Toda tabela tem `salon_id` + RLS. Escrita de catálogo/site só `owner`/`manager`; sem assinatura ativa, escrita bloqueada (políticas restritivas).

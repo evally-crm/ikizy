@@ -242,3 +242,21 @@
   font-weight: 500;
   white-space: nowrap;
 }
+
+/* botão de contorno dentro da faixa vermelha (Cancelar exclusão) */
+.billing-banner__btn {
+  min-height: 36px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  box-shadow: inset 0 0 0 1px currentColor;
+  color: inherit;
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+.billing-banner__btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
