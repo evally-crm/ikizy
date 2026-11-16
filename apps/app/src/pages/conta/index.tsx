@@ -1,0 +1,287 @@
+import { useState, type FormEvent } from 'react'
+import { NavLink } from 'react-router-dom'
+import { ChevronRight, CreditCard, KeyRound, LogOut, Mail, ShieldCheck, Store, Trash2 } from 'lucide-react'
+import { useAuth } from '../../auth/AuthProvider'
+import { useSubscription } from '../../billing/SubscriptionProvider'
+import { DarkModeRow } from '../../components/DarkModeRow'
+import { DeleteAccountDialog } from '../../components/DeleteAccountDialog'
+import { NoticeDialog } from '../../components/Modal'
+import { Avatar, Button, Em, PageHeader } from '../../components/ui'
+import { roleAccess, ROLE_LABEL } from '../../domain/team'
+import { daysLeft, describeSubscription, isCardTrial, periodEnd } from '../../lib/plans'
+import { dash } from '../../lib/routes'
+import './Conta.css'
+
+/** /dashboard/conta: o perfil de quem está logada — dados, plano, segurança, aparência e exclusão da conta */
+export default function Conta() {
+  const { displayName, salon, session, status, updateProfile, signOut, deleteAccount, sendPasswordReset, isAdmin } = useAuth()
+  const { sub } = useSubscription()
+  const access = roleAccess(salon?.role ?? 'owner')
+  const isOwner = !salon || salon.role === 'owner'
+  const canEditSalon = !salon || salon.role === 'owner' || salon.role === 'manager'
+  const email = session?.user.email ?? null
+  const demo = status === 'demo'
+
+  // só o que a pessoa digitou fica guardado; sem isso vale o dado atual, que pode chegar depois de a tela abrir
+  const [userEdit, setUserName] = useState<string | null>(null)
+  const [salonEdit, setSalonName] = useState<string | null>(null)
+  const userName = userEdit ?? displayName
+  const salonName = salonEdit ?? salon?.name ?? ''
+  const dirty = userName.trim() !== displayName || (canEditSalon && salonName.trim() !== (salon?.name ?? ''))
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [saved, setSaved] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [resetSent, setResetSent] = useState(false)
+
+  const onSave = async (e: FormEvent) => {
+    e.preventDefault()
+    if (!dirty || busy) return
+    setBusy(true)
+    setSaved(false)
+    const message = await updateProfile(userName, canEditSalon ? salonName : (salon?.name ?? salonName))
+    setBusy(false)
+    setError(message)
+    if (!message) {
+      setUserName(null)
+      setSalonName(null)
+      setSaved(true)
+    }
+  }
+
+  // Pix já pago e ainda dentro do período: o valor não volta ao excluir (só o cartão é cancelado no Stripe)
+  const prepaidUntil = isOwner && sub?.method === 'pix' && sub.status === 'active' && sub.accessUntil.getTime() > Date.now() ? sub.accessUntil : null
+  const trialDays = sub?.status === 'trialing' ? daysLeft(isCardTrial(sub) ? periodEnd(sub) : sub.accessUntil) : 0
+  const first = displayName.split(' ')[0]
+
+  return (
+    <div className="page conta">
+      <PageHeader
+        title={
+          <>
+            Minha <Em>conta</Em>
+          </>
+        }
+        crumb={`${first}, seus dados e preferências`}
+      />
+
+      <div className="conta__grid">
+        <aside className="conta__side">
+          <section className="conta__hero">
+            <Avatar name={displayName} size="lg" />
+            <div className="conta__who">
+              <strong>{displayName}</strong>
+              {email && <small>{email}</small>}
+              <span className="badge badge--dark">{ROLE_LABEL[salon?.role ?? 'owner']}</span>
+            </div>
+            {salon && (
+              <p className="conta__salon">
+                <Store size={16} aria-hidden="true" />
+                <span>
+                  {salon.name}
+                  <small>{salon.slug}.ikizy.com</small>
+                </span>
+              </p>
+            )}
+          </section>
+
+          {isOwner && sub && (
+            <NavLink to={dash('/assinatura')} className="plancard">
+              <span className="plancard__icon">
+                <CreditCard size={18} aria-hidden="true" />
+              </span>
+              <span className="plancard__text">
+                <strong>{trialDays > 0 ? `Teste grátis · ${trialDays === 1 ? 'último dia' : `${trialDays} dias`}` : 'Seu plano'}</strong>
+                <small>{trialDays > 0 ? 'Escolha um plano para seguir depois do teste, sem perder nada.' : describeSubscription(sub)}</small>
+              </span>
+              <span className="plancard__btn">
+                {trialDays > 0 ? 'Ver planos' : 'Gerenciar'} <ChevronRight size={14} aria-hidden="true" />
+              </span>
+            </NavLink>
+          )}
+
+          <ul className="settings__list">
+            {access.business && (
+              <li>
+                <NavLink to={dash('/negocio')} className="settings__row">
+                  <Store size={19} aria-hidden="true" />
+                  <span>Meu negócio</span>
+                  <ChevronRight size={17} aria-hidden="true" />
+                </NavLink>
+              </li>
+            )}
+            {access.billing && (
+              <li>
+                <NavLink to={dash('/assinatura')} className="settings__row">
+                  <CreditCard size={19} aria-hidden="true" />
+                  <span>Assinatura</span>
+                  <ChevronRight size={17} aria-hidden="true" />
+                </NavLink>
+              </li>
+            )}
+            {isAdmin && (
+              <li>
+                <NavLink to={dash('/admin')} className="settings__row">
+                  <ShieldCheck size={19} aria-hidden="true" />
+                  <span>Acesso master</span>
+                  <ChevronRight size={17} aria-hidden="true" />
+                </NavLink>
+              </li>
+            )}
+            <li>
+              <DarkModeRow />
+            </li>
+          </ul>
+        </aside>
+
+        <div className="conta__main">
+          <form className="conta__card" onSubmit={onSave}>
+            <h2 className="conta__title">Dados pessoais</h2>
+            <p className="conta__hint">É assim que você aparece na agenda e nos avisos para a equipe.</p>
+            <div className="form">
+              <label className="field">
+                <span className="field__label">Seu nome</span>
+                <span className="input">
+                  <input
+                    value={userName}
+                    onChange={(e) => {
+                      setUserName(e.target.value)
+                      setSaved(false)
+                    }}
+                    autoComplete="name"
+                    required
+                    minLength={2}
+                    maxLength={80}
+                  />
+                </span>
+              </label>
+              {salon && (
+                <label className="field">
+                  <span className="field__label">Nome do negócio</span>
+                  <span className="input">
+                    <input
+                      value={salonName}
+                      onChange={(e) => {
+                        setSalonName(e.target.value)
+                        setSaved(false)
+                      }}
+                      autoComplete="organization"
+                      required
+                      minLength={2}
+                      maxLength={60}
+                      disabled={!canEditSalon}
+                    />
+                  </span>
+                  {!canEditSalon ? (
+                    <span className="field__hint">Só dona ou gerente altera o negócio.</span>
+                  ) : (
+                    <span className="field__hint">
+                      O endereço <strong>{salon.slug}</strong> não muda, para não quebrar links já compartilhados.
+                    </span>
+                  )}
+                </label>
+              )}
+              {email && (
+                <label className="field">
+                  <span className="field__label">E-mail</span>
+                  <span className="input">
+                    <input value={email} disabled readOnly />
+                  </span>
+                </label>
+              )}
+            </div>
+            {error && (
+              <p className="dialog__error" role="alert">
+                {error}
+              </p>
+            )}
+            <div className="conta__actions">
+              <Button type="submit" disabled={!dirty || busy}>
+                {busy ? 'Salvando…' : 'Salvar alterações'}
+              </Button>
+              {saved && !dirty && (
+                <span className="conta__saved" role="status">
+                  Alterações salvas
+                </span>
+              )}
+            </div>
+          </form>
+
+          {!demo && (
+            <section className="conta__card">
+              <h2 className="conta__title">Segurança</h2>
+              <ul className="settings__list conta__flat">
+                {email && (
+                  <li>
+                    <button
+                      type="button"
+                      className="settings__row"
+                      onClick={() => {
+                        setResetSent(true)
+                        void sendPasswordReset(email)
+                      }}
+                    >
+                      <KeyRound size={19} aria-hidden="true" />
+                      <span>
+                        Redefinir senha
+                        <small className="conta__sub">Enviamos um link para {email}</small>
+                      </span>
+                      <Mail size={17} aria-hidden="true" />
+                    </button>
+                  </li>
+                )}
+                <li>
+                  <button type="button" className="settings__row" onClick={() => void signOut()}>
+                    <LogOut size={19} aria-hidden="true" />
+                    <span>Sair da conta</span>
+                  </button>
+                </li>
+              </ul>
+            </section>
+          )}
+
+          {!demo && session && (
+            <section className="conta__card conta__danger">
+              <h2 className="conta__title">Excluir conta</h2>
+              <p className="conta__hint">
+                {isOwner
+                  ? 'Apaga de vez o negócio, as clientes, a agenda, o caixa, as fotos e o site, e remove o acesso da equipe. A assinatura é cancelada na hora. Não dá para desfazer.'
+                  : 'Seu login é apagado e você sai do negócio. Os atendimentos continuam na agenda. Não dá para desfazer.'}
+              </p>
+              <Button variant="light" className="conta__delete" onClick={() => setDeleting(true)}>
+                <Trash2 size={16} aria-hidden="true" /> Excluir minha conta
+              </Button>
+            </section>
+          )}
+        </div>
+      </div>
+
+      {deleting && (
+        <DeleteAccountDialog
+          title="Excluir sua conta?"
+          text={
+            isOwner && salon
+              ? `Isso apaga de vez o ${salon.name}: clientes, agenda, caixa, fotos, site e os acessos da equipe. A assinatura é cancelada na hora, sem novas cobranças. Não dá para desfazer.`
+              : 'Seu login é apagado e você sai do negócio. Os atendimentos continuam na agenda do negócio. Não dá para desfazer.'
+          }
+          expected={isOwner && salon ? salon.name : 'excluir'}
+          warning={
+            prepaidUntil
+              ? `Você pagou por Pix e tem acesso até ${prepaidUntil.toLocaleDateString('pt-BR')}. Esse valor não é devolvido ao excluir.`
+              : undefined
+          }
+          onDelete={deleteAccount}
+          onClose={() => setDeleting(false)}
+        />
+      )}
+      {resetSent && (
+        <NoticeDialog
+          tone="ok"
+          title="Link enviado"
+          text={`Se o e-mail ${email} tiver conta, o link para criar uma nova senha chega em instantes. Olhe também o spam.`}
+          onClose={() => setResetSent(false)}
+        />
+      )}
+    </div>
+  )
+}

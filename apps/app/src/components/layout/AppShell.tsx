@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useRef, useState, type CSSProperties, type FormEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
 import { usePresence } from '../../hooks/usePresence'
-import { useAppTheme, useTheme } from '../../lib/theme'
+import { useAppTheme } from '../../lib/theme'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { CalendarPlus, ChevronRight, Clock, CreditCard, Globe, LogOut, Moon, Plus, ReceiptText, Scissors, ShieldCheck, Trash2, UserPlus, UserRound, X, type LucideIcon } from 'lucide-react'
+import { CalendarPlus, ChevronRight, Clock, CreditCard, Globe, LogOut, Plus, ReceiptText, Scissors, ShieldCheck, UserPlus, UserRound, X, type LucideIcon } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
 import { SubscriptionProvider, useSubscription } from '../../billing/SubscriptionProvider'
 import { AgendaProvider } from '../../data/AgendaProvider'
@@ -14,7 +14,7 @@ import { roleAccess, type RoleAccess } from '../../domain/team'
 import { daysLeft, describeSubscription, isCardTrial, periodEnd } from '../../lib/plans'
 import { agenda, dash, ROUTES } from '../../lib/routes'
 import { Avatar, Button, PageHeaderShell } from '../ui'
-import { DeleteAccountDialog } from '../DeleteAccountDialog'
+import { DarkModeRow } from '../DarkModeRow'
 import { GlassDefs, useLiquidGlass } from '../ui/LiquidGlass'
 import { useLensDrag } from '../ui/useLensDrag'
 import { LogoWord } from '../BunnyMark'
@@ -83,7 +83,7 @@ function PillNav() {
 }
 
 /** avatar do topo (desktop): abre o menu da conta */
-function UserMenu({ onAccount }: { onAccount: () => void }) {
+function UserMenu() {
   const { salon, displayName, signOut, status, isAdmin } = useAuth()
   const items = useMoreItems()
   const [open, setOpen] = useState(false)
@@ -124,18 +124,10 @@ function UserMenu({ onAccount }: { onAccount: () => void }) {
             </NavLink>
           )}
           <DarkModeRow className="popover__item" />
-          <button
-            type="button"
-            className="popover__item"
-            role="menuitem"
-            onClick={() => {
-              setOpen(false)
-              onAccount()
-            }}
-          >
+          <NavLink to={dash('/conta')} className="popover__item" role="menuitem">
             <UserRound size={18} aria-hidden="true" />
             Minha conta
-          </button>
+          </NavLink>
           {status !== 'demo' && (
             <button type="button" className="popover__item popover__item--muted" role="menuitem" onClick={() => void signOut()}>
               <LogOut size={18} aria-hidden="true" />
@@ -168,20 +160,6 @@ function PlanCard() {
         {trialDays > 0 ? 'Ver planos' : 'Gerenciar'} <ChevronRight size={14} aria-hidden="true" />
       </span>
     </NavLink>
-  )
-}
-
-/** linha "Modo escuro" com a chave à direita (Configurações no celular e menu da conta no computador) */
-function DarkModeRow({ className = 'settings__row' }: { className?: string }) {
-  const [theme, setTheme] = useTheme()
-  const dark = theme === 'dark'
-  return (
-    <label className={`${className} settings__row--switch`}>
-      <Moon size={19} aria-hidden="true" />
-      <span>Modo escuro</span>
-      <input type="checkbox" role="switch" checked={dark} onChange={(e) => setTheme(e.target.checked ? 'dark' : 'light')} />
-      <span className="switch__track" aria-hidden="true" />
-    </label>
   )
 }
 
@@ -316,7 +294,7 @@ function SettingsButton({ open, onOpen }: { open: boolean; onOpen: () => void })
 }
 
 /** Configurações (celular): conta, plano, Meu site, Negócio, assinatura, modo escuro e sair */
-function SettingsSheet({ open, onClose, onAccount }: { open: boolean; onClose: () => void; onAccount: () => void }) {
+function SettingsSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { signOut, status, displayName, salon, session, isAdmin } = useAuth()
   const items = useMoreItems()
   const { sheet: sheetItems } = useSections()
@@ -335,21 +313,14 @@ function SettingsSheet({ open, onClose, onAccount }: { open: boolean; onClose: (
           </button>
         </div>
 
-        <button
-          type="button"
-          className="settings__profile"
-          onClick={() => {
-            onClose()
-            onAccount()
-          }}
-        >
+        <NavLink to={dash('/conta')} className="settings__profile">
           <Avatar name={displayName} />
           <span className="settings__who">
             <strong>{displayName}</strong>
             <small>{session?.user.email ?? salon?.name ?? 'Minha conta'}</small>
           </span>
           <ChevronRight size={18} aria-hidden="true" />
-        </button>
+        </NavLink>
 
         <PlanCard />
 
@@ -386,167 +357,9 @@ function SettingsSheet({ open, onClose, onAccount }: { open: boolean; onClose: (
   )
 }
 
-/** editar cadastro: nome da pessoa e do negócio */
-function ProfileDialog({ onClose }: { onClose: () => void }) {
-  const { displayName, salon, session, updateProfile, signOut, deleteAccount } = useAuth()
-  const [deleting, setDeleting] = useState(false)
-  const { sub } = useSubscription()
-  const navigate = useNavigate()
-  // só o que a pessoa digitou fica guardado; sem isso vale o dado atual, que pode chegar depois de a janela abrir
-  const [userEdit, setUserName] = useState<string | null>(null)
-  const [salonEdit, setSalonName] = useState<string | null>(null)
-  const userName = userEdit ?? displayName
-  const salonName = salonEdit ?? salon?.name ?? ''
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const canEditSalon = !salon || salon.role === 'owner' || salon.role === 'manager'
-
-  useEffect(() => {
-    if (deleting) return
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onClose, deleting])
-
-  const onSubmit = async (e: FormEvent) => {
-    e.preventDefault()
-    setBusy(true)
-    const message = await updateProfile(userName, canEditSalon ? salonName : (salon?.name ?? salonName))
-    setBusy(false)
-    if (message) setError(message)
-    else onClose()
-  }
-
-  return (
-    <>
-    <div className="overlay" onClick={onClose}>
-      <form
-        className="dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Minha conta"
-        onClick={(e) => e.stopPropagation()}
-        onSubmit={onSubmit}
-      >
-        <div className="dialog__head">
-          <h2>
-            Minha <span className="em">conta</span>
-          </h2>
-          <Button variant="ghost" size="sm" icon aria-label="Fechar" onClick={onClose}>
-            <X size={18} />
-          </Button>
-        </div>
-
-        <div className="form">
-          <label className="field">
-            <span className="field__label">Seu nome</span>
-            <span className="input">
-              <input
-                value={userName}
-                onChange={(e) => setUserName(e.target.value)}
-                autoComplete="name"
-                required
-                minLength={2}
-                maxLength={80}
-              />
-            </span>
-          </label>
-          <label className="field">
-            <span className="field__label">Nome do negócio</span>
-            <span className="input">
-              <input
-                value={salonName}
-                onChange={(e) => setSalonName(e.target.value)}
-                autoComplete="organization"
-                required
-                minLength={2}
-                maxLength={60}
-                disabled={!canEditSalon}
-              />
-            </span>
-            {!canEditSalon && <span className="field__hint">Só dona ou gerente altera o negócio.</span>}
-          </label>
-          {session?.user.email && (
-            <label className="field">
-              <span className="field__label">E-mail</span>
-              <span className="input">
-                <input value={session.user.email} disabled readOnly />
-              </span>
-            </label>
-          )}
-          {sub && (
-            <div className="account-plan">
-              <div>
-                <span className="field__label">Assinatura</span>
-                <p className="account-plan__text">{describeSubscription(sub)}</p>
-              </div>
-              <Button
-                variant="light"
-                size="sm"
-                onClick={() => {
-                  onClose()
-                  navigate(dash('/assinatura'))
-                }}
-              >
-                Ver planos
-              </Button>
-            </div>
-          )}
-          {salon && (
-            <p className="field__hint">
-              Seu endereço <strong>{salon.slug}</strong> não muda por aqui, para não quebrar links já compartilhados.
-            </p>
-          )}
-        </div>
-
-        {error && (
-          <p className="dialog__error" role="alert">
-            {error}
-          </p>
-        )}
-
-        <div className="dialog__actions">
-          <Button variant="light" onClick={onClose}>
-            Cancelar
-          </Button>
-          <Button type="submit" disabled={busy}>
-            {busy ? 'Salvando…' : 'Salvar'}
-          </Button>
-        </div>
-        {session && (
-          <button type="button" className="dialog__signout" onClick={() => void signOut()}>
-            <LogOut size={16} aria-hidden="true" /> Sair da conta
-          </button>
-        )}
-        {session && (
-          <button type="button" className="dialog__delete" onClick={() => setDeleting(true)}>
-            <Trash2 size={15} aria-hidden="true" /> Excluir conta
-          </button>
-        )}
-      </form>
-    </div>
-      {deleting && (
-        <DeleteAccountDialog
-          title="Excluir sua conta?"
-          text={
-            salon?.role === 'owner'
-              ? `Isso apaga de vez o ${salon.name}: clientes, agenda, caixa, fotos, site e os acessos da equipe. A assinatura é cancelada na hora, sem novas cobranças. Não dá para desfazer.`
-              : 'Seu login é apagado e você sai do negócio. Os atendimentos continuam na agenda do negócio. Não dá para desfazer.'
-          }
-          expected={salon?.role === 'owner' ? salon.name : 'excluir'}
-          onDelete={deleteAccount}
-          onClose={() => setDeleting(false)}
-        />
-      )}
-    </>
-  )
-}
-
 export default function AppShell() {
   useAppTheme()
   const navigate = useNavigate()
-  const [editing, setEditing] = useState(false)
-  const closeEdit = useRef(() => setEditing(false)).current
   const [settings, setSettings] = useState(false)
   const closeSettings = useRef(() => setSettings(false)).current
 
@@ -564,7 +377,7 @@ export default function AppShell() {
             <Button className="topbar__add" onClick={() => navigate(agenda('nova=1'))}>
               <CalendarPlus size={16} aria-hidden="true" /> Agendar
             </Button>
-            <UserMenu onAccount={() => setEditing(true)} />
+            <UserMenu />
           </div>
         </div>
       </header>
@@ -582,10 +395,9 @@ export default function AppShell() {
         </PageHeaderShell.Provider>
       </main>
       <BottomNav />
-      <SettingsSheet open={settings} onClose={closeSettings} onAccount={() => setEditing(true)} />
+      <SettingsSheet open={settings} onClose={closeSettings} />
       <PendingToast />
       <FirstSteps />
-      {editing && <ProfileDialog onClose={closeEdit} />}
     </div>
     </AgendaProvider>
     </SubscriptionProvider>

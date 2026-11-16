@@ -29,7 +29,7 @@ const planName = (plan: string | null) => (plan && isPlanId(plan) ? PLANS[plan].
 
 /** /dashboard/admin: acesso master da IKIZY — todos os negócios, com plano, uso e o botão de apagar */
 export default function Admin() {
-  const { isAdmin, status } = useAuth()
+  const { isAdmin, adminChecked } = useAuth()
   const [salons, setSalons] = useState<AdminSalon[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [query, setQuery] = useState('')
@@ -56,8 +56,9 @@ export default function Admin() {
     return salons.filter((s) => [s.name, s.slug, s.ownerEmail, s.ownerName].some((v) => v?.toLowerCase().includes(q)))
   }, [salons, query])
 
-  // o servidor é quem decide; quem não é master volta para o Início
-  if (!isAdmin) return status === 'loading' ? null : <Navigate to={ROUTES.dashboard} replace />
+  // o servidor é quem decide: espera a resposta antes de mandar embora quem não é master
+  if (!adminChecked) return <PageLoader label="Conferindo o acesso…" />
+  if (!isAdmin) return <Navigate to={ROUTES.dashboard} replace />
 
   const count = (st: string) => salons?.filter((s) => s.status === st).length ?? 0
 
@@ -153,9 +154,9 @@ export default function Admin() {
           }. A assinatura no Stripe é cancelada na hora. Não dá para desfazer.`}
           expected={target.slug}
           confirmLabel="Apagar negócio"
-          onDelete={async () => {
+          onDelete={async (typed) => {
             try {
-              await adminDeleteSalon(target.id)
+              await adminDeleteSalon(target.id, typed)
             } catch (e) {
               return e instanceof BillingError ? e.message : 'Não foi possível apagar agora.'
             }

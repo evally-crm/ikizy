@@ -14,6 +14,7 @@ export function DeleteAccountDialog({
   title,
   text,
   expected,
+  warning,
   confirmLabel = 'Excluir conta',
   onDelete,
   onClose,
@@ -22,8 +23,11 @@ export function DeleteAccountDialog({
   text: string
   /** o que precisa ser digitado para liberar o botão */
   expected: string
+  /** aviso em destaque acima do campo (ex.: Pix já pago não é devolvido) */
+  warning?: string
   confirmLabel?: string
-  onDelete: () => Promise<string | null>
+  /** recebe o texto digitado: o servidor confere de novo, a tela só libera o botão */
+  onDelete: (typed: string) => Promise<string | null>
   onClose: () => void
 }) {
   const [typed, setTyped] = useState('')
@@ -36,7 +40,7 @@ export function DeleteAccountDialog({
     if (!ok || busy) return
     setBusy(true)
     setError(null)
-    const message = await onDelete()
+    const message = await onDelete(typed)
     setBusy(false)
     if (message) setError(message)
   }
@@ -51,6 +55,11 @@ export function DeleteAccountDialog({
           </Button>
         </div>
         <p className="dialog__text">{text}</p>
+        {warning && (
+          <p className="dialog__warn" role="note">
+            {warning}
+          </p>
+        )}
         <label className="field">
           <span className="field__label">
             Para confirmar, digite: <strong>{expected}</strong>

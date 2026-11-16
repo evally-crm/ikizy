@@ -46,10 +46,12 @@ interface AuthState {
   updateProfile: (userName: string, salonName: string) => Promise<string | null>
   /** aceita o convite da equipe: liga o login ao negócio (e à profissional) e já abre o sistema */
   acceptInvite: (token: string) => Promise<string | null>
-  /** apaga a conta de vez (dona: o negócio inteiro e a assinatura) e sai */
-  deleteAccount: () => Promise<string | null>
+  /** apaga a conta de vez (dona: o negócio inteiro e a assinatura) e sai; o servidor confere o texto digitado */
+  deleteAccount: (confirmation: string) => Promise<string | null>
   /** acesso master da IKIZY (lista de e-mails no servidor) */
   isAdmin: boolean
+  /** false enquanto o servidor ainda não respondeu se é master (a tela do master espera, não redireciona) */
+  adminChecked: boolean
 }
 
 const AuthContext = createContext<AuthState | null>(null)
@@ -132,16 +134,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [userId, sessionReady, loadSalon])
 
   // master da IKIZY: o servidor decide (ADMIN_EMAILS); sem login, nunca
-  const [adminFor, setAdminFor] = useState<string | null>(null)
+  // `adminCheck` guarda de quem é a resposta: enquanto ela não chega, a tela do master espera em vez de mandar a pessoa embora
+  const [adminCheck, setAdminCheck] = useState<{ uid: string; admin: boolean } | null>(null)
   useEffect(() => {
     if (!userId) return
     let alive = true
-    void fetchIsAdmin().then((admin) => alive && setAdminFor(admin ? userId : null))
+    void fetchIsAdmin().then((admin) => alive && setAdminCheck({ uid: userId, admin }))
     return () => {
       alive = false
     }
   }, [userId])
-  const isAdmin = Boolean(userId && adminFor === userId)
+  const isAdmin = Boolean(userId && adminCheck?.uid === userId && adminCheck.admin)
+  const adminChecked = !userId || adminCheck?.uid === userId
 
   // a dona deixa o e-mail guardado no servidor para os avisos de teste e de cobrança
   const ownedSalonId = salon?.role === 'owner' ? salon.id : null
@@ -180,10 +184,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       salon: shownSalon,
       displayName,
       isAdmin,
-      async deleteAccount() {
+      adminChecked,
+      async deleteAccount(confirmation) {
         if (!neon) return 'No modo demonstração não há conta para excluir.'
         try {
-          await deleteAccountApi()
+          await deleteAccountApi(confirmation)
         } catch (e) {
           return e instanceof BillingError ? e.message : 'Não foi possível excluir a conta agora. Tente novamente.'
         }
@@ -385,7 +390,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return null
       },
     }),
-    [status, session, salon, shownSalon, displayName, isAdmin, userId, loadSalon, sessionName, sendCode],
+    [status, session, salon, shownSalon, displayName, isAdmin, adminChecked, userId, loadSalon, sessionName, sendCode],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
