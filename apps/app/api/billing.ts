@@ -1,6 +1,6 @@
 import { HttpError, changePlan, createCheckout, createPortal, parseCheckoutInput } from './_lib/billing.js'
 import { isPlanId } from '../src/lib/plans.js'
-import { appUrl, authenticate, createDb, fail, json, stripe } from './_lib/runtime.js'
+import { appUrl, authenticate, createDb, fail, json, limitUser, stripe } from './_lib/runtime.js'
 
 type User = Awaited<ReturnType<typeof authenticate>>
 type Deps = { db: ReturnType<typeof createDb>; stripe: ReturnType<typeof stripe>; appUrl: string }
@@ -26,6 +26,7 @@ export async function POST(request: Request) {
     const action = ACTIONS[new URL(request.url).searchParams.get('action') ?? '']
     if (!action) throw new HttpError(404, 'not_found', 'Ação não encontrada.')
     const user = await authenticate(request)
+    await limitUser(user.id, 'billing')
     const body = await request.json().catch(() => null)
     return json(await action({ db: createDb(), stripe: stripe(), appUrl: appUrl() }, user, body))
   } catch (error) {
