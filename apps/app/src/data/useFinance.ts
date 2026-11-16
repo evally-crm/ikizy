@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { addMonths, format, startOfMonth } from 'date-fns'
 import { useAuth } from '../auth/AuthProvider'
 import { buildDayStatement, buildMonth, buildPeriod } from '../domain/finance'
+import { track } from '../lib/analytics'
 import type { DayStatement, Expense, MonthClosing, ProfessionalRate, SettledAppointment } from '../domain/finance'
 import { isNeonConfigured, neon } from '../lib/neon'
 import type { PaymentMethod } from '../types'
@@ -189,6 +190,7 @@ export function useFinance() {
         .insert({ salon_id: salonId, spent_on: input.date, description: input.description, amount: input.amount })
       if (err) return friendly(err)
       reload()
+      track('despesa_lancada')
       return null
     },
     [live, salonId, reload],
@@ -224,6 +226,7 @@ export function useFinance() {
         return friendly(err)
       }
       reload()
+      track('mes_fechado')
       return null
     },
     [live, salonId, reload],

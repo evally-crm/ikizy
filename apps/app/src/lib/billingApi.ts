@@ -1,4 +1,5 @@
 import { neon } from './neon'
+import { track } from './analytics'
 import type { BillingMethod, PixMonths, PlanId } from './plans'
 
 /** erro devolvido pelas funções de cobrança, com um código estável para a tela decidir o que fazer */
@@ -76,6 +77,7 @@ export async function chooseTrialPlan(plan: PlanId): Promise<void> {
   if (!neon) return
   const { error } = await neon.rpc('choose_trial_plan', { p_plan: plan })
   if (error) throw new BillingError('choose_failed', 'Não foi possível salvar o plano agora. Tente novamente.')
+  track('plano_escolhido', { plano: plan })
 }
 
 const synced = new Set<string>()
