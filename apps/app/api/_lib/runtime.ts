@@ -7,6 +7,7 @@ import type { BookingDb, BookingResult, Slot } from './booking.js'
 import type { AccountDb, AccountDeps, AuditEntry } from './account.js'
 import type { HousekeepingDb, RetentionCandidate } from './housekeeping.js'
 import { FROM } from './authEmail.js'
+import type { ExportDeps } from './export.js'
 import type { CronDb } from './cron.js'
 import type { LeadDb } from './lead.js'
 import { reportError } from './monitoring.js'
@@ -506,6 +507,42 @@ export function createAccountDb(): AccountDb {
         deletionScheduledAt: iso(r.deletion_scheduled_at),
       }))
     },
+  }
+}
+
+/** tabelas do negócio que entram na cópia dos dados (lista fechada: nada de segredo, token nem dado do Stripe) */
+const EXPORT_TABLES = [
+  'professionals',
+  'services',
+  'products',
+  'clients',
+  'client_notes',
+  'appointments',
+  'expenses',
+  'month_closings',
+  'working_hours',
+  'client_plans',
+  'showcase_items',
+  'site_settings',
+] as const
+
+/** exportar os dados do negócio (conexão de dono, só no servidor): tudo sempre filtrado pelo negócio da dona logada */
+export function createExportLoader(): ExportDeps['load'] {
+  const sql = neon(env('DATABASE_URL'))
+  return async (salonId) => {
+    const q = (text: string) => sql.query(text, [salonId]) as Promise<Row[]>
+    const tables: Record<string, Row[]> = {}
+    for (const t of EXPORT_TABLES) tables[t] = await q(`select * from public.${t} where salon_id = $1::uuid order by 1`)
+    // fotos: só a lista (as imagens não vão no arquivo)
+    tables.client_photos = await q(`select id, client_id, kind, caption, taken_on, created_at from public.client_photos where salon_id = $1::uuid order by created_at`)
+    tables.site_photos = await q(`select id, created_at from public.site_photos where salon_id = $1::uuid order by created_at`)
+    const [salon] = await q(`select id, name, slug, created_at from public.salons where id = $1::uuid`)
+    const [subscription] = await q(`select plan, status, trial_ends_at, access_until, billing_method from public.subscriptions where salon_id = $1::uuid`)
+    const team = await q(`
+      select u.name, u.email, m.role, m.created_at as since
+      from public.members m join neon_auth."user" u on u.id = m.user_id
+      where m.salon_id = $1::uuid order by m.created_at`)
+    return { salon: salon ?? {}, subscription: subscription ?? null, team, tables }
   }
 }
 

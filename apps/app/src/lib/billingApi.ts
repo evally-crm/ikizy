@@ -10,7 +10,8 @@ export class BillingError extends Error {
   }
 }
 
-export async function post<T>(path: string, body: unknown): Promise<T> {
+/** envia o pedido com o token de quem está logada; devolve a resposta crua (a de erro já vira BillingError) */
+async function send(path: string, body: unknown): Promise<Response> {
   const { data } = (await neon?.auth.getSession()) ?? { data: { session: null } }
   const token = data.session?.access_token
   if (!token) throw new BillingError('unauthenticated', 'Entre na sua conta para continuar.')
@@ -25,15 +26,27 @@ export async function post<T>(path: string, body: unknown): Promise<T> {
   } catch {
     throw new BillingError('network', 'Sem conexão. Verifique sua internet e tente de novo.')
   }
-  const payload = (await res.json().catch(() => null)) as { error?: string; message?: string } | null
   if (!res.ok) {
     // no ambiente local as funções de servidor não existem (/api devolve a própria página)
     if (res.status === 404 || res.status === 405) {
       throw new BillingError('unavailable', 'Isso não está disponível neste ambiente.')
     }
+    const payload = (await res.json().catch(() => null)) as { error?: string; message?: string } | null
     throw new BillingError(payload?.error ?? 'error', payload?.message ?? 'Não foi possível continuar agora. Tente novamente.')
   }
-  return payload as T
+  return res
+}
+
+export async function post<T>(path: string, body: unknown): Promise<T> {
+  const res = await send(path, body)
+  return (await res.json().catch(() => null)) as T
+}
+
+/** pede um arquivo (ex.: o ZIP com os dados): devolve o conteúdo e o nome sugerido pelo servidor */
+export async function postFile(path: string, body: unknown): Promise<{ blob: Blob; filename: string }> {
+  const res = await send(path, body)
+  const name = /filename="([^"]+)"/.exec(res.headers.get('content-disposition') ?? '')?.[1]
+  return { blob: await res.blob(), filename: name ?? 'dados.zip' }
 }
 
 /** abre o Checkout do Stripe (cartão = assinatura mensal; Pix = pagamento adiantado de N meses); `from` decide para onde o Stripe devolve */

@@ -9,6 +9,7 @@ import {
   parseAdminEmails,
 } from './_lib/account.js'
 import { HttpError } from './_lib/billing.js'
+import { exportData } from './_lib/export.js'
 import { sendWelcome } from './_lib/notify.js'
 import type { LimitKey } from './_lib/throttle.js'
 import {
@@ -16,6 +17,7 @@ import {
   authenticate,
   createAccountDb,
   createAccountDeps,
+  createExportLoader,
   createNotifyDb,
   fail,
   json,
@@ -49,6 +51,17 @@ const ACTIONS: Record<string, (user: User, body: unknown) => Promise<unknown>> =
    * Dona: agenda para daqui a 7 dias ({ scheduled }); equipe: apaga na hora ({ deleted }).
    */
   delete: (user, body) => deleteAccount(createAccountDeps(), user, body),
+  /** a dona baixa uma cópia dos dados do negócio (ZIP com planilhas e dados.json) */
+  export: async (user) => {
+    const pkg = await exportData({ db: createAccountDb(), load: createExportLoader() }, user)
+    return new Response(pkg.bytes, {
+      headers: {
+        'content-type': 'application/zip',
+        'content-disposition': `attachment; filename="${pkg.filename}"`,
+        'cache-control': 'no-store',
+      },
+    })
+  },
   /** a dona desiste da exclusão agendada */
   'cancel-delete': (user) => cancelDeletion(createAccountDeps(), user),
   /** -> { admin, deletionAt }: se quem está logada é master e quando a exclusão dela acontece (null = nada agendado) */
@@ -74,7 +87,9 @@ export async function POST(request: Request) {
     const user = await authenticate(request)
     await limitUser(user.id, `account:${name}` as LimitKey)
     const body = await request.json().catch(() => null)
-    return json(await action(user, body))
+    const result = await action(user, body)
+    // a cópia dos dados é um arquivo, não JSON
+    return result instanceof Response ? result : json(result)
   } catch (error) {
     return fail(error)
   }

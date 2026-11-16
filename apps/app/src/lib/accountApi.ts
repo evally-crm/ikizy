@@ -1,4 +1,4 @@
-import { post } from './billingApi'
+import { post, postFile } from './billingApi'
 
 /** a dona recebe a data da exclusão (7 dias); quem é da equipe é apagado na hora */
 export type DeleteResult = { deleted: true } | { scheduled: string }
@@ -6,6 +6,19 @@ export type DeleteResult = { deleted: true } | { scheduled: string }
 /** pede a exclusão da conta; o servidor confere o texto digitado */
 export async function deleteAccount(confirmation: string): Promise<DeleteResult> {
   return post<DeleteResult>('/api/account/delete', { confirmation })
+}
+
+/** baixa uma cópia dos dados do negócio (ZIP com planilhas): só a dona; o navegador salva o arquivo */
+export async function downloadMyData(): Promise<void> {
+  const { blob, filename } = await postFile('/api/account/export', {})
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  window.setTimeout(() => URL.revokeObjectURL(url), 10_000)
 }
 
 /** a dona desiste da exclusão agendada */

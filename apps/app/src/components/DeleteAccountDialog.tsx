@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useState, type FormEvent, type ReactNode } from 'react'
 import { Trash2, X } from 'lucide-react'
 import { Modal } from './Modal'
 import { Button } from './ui'
@@ -15,6 +15,7 @@ export function DeleteAccountDialog({
   text,
   expected,
   warning,
+  before,
   confirmLabel = 'Excluir conta',
   onDelete,
   onClose,
@@ -25,6 +26,8 @@ export function DeleteAccountDialog({
   expected: string
   /** aviso em destaque acima do campo (ex.: Pix já pago não é devolvido) */
   warning?: string
+  /** algo para a pessoa fazer antes de apagar (ex.: baixar os dados), logo abaixo do texto */
+  before?: ReactNode
   confirmLabel?: string
   /** recebe o texto digitado: o servidor confere de novo, a tela só libera o botão */
   onDelete: (typed: string) => Promise<string | null>
@@ -56,6 +59,7 @@ export function DeleteAccountDialog({
           </Button>
         </div>
         <p className="dialog__text">{text}</p>
+        {before}
         {warning && (
           <p className="dialog__warn" role="note">
             {warning}

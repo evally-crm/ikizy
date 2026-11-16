@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { NavLink } from 'react-router-dom'
-import { ChevronRight, CreditCard, KeyRound, LogOut, Mail, ShieldCheck, Store, Trash2 } from 'lucide-react'
+import { ChevronRight, CreditCard, Download, KeyRound, LogOut, Mail, ShieldCheck, Store, Trash2 } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
 import { useSubscription } from '../../billing/SubscriptionProvider'
 import { DarkModeRow } from '../../components/DarkModeRow'
@@ -9,6 +9,8 @@ import { NoticeDialog } from '../../components/Modal'
 import { Avatar, Button, Em, PageHeader } from '../../components/ui'
 import { roleAccess, ROLE_LABEL } from '../../domain/team'
 import { daysLeft, describeSubscription, isCardTrial, periodEnd } from '../../lib/plans'
+import { downloadMyData } from '../../lib/accountApi'
+import { BillingError } from '../../lib/billingApi'
 import { dash } from '../../lib/routes'
 import './Conta.css'
 
@@ -33,6 +35,9 @@ export default function Conta() {
   const [saved, setSaved] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [resetSent, setResetSent] = useState(false)
+  const [exporting, setExporting] = useState(false)
+  const [exportError, setExportError] = useState<string | null>(null)
+  const [exported, setExported] = useState(false)
   const [scheduledNotice, setScheduledNotice] = useState(false)
   const [cancelBusy, setCancelBusy] = useState(false)
   const [cancelError, setCancelError] = useState<string | null>(null)
@@ -54,6 +59,18 @@ export default function Conta() {
 
   // Pix já pago e ainda dentro do período: o valor não volta ao excluir (só o cartão é cancelado no Stripe)
   const prepaidUntil = isOwner && sub?.method === 'pix' && sub.status === 'active' && sub.accessUntil.getTime() > Date.now() ? sub.accessUntil : null
+  const exportData = async () => {
+    setExporting(true)
+    setExportError(null)
+    setExported(false)
+    try {
+      await downloadMyData()
+      setExported(true)
+    } catch (e) {
+      setExportError(e instanceof BillingError ? e.message : 'Não foi possível baixar agora. Tente novamente.')
+    }
+    setExporting(false)
+  }
   const trialDays = sub?.status === 'trialing' ? daysLeft(isCardTrial(sub) ? periodEnd(sub) : sub.accessUntil) : 0
   const first = displayName.split(' ')[0]
 
@@ -210,6 +227,31 @@ export default function Conta() {
             </div>
           </form>
 
+          {!demo && session && isOwner && (
+            <section className="conta__card">
+              <h2 className="conta__title">Seus dados</h2>
+              <p className="conta__hint">
+                Baixe uma cópia do negócio: clientes, atendimentos, serviços, saídas e equipe, em planilhas que abrem no Excel. As fotos e as
+                assinaturas não vão no arquivo. Tem dados pessoais das suas clientes, então guarde num lugar seguro.
+              </p>
+              {exportError && (
+                <p className="dialog__error" role="alert">
+                  {exportError}
+                </p>
+              )}
+              <div className="conta__actions">
+                <Button disabled={exporting} onClick={() => void exportData()}>
+                  <Download size={16} aria-hidden="true" /> {exporting ? 'Preparando…' : 'Baixar meus dados'}
+                </Button>
+                {exported && (
+                  <span className="conta__saved" role="status">
+                    Arquivo baixado
+                  </span>
+                )}
+              </div>
+            </section>
+          )}
+
           {!demo && (
             <section className="conta__card">
               <h2 className="conta__title">Segurança</h2>
@@ -294,6 +336,16 @@ export default function Conta() {
               : 'Seu login é apagado e você sai do negócio. Os atendimentos continuam na agenda do negócio. Não dá para desfazer.'
           }
           expected={isOwner && salon ? salon.name : 'excluir'}
+          before={
+            isOwner ? (
+              <p className="dialog__text">
+                Antes de excluir, que tal levar uma cópia dos seus dados?{' '}
+                <button type="button" className="linklike" disabled={exporting} onClick={() => void exportData()}>
+                  {exporting ? 'Preparando…' : exported ? 'Baixar de novo' : 'Baixar meus dados'}
+                </button>
+              </p>
+            ) : undefined
+          }
           warning={
             prepaidUntil
               ? `Você pagou por Pix e tem acesso até ${prepaidUntil.toLocaleDateString('pt-BR')}. Esse valor não é devolvido ao excluir.`
