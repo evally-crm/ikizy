@@ -1028,3 +1028,21 @@ button.textlink:disabled {
   font-size: 13.5px;
   line-height: 1.4;
 }
+
+/* botão com cara de link, dentro de um texto */
+.linklike {
+  display: inline;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink-900);
+  font: inherit;
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.linklike:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

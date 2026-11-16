@@ -5,6 +5,7 @@ import type { ClientDraft, ProfessionalOption } from '../data/useClientBook'
 import { Button } from './ui'
 import { Switch } from './controls'
 import { Modal } from './Modal'
+import { instagramHandle } from '../lib/social'
 
 const splitLines = (v: string) =>
   v
@@ -85,7 +86,8 @@ export function ClientDialog({
         .filter(Boolean),
       preferences: splitLines(preferences),
       email: email.trim(),
-      instagram: instagram.trim().replace(/^@/, ''),
+      // guarda só o usuário, não importa como a pessoa colou (@usuario, instagram.com/usuario, link completo)
+      instagram: instagramHandle(instagram) ?? '',
       address: address.trim(),
       occupation: occupation.trim(),
       referral: composeReferral(referralKind, referralWho),

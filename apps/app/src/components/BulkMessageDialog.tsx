@@ -1,7 +1,8 @@
 import './BulkMessageDialog.css'
 import { useState } from 'react'
 import { format } from 'date-fns'
-import { ArrowLeft, Check, Copy, MessageCircle, X } from 'lucide-react'
+import { ArrowLeft, Check, Copy, X } from 'lucide-react'
+import { WhatsAppIcon } from './BrandIcons'
 import { CLIENT_KINDS, MESSAGE_LABEL, markSent, renderMessage, sentKey, whatsappHref, type MessageKind } from '../lib/messages'
 import { useSalonInfo } from '../hooks/useSalonInfo'
 import type { Client } from '../data/clients'
@@ -102,7 +103,7 @@ export function BulkMessageDialog({
               {copied ? <Check size={16} aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />} {copied ? 'Copiado' : 'Copiar texto'}
             </Button>
             <Button disabled={!withPhone.length || !text.trim()} onClick={() => setStep('envio')}>
-              <MessageCircle size={16} aria-hidden="true" /> Continuar
+              <WhatsAppIcon size={16} /> Continuar
             </Button>
           </div>
         </>
@@ -130,7 +131,7 @@ export function BulkMessageDialog({
                       rel="noreferrer"
                       onClick={() => send(c)}
                     >
-                      {ok ? <Check size={14} aria-hidden="true" /> : <MessageCircle size={14} aria-hidden="true" />} {ok ? 'Enviada' : 'Enviar'}
+                      {ok ? <Check size={14} aria-hidden="true" /> : <WhatsAppIcon size={14} />} {ok ? 'Enviada' : 'Enviar'}
                     </a>
                   </li>
                 )
@@ -144,7 +145,7 @@ export function BulkMessageDialog({
             </Button>
             {next ? (
               <a className="btn btn--primary" href={whatsappHref(next.phone, textFor(next)) ?? undefined} target="_blank" rel="noreferrer" onClick={() => send(next)}>
-                <MessageCircle size={16} aria-hidden="true" /> Enviar para {firstName(next.name)}
+                <WhatsAppIcon size={16} /> Enviar para {firstName(next.name)}
               </a>
             ) : (
               <Button onClick={onClose}>

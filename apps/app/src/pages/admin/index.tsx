@@ -31,6 +31,8 @@ function actionLabel(r: AuditRow): string {
       return 'Master apagou o negócio'
     case 'owner.request_deletion':
       return 'Dona pediu a exclusão (7 dias)'
+    case 'owner.export_data':
+      return 'Dona baixou os dados do negócio'
     case 'owner.cancel_deletion':
       return 'Dona desistiu da exclusão'
     case 'system.purge_salon':

@@ -28,6 +28,16 @@ export default function Login() {
   const from = typeof location.state?.from === 'string' && location.state.from.startsWith('/dashboard') ? (location.state.from as string) : ROUTES.dashboard
   const [email, setEmail] = useState<string>(location.state?.email ?? readLastEmail())
   const [password, setPassword] = useState('')
+  // quem acabou de excluir a própria conta volta para cá com um recado (deixado pela tela "Excluir conta")
+  const [goodbye] = useState(() => {
+    try {
+      const flag = sessionStorage.getItem('ikizy:goodbye') === '1'
+      sessionStorage.removeItem('ikizy:goodbye')
+      return flag
+    } catch {
+      return false
+    }
+  })
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -105,7 +115,7 @@ export default function Login() {
           <Link to={ROUTES.recover} className="auth__forgot">
             Esqueci a senha
           </Link>
-          <FormMessages error={error} notice={verified && !error ? 'E-mail confirmado. Agora entre com a sua senha.' : null} />
+          <FormMessages error={error} notice={error ? null : verified ? 'E-mail confirmado. Agora entre com a sua senha.' : goodbye ? 'Sua conta foi excluída. Obrigada por ter usado o IKIZY.' : null} />
           <AuthSubmit label="Entrar" disabled={busy} />
         </form>
       </AuthCard>

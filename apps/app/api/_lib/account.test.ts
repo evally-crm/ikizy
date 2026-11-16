@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import {
+  accountSummary,
   adminAuditLog,
   adminDeleteSalon,
   adminListSalons,
@@ -10,6 +11,7 @@ import {
   GRACE_DAYS,
   isAdmin,
   parseAdminEmails,
+  parseReason,
   type AccountDb,
   type AccountDeps,
   type AuditEntry,
@@ -72,6 +74,9 @@ function fakeDeps(opts: Opts = {}) {
     },
     async contactsOf() {
       return { ownerEmail: 'dona@x.com', memberEmails: opts.team ?? [] }
+    },
+    async salonCounts() {
+      return { clients: 42, appointments: 310, members: 3 }
     },
     async scheduleDeletion(_id, _req, at, resume) {
       log.push(`schedule:${at.toISOString()}:${resume}`)
@@ -175,6 +180,47 @@ describe('pedir a exclusão (dona)', () => {
     const { deps, state } = fakeDeps({ sendFails: true })
     await deleteAccount(deps, OWNER, { confirmation: 'Studio Maria' })
     assert.deepEqual(state.scheduled, SCHEDULED_AT)
+  })
+})
+
+describe('motivo da exclusão', () => {
+  it('lê só motivos da lista e corta o comentário em 300 letras', () => {
+    assert.deepEqual(parseReason({ reason: 'caro', comment: '  achei caro  ' }), { reason: 'caro', comment: 'achei caro' })
+    assert.deepEqual(parseReason({ reason: 'inventado', comment: 'x' }), { reason: null, comment: null })
+    assert.deepEqual(parseReason({ comment: 'sem motivo' }), { reason: null, comment: null })
+    assert.deepEqual(parseReason(null), { reason: null, comment: null })
+    assert.equal(parseReason({ reason: 'outro', comment: 'a'.repeat(900) }).comment?.length, 300)
+    assert.deepEqual(parseReason({ reason: 'fechei', comment: 42 }), { reason: 'fechei', comment: null })
+  })
+
+  it('o motivo vai para o registro do pedido; sem motivo, o pedido vale igual', async () => {
+    const withReason = fakeDeps()
+    await deleteAccount(withReason.deps, OWNER, { confirmation: 'Studio Maria', reason: 'caro', comment: 'preço' })
+    assert.equal(withReason.audits[0].details?.reason, 'caro')
+    assert.equal(withReason.audits[0].details?.comment, 'preço')
+    const without = fakeDeps()
+    await deleteAccount(without.deps, OWNER, { confirmation: 'Studio Maria' })
+    assert.equal('reason' in (without.audits[0].details ?? {}), false)
+  })
+
+  it('motivo fora da lista é ignorado, não bloqueia', async () => {
+    const { deps, audits } = fakeDeps()
+    await deleteAccount(deps, OWNER, { confirmation: 'Studio Maria', reason: '<script>' })
+    assert.equal('reason' in (audits[0].details ?? {}), false)
+  })
+})
+
+describe('resumo para a tela de excluir', () => {
+  it('a dona vê quanto vai perder e quando acontece', async () => {
+    const out = await accountSummary(fakeDeps({ scheduled: SCHEDULED_AT }).deps.db, 'u1')
+    assert.deepEqual(out, { role: 'owner', salonName: 'Studio Maria', clients: 42, appointments: 310, members: 3, deletionAt: SCHEDULED_AT.toISOString() })
+  })
+
+  it('equipe e quem não tem negócio não recebem contagem', async () => {
+    const team = await accountSummary(fakeDeps({ member: { salonId: SALON, salonName: 'Studio Maria', role: 'reception' } }).deps.db, 'u2')
+    assert.deepEqual(team, { role: 'reception', salonName: 'Studio Maria', clients: 0, appointments: 0, members: 0, deletionAt: null })
+    const none = await accountSummary(fakeDeps({ member: null }).deps.db, 'u3')
+    assert.equal(none.role, null)
   })
 })
 

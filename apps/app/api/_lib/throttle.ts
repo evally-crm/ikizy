@@ -15,6 +15,8 @@ export interface Limiter {
 export const LIMITS = {
   'account:delete': { max: 5, window: 3600 },
   'account:admin-delete': { max: 20, window: 3600 },
+  'account:export': { max: 5, window: 3600 },
+  'account:summary': { max: 60, window: 60 },
   'account:admin-salons': { max: 30, window: 60 },
   'account:admin-log': { max: 30, window: 60 },
   'account:cancel-delete': { max: 20, window: 3600 },

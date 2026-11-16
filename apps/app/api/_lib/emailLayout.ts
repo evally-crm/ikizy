@@ -6,7 +6,7 @@
 export const escHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
 export const IMG = 'https://ikizy.com/email'
-export const INSTAGRAM = { handle: '@ikizy.app', url: 'https://instagram.com/ikizy.app' }
+export const INSTAGRAM = { handle: '@ikizy.app', url: 'https://www.instagram.com/ikizy.app/' }
 
 export const FONT = "'Outfit',Arial,Helvetica,sans-serif"
 export const INK = '#0e0d0d'

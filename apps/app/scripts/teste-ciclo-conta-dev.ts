@@ -18,7 +18,8 @@ const sql = neon(url)
 const [who] = await sql`select current_setting('neon.endpoint_id', true) as ep`
 if (who.ep !== DEV) throw new Error('abortado: o servidor não é a branch dev')
 
-const { createAccountDb, createHousekeepingDb } = await import('../api/_lib/runtime.js')
+const { createAccountDb, createHousekeepingDb, createExportLoader } = await import('../api/_lib/runtime.js')
+const { exportData, sanitizeRow } = await import('../api/_lib/export.js')
 const { deleteAccount, cancelDeletion, deletionStatus, adminDeleteSalon, adminAuditLog, adminListSalons, parseAdminEmails } = await import('../api/_lib/account.js')
 const { runHousekeeping } = await import('../api/_lib/housekeeping.js')
 
@@ -168,6 +169,38 @@ try {
   assert.ok(mine.some((l) => l.action === 'admin.delete_salon' && l.actorEmail === `${tag}-m2@int.test`))
   assert.ok(mine.some((l) => l.action === 'owner.request_deletion') && mine.some((l) => l.action === 'owner.cancel_deletion') && mine.some((l) => l.action === 'system.purge_salon'))
   ok('apagou tudo e o registro guarda quem, o quê e quando (inclusive pedidos, desistência e limpezas)')
+  console.log('exportar os dados')
+  const ownerE = await user('Dona E', `${tag}-e@int.test`, true)
+  const sE = await salon(`${tag}-e`, ownerE, { seed: true })
+  const ownerF = await user('Dona F', `${tag}-f@int.test`, true)
+  const sF = await salon(`${tag}-f`, ownerF, { seed: true })
+  await sql`update public.clients set name = 'Cliente Da E', phone = '11999990000', allergies = array['látex'], anamnesis_signature = 'data:image/png;base64,SEGREDO' where salon_id = ${sE}::uuid`
+  await sql`update public.clients set name = 'Cliente Da F' where salon_id = ${sF}::uuid`
+  const cE = (await sql`select id from public.clients where salon_id = ${sE}::uuid`)[0].id as string
+  await sql`insert into public.client_photos (salon_id, client_id, kind, caption, data, thumb) values (${sE}::uuid, ${cE}::uuid, 'antes', 'Foto 1', 'data:image/jpeg;base64,IMAGEM', 'data:image/jpeg;base64,MINI')`
+  await sql`insert into public.expenses (salon_id, spent_on, description, amount) values (${sE}::uuid, current_date, 'Aluguel', 1500)`
+  const loaded = await createExportLoader()(sE)
+  assert.equal(loaded.salon.slug, `${tag}-e`)
+  assert.equal(loaded.team.length, 1)
+  assert.equal(loaded.tables.clients.length, 1, 'só as clientes deste negócio')
+  assert.equal(loaded.tables.clients[0].name, 'Cliente Da E')
+  assert.equal(JSON.stringify(loaded).includes('Cliente Da F'), false)
+  ok('o carregador traz só os dados do negócio da dona (nada do negócio vizinho)')
+  assert.equal(loaded.tables.appointments.length, 1)
+  assert.equal(loaded.tables.expenses.length, 1)
+  assert.equal(loaded.tables.client_photos.length, 1)
+  assert.equal('data' in loaded.tables.client_photos[0], false)
+  assert.equal(JSON.stringify(sanitizeRow(loaded.tables.clients[0])).includes('SEGREDO'), false)
+  ok('fotos entram só como lista; assinatura e imagens não saem')
+  const exported = await exportData({ db, load: createExportLoader() }, { id: ownerE, email: `${tag}-e@int.test` })
+  assert.ok(exported.bytes.length > 500 && exported.filename.startsWith(`ikizy-dados-${tag}-e-`))
+  const text = Buffer.from(exported.bytes).toString('latin1')
+  assert.equal(text.includes('SEGREDO') || text.includes('IMAGEM'), false)
+  const audit = (await adminAuditLog(deps, parseAdminEmails(`${tag}-m2@int.test`), { id: masterId, email: `${tag}-m2@int.test` })).log
+  assert.ok(audit.some((l) => l.action === 'owner.export_data' && l.salonSlug === `${tag}-e`))
+  ok('ZIP gerado e o pedido de exportação fica no registro')
+  await assert.rejects(exportData({ db, load: createExportLoader() }, { id: masterId, email: `${tag}-m2@int.test` }), /Só a dona/)
+  ok('quem não tem negócio não exporta')
   console.log('\nTUDO CERTO')
 } finally {
   // limpa o que o teste criou, mesmo que algo tenha falhado
