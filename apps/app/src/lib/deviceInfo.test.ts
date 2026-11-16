@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { describeDevice, passwordErrorMessage, toDevices } from './deviceInfo.js'
+import { describeDevice, passwordErrorMessage, toDevices, urlBase64ToBytes } from './deviceInfo.js'
 
 const CHROME_WIN = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
 const EDGE_WIN = `${CHROME_WIN} Edg/120.0.0.0`
@@ -54,5 +54,21 @@ describe('toDevices', () => {
 
   it('sem saber qual é o de agora, ninguém é marcado', () => {
     assert.equal(toDevices([{ id: 'ia', token: 'a', createdAt: new Date() }], null)[0].current, false)
+  })
+})
+
+describe('urlBase64ToBytes', () => {
+  it('converte a chave pública dos avisos em bytes (com os caracteres - e _ do base64 para URL)', () => {
+    // 65 bytes de uma chave P-256 não comprimida: começa com 0x04
+    const bytes = new Uint8Array(65)
+    bytes[0] = 4
+    for (let i = 1; i < 65; i++) bytes[i] = (i * 37) % 256
+    const url = Buffer.from(bytes).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+    assert.deepEqual([...urlBase64ToBytes(url)], [...bytes])
+  })
+
+  it('aceita com e sem o preenchimento "="', () => {
+    assert.deepEqual([...urlBase64ToBytes('aGk')], [104, 105])
+    assert.deepEqual([...urlBase64ToBytes('aGk=')], [104, 105])
   })
 })

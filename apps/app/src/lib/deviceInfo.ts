@@ -69,3 +69,10 @@ export function toDevices(sessions: RawSession[], currentId: string | null): Dev
     .sort((a, b) => Number(b.current) - Number(a.current) || b.since.getTime() - a.since.getTime())
 }
 
+
+/** chave pública dos avisos (base64 seguro para URL) -> bytes, que é o que o navegador pede ao assinar */
+export function urlBase64ToBytes(value: string): Uint8Array {
+  const padded = value + '='.repeat((4 - (value.length % 4)) % 4)
+  const raw = atob(padded.replace(/-/g, '+').replace(/_/g, '/'))
+  return Uint8Array.from(raw, (c) => c.charCodeAt(0))
+}

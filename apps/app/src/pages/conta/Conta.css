@@ -141,3 +141,13 @@
     flex: 1;
   }
 }
+
+/* texto de orientação dentro de uma lista (sem seta nem botão) */
+.conta__note {
+  align-items: flex-start;
+  margin: 0;
+  padding-block: 12px;
+  color: var(--ink-500);
+  font-size: 13.5px;
+  line-height: 1.45;
+}

@@ -2,6 +2,7 @@ import { neon } from '@neondatabase/serverless'
 import { del, get, list, put } from '@vercel/blob'
 import { createRemoteJWKSet, jwtVerify } from 'jose'
 import Stripe from 'stripe'
+import { sendNotification, setVapidDetails } from 'web-push'
 import { HttpError, type BillingDb, type Membership, type ReconcileDb, type SubscriptionRow } from './billing.js'
 import type { BookingDb, BookingResult, Slot } from './booking.js'
 import type { AccountDb, AccountDeps, AuditEntry } from './account.js'
@@ -13,6 +14,7 @@ import type { LeadDb } from './lead.js'
 import { reportError } from './monitoring.js'
 import type { NotifyDb, OwnerContact } from './notify.js'
 import type { BlobStore, PhotoStoreDb } from './photoStore.js'
+import type { PushDb, PushSender } from './push.js'
 import type { PlannedReminder, ReminderCandidate, ReminderDb, SendEmail } from './reminders.js'
 import type { PublicSite } from './siteHtml.js'
 import { throttle, type LimitKey } from './throttle.js'
@@ -406,10 +408,12 @@ export function createAccountDb(): AccountDb {
       await sql.transaction([
         sql`update public.professionals set user_id = null where salon_id = ${salonId}::uuid and user_id = ${userId}::uuid`,
         sql`delete from public.members where salon_id = ${salonId}::uuid and user_id = ${userId}::uuid`,
+        sql`delete from public.push_subscriptions where salon_id = ${salonId}::uuid and user_id = ${userId}::uuid`,
       ])
     },
     async deleteUser(userId) {
       // sessões e contas (senha, Google) caem junto (on delete cascade no neon_auth)
+      await sql`delete from public.push_subscriptions where user_id = ${userId}::uuid`
       await sql`delete from neon_auth."user" where id = ${userId}::uuid`
     },
     async ownerOf(salonId) {
@@ -513,6 +517,64 @@ export function createAccountDb(): AccountDb {
         members: Number(r.members ?? 0),
         deletionScheduledAt: iso(r.deletion_scheduled_at),
       }))
+    },
+  }
+}
+
+/** chave pública dos avisos no aparelho (VAPID); null = avisos não configurados neste ambiente */
+export const vapidPublicKey = (): string | null => process.env.VAPID_PUBLIC_KEY ?? null
+
+/** envia os avisos pelo serviço de push do navegador; null se as chaves (VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY) não estão configuradas */
+export function createPushSender(): PushSender | null {
+  const pub = process.env.VAPID_PUBLIC_KEY
+  const priv = process.env.VAPID_PRIVATE_KEY
+  if (!pub || !priv) return null
+  setVapidDetails(process.env.VAPID_SUBJECT ?? 'mailto:contato@ikizy.com', pub, priv)
+  return async (sub, payload) => {
+    try {
+      const res = await sendNotification({ endpoint: sub.endpoint, keys: sub.keys }, JSON.stringify(payload), { TTL: 60 * 60 * 24, urgency: 'high', timeout: 3500 })
+      return { status: res.statusCode }
+    } catch (error) {
+      // o serviço respondeu com erro (404/410 = aparelho que saiu): devolve o código; sem resposta, o erro sobe
+      const status = (error as { statusCode?: number }).statusCode
+      if (typeof status === 'number') return { status }
+      throw error
+    }
+  }
+}
+
+/** avisos no aparelho (conexão de dono, só no servidor) */
+export function createPushDb(): PushDb {
+  const sql = neon(env('DATABASE_URL'))
+  return {
+    async salonIdBySlug(slug) {
+      const rows = (await sql`select id from public.salons where slug = ${slug}`) as Row[]
+      return (rows[0]?.id as string | undefined) ?? null
+    },
+    async roleOf(userId, salonId) {
+      const rows = (await sql`select role from public.members where user_id = ${userId}::uuid and salon_id = ${salonId}::uuid`) as Row[]
+      return (rows[0]?.role as string | undefined) ?? null
+    },
+    async save(userId, salonId, sub, userAgent) {
+      // o mesmo aparelho (endereço) volta a valer para quem ligou por último
+      await sql`
+        insert into public.push_subscriptions (user_id, salon_id, endpoint, p256dh, auth, user_agent)
+        values (${userId}::uuid, ${salonId}::uuid, ${sub.endpoint}, ${sub.keys.p256dh}, ${sub.keys.auth}, ${userAgent})
+        on conflict (endpoint) do update set user_id = excluded.user_id, salon_id = excluded.salon_id, p256dh = excluded.p256dh,
+          auth = excluded.auth, user_agent = excluded.user_agent`
+    },
+    async remove(userId, endpoint) {
+      await sql`delete from public.push_subscriptions where endpoint = ${endpoint} and user_id = ${userId}::uuid`
+    },
+    async listForSalon(salonId) {
+      const rows = (await sql`
+        select p.user_id, p.endpoint, p.p256dh, p.auth
+        from public.push_subscriptions p join public.members m on m.user_id = p.user_id and m.salon_id = p.salon_id
+        where p.salon_id = ${salonId}::uuid and m.role in ('owner', 'manager', 'reception')`) as Row[]
+      return rows.map((r) => ({ userId: r.user_id as string, endpoint: r.endpoint as string, keys: { p256dh: r.p256dh as string, auth: r.auth as string } }))
+    },
+    async drop(endpoint) {
+      await sql`delete from public.push_subscriptions where endpoint = ${endpoint}`
     },
   }
 }

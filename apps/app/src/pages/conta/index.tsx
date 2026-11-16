@@ -4,6 +4,7 @@ import { ChevronRight, CreditCard, Download, KeyRound, LogOut, Mail, MonitorSmar
 import { useAuth } from '../../auth/AuthProvider'
 import { useSubscription } from '../../billing/SubscriptionProvider'
 import { DarkModeRow } from '../../components/DarkModeRow'
+import { PushCard } from '../../components/PushCard'
 import { ChangePasswordDialog, DevicesDialog } from '../../components/SecurityDialogs'
 import { NoticeDialog } from '../../components/Modal'
 import { Avatar, Button, Em, PageHeader } from '../../components/ui'
@@ -237,6 +238,8 @@ export default function Conta() {
               )}
             </div>
           </form>
+
+          {!demo && session && salon && salon.role !== 'professional' && <PushCard />}
 
           {!demo && session && isOwner && (
             <section className="conta__card">
