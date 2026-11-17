@@ -576,6 +576,10 @@ export function createPushDb(): PushDb {
     async drop(endpoint) {
       await sql`delete from public.push_subscriptions where endpoint = ${endpoint}`
     },
+    async pendingCount(salonId) {
+      const rows = (await sql`select count(*)::int as n from public.appointments where salon_id = ${salonId}::uuid and status = 'pendente'`) as Row[]
+      return Number(rows[0]?.n ?? 0)
+    },
   }
 }
 
