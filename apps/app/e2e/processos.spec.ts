@@ -97,6 +97,12 @@ test.describe('Meu site', () => {
     await expect(other.getByRole('radio', { name: 'Rosa', exact: true })).toBeChecked()
   })
 
+  test('o assistente da primeira vez não aparece num site que já está no ar', async ({ page }) => {
+    await page.goto('/dashboard/site')
+    await expect(page.getByRole('navigation', { name: 'Partes do site' })).toBeVisible()
+    await expect(page.getByRole('region', { name: 'Passo a passo para publicar' })).toHaveCount(0)
+  })
+
   test('o botão do site segue o agendamento online: Agendar ligado, WhatsApp desligado', async ({ page }) => {
     await page.goto('/dashboard/site')
     // o agendamento online fica no fim da parte Perfil

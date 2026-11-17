@@ -5,7 +5,7 @@ import { CircleUserRound, ExternalLink, Eye, LayoutList, MapPin, Maximize2, Pack
 import { newId, useStudio, type ClientPlan, type Service, type ShowcaseItem, type SiteConfig } from '../../data/catalog'
 import { useAgenda } from '../../data/AgendaProvider'
 import { useBusiness, type ServiceInput } from '../../data/business'
-import { blankPlan, blankShowcaseItem, hoursSummary, patchById, quickSteps, removeById, type PublishState } from '../../domain/site'
+import { blankPlan, blankShowcaseItem, firstOpenGuideStep, guideSteps, hoursSummary, patchById, quickSteps, removeById, type GuideStepId, type PublishState } from '../../domain/site'
 import { isReservedSlug, siteHost } from '../../lib/slug'
 import { useMediaQuery } from '../../hooks/useMediaQuery'
 import { useScrollLock } from '../../hooks/useScrollLock'
@@ -16,6 +16,7 @@ import { ExtrasEditor } from './ExtrasEditor'
 import { CoverFields, IdentityFields } from './IdentityFields'
 import { PreviewSheet } from './PreviewSheet'
 import { PublishButton } from './PublishButton'
+import { SetupGuide } from './SetupGuide'
 import { ServicesEditor, type SaveServiceResult } from './ServicesEditor'
 import { BookingFields, ContactFields, TextFields } from './SiteFields'
 import './MeuSite.css'
@@ -39,6 +40,17 @@ const savedPart = (): Part => {
     return PARTS.some((x) => x.id === t) ? (t as Part) : 'perfil'
   } catch {
     return 'perfil'
+  }
+}
+
+/** cada passo do assistente abre a parte do editor onde ele se resolve */
+const GUIDE_PART: Partial<Record<GuideStepId, Part>> = { perfil: 'perfil', servicos: 'servicos', contato: 'contato' }
+const GUIDE_KEY = 'ikizy:site:guide-off'
+const readGuideOff = () => {
+  try {
+    return localStorage.getItem(GUIDE_KEY) === '1'
+  } catch {
+    return false
   }
 }
 
@@ -74,6 +86,8 @@ export default function MeuSite() {
       /* sem storage: vale só nesta visita */
     }
   }
+  const [guideIdx, setGuideIdx] = useState<number | null>(null)
+  const [guideOff, setGuideOff] = useState(readGuideOff)
   const navigate = useNavigate()
   const bodyRef = useRef<HTMLDivElement>(null)
 
@@ -153,6 +167,24 @@ export default function MeuSite() {
     contato: isDone('contato'),
   }
   const ready = steps.filter((x) => x.done).length
+
+  // assistente da primeira vez: só enquanto o site nunca foi ao ar e a pessoa não fechou o guia
+  const gsteps = guideSteps({ site, services, isLive, dirty, hasHours: Boolean(agendaHours) })
+  const gidx = guideIdx ?? firstOpenGuideStep(gsteps)
+  const showGuide = !loading && !loadError && !isLive &&!guideOff
+  const goGuide = (i: number) => {
+    setGuideIdx(i)
+    const target = GUIDE_PART[gsteps[i].id]
+    if (target) goPart(target)
+  }
+  const closeGuide = () => {
+    setGuideOff(true)
+    try {
+      localStorage.setItem(GUIDE_KEY, '1')
+    } catch {
+      /* sem storage: fecha só nesta visita */
+    }
+  }
 
   const publishState: PublishState = { isLive, dirty, justPublished, publishing, loading, reserved: slugReserved }
   const liveUrl = `https://${siteHost(publishedSlug)}`
@@ -262,6 +294,7 @@ export default function MeuSite() {
 
       <div className={`studio ${!isWide ? '' : previewHidden ? 'studio--nopreview' : device === 'desktop' ? 'studio--widepreview' : ''}`.trim()}>
         <Card className="studio__editor">
+          {showGuide && <SetupGuide steps={gsteps} index={gidx} publishing={publishing} onGo={goGuide} onPublish={() => void onPublish()} onSkip={closeGuide} />}
           <div className="studio__body parts" ref={bodyRef}>
             <section className="sect part" aria-label={PARTS.find((p) => p.id === part)?.label}>
               <div className="form">

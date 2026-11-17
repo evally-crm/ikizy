@@ -1466,6 +1466,95 @@ button.sitelink {
   }
 }
 
+/* assistente da primeira vez: um passo por vez, no alto do editor */
+.guide {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 20px;
+  background: var(--white);
+  box-shadow: var(--shadow-sm);
+}
+.guide__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.guide__dots {
+  display: flex;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.guide__dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--ink-500);
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.guide__dot.is-done {
+  background: var(--brand-tint);
+  color: var(--ink-900);
+}
+.guide__dot.is-now {
+  background: var(--solid);
+  color: var(--on-solid);
+}
+.guide__title {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink-900);
+}
+.guide__title span {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--ink-500);
+}
+.guide__hint {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--ink-500);
+}
+.guide__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.guide__go {
+  margin-left: auto;
+}
+.guide__skip {
+  border: 0;
+  background: none;
+  color: var(--ink-500);
+  font: inherit;
+  font-size: 12.5px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+:root[data-theme='dark'] .btn--primary.guide__go {
+  border-color: transparent;
+  background: var(--ink-900);
+  color: var(--bg);
+}
+
 /* textos prontos embaixo dos campos */
 .ideas {
   display: flex;

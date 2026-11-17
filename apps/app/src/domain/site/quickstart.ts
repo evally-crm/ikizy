@@ -29,6 +29,36 @@ export function quickSteps({ site, services, isLive, dirty }: QuickInput): Quick
   ]
 }
 
+export type GuideStepId = 'perfil' | 'servicos' | 'contato' | 'publicar'
+
+export interface GuideStep {
+  id: GuideStepId
+  title: string
+  hint: string
+  done: boolean
+}
+
+/**
+ * assistente da primeira vez: 4 passos curtos, cada um leva a uma parte do editor.
+ * Horário vem da agenda (`hasHours`); nome do salão vem de Meu negócio e já existe.
+ */
+export function guideSteps(input: QuickInput & { hasHours: boolean }): GuideStep[] {
+  const { site, services, hasHours } = input
+  const shown = services.filter((s) => s.visible)
+  return [
+    { id: 'perfil', title: 'Nome e foto', hint: 'Ponha sua foto ou a capa. O nome do salão vem de Meu negócio.', done: Boolean(site.logo || site.cover) },
+    { id: 'servicos', title: 'Serviços com preço', hint: 'Quem agenda quer saber quanto custa. Ponha o preço em cada serviço.', done: shown.length > 0 && shown.every((s) => s.price > 0) },
+    { id: 'contato', title: 'Horário e WhatsApp', hint: 'O horário vem da sua agenda. Falta o WhatsApp para a cliente falar com você.', done: hasHours && Boolean(site.whatsapp.trim()) },
+    { id: 'publicar', title: 'Publicar', hint: 'Tudo certo? Publique e seu site entra no ar.', done: input.isLive && !input.dirty },
+  ]
+}
+
+/** o primeiro passo ainda aberto antes de Publicar (ou o próprio Publicar quando tudo está feito) */
+export function firstOpenGuideStep(steps: GuideStep[]): number {
+  const i = steps.findIndex((s) => !s.done)
+  return i === -1 ? steps.length - 1 : i
+}
+
 const DAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 const clock = (m: number) => `${String(Math.floor(m / 60)).padStart(2, '0')}h${m % 60 ? String(m % 60).padStart(2, '0') : ''}`
 

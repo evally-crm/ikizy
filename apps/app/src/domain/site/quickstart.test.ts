@@ -1,6 +1,24 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { aboutIdeas, hoursSummary, quickSteps, taglineIdeas } from './quickstart'
+import { aboutIdeas, firstOpenGuideStep, guideSteps, hoursSummary, quickSteps, taglineIdeas } from './quickstart'
+
+describe('assistente da primeira vez', () => {
+  const base = { site: { logo: '', cover: '', tagline: '', about: '', whatsapp: '', address: '' }, services: [], isLive: false, dirty: false, hasHours: false }
+  it('4 passos; começa no primeiro aberto', () => {
+    const steps = guideSteps(base)
+    assert.deepEqual(steps.map((s) => s.id), ['perfil', 'servicos', 'contato', 'publicar'])
+    assert.equal(firstOpenGuideStep(steps), 0)
+  })
+  it('foto, preço e WhatsApp com horário marcam; pula para o que falta', () => {
+    const steps = guideSteps({ ...base, site: { ...base.site, cover: 'x', whatsapp: '11 9' }, services: [{ price: 40, visible: true }], hasHours: true })
+    assert.deepEqual(steps.filter((s) => s.done).map((s) => s.id), ['perfil', 'servicos', 'contato'])
+    assert.equal(firstOpenGuideStep(steps), 3)
+  })
+  it('WhatsApp sem horário na agenda não conta', () => {
+    const steps = guideSteps({ ...base, site: { ...base.site, whatsapp: '11 9' } })
+    assert.ok(!steps[2].done)
+  })
+})
 
 const site = { logo: '', cover: '', tagline: '', about: '', whatsapp: '', address: '' }
 const done = (input: Parameters<typeof quickSteps>[0]) => quickSteps(input).filter((s) => s.done).map((s) => s.id)
