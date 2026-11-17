@@ -1,7 +1,7 @@
 import { reportError } from './_lib/monitoring.js'
 import { isReservedSlug } from '../src/lib/slug.js'
-import { renderNotFound, renderSitePage } from './_lib/siteHtml.js'
-import { appUrl, fetchPublicSite } from './_lib/runtime.js'
+import { renderNotFound, renderSiteOffline, renderSitePage } from './_lib/siteHtml.js'
+import { appUrl, fetchOfflineSiteName, fetchPublicSite } from './_lib/runtime.js'
 
 const html = (body: string, status: number, cache: string) =>
   new Response(body, { status, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': cache } })
@@ -14,7 +14,13 @@ export async function GET(request: Request) {
 
   try {
     const site = await fetchPublicSite(slug)
-    if (!site) return html(renderNotFound(), 404, 'public, s-maxage=30')
+    if (!site) {
+      // publicado mas fora do ar (acesso vencido há mais de 7 dias): aviso neutro; 503 diz aos buscadores que é temporário
+      // se a migration 20261117120000 ainda não rodou neste banco, cai no 404 de sempre
+      const offline = await fetchOfflineSiteName(slug).catch((error) => (reportError(error, `site fora do ar ${slug}`), null))
+      if (offline) return html(renderSiteOffline(offline), 503, 'public, s-maxage=60')
+      return html(renderNotFound(), 404, 'public, s-maxage=30')
+    }
     const page = renderSitePage(site, { canonical: `${appUrl()}/s/${slug}`, captchaSiteKey: process.env.TURNSTILE_SITE_KEY })
     // cache curto: a edição publicada aparece em até 1 minuto
     return html(page, 200, 'public, s-maxage=60')

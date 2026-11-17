@@ -484,3 +484,9 @@ export function renderSitePage(site: PublicSite, opts: { canonical: string; capt
 export function renderNotFound(): string {
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Página não encontrada · IKIZY</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;font:16px system-ui,sans-serif;color:#242424;background:#f5f5f7;text-align:center;padding:24px}h1{font-weight:400;font-size:32px;margin:0 0 8px}a{color:#63001f}</style></head><body><main><h1>Página não encontrada</h1><p>Este endereço não existe ou o site ainda não foi publicado.</p><p><a href="https://ikizy.com">Conheça a IKIZY</a></p></main></body></html>`
 }
+
+/** site publicado cujo acesso venceu há mais de 7 dias: aviso neutro, sem falar de pagamento (não expõe a dona) */
+export function renderSiteOffline(name: string): string {
+  const n = esc(name)
+  return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>${n}</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;font:16px system-ui,sans-serif;color:#242424;background:#f5f5f7;text-align:center;padding:24px}h1{font-weight:400;font-size:32px;margin:0 0 8px}p{color:#6b6b6b;margin:0}</style></head><body><main><h1>${n}</h1><p>Este site está temporariamente fora do ar.</p></main></body></html>`
+}

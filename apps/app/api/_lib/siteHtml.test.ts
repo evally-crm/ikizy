@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { esc, formatPrice, instagramHandle, renderNotFound, renderSitePage, whatsappLink, type PublicSite } from './siteHtml.js'
+import { esc, formatPrice, instagramHandle, renderNotFound, renderSiteOffline, renderSitePage, whatsappLink, type PublicSite } from './siteHtml.js'
 
 const base = (over: Partial<PublicSite> = {}, settings: PublicSite['settings'] = {}): PublicSite => ({
   name: 'Studio Maria Beauty',
@@ -278,6 +278,14 @@ describe('renderSitePage', () => {
 
   it('página 404 não é indexada', () => {
     assert.match(renderNotFound(), /name="robots" content="noindex"/)
+  })
+
+  it('site fora do ar: nome escapado, aviso neutro, sem falar de pagamento', () => {
+    const html = renderSiteOffline('Studio <b>Ana</b>')
+    assert.match(html, /Studio &lt;b&gt;Ana&lt;\/b&gt;/)
+    assert.match(html, /temporariamente fora do ar/)
+    assert.match(html, /name="robots" content="noindex"/)
+    assert.doesNotMatch(html, /pag|plano|assinatura/i)
   })
 })
 

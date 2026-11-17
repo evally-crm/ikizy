@@ -144,6 +144,15 @@ export function accessState(sub: SubscriptionInfo, now = new Date()): AccessStat
   return 'active'
 }
 
+/** o site público continua no ar por mais 7 dias depois que o acesso vence (igual a public.site_online no banco) */
+export const SITE_GRACE_DAYS = 7
+
+/** quando o site público sai do ar se ninguém pagar */
+export const siteOfflineAt = (sub: Pick<SubscriptionInfo, 'accessUntil'>) => new Date(sub.accessUntil.getTime() + SITE_GRACE_DAYS * DAY)
+
+/** o site publicado está fora do ar por falta de acesso */
+export const isSiteOffline = (sub: Pick<SubscriptionInfo, 'accessUntil'>, now = new Date()) => siteOfflineAt(sub).getTime() <= now.getTime()
+
 /** o que mostrar como "renova em" / "acesso até": para cartão, o fim do período sem a tolerância */
 export function periodEnd(sub: SubscriptionInfo): Date {
   if (sub.method === 'card') return new Date(sub.accessUntil.getTime() - GRACE_DAYS * DAY)

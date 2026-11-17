@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useSubscription } from '../billing/SubscriptionProvider'
 import { dash } from '../lib/routes'
-import { daysLeft, periodEnd, WARN_DAYS } from '../lib/plans'
+import { daysLeft, isSiteOffline, periodEnd, siteOfflineAt, WARN_DAYS } from '../lib/plans'
 
 const fmt = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' })
 
@@ -25,7 +25,9 @@ export default function BillingBanner() {
     text = 'Não conseguimos cobrar seu cartão. Atualize o pagamento para não perder o acesso.'
   } else if (state === 'expired') {
     tone = 'alert'
-    text = 'Seu acesso terminou e o sistema está só para leitura. Escolha um plano para voltar a editar.'
+    text = isSiteOffline(sub)
+      ? 'Seu acesso terminou: o sistema está só para leitura e o seu site está fora do ar. Escolha um plano e tudo volta na hora.'
+      : `Seu acesso terminou e o sistema está só para leitura. O seu site sai do ar em ${fmt.format(siteOfflineAt(sub))}. Escolha um plano para continuar.`
   }
   if (!tone) return null
 

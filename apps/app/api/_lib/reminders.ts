@@ -1,5 +1,5 @@
 import { reportError } from './monitoring.js'
-import { daysLeft } from '../../src/lib/plans.js'
+import { daysLeft, siteOfflineAt } from '../../src/lib/plans.js'
 import type { BillingMethod, BillingStatus } from '../../src/lib/plans.js'
 import { renderBrandEmail } from './emailLayout.js'
 
@@ -112,7 +112,7 @@ function copyFor(r: PlannedReminder): Copy {
       return {
         subject: 'Seu acesso ao IKIZY terminou',
         title: 'Seu acesso terminou',
-        lead: `O acesso de ${r.salonName} terminou em ${until}. O sistema está aberto só para consulta e os seus dados continuam guardados. Reative quando quiser.`,
+        lead: `O acesso de ${r.salonName} terminou em ${until}. O sistema está aberto só para consulta e os seus dados continuam guardados. Se o seu site estiver publicado, ele fica no ar até ${dateBR(siteOfflineAt(r))} e depois sai do ar até você reativar. Reative quando quiser.`,
         button: 'Reativar acesso',
       }
   }

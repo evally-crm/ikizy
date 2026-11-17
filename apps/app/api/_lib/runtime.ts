@@ -180,6 +180,13 @@ export async function fetchPublicSite(slug: string): Promise<PublicSite | null> 
   return site
 }
 
+/** nome de um negócio publicado cujo site saiu do ar (acesso vencido há mais de 7 dias); null nos outros casos */
+export async function fetchOfflineSiteName(slug: string): Promise<string | null> {
+  const sql = neon(env('DATABASE_URL'))
+  const rows = (await sql`select public.get_offline_site(${slug}) as s`) as { s: { name: string } | null }[]
+  return rows[0]?.s?.name ?? null
+}
+
 /** foto (data URL) de um negócio publicado; null se não existe ou o site não está publicado */
 export async function fetchPublicPhoto(id: string): Promise<string | null> {
   const sql = neon(env('DATABASE_URL'))

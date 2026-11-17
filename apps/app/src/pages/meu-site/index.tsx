@@ -7,6 +7,8 @@ import { useAgenda } from '../../data/AgendaProvider'
 import { useBusiness, type ServiceInput } from '../../data/business'
 import { blankPlan, blankShowcaseItem, firstOpenGuideStep, guideSteps, hoursSummary, patchById, quickSteps, removeById, type GuideStepId, type PublishState } from '../../domain/site'
 import { isReservedSlug, siteHost } from '../../lib/slug'
+import { accessState, isSiteOffline } from '../../lib/plans'
+import { useSubscription } from '../../billing/SubscriptionProvider'
 import { useMediaQuery } from '../../hooks/useMediaQuery'
 import { useScrollLock } from '../../hooks/useScrollLock'
 import SiteFrame, { DeviceToggle, type Device } from '../../components/SiteFrame'
@@ -68,6 +70,7 @@ const readPreviewHidden = () => {
 /** Meu site: editor em etapas com a prévia ao vivo */
 export default function MeuSite() {
   const { draft, setDraft, dirty, publish, discard, syncService, dropService, loading, error: loadError, isLive, publishedSlug } = useStudio()
+  const { sub } = useSubscription()
   const biz = useBusiness()
   const isWide = useMediaQuery('(min-width: 1100px)')
   const [part, setPart] = useState<Part>(savedPart)
@@ -192,6 +195,9 @@ export default function MeuSite() {
 
   const publishState: PublishState = { isLive, dirty, justPublished, publishing, loading, reserved: slugReserved }
   const liveUrl = `https://${siteHost(publishedSlug)}`
+  // acesso vencido há mais de 7 dias: o endereço mostra "temporariamente fora do ar" até a dona voltar a pagar
+  // (só quando o acesso está vencido: a cortesia nunca vence, mesmo com access_until no passado)
+  const siteOffline = !!sub && accessState(sub) === 'expired' && isSiteOffline(sub)
   const closePreview = () => setPreviewOpen(false)
 
   // celular: uma barra só no topo (fechar, nome e endereço, prévia e publicar)
@@ -207,6 +213,7 @@ export default function MeuSite() {
         {isLive ? (
           <a href={liveUrl} target="_blank" rel="noreferrer">
             {siteHost(publishedSlug)}
+            {siteOffline && ' · fora do ar'}
             <ExternalLink size={11} aria-hidden="true" />
           </a>
         ) : (
@@ -249,7 +256,10 @@ export default function MeuSite() {
             <>
               {isLive ? (
                 <a className="sitelink" href={liveUrl} target="_blank" rel="noreferrer">
-                  <span>{siteHost(publishedSlug)}</span>
+                  <span>
+                    {siteHost(publishedSlug)}
+                    {siteOffline && ' · fora do ar'}
+                  </span>
                   <ExternalLink size={13} aria-hidden="true" />
                 </a>
               ) : (
