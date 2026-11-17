@@ -66,6 +66,22 @@ try {
   assert.ok(token.split('.').length === 3)
   ok('entrou e recebeu o token da sessão')
 
+  console.log('login pelo repasse /api/auth (o caminho que o Safari do iPhone usa)')
+  const authRoute = await import('../api/auth.js')
+  const viaProxy = (path: string, init: RequestInit = {}) =>
+    (init.method === 'POST' ? authRoute.POST : authRoute.GET)(new Request(`https://app.ikizy.com/api/auth?p=${path}`, init))
+  const pin = await viaProxy('sign-in/email', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email, password }) })
+  assert.equal(pin.status, 200, await pin.clone().text())
+  const proxCookie = pin.headers.getSetCookie().map((c) => c.split(';')[0]).join('; ')
+  assert.ok(proxCookie.includes('session_token'), 'o cookie da sessão deveria voltar pelo repasse')
+  const psess = await viaProxy('get-session', { headers: { cookie: proxCookie } })
+  assert.equal(psess.status, 200)
+  assert.equal(((await psess.json()) as { user: { email: string } }).user.email, email)
+  assert.ok(psess.headers.get('set-auth-jwt'), 'o token (JWT) deveria voltar pelo repasse')
+  ok('entrar, ler a sessão com o cookie e receber o token: tudo pelo repasse')
+  assert.equal((await viaProxy('%2e%2e/%2e%2e/x')).status, 404)
+  ok('caminho fora da API do login é recusado')
+
   console.log('segurança das rotas')
   assert.equal((await status(await call('me', null))).status, 401)
   assert.equal((await status(await call('me', 'lixo.lixo.lixo'))).status, 401)
