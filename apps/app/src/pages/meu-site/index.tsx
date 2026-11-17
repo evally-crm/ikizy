@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
-import { CalendarCheck, CircleUserRound, ExternalLink, Eye, LayoutList, MapPin, Maximize2, PackagePlus, PanelRightClose, PanelRightOpen, Palette, Undo2, X } from 'lucide-react'
+import { CircleUserRound, ExternalLink, Eye, LayoutList, MapPin, Maximize2, PackagePlus, PanelRightClose, PanelRightOpen, Palette, Undo2, X } from 'lucide-react'
 import { newId, useStudio, type ClientPlan, type Service, type ShowcaseItem, type SiteConfig } from '../../data/catalog'
 import { useAgenda } from '../../data/AgendaProvider'
 import { useBusiness, type ServiceInput } from '../../data/business'
@@ -13,14 +13,14 @@ import SiteFrame, { DeviceToggle, type Device } from '../../components/SiteFrame
 import { Button, Card, Em, PageHeader, Tag } from '../../components/ui'
 import { AppearanceFields } from './AppearanceFields'
 import { ExtrasEditor } from './ExtrasEditor'
-import { IdentityFields } from './IdentityFields'
+import { CoverFields, IdentityFields } from './IdentityFields'
 import { PreviewSheet } from './PreviewSheet'
 import { PublishButton } from './PublishButton'
 import { ServicesEditor, type SaveServiceResult } from './ServicesEditor'
 import { BookingFields, ContactFields, TextFields } from './SiteFields'
 import './MeuSite.css'
 
-type Part = 'perfil' | 'visual' | 'servicos' | 'extras' | 'contato' | 'agendamento'
+type Part = 'perfil' | 'visual' | 'servicos' | 'extras' | 'contato'
 
 /** um menu só: cada parte é um assunto, aberta uma por vez */
 const PARTS: { id: Part; label: string; icon: ReactNode }[] = [
@@ -29,7 +29,6 @@ const PARTS: { id: Part; label: string; icon: ReactNode }[] = [
   { id: 'servicos', label: 'Serviços', icon: <LayoutList size={20} aria-hidden="true" /> },
   { id: 'extras', label: 'Extras', icon: <PackagePlus size={20} aria-hidden="true" /> },
   { id: 'contato', label: 'Contato', icon: <MapPin size={20} aria-hidden="true" /> },
-  { id: 'agendamento', label: 'Agenda', icon: <CalendarCheck size={20} aria-hidden="true" /> },
 ]
 
 const PART_KEY = 'ikizy:site:part'
@@ -141,9 +140,9 @@ export default function MeuSite() {
   const { workingHours } = useAgenda()
   const agendaHours = hoursSummary(Object.values(workingHours).flat())
   useEffect(() => {
-    if (loading || !agendaHours || agendaHours === site.hours) return
+    if (loading || loadError || !agendaHours || agendaHours === site.hours) return
     setDraft((d) => ({ ...d, site: { ...d.site, hours: agendaHours } }))
-  }, [loading, agendaHours, site.hours, setDraft])
+  }, [loading, loadError, agendaHours, site.hours, setDraft])
 
   // o que falta para o site ficar pronto: marca no menu (bolinha = falta, certo = feito) e o placar ao lado de Publicar
   const steps = quickSteps({ site, services, isLive, dirty })
@@ -270,9 +269,15 @@ export default function MeuSite() {
                   <>
                     <IdentityFields site={site} setSite={setSite} />
                     <TextFields site={site} setSite={setSite} categories={[...new Set(services.map((x) => x.category))]} />
+                    <BookingFields site={site} setSite={setSite} />
                   </>
                 )}
-                {part === 'visual' && <AppearanceFields site={site} setSite={setSite} />}
+                {part === 'visual' && (
+                  <>
+                    <CoverFields site={site} setSite={setSite} />
+                    <AppearanceFields site={site} setSite={setSite} />
+                  </>
+                )}
                 {part === 'servicos' && (
                   <ServicesEditor
                     services={services}
@@ -295,7 +300,6 @@ export default function MeuSite() {
                   />
                 )}
                 {part === 'contato' && <ContactFields site={site} setSite={setSite} slugReserved={slugReserved} />}
-                {part === 'agendamento' && <BookingFields site={site} setSite={setSite} />}
               </div>
             </section>
 

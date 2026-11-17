@@ -430,6 +430,8 @@ export function useStudio() {
       }
       return null
     }
+    // site que não carregou está em branco: publicar assim apagaria o que já está no ar
+    if (error) return 'O site não carregou. Recarregue a página antes de publicar.'
     if (saving.current) return null
     saving.current = true
     try {
@@ -655,7 +657,7 @@ export function useStudio() {
     } finally {
       saving.current = false
     }
-  }, [draft, live, published, salonId])
+  }, [draft, live, published, salonId, error])
 
   const discard = useCallback(() => setDraft(published), [published])
 
@@ -679,11 +681,12 @@ export function useStudio() {
   }, [])
 
   // guarda o rascunho enquanto houver alteração não publicada (só depois de carregar, para não apagar o guardado)
+  // Se o site não carregou (erro de rede), o editor está em branco: guardar esse rascunho em branco apagaria, na volta, o que já estava publicado.
   useEffect(() => {
-    if (loading) return
+    if (loading || error) return
     if (dirty) writeDraft(salonId, draft)
     else clearDraft(salonId)
-  }, [draft, dirty, loading, salonId])
+  }, [draft, dirty, loading, error, salonId])
 
   // avisa antes de sair com alterações não publicadas
   useEffect(() => {

@@ -45,7 +45,7 @@ export function FontOptions({ site, setSite }: { site: SiteConfig; setSite: SetS
   )
 }
 
-/** aparência: paleta e fonte (a capa fica em Perfil) */
+/** aparência: paleta e fonte (a capa vem antes, em CoverFields) */
 export function AppearanceFields({ site, setSite }: { site: SiteConfig; setSite: SetSite }) {
   return (
     <>

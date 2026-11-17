@@ -99,13 +99,18 @@ test.describe('Meu site', () => {
 
   test('o botão do site segue o agendamento online: Agendar ligado, WhatsApp desligado', async ({ page }) => {
     await page.goto('/dashboard/site')
-    const nav = page.getByRole('navigation', { name: 'Partes do site' })
-    await nav.getByRole('button', { name: /Agenda/ }).first().click()
+    // o agendamento online fica no fim da parte Perfil
     const toggle = page.getByRole('switch', { name: /Aceitar agendamentos pelo site/ })
-    await toggle.uncheck({ force: true })
+    // a chave fica longe do topo: o clique no rótulo rola até ela e vale como o toque da usuária
+    const label = page.locator('label.switch', { hasText: 'Aceitar agendamentos pelo site' })
+    await label.scrollIntoViewIfNeeded()
+    if (await toggle.isChecked()) await label.click()
+    await expect(toggle).not.toBeChecked()
     const off = await previewHtml(page)
     expect(off).not.toContain('class="btn card__cta" data-book')
-    await toggle.check({ force: true })
+    await label.scrollIntoViewIfNeeded()
+    await label.click()
+    await expect(toggle).toBeChecked()
     const on = await previewHtml(page)
     expect(on).toContain('class="btn card__cta" data-book')
   })

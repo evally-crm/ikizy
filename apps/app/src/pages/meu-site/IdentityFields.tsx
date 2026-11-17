@@ -138,17 +138,40 @@ function ProfileIcon({ id }: { id: Profile }) {
   return <span className="profilepick__icon">{id === 'foto' ? <CircleUserRound size={28} strokeWidth={1.6} aria-hidden="true" /> : <PanelsLeftBottom size={28} strokeWidth={1.6} aria-hidden="true" />}</span>
 }
 
-/** foto de perfil (ou logo) e capa: a imagem é reduzida no navegador antes de entrar no rascunho */
+/** capa (fica em Visual, junto com paleta e fonte): a imagem é reduzida no navegador antes de entrar no rascunho */
+export function CoverFields({ site, setSite }: { site: SiteConfig; setSite: SetSite }) {
+  const [error, setError] = useState<string | null>(null)
+  const pickCover = async (file: File) => {
+    setError(null)
+    try {
+      setSite('cover', await resizeToDataUrl(file, 1000, 280_000))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Não foi possível usar essa imagem.')
+    }
+  }
+  return (
+    <Group title="Capa">
+      <CoverPicker site={site} setSite={setSite} onFile={(f) => void pickCover(f)} />
+      {error && (
+        <p className="field__hint" role="alert">
+          {error}
+        </p>
+      )}
+    </Group>
+  )
+}
+
+/** foto de perfil (ou logo): a imagem é reduzida no navegador antes de entrar no rascunho */
 export function IdentityFields({ site, setSite }: { site: SiteConfig; setSite: SetSite }) {
   const [error, setError] = useState<string | null>(null)
   // com foto escolhida, o tipo é sempre "com foto"; sem ela, vale a escolha feita aqui
   const [chosen, setChosen] = useState<Profile>(site.logo ? 'foto' : 'capa')
   const profile: Profile = site.logo ? 'foto' : chosen
 
-  const pick = (kind: 'logo' | 'cover') => async (file: File) => {
+  const pickLogo = async (file: File) => {
     setError(null)
     try {
-      setSite(kind, kind === 'logo' ? await resizeToDataUrl(file) : await resizeToDataUrl(file, 1000, 280_000))
+      setSite('logo', await resizeToDataUrl(file))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Não foi possível usar essa imagem.')
     }
@@ -186,19 +209,16 @@ export function IdentityFields({ site, setSite }: { site: SiteConfig; setSite: S
             titleFilled="Foto de perfil"
             hint="Seu rosto ou o logo do negócio"
             removeLabel="Remover foto de perfil"
-            onFile={(f) => void pick('logo')(f)}
+            onFile={(f) => void pickLogo(f)}
             onClear={() => setSite('logo', '')}
           />
+          {error && (
+            <p className="field__hint" role="alert">
+              {error}
+            </p>
+          )}
         </Group>
       )}
-      <Group title="Capa">
-        <CoverPicker site={site} setSite={setSite} onFile={(f) => void pick('cover')(f)} />
-        {error && (
-          <p className="field__hint" role="alert">
-            {error}
-          </p>
-        )}
-      </Group>
     </>
   )
 }

@@ -690,13 +690,18 @@
   color: var(--ink-900);
 }
 
-/* só o item aberto mostra o nome; os outros ficam no ícone (o nome segue no title e no aria-label) */
+/* todos os itens mostram o nome embaixo do ícone; o aberto ganha o fundo branco */
 .rail__btn {
   justify-content: center;
 }
 
-.rail__btn:not([aria-current='true']) .rail__label {
-  display: none;
+.rail__label {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 11px;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .rail__btn[aria-current='true'] {
