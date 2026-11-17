@@ -17,7 +17,8 @@
     "test": "npm run test:api && npm run test:domain",
     "check:conventions": "node scripts/check-conventions.mjs",
     "test:e2e": "playwright test",
-    "test:dev-db": "tsx scripts/teste-ciclo-conta-dev.ts"
+    "test:dev-db": "tsx scripts/teste-ciclo-conta-dev.ts",
+    "test:e2e-dev": "tsx scripts/teste-rotas-dev.ts"
   },
   "dependencies": {
     "@neondatabase/neon-js": "^0.7.0-beta",
