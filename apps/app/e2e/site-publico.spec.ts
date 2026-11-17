@@ -77,8 +77,10 @@ test('no celular a janela de agendamento fica inteira na área visível, com o b
   await expect(sheet).toBeVisible()
   const box = (await sheet.boundingBox())!
   const view = page.viewportSize()!
-  // encostada embaixo e sem passar da tela
+  // centralizada e sem passar da tela
   expect(box.y + box.height).toBeLessThanOrEqual(view.height + 1)
+  // sobra o mesmo espaço em cima e embaixo (±2px)
+  expect(Math.abs(box.y - (view.height - box.y - box.height))).toBeLessThanOrEqual(2)
   expect(box.y).toBeGreaterThanOrEqual(0)
   await expect(sheet.getByRole('button', { name: 'Fechar' })).toBeInViewport()
 })
