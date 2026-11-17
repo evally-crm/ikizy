@@ -399,13 +399,16 @@
   bottom: calc(var(--bottomnav-h, 0px) + 32px);
   left: 50%;
   z-index: 90;
+  /* sem isto o texto só podia usar a metade da tela (a caixa nasce em left: 50%) e quebrava em muitas linhas */
+  width: max-content;
   max-width: calc(100vw - 32px);
-  padding: 11px 20px;
-  border-radius: var(--radius-pill);
+  padding: 12px 20px;
+  border-radius: 26px;
   background: var(--solid);
   box-shadow: var(--shadow-md);
   color: var(--on-solid);
-  font-size: 13px;
+  font-size: 14px;
+  line-height: 1.35;
   transform: translateX(-50%);
   animation: toast-in 0.2s ease-out;
 }
