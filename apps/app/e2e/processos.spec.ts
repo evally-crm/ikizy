@@ -103,6 +103,20 @@ test.describe('Meu site', () => {
     await expect(page.getByRole('region', { name: 'Passo a passo para publicar' })).toHaveCount(0)
   })
 
+  test('depois de publicar abre o resumo com o que a cliente vai ver', async ({ page }) => {
+    await page.goto('/dashboard/site')
+    const nav = page.getByRole('navigation', { name: 'Partes do site' })
+    await nav.getByRole('button', { name: /^Visual/ }).first().click()
+    await page.getByRole('radio', { name: 'Rosa', exact: true }).check({ force: true })
+    await page.getByRole('button', { name: /^Publicar/ }).first().click()
+    const summary = page.getByRole('dialog', { name: 'Site publicado' })
+    await expect(summary).toBeVisible()
+    await expect(summary).toContainText('O que sua cliente vai ver')
+    await expect(summary.getByRole('button', { name: /Copiar link/ })).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(summary).toBeHidden()
+  })
+
   test('o botão do site segue o agendamento online: Agendar ligado, WhatsApp desligado', async ({ page }) => {
     await page.goto('/dashboard/site')
     // o agendamento online fica no fim da parte Perfil

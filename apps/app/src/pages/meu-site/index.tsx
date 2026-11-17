@@ -16,6 +16,7 @@ import { ExtrasEditor } from './ExtrasEditor'
 import { CoverFields, IdentityFields } from './IdentityFields'
 import { PreviewSheet } from './PreviewSheet'
 import { PublishButton } from './PublishButton'
+import { PublishedSummary } from './PublishedSummary'
 import { SetupGuide } from './SetupGuide'
 import { ServicesEditor, type SaveServiceResult } from './ServicesEditor'
 import { BookingFields, ContactFields, TextFields } from './SiteFields'
@@ -86,6 +87,7 @@ export default function MeuSite() {
       /* sem storage: vale só nesta visita */
     }
   }
+  const [summary, setSummary] = useState<{ firstTime: boolean } | null>(null)
   const [guideIdx, setGuideIdx] = useState<number | null>(null)
   const [guideOff, setGuideOff] = useState(readGuideOff)
   const navigate = useNavigate()
@@ -136,7 +138,9 @@ export default function MeuSite() {
     return !problem
   }
   const onPublish = async () => {
+    const wasLive = isLive
     if (!(await runPublish())) return
+    setSummary({ firstTime: !wasLive })
     setJustPublished(true)
     window.setTimeout(() => setJustPublished(false), 2500)
   }
@@ -384,6 +388,20 @@ export default function MeuSite() {
           </Card>
         )}
       </div>
+
+      {summary && (
+        <PublishedSummary
+          site={site}
+          services={services}
+          host={siteHost(publishedSlug)}
+          firstTime={summary.firstTime}
+          onClose={() => setSummary(null)}
+          onFixBooking={() => {
+            setSummary(null)
+            goPart('perfil')
+          }}
+        />
+      )}
 
       {previewOpen && !isWide && <PreviewSheet studio={draft} host={siteHost(site.slug)} onClose={closePreview} />}
     </div>
