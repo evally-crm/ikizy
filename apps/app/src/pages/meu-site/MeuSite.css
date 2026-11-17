@@ -921,12 +921,12 @@
 /* Meu site em tela cheia: sem o menu do app, a página inteira vira editor + prévia */
 .sfull {
   position: fixed;
-  inset: 0;
+  inset: var(--vvt, 0px) 0 auto 0;
   z-index: 55;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  height: auto;
+  height: var(--vvh, 100dvh);
   max-width: none;
   padding: 12px 20px 16px;
   overflow: hidden;
@@ -944,6 +944,8 @@
 
 .sfull .studio__body {
   overflow-y: auto;
+  /* rolar no começo ou no fim da lista não puxa a página nem a barra do navegador */
+  overscroll-behavior: contain;
   padding-right: 6px;
 }
 
