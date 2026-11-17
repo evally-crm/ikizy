@@ -11,7 +11,7 @@ body:has(dialog.sheet[open]){overflow:hidden}
 .sheet__head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px 22px 8px}
 .sheet__head h2{font-size:24px}
 .sheet__x{display:grid;place-items:center;width:44px;height:44px;border:1px solid var(--line);border-radius:50%;background:var(--panel);font-size:22px;line-height:1;cursor:pointer;color:var(--text)}
-.sheet__body{flex:1;overflow-y:auto;padding:8px 22px 18px}
+.sheet__body{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px 22px 18px}
 .sheet__foot{display:flex;gap:10px;padding:12px 22px calc(16px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
 .sheet__foot .btn{flex:1;min-height:54px;cursor:pointer;font:inherit;font-weight:500}
 .sheet__foot .btn:disabled{opacity:.45;cursor:not-allowed}
@@ -94,6 +94,14 @@ export const BOOKING_SCRIPT = `
   function svc(id){for(var i=0;i<D.services.length;i++){if(D.services[i].id===id)return D.services[i]}return null}
 
   function openSheet(id){
+    /* fechou sem terminar e abriu de novo pelo botão geral: continua de onde parou (os horários são buscados de novo) */
+    if(!id&&S.service&&!S.done&&!S.busy){
+      S.error='';render();
+      if(!dlg.open)dlg.showModal();fit();
+      captchaStart();
+      if(S.date){if(S.step>1)S.step=1;pickDay(S.date)}
+      return;
+    }
     S.service=id||null;S.step=id?1:0;S.off=0;S.date=null;S.minute=null;S.slots=null;S.error='';S.done=null;S.busy=false;
     render();
     if(!dlg.open)dlg.showModal();fit();

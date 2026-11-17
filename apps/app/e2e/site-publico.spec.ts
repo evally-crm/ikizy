@@ -69,6 +69,28 @@ test('a cliente pede um horário e só consegue enviar autorizando o uso dos dad
   expect(sent).toMatchObject({ slug: 'studio-teste', service: SERVICE, minute: 600, name: 'Ana Souza', phone: '11999998888', consent: true })
 })
 
+test('fechar a janela sem pedir horário e abrir de novo continua de onde parou', async ({ page }) => {
+  await page.goto('https://studio-teste.ikizy.com/')
+  await page.getByRole('button', { name: /Agendar/ }).first().click()
+  const sheet = page.getByRole('dialog')
+  const service = sheet.getByRole('button', { name: /Alongamento em gel/ })
+  if (await service.isVisible()) await service.click()
+  await expect(sheet.getByRole('button', { name: '10:00' })).toBeVisible()
+  await sheet.getByRole('button', { name: 'Fechar' }).click()
+  await expect(sheet).toBeHidden()
+  await page.getByRole('button', { name: /Agendar/ }).first().click()
+  await expect(sheet.getByRole('button', { name: '10:00' })).toBeVisible()
+})
+
+test('no celular o corpo da janela de agendamento tem altura de verdade (não encolhe a zero)', async ({ page, isMobile }) => {
+  test.skip(!isMobile, 'só faz sentido na tela de celular')
+  await page.goto('https://studio-teste.ikizy.com/')
+  await page.getByRole('button', { name: /Agendar/ }).first().click()
+  const body = page.locator('#book-body')
+  await expect(body).toBeVisible()
+  expect((await body.boundingBox())!.height).toBeGreaterThan(120)
+})
+
 test('no celular a janela de agendamento fica inteira na área visível, com o botão alcançável', async ({ page, isMobile }) => {
   test.skip(!isMobile, 'só faz sentido na tela de celular')
   await page.goto('https://studio-teste.ikizy.com/')
