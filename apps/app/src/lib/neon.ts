@@ -9,7 +9,8 @@ export const isNeonConfigured = Boolean(authUrl && dataApiUrl)
 /** adaptador Supabase: mantém signInWithPassword, signUp, getSession etc. sobre o Neon Auth */
 export const neon = isNeonConfigured
   ? createClient({
-      auth: { adapter: SupabaseAuthAdapter(), url: authUrl! },
+      // em produção o login passa pelo nosso próprio endereço (api/auth.ts): o cookie vira do mesmo site e o Safari do iPhone aceita
+      auth: { adapter: SupabaseAuthAdapter(), url: import.meta.env.PROD ? `${window.location.origin}/api/auth` : authUrl! },
       dataApi: { url: dataApiUrl! },
     })
   : null

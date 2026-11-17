@@ -28,6 +28,10 @@
       "dest": "/api/site?slug=$1"
     },
     {
+      "src": "/api/auth/(.*)",
+      "dest": "/api/auth?p=$1"
+    },
+    {
       "src": "/api/cron/([a-z-]+)",
       "dest": "/api/cron?job=$1"
     },
