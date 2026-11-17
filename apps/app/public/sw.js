@@ -14,15 +14,17 @@ self.addEventListener('push', (event) => {
     data = { body: event.data ? event.data.text() : '' }
   }
   const title = typeof data.title === 'string' && data.title ? data.title : 'IKIZY'
+  // número no ícone do app (onde o aparelho deixa): pedidos esperando resposta
+  const badge = typeof data.badge === 'number' && self.navigator.setAppBadge ? self.navigator.setAppBadge(data.badge).catch(() => undefined) : undefined
   event.waitUntil(
-    self.registration.showNotification(title, {
+    Promise.all([badge, self.registration.showNotification(title, {
       body: typeof data.body === 'string' ? data.body : '',
       icon: '/icons/icon-192.png',
       badge: '/icons/icon-192.png',
       // a mesma etiqueta substitui o aviso anterior em vez de empilhar
       tag: typeof data.tag === 'string' ? data.tag : undefined,
       data: { url: typeof data.url === 'string' && data.url.startsWith('/') ? data.url : '/dashboard' },
-    }),
+    })]),
   )
 })
 

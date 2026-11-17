@@ -84,15 +84,39 @@ test.describe('Meu site', () => {
     expect(errors).toEqual([])
   })
 
-  test('o botão do site segue o agendamento online: Agendar ligado, WhatsApp desligado', async ({ page }) => {
+  test('o rascunho é guardado sozinho: fechar e abrir de novo não perde o que foi mudado', async ({ page, context }) => {
     await page.goto('/dashboard/site')
     const nav = page.getByRole('navigation', { name: 'Partes do site' })
-    await nav.getByRole('button', { name: /Agenda/ }).first().click()
+    await nav.getByRole('button', { name: /^Visual/ }).first().click()
+    await page.getByRole('radio', { name: 'Rosa', exact: true }).check({ force: true })
+    // outra aba (sem a memória da primeira): o rascunho vem do aparelho
+    const other = await context.newPage()
+    await other.clock.setFixedTime(NOW)
+    await other.goto('/dashboard/site')
+    await other.getByRole('navigation', { name: 'Partes do site' }).getByRole('button', { name: /^Visual/ }).first().click()
+    await expect(other.getByRole('radio', { name: 'Rosa', exact: true })).toBeChecked()
+  })
+
+  test('o assistente da primeira vez não aparece num site que já está no ar', async ({ page }) => {
+    await page.goto('/dashboard/site')
+    await expect(page.getByRole('navigation', { name: 'Partes do site' })).toBeVisible()
+    await expect(page.getByRole('region', { name: 'Passo a passo para publicar' })).toHaveCount(0)
+  })
+
+  test('o botão do site segue o agendamento online: Agendar ligado, WhatsApp desligado', async ({ page }) => {
+    await page.goto('/dashboard/site')
+    // o agendamento online fica no fim da parte Perfil
     const toggle = page.getByRole('switch', { name: /Aceitar agendamentos pelo site/ })
-    await toggle.uncheck({ force: true })
+    // a chave fica longe do topo: o clique no rótulo rola até ela e vale como o toque da usuária
+    const label = page.locator('label.switch', { hasText: 'Aceitar agendamentos pelo site' })
+    await label.scrollIntoViewIfNeeded()
+    if (await toggle.isChecked()) await label.click()
+    await expect(toggle).not.toBeChecked()
     const off = await previewHtml(page)
     expect(off).not.toContain('class="btn card__cta" data-book')
-    await toggle.check({ force: true })
+    await label.scrollIntoViewIfNeeded()
+    await label.click()
+    await expect(toggle).toBeChecked()
     const on = await previewHtml(page)
     expect(on).toContain('class="btn card__cta" data-book')
   })
@@ -120,7 +144,7 @@ test.describe('Meu negócio', () => {
     const days = dialog.getByRole('switch')
     await expect(days.first()).toBeVisible()
     const closed = dialog.locator('.hours__row:not(.is-open)').first()
-    if (await closed.count()) await closed.getByRole('switch').check({ force: true })
+    if (await closed.count()) await closed.locator('label.switch').click() // toque na chave, como a usuária
     const save = dialog.getByRole('button', { name: 'Salvar horários' })
     await expect(save).toBeEnabled()
     await save.click()

@@ -134,6 +134,22 @@ describe('aviso de pedido novo', () => {
     assert.equal(sent.length, 3)
   })
 
+  it('leva o número de pedidos esperando para o ícone do app, e segue sem ele se a contagem falhar', async () => {
+    const seen: (number | undefined)[] = []
+    const send: PushSender = async (_s, p) => {
+      seen.push(p.badge)
+      return { status: 201 }
+    }
+    const { db } = fakeDb({ subs: [sub(1)] })
+    db.pendingCount = async () => 3
+    await pushNewRequest({ db, send }, 'studio', request)
+    db.pendingCount = async () => {
+      throw new Error('banco')
+    }
+    await pushNewRequest({ db, send }, 'studio', request)
+    assert.deepEqual(seen, [3, undefined])
+  })
+
   it('apaga o aparelho que saiu (404 e 410) e segue com os outros', async () => {
     const send: PushSender = async (s) => ({ status: s.endpoint.endsWith('/2') ? 410 : s.endpoint.endsWith('/3') ? 404 : 201 })
     const { db, log } = fakeDb({ subs: [sub(1), sub(2), sub(3)] })

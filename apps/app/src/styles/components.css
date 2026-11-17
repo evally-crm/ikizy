@@ -976,6 +976,19 @@ button.textlink:disabled {
   border-color: var(--ink-500);
   background: rgba(255, 255, 255, 0.05);
 }
+/* Publicar é a ação principal do editor: no escuro continua preenchido (pílula clara), não só contorno */
+:root[data-theme='dark'] .btn--primary.publishbtn {
+  border-color: transparent;
+  background: var(--ink-900);
+  color: var(--bg);
+}
+:root[data-theme='dark'] .btn--primary.publishbtn:disabled {
+  opacity: 0.5;
+}
+:root[data-theme='dark'] .btn--primary.publishbtn:hover:not(:disabled) {
+  border-color: transparent;
+  background: #d6d2d4;
+}
 /* escolhido: só um véu na cor da marca, sem borda */
 :root[data-theme='dark'] .chip[aria-pressed='true'],
 :root[data-theme='dark'] .chip[aria-selected='true'],

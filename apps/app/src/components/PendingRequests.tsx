@@ -114,6 +114,9 @@ export function PendingBell() {
   useEffect(() => {
     const base = document.title.replace(/^\(\d+\) /, '')
     document.title = count ? `(${count}) ${base}` : base
+    // contador no ícone do app instalado (iPhone, Android e computador); onde não existe, não faz nada
+    const nav = navigator as Navigator & { setAppBadge?: (n?: number) => Promise<void>; clearAppBadge?: () => Promise<void> }
+    void (count ? nav.setAppBadge?.(count) : nav.clearAppBadge?.())?.catch(() => undefined)
   }, [count])
 
   useEffect(() => {

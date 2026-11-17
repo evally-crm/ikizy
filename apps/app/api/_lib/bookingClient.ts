@@ -4,10 +4,9 @@
  * Tudo que vem do negócio é escapado com `e()` antes de entrar no HTML.
  */
 export const BOOKING_CSS = `
-dialog.sheet{border:0;padding:0;width:min(520px,100%);max-width:100%;max-height:var(--sheet-h,92dvh);position:fixed;inset:auto 0 var(--sheet-b,0) 0;margin:0 auto;border-radius:28px 28px 0 0;background:var(--panel);color:var(--text);overflow:hidden}
+dialog.sheet{border:0;padding:0;width:min(520px,calc(100% - 24px));max-width:100%;max-height:var(--sheet-h,72dvh);height:fit-content;position:fixed;inset:0;margin:auto;border-radius:28px;background:var(--panel);color:var(--text);overflow:hidden}
 dialog.sheet[open]{display:flex;flex-direction:column}
 dialog.sheet::backdrop{background:rgba(14,13,13,.55)}
-@media(min-width:720px){dialog.sheet{inset:0;margin:auto;max-height:92dvh;height:fit-content;border-radius:28px}}
 body:has(dialog.sheet[open]){overflow:hidden}
 .sheet__head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px 22px 8px}
 .sheet__head h2{font-size:24px}
@@ -87,6 +86,9 @@ export const BOOKING_SCRIPT = `
   function today(){return new Intl.DateTimeFormat('en-CA',{timeZone:TZ}).format(new Date())}
   function mk(s,n){var p=s.split('-');return new Date(Date.UTC(+p[0],+p[1]-1,+p[2]+(n||0),12))}
   function addDays(s,n){return mk(s,n).toISOString().slice(0,10)}
+  /* o profissional escolhido (ou qualquer um) atende nesse dia da semana? Sem a lista (página antiga), todo dia vale. */
+  function openOn(d){if(!D.open)return true;var w=mk(d).getUTCDay(),ids=S.pro?[S.pro]:Object.keys(D.open);for(var i=0;i<ids.length;i++){var l=D.open[ids[i]]||[];if(l.indexOf(w)>=0)return true}return false}
+  function firstOpen(){var t=today();for(var n=0;n<D.windowDays;n++){if(openOn(addDays(t,n))){S.off=7*Math.floor(n/7);return addDays(t,n)}}return t}
   function wd(s){return mk(s).toLocaleDateString('pt-BR',{weekday:'short',timeZone:'UTC'}).replace('.','')}
   function full(s){return mk(s).toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',timeZone:'UTC'})}
   function svc(id){for(var i=0;i<D.services.length;i++){if(D.services[i].id===id)return D.services[i]}return null}
@@ -96,12 +98,11 @@ export const BOOKING_SCRIPT = `
     render();
     if(!dlg.open)dlg.showModal();fit();
     captchaStart();
-    if(id)pickDay(today());
+    if(id)pickDay(firstOpen());
   }
-  /* navegadores dentro de apps (Instagram, WhatsApp) e o Safari do iPhone medem a tela maior do que a parte visível: a janela ficava com o fim escondido. Aqui ela segue a área realmente visível. */
-  function fit(){var v=window.visualViewport;if(!v||window.innerWidth>=720){dlg.style.removeProperty('--sheet-h');dlg.style.removeProperty('--sheet-b');return}
-    dlg.style.setProperty('--sheet-h',Math.floor(v.height*.92)+'px');dlg.style.setProperty('--sheet-b',Math.max(0,Math.round(window.innerHeight-v.height-v.offsetTop))+'px')}
-  if(window.visualViewport){window.visualViewport.addEventListener('resize',function(){if(dlg.open)fit()});window.visualViewport.addEventListener('scroll',function(){if(dlg.open)fit()})}
+  /* centralizada e com altura de até 72% da área visível: navegadores dentro de apps (Google, Instagram) e o Safari do iPhone põem barras por cima da tela e escondiam o fim da janela */
+  function fit(){var v=window.visualViewport;if(!v){dlg.style.removeProperty('--sheet-h');return}dlg.style.setProperty('--sheet-h',Math.floor(v.height*.72)+'px')}
+  if(window.visualViewport){window.visualViewport.addEventListener('resize',function(){if(dlg.open)fit()})}
   function closeSheet(){if(dlg.open)dlg.close()}
 
   function pickDay(date){
@@ -148,7 +149,7 @@ export const BOOKING_SCRIPT = `
         +'<button type="button" class="bk-arrow" data-act="wk" data-id="1" aria-label="Próxima semana" '+(S.off+7>last?'disabled':'')+'>&rsaquo;</button></div></div><div class="bk-days">';
       for(var i=0;i<7;i++){
         var n=S.off+i,d=addDays(t0,n);
-        h+='<button type="button" class="bk-day" data-act="day" data-id="'+d+'" aria-pressed="'+(S.date===d?'true':'false')+'" '+(n>last?'disabled':'')+'><small>'+e(wd(d))+'</small><strong>'+d.slice(8)+'</strong></button>';
+        h+='<button type="button" class="bk-day" data-act="day" data-id="'+d+'" aria-pressed="'+(S.date===d?'true':'false')+'" '+(n>last||!openOn(d)?'disabled':'')+'><small>'+e(wd(d))+'</small><strong>'+d.slice(8)+'</strong></button>';
       }
       h+='</div>';
       if(S.date){
@@ -218,9 +219,9 @@ export const BOOKING_SCRIPT = `
     var el=ev.target.closest('[data-act]');if(!el)return;
     var act=el.getAttribute('data-act'),id=el.getAttribute('data-id');
     if(act==='close')closeSheet();
-    else if(act==='svc'){S.service=id;S.step=1;S.date=null;S.minute=null;S.slots=null;pickDay(today())}
+    else if(act==='svc'){S.service=id;S.step=1;S.date=null;S.minute=null;S.slots=null;S.off=0;pickDay(firstOpen())}
     else if(act==='change'){S.step=0;render()}
-    else if(act==='pro'){S.pro=id||'';if(S.date)pickDay(S.date);else render()}
+    else if(act==='pro'){S.pro=id||'';if(S.date)pickDay(openOn(S.date)?S.date:firstOpen());else render()}
     else if(act==='wk'){S.off=Math.max(0,S.off+7*(+id));render()}
     else if(act==='day')pickDay(id);
     else if(act==='time'){S.minute=+id;render()}

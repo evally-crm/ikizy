@@ -31,6 +31,8 @@ export interface PushDb {
   listForSalon(salonId: string): Promise<StoredSubscription[]>
   /** aparelho que o serviço de push disse que não existe mais */
   drop(endpoint: string): Promise<void>
+  /** pedidos do site esperando resposta (vira o número no ícone do app) */
+  pendingCount?(salonId: string): Promise<number>
 }
 
 /** quem pode ligar o aviso de pedido novo */
@@ -43,6 +45,8 @@ export interface PushPayload {
   url: string
   /** a mesma etiqueta substitui o aviso anterior */
   tag: string
+  /** número no ícone do app (pedidos esperando resposta) */
+  badge?: number
 }
 
 /** envia um aviso; devolve o código HTTP do serviço de push (404 e 410 = aparelho que saiu) */
@@ -121,6 +125,8 @@ export async function pushNewRequest(deps: { db: PushDb; send: PushSender }, slu
     const subs = await deps.db.listForSalon(salonId)
     if (!subs.length) return out
     const payload = newRequestPayload(r)
+    const pending = await deps.db.pendingCount?.(salonId).catch(() => undefined)
+    if (typeof pending === 'number' && pending > 0) payload.badge = pending
     await Promise.race([
       Promise.all(
         subs.map(async (s) => {

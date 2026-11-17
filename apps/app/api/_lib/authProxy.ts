@@ -70,6 +70,12 @@ export async function proxyAuth(request: Request, opts: AuthProxyOptions): Promi
     return Response.json({ error: 'upstream', message: 'O login não respondeu. Tente novamente.' }, { status: 502, headers: noStore })
   }
 
+  // diagnóstico do login com o Google: só os NOMES dos cookies (nunca os valores) e o resultado da troca do verificador
+  if (path === 'get-session' && incoming.searchParams.has('neon_auth_session_verifier') || path === 'sign-in/social') {
+    const names = (request.headers.get('cookie') ?? '').split(';').map((c) => c.split('=')[0].trim()).filter(Boolean)
+    const set = upstream.headers.getSetCookie().map((c) => c.split('=')[0])
+    console.log(JSON.stringify({ authproxy: path, status: upstream.status, cookiesIn: names, cookiesSet: set, ua: (request.headers.get('user-agent') ?? '').slice(0, 80) }))
+  }
   const out = new Headers(noStore)
   for (const name of ['content-type', 'location', 'set-auth-jwt', 'access-control-expose-headers']) {
     const value = upstream.headers.get(name)
