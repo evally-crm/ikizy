@@ -4,10 +4,10 @@
  * Tudo que vem do negócio é escapado com `e()` antes de entrar no HTML.
  */
 export const BOOKING_CSS = `
-dialog.sheet{border:0;padding:0;width:min(520px,100%);max-width:100%;max-height:92dvh;margin:auto auto 0;border-radius:28px 28px 0 0;background:var(--panel);color:var(--text);overflow:hidden}
+dialog.sheet{border:0;padding:0;width:min(520px,100%);max-width:100%;max-height:var(--sheet-h,92dvh);position:fixed;inset:auto 0 var(--sheet-b,0) 0;margin:0 auto;border-radius:28px 28px 0 0;background:var(--panel);color:var(--text);overflow:hidden}
 dialog.sheet[open]{display:flex;flex-direction:column}
 dialog.sheet::backdrop{background:rgba(14,13,13,.55)}
-@media(min-width:720px){dialog.sheet{margin:auto;border-radius:28px}}
+@media(min-width:720px){dialog.sheet{inset:0;margin:auto;max-height:92dvh;height:fit-content;border-radius:28px}}
 body:has(dialog.sheet[open]){overflow:hidden}
 .sheet__head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px 22px 8px}
 .sheet__head h2{font-size:24px}
@@ -94,10 +94,14 @@ export const BOOKING_SCRIPT = `
   function openSheet(id){
     S.service=id||null;S.step=id?1:0;S.off=0;S.date=null;S.minute=null;S.slots=null;S.error='';S.done=null;S.busy=false;
     render();
-    if(!dlg.open)dlg.showModal();
+    if(!dlg.open)dlg.showModal();fit();
     captchaStart();
     if(id)pickDay(today());
   }
+  /* navegadores dentro de apps (Instagram, WhatsApp) e o Safari do iPhone medem a tela maior do que a parte visível: a janela ficava com o fim escondido. Aqui ela segue a área realmente visível. */
+  function fit(){var v=window.visualViewport;if(!v||window.innerWidth>=720){dlg.style.removeProperty('--sheet-h');dlg.style.removeProperty('--sheet-b');return}
+    dlg.style.setProperty('--sheet-h',Math.floor(v.height*.92)+'px');dlg.style.setProperty('--sheet-b',Math.max(0,Math.round(window.innerHeight-v.height-v.offsetTop))+'px')}
+  if(window.visualViewport){window.visualViewport.addEventListener('resize',function(){if(dlg.open)fit()});window.visualViewport.addEventListener('scroll',function(){if(dlg.open)fit()})}
   function closeSheet(){if(dlg.open)dlg.close()}
 
   function pickDay(date){

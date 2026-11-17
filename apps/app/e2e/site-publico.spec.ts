@@ -68,3 +68,17 @@ test('a cliente pede um horário e só consegue enviar autorizando o uso dos dad
   await expect(sheet.getByText('Pedido enviado')).toBeVisible()
   expect(sent).toMatchObject({ slug: 'studio-teste', service: SERVICE, minute: 600, name: 'Ana Souza', phone: '11999998888', consent: true })
 })
+
+test('no celular a janela de agendamento fica inteira na área visível, com o botão alcançável', async ({ page, isMobile }) => {
+  test.skip(!isMobile, 'só faz sentido na tela de celular')
+  await page.goto('https://studio-teste.ikizy.com/')
+  await page.getByRole('button', { name: /Agendar/ }).first().click()
+  const sheet = page.getByRole('dialog')
+  await expect(sheet).toBeVisible()
+  const box = (await sheet.boundingBox())!
+  const view = page.viewportSize()!
+  // encostada embaixo e sem passar da tela
+  expect(box.y + box.height).toBeLessThanOrEqual(view.height + 1)
+  expect(box.y).toBeGreaterThanOrEqual(0)
+  await expect(sheet.getByRole('button', { name: 'Fechar' })).toBeInViewport()
+})
