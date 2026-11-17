@@ -20,6 +20,17 @@ export interface AuthProxyOptions {
 
 const noStore = { 'cache-control': 'no-store' }
 
+/**
+ * regrava o cookie do Neon como cookie comum do nosso site: sem Partitioned (o Safari não o entende), sem Domain e
+ * com Path=/ (o do Neon aponta para o caminho dele, que não existe aqui). SameSite=Lax basta: quem usa é o próprio site
+ * e a volta do Google é uma navegação normal de página.
+ */
+export function firstPartyCookie(cookie: string): string {
+  const [pair, ...attrs] = cookie.split(';').map((a) => a.trim()).filter(Boolean)
+  const keep = attrs.filter((a) => !/^(partitioned|samesite|path|domain)(=|$)/i.test(a))
+  return [pair, 'Path=/', 'SameSite=Lax', ...keep].join('; ')
+}
+
 /** monta o endereço de destino; null se o caminho tentar sair da API do login */
 export function targetUrl(base: string, path: string, search: string): URL | null {
   if (!path || path.startsWith('/') || path.includes('\\') || path.includes('\0')) return null
@@ -82,7 +93,7 @@ export async function proxyAuth(request: Request, opts: AuthProxyOptions): Promi
     if (value) out.set(name, value)
   }
   // vários Set-Cookie precisam ir um por um
-  for (const cookie of upstream.headers.getSetCookie()) out.append('set-cookie', cookie)
+  for (const cookie of upstream.headers.getSetCookie()) out.append('set-cookie', firstPartyCookie(cookie))
   // o corpo já vem decodificado: não repassar o tamanho nem a compressão do original
   return new Response(upstream.status === 204 || upstream.status === 304 ? null : await upstream.arrayBuffer(), { status: upstream.status, headers: out })
 }

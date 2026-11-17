@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { proxyAuth, targetUrl } from './authProxy.js'
+import { firstPartyCookie, proxyAuth, targetUrl } from './authProxy.js'
 
 const BASE = 'https://ep-x.neonauth.sa-east-1.aws.neon.tech/neondb/auth'
 
@@ -14,6 +14,18 @@ describe('targetUrl (não sai da API do login)', () => {
     for (const p of ['', '../x', 'a/../../x', '%2e%2e/x', 'a/%2e%2e/b', '//evil.com/x', 'https://evil.com/x', 'a\\b', '/\\evil.com']) {
       assert.equal(targetUrl(BASE, p, ''), null, p)
     }
+  })
+})
+
+describe('firstPartyCookie', () => {
+  it('tira Partitioned, Domain, SameSite e Path do Neon e deixa um cookie comum do nosso site', () => {
+    assert.equal(
+      firstPartyCookie('__Secure-neon-auth.session_challenge=abc; Max-Age=600; Domain=x.neon.tech; Path=/neondb/auth; HttpOnly; Secure; SameSite=None; Partitioned'),
+      '__Secure-neon-auth.session_challenge=abc; Path=/; SameSite=Lax; Max-Age=600; HttpOnly; Secure',
+    )
+  })
+  it('valor com = e cookie apagado (Max-Age=0) seguem intactos', () => {
+    assert.equal(firstPartyCookie('t=a=b==; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT'), 't=a=b==; Path=/; SameSite=Lax; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT')
   })
 })
 
@@ -46,7 +58,7 @@ describe('proxyAuth', () => {
     assert.equal(res.headers.get('cache-control'), 'no-store')
     assert.equal(res.headers.get('content-encoding'), null)
     assert.equal(res.headers.get('content-length'), null)
-    assert.deepEqual(res.headers.getSetCookie(), ['a=1; Path=/; HttpOnly; Secure; SameSite=None', 'b=2; Path=/; HttpOnly; Secure'])
+    assert.deepEqual(res.headers.getSetCookie(), ['a=1; Path=/; SameSite=Lax; HttpOnly; Secure', 'b=2; Path=/; SameSite=Lax; HttpOnly; Secure'])
     assert.deepEqual(await res.json(), { ok: true })
   })
 
