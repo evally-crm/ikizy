@@ -37,6 +37,8 @@ export interface PublicSite {
   team: { name: string; title: string }[]
   /** só vem preenchido com o agendamento online ligado */
   professionals?: { id: string; name: string }[]
+  /** dias da semana (0 = domingo) em que cada profissional atende; os outros dias aparecem desligados no agendamento */
+  openDays?: Record<string, number[]>
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -395,6 +397,7 @@ export function renderSitePage(site: PublicSite, opts: { canonical: string; capt
     windowDays: Math.min(90, Math.max(1, Number(s.booking_window_days) || 30)),
     services: services.filter((x) => x.id).map((x) => ({ id: x.id, name: x.name, category: x.category, duration: x.duration, price: x.price })),
     pros: pros.map((p) => ({ id: p.id, name: p.name })),
+    ...(site.openDays ? { open: site.openDays } : {}),
   })
     .replace(/</g, '\\u003c')
     .replace(/\u2028/g, '\\u2028')

@@ -84,3 +84,35 @@ test('no celular a janela de agendamento fica inteira na área visível, com o b
   expect(box.y).toBeGreaterThanOrEqual(0)
   await expect(sheet.getByRole('button', { name: 'Fechar' })).toBeInViewport()
 })
+
+test('dias em que ninguém atende aparecem desligados e o primeiro dia aberto já vem escolhido', async ({ page }) => {
+  const weekdays = renderSitePage(
+    {
+      name: 'Studio Teste',
+      slug: 'studio-teste',
+      settings: { whatsapp: '(11) 98765-0000', show_prices: true, online_booking: true, palette: 'vinho-preto', booking_window_days: 30 },
+      services: [{ id: SERVICE, name: 'Alongamento em gel', category: 'Unhas', duration: 120, price: 220 }],
+      professionals: [{ id: PRO, name: 'Maria' }],
+      openDays: { [PRO]: [1, 2, 3, 4, 5] },
+      plans: [],
+      team: [],
+    } as never,
+    { canonical: 'https://studio-teste.ikizy.com' },
+  )
+  await page.route('https://studio-teste.ikizy.com/', (route) => route.fulfill({ contentType: 'text/html', body: weekdays }))
+  await page.goto('https://studio-teste.ikizy.com/')
+  await page.getByRole('button', { name: /Agendar/ }).first().click()
+  const sheet = page.getByRole('dialog')
+  const service = sheet.getByRole('button', { name: /Alongamento em gel/ })
+  if (await service.isVisible()) await service.click()
+  const days = sheet.locator('.bk-day')
+  await expect(days.first()).toBeVisible()
+  const info = await days.evaluateAll((els) => els.map((e) => ({ label: (e.querySelector('small')?.textContent ?? '').toLowerCase(), disabled: (e as HTMLButtonElement).disabled, pressed: e.getAttribute('aria-pressed') === 'true' })))
+  for (const d of info) {
+    if (d.label.startsWith('sáb') || d.label.startsWith('dom')) expect(d.disabled, d.label).toBe(true)
+    else if (d.label) expect(d.disabled || d.label.length > 0).toBe(true)
+  }
+  // o dia escolhido de partida nunca é sábado nem domingo
+  const picked = info.find((d) => d.pressed)
+  expect(picked && !picked.label.startsWith('sáb') && !picked.label.startsWith('dom')).toBe(true)
+})

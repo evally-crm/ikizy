@@ -168,7 +168,16 @@ export function limitUser(userId: string, key: LimitKey): Promise<void> {
 export async function fetchPublicSite(slug: string): Promise<PublicSite | null> {
   const sql = neon(env('DATABASE_URL'))
   const rows = (await sql`select public.get_public_site(${slug}) as site`) as { site: PublicSite | null }[]
-  return rows[0]?.site ?? null
+  const site = rows[0]?.site ?? null
+  if (site?.professionals?.length) {
+    // dias em que cada profissional tem horário: o agendamento desliga os outros dias em vez de mostrar uma lista vazia
+    const days = (await sql`
+      select wh.professional_id as id, array_agg(distinct wh.weekday order by wh.weekday) as days
+      from public.working_hours wh join public.salons s on s.id = wh.salon_id
+      where s.slug = ${slug} group by wh.professional_id`) as { id: string; days: number[] }[]
+    site.openDays = Object.fromEntries(days.map((d) => [d.id, d.days.map(Number)]))
+  }
+  return site
 }
 
 /** foto (data URL) de um negócio publicado; null se não existe ou o site não está publicado */
