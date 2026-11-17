@@ -479,6 +479,7 @@ const info = (over: Partial<SubscriptionInfo> = {}): SubscriptionInfo => ({
   cancelAtPeriodEnd: false,
   hasCustomer: false,
   planChosen: true,
+  complimentary: false,
   ...over,
 })
 

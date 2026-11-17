@@ -32,6 +32,7 @@ const demoSubscription = (): SubscriptionInfo => ({
   cancelAtPeriodEnd: false,
   hasCustomer: false,
   planChosen: true,
+  complimentary: false,
 })
 
 /** carrega a assinatura do salão (só leitura: quem grava é o webhook do Stripe no servidor) */

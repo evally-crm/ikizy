@@ -109,6 +109,8 @@ export interface SubscriptionInfo {
   hasCustomer: boolean
   /** a dona já passou pela escolha de plano do cadastro (cartão ou Pix) */
   planChosen: boolean
+  /** cortesia da IKIZY (conta do master): acesso sem vencimento e sem cobrança */
+  complimentary: boolean
 }
 
 /**
@@ -134,6 +136,7 @@ export const WARN_DAYS = 7
 export const isCardTrial = (sub: SubscriptionInfo) => sub.status === 'trialing' && sub.method === 'card'
 
 export function accessState(sub: SubscriptionInfo, now = new Date()): AccessState {
+  if (sub.complimentary) return 'active'
   if (sub.accessUntil.getTime() <= now.getTime()) return 'expired'
   if (isCardTrial(sub)) return 'active'
   if (sub.status === 'trialing') return 'trial'
@@ -171,6 +174,7 @@ export function parseSubscription(row: Record<string, unknown>): SubscriptionInf
     cancelAtPeriodEnd: row.cancel_at_period_end === true,
     hasCustomer: typeof row.stripe_customer_id === 'string' && row.stripe_customer_id.length > 0,
     planChosen: typeof row.plan_chosen_at === 'string',
+    complimentary: row.complimentary === true,
   }
 }
 
@@ -179,6 +183,7 @@ const shortDate = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-d
 /** uma linha para mostrar na conta: 'Solo · teste grátis, restam 21 dias' */
 export function describeSubscription(sub: SubscriptionInfo, now = new Date()): string {
   const name = PLANS[sub.plan].name
+  if (sub.complimentary) return name + ' · cortesia, sem vencimento'
   if (isCardTrial(sub) && sub.accessUntil.getTime() > now.getTime()) return name + ' · assinatura ativa, 1ª cobrança em ' + shortDate.format(periodEnd(sub))
   switch (accessState(sub, now)) {
     case 'trial': {

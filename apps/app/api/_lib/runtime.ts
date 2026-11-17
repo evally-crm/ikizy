@@ -251,7 +251,7 @@ export function createReminderDb(): ReminderDb {
       const rows = (await sql`
         select s.salon_id, sa.name, s.notify_email, s.status, s.billing_method, s.cancel_at_period_end, s.access_until
         from public.subscriptions s join public.salons sa on sa.id = s.salon_id
-        where s.notify_email is not null
+        where s.notify_email is not null and not s.complimentary
           and (s.status = 'past_due' or (s.access_until > now() - interval '4 days' and s.access_until < now() + interval '8 days'))`) as Row[]
       return rows.map(
         (r): ReminderCandidate => ({
@@ -644,7 +644,7 @@ export function createHousekeepingDb(): HousekeepingDb {
         select sa.id, sa.name, sa.slug, s.status, s.access_until, s.notify_email,
                (select l.sent_at from public.email_log l where l.key = 'retention-warn:' || sa.id::text) as warned_at
         from public.salons sa join public.subscriptions s on s.salon_id = sa.id
-        where s.status <> 'active' and sa.deletion_scheduled_at is null
+        where s.status <> 'active' and not s.complimentary and sa.deletion_scheduled_at is null
           and s.access_until < ${now.toISOString()}::timestamptz - interval '83 days'`) as Row[]
       return rows.map(
         (r): RetentionCandidate => ({

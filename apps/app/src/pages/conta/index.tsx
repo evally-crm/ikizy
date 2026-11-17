@@ -83,7 +83,7 @@ export default function Conta() {
     }
     setExporting(false)
   }
-  const trialDays = sub?.status === 'trialing' ? daysLeft(isCardTrial(sub) ? periodEnd(sub) : sub.accessUntil) : 0
+  const trialDays = sub?.status === 'trialing' && !sub.complimentary ? daysLeft(isCardTrial(sub) ? periodEnd(sub) : sub.accessUntil) : 0
   const first = displayName.split(' ')[0]
 
   return (

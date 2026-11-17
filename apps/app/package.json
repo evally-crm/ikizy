@@ -14,6 +14,7 @@
     "stripe:setup": "tsx scripts/stripe-setup.ts",
     "db:migrate": "tsx scripts/migrate.ts",
     "db:migrate:dev": "tsx scripts/migrate.ts --dev",
+    "db:cortesia": "tsx scripts/cortesia.ts",
     "test:domain": "tsx --test \"src/domain/**/*.test.ts\" \"src/lib/**/*.test.ts\"",
     "test": "npm run test:api && npm run test:domain",
     "check:conventions": "node scripts/check-conventions.mjs",

@@ -60,7 +60,7 @@ function useSections(): { all: NavItem[]; bar: NavItem[]; sheet: NavItem[] } {
 /** linha discreta do teste grátis, no menu do avatar e no "Mais" */
 function TrialLine() {
   const { sub } = useSubscription()
-  if (!sub || sub.status !== 'trialing') return null
+  if (!sub || sub.complimentary || sub.status !== 'trialing') return null
   const days = daysLeft(isCardTrial(sub) ? periodEnd(sub) : sub.accessUntil)
   if (days <= 0) return null
   return (
@@ -152,7 +152,7 @@ function PlanCard() {
   const { sub } = useSubscription()
   const isOwner = !salon || salon.role === 'owner'
   if (!sub || !isOwner) return null
-  const trialDays = sub.status === 'trialing' ? daysLeft(isCardTrial(sub) ? periodEnd(sub) : sub.accessUntil) : 0
+  const trialDays = sub.status === 'trialing' && !sub.complimentary ? daysLeft(isCardTrial(sub) ? periodEnd(sub) : sub.accessUntil) : 0
   return (
     <NavLink to={dash('/assinatura')} className="plancard">
       <span className="plancard__icon">

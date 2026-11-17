@@ -154,7 +154,8 @@ export default function Assinatura() {
                   Teste grátis · restam <Em>{daysLeft(sub.accessUntil)} dias</Em>
                 </>
               )}
-              {state === 'active' && <>Assinatura ativa</>}
+              {sub.complimentary && <>Cortesia · <Em>sem vencimento</Em></>}
+              {state === 'active' && !sub.complimentary && <>Assinatura ativa</>}
               {state === 'ending' && <>Seu acesso termina em breve</>}
               {state === 'past_due' && <>Pagamento pendente</>}
               {state === 'expired' && <>Acesso encerrado</>}
@@ -162,7 +163,8 @@ export default function Assinatura() {
             <p className="billing-status__text">
               {state === 'trial' && `Sem cartão. O teste vai até ${longDate.format(sub.accessUntil)}.`}
               {isCardTrial(sub) && `Teste grátis até ${longDate.format(periodEnd(sub))}. Depois, cobramos ${formatBRL(PLANS[sub.plan].cents / 100)}/mês no cartão, e você pode cancelar antes pelo portal.`}
-              {state === 'active' && sub.method === 'card' && !isCardTrial(sub) && `Renova automaticamente no cartão em ${longDate.format(periodEnd(sub))}.`}
+              {sub.complimentary && 'Conta da IKIZY: tudo liberado, sem cobrança e sem data para acabar.'}
+              {state === 'active' && !sub.complimentary && sub.method === 'card' && !isCardTrial(sub) && `Renova automaticamente no cartão em ${longDate.format(periodEnd(sub))}.`}
               {state === 'active' && sub.method === 'pix' && `Pago por Pix. Acesso até ${longDate.format(sub.accessUntil)}. Para renovar, pague de novo antes dessa data.`}
               {state === 'ending' && `Acesso até ${longDate.format(periodEnd(sub))}. Depois disso o sistema abre só para leitura.`}
               {state === 'past_due' && 'Não conseguimos cobrar o cartão. Atualize o pagamento para manter o acesso.'}
@@ -185,7 +187,7 @@ export default function Assinatura() {
 
       {!isOwner && sub && <p className="billing-note">Só a dona do negócio pode assinar ou mudar o plano.</p>}
 
-      {sub && (
+      {sub && !sub.complimentary && (
       <section aria-labelledby="pix-months" className="billing-pix">
         <p id="pix-months" className="billing-pix__label">
           Se pagar com Pix, quantos meses adiantado?
@@ -204,7 +206,7 @@ export default function Assinatura() {
       </section>
       )}
 
-      {sub && (
+      {sub && !sub.complimentary && (
       <div className="billing-plans">
         {PLAN_IDS.map((id) => {
           const plan = PLANS[id]
