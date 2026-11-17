@@ -15,6 +15,8 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   reporter: [['list']],
   use: {
+    // PW_CHANNEL=chrome (ou msedge) usa o navegador já instalado, sem baixar o do Playwright
+    channel: process.env.PW_CHANNEL || undefined,
     baseURL: `http://localhost:${PORT}`,
     locale: 'pt-BR',
     timezoneId: 'America/Sao_Paulo',

@@ -1,7 +1,8 @@
 import { HttpError } from './_lib/billing.js'
 import { checkBookingLimits, createBooking, listSlots, parseBookingInput, parseSlotsQuery, tooManyFromIp, verifyCaptcha } from './_lib/booking.js'
 import { notifyNewRequest } from './_lib/notify.js'
-import { appUrl, createBookingDb, createNotifyDb, fail, json, sendEmail } from './_lib/runtime.js'
+import { pushNewRequest } from './_lib/push.js'
+import { appUrl, createBookingDb, createNotifyDb, createPushDb, createPushSender, fail, json, sendEmail } from './_lib/runtime.js'
 
 /** GET /api/booking?slug=&service=&date=YYYY-MM-DD[&professional=] -> { slots: [{ professional_id, professional, minute }] } */
 export async function GET(request: Request) {
@@ -35,6 +36,9 @@ export async function POST(request: Request) {
       clientName: input.name,
       clientPhone: input.phone,
     })
+    // aviso no aparelho de quem trata pedidos (se os avisos estiverem configurados); nunca atrapalha a resposta
+    const sender = createPushSender()
+    if (sender) await pushNewRequest({ db: createPushDb(), send: sender }, input.slug, { id: booking.id, startsAt: booking.starts_at, service: booking.service, clientName: input.name })
     return json({ booking }, 201)
   } catch (error) {
     return fail(error)

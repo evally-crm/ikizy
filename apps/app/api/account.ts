@@ -11,6 +11,7 @@ import {
 } from './_lib/account.js'
 import { HttpError } from './_lib/billing.js'
 import { exportData } from './_lib/export.js'
+import { subscribe as pushSubscribe, unsubscribe as pushUnsubscribe } from './_lib/push.js'
 import { sendWelcome } from './_lib/notify.js'
 import type { LimitKey } from './_lib/throttle.js'
 import {
@@ -19,12 +20,14 @@ import {
   createAccountDb,
   createAccountDeps,
   createExportLoader,
+  createPushDb,
   createNotifyDb,
   fail,
   json,
   limitUser,
   sendEmail,
   setNotifyEmail,
+  vapidPublicKey,
 } from './_lib/runtime.js'
 
 type User = Awaited<ReturnType<typeof authenticate>>
@@ -65,6 +68,18 @@ const ACTIONS: Record<string, (user: User, body: unknown) => Promise<unknown>> =
   },
   /** o que a tela "Excluir conta" mostra antes de confirmar: quanto o negócio tem e quando a exclusão acontece */
   summary: (user) => accountSummary(createAccountDb(), user.id),
+  /** -> { publicKey }: a chave dos avisos no aparelho (null = avisos não configurados neste ambiente) */
+  'push-config': async () => ({ publicKey: vapidPublicKey() }),
+  /** { subscription, userAgent? } -> liga o aviso de pedido novo neste aparelho (dona, gerente e recepção) */
+  'push-subscribe': async (user, body) => {
+    if (!vapidPublicKey()) throw new HttpError(503, 'push_not_configured', 'Os avisos ainda não estão ligados neste ambiente.')
+    const member = await createAccountDb().getMembership(user.id)
+    if (!member) throw new HttpError(403, 'forbidden', 'Seu perfil não recebe avisos de pedido.')
+    const ua = (body as { userAgent?: unknown } | null)?.userAgent
+    return pushSubscribe(createPushDb(), user, member.salonId, body, typeof ua === 'string' ? ua : null)
+  },
+  /** { endpoint } -> desliga o aviso neste aparelho */
+  'push-unsubscribe': (user, body) => pushUnsubscribe(createPushDb(), user, body),
   /** a dona desiste da exclusão agendada */
   'cancel-delete': (user) => cancelDeletion(createAccountDeps(), user),
   /** -> { admin, deletionAt }: se quem está logada é master e quando a exclusão dela acontece (null = nada agendado) */
