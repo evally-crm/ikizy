@@ -176,14 +176,67 @@ function load(): Studio {
   return DEFAULT_STUDIO
 }
 
-/** rascunho não publicado guardado na aba: sobrevive a ir para Meu negócio (ou outra tela) e voltar */
+/**
+ * rascunho não publicado, guardado automaticamente neste aparelho: sobrevive a ir para outra tela, a fechar o navegador e a voltar dias depois.
+ * Vai para o localStorage; se não couber (fotos grandes) ou não existir, cai para a aba (sessionStorage). Some sozinho depois de 30 dias.
+ */
 const draftKey = (salonId: string | undefined) => `ikizy:studio:draft:${salonId ?? 'demo'}`
+const DRAFT_MAX_AGE_MS = 30 * 24 * 3600 * 1000
+
+function readDraft(salonId: string | undefined): string | null {
+  const key = draftKey(salonId)
+  try {
+    const raw = localStorage.getItem(key)
+    if (raw) {
+      const at = Number(localStorage.getItem(`${key}:at`) ?? 0)
+      if (at && Date.now() - at > DRAFT_MAX_AGE_MS) clearDraft(salonId)
+      else return raw
+    }
+  } catch {
+    /* sem storage: tenta a aba */
+  }
+  try {
+    return sessionStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+function writeDraft(salonId: string | undefined, draft: Studio) {
+  const key = draftKey(salonId)
+  const raw = JSON.stringify(draft)
+  try {
+    localStorage.setItem(key, raw)
+    localStorage.setItem(`${key}:at`, String(Date.now()))
+    sessionStorage.removeItem(key)
+    return
+  } catch {
+    /* não coube: segue para a aba */
+  }
+  try {
+    sessionStorage.setItem(key, raw)
+  } catch {
+    /* sem espaço em lugar nenhum: segue só na memória */
+  }
+}
+
+function clearDraft(salonId: string | undefined) {
+  const key = draftKey(salonId)
+  for (const store of [() => localStorage, () => sessionStorage]) {
+    try {
+      store().removeItem(key)
+      store().removeItem(`${key}:at`)
+    } catch {
+      /* sem storage */
+    }
+  }
+}
 
 /** junta o rascunho guardado à versão recém-carregada; dos serviços e produtos de custo, só a escolha do site
  * (foto e "No site") vem do rascunho: nome, preço e duração valem como estão em Meu negócio */
 function restoreDraft(salonId: string | undefined, fresh: Studio): Studio {
   try {
-    const raw = sessionStorage.getItem(draftKey(salonId))
+    const raw = readDraft(salonId)
     if (!raw) return fresh
     const saved = normalize({ ...fresh, ...JSON.parse(raw) })
     const savedServices = new Map(saved.services.map((s) => [s.id, s]))
@@ -628,12 +681,8 @@ export function useStudio() {
   // guarda o rascunho enquanto houver alteração não publicada (só depois de carregar, para não apagar o guardado)
   useEffect(() => {
     if (loading) return
-    try {
-      if (dirty) sessionStorage.setItem(draftKey(salonId), JSON.stringify(draft))
-      else sessionStorage.removeItem(draftKey(salonId))
-    } catch {
-      /* sem espaço (fotos grandes) ou sem storage: segue só na memória */
-    }
+    if (dirty) writeDraft(salonId, draft)
+    else clearDraft(salonId)
   }, [draft, dirty, loading, salonId])
 
   // avisa antes de sair com alterações não publicadas

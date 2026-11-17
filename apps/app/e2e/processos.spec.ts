@@ -84,6 +84,19 @@ test.describe('Meu site', () => {
     expect(errors).toEqual([])
   })
 
+  test('o rascunho é guardado sozinho: fechar e abrir de novo não perde o que foi mudado', async ({ page, context }) => {
+    await page.goto('/dashboard/site')
+    const nav = page.getByRole('navigation', { name: 'Partes do site' })
+    await nav.getByRole('button', { name: /^Visual/ }).first().click()
+    await page.getByRole('radio', { name: 'Rosa', exact: true }).check({ force: true })
+    // outra aba (sem a memória da primeira): o rascunho vem do aparelho
+    const other = await context.newPage()
+    await other.clock.setFixedTime(NOW)
+    await other.goto('/dashboard/site')
+    await other.getByRole('navigation', { name: 'Partes do site' }).getByRole('button', { name: /^Visual/ }).first().click()
+    await expect(other.getByRole('radio', { name: 'Rosa', exact: true })).toBeChecked()
+  })
+
   test('o botão do site segue o agendamento online: Agendar ligado, WhatsApp desligado', async ({ page }) => {
     await page.goto('/dashboard/site')
     const nav = page.getByRole('navigation', { name: 'Partes do site' })
