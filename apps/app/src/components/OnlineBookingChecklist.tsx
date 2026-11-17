@@ -61,8 +61,9 @@ export default function OnlineBookingChecklist({ whatsapp, online, bare = false 
     {
       id: 'whatsapp',
       title: 'WhatsApp do salão',
-      detail: whatsapp.trim() ? 'É por ele que o cliente fala com você e você responde aos pedidos.' : 'Preencha o WhatsApp em Contato.',
+      detail: whatsapp.trim() ? 'É por ele que o cliente fala com você e você responde aos pedidos.' : 'Preencha o WhatsApp em Meu negócio.',
       state: whatsapp.trim() ? 'ok' : 'todo',
+      action: whatsapp.trim() ? undefined : { to: dash('/negocio'), label: 'Preencher' },
     },
     {
       id: 'rules',

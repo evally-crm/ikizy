@@ -183,31 +183,47 @@ function load(): Studio {
 const draftKey = (salonId: string | undefined) => `ikizy:studio:draft:${salonId ?? 'demo'}`
 const DRAFT_MAX_AGE_MS = 30 * 24 * 3600 * 1000
 
-function readDraft(salonId: string | undefined): string | null {
+/**
+ * "assinatura" do que está publicado (só as opções do site, sem nome, contatos e horário, que vêm de outras telas). O rascunho guarda a assinatura da
+ * versão em que foi feito: se o site publicado mudou depois (outro aparelho, outra publicação), o rascunho velho é descartado em vez de sobrescrevê-lo.
+ */
+const baseSignature = (s: Studio) => {
+  const { salonName: _n, whatsapp: _w, instagram: _i, address: _a, hours: _h, ...rest } = s.site
+  return JSON.stringify(rest)
+}
+
+function readDraft(salonId: string | undefined, fresh: Studio): string | null {
   const key = draftKey(salonId)
+  const sig = baseSignature(fresh)
   try {
     const raw = localStorage.getItem(key)
     if (raw) {
       const at = Number(localStorage.getItem(`${key}:at`) ?? 0)
-      if (at && Date.now() - at > DRAFT_MAX_AGE_MS) clearDraft(salonId)
+      const base = localStorage.getItem(`${key}:base`)
+      if ((at && Date.now() - at > DRAFT_MAX_AGE_MS) || base !== sig) clearDraft(salonId)
       else return raw
     }
   } catch {
     /* sem storage: tenta a aba */
   }
   try {
-    return sessionStorage.getItem(key)
+    const raw = sessionStorage.getItem(key)
+    if (raw && sessionStorage.getItem(`${key}:base`) === sig) return raw
+    if (raw) clearDraft(salonId)
   } catch {
-    return null
+    /* sem storage */
   }
+  return null
 }
 
-function writeDraft(salonId: string | undefined, draft: Studio) {
+function writeDraft(salonId: string | undefined, draft: Studio, published: Studio) {
   const key = draftKey(salonId)
   const raw = JSON.stringify(draft)
+  const base = baseSignature(published)
   try {
     localStorage.setItem(key, raw)
     localStorage.setItem(`${key}:at`, String(Date.now()))
+    localStorage.setItem(`${key}:base`, base)
     sessionStorage.removeItem(key)
     return
   } catch {
@@ -215,6 +231,7 @@ function writeDraft(salonId: string | undefined, draft: Studio) {
   }
   try {
     sessionStorage.setItem(key, raw)
+    sessionStorage.setItem(`${key}:base`, base)
   } catch {
     /* sem espaço em lugar nenhum: segue só na memória */
   }
@@ -226,6 +243,7 @@ function clearDraft(salonId: string | undefined) {
     try {
       store().removeItem(key)
       store().removeItem(`${key}:at`)
+      store().removeItem(`${key}:base`)
     } catch {
       /* sem storage */
     }
@@ -236,12 +254,14 @@ function clearDraft(salonId: string | undefined) {
  * (foto e "No site") vem do rascunho: nome, preço e duração valem como estão em Meu negócio */
 function restoreDraft(salonId: string | undefined, fresh: Studio): Studio {
   try {
-    const raw = readDraft(salonId)
+    const raw = readDraft(salonId, fresh)
     if (!raw) return fresh
     const saved = normalize({ ...fresh, ...JSON.parse(raw) })
     const savedServices = new Map(saved.services.map((s) => [s.id, s]))
     return {
       ...saved,
+      // nome, WhatsApp, Instagram e endereço são editados só em Meu negócio: um rascunho antigo nunca sobrepõe o que está salvo lá
+      site: { ...saved.site, salonName: fresh.site.salonName, whatsapp: fresh.site.whatsapp, instagram: fresh.site.instagram, address: fresh.site.address },
       products: fresh.products,
       services: fresh.services.map((s) => {
         const prev = savedServices.get(s.id)
@@ -450,8 +470,8 @@ export function useStudio() {
       if (name.length < 2) return 'O nome do salão precisa ter pelo menos 2 caracteres.'
       if (site.slug.length < 3) return 'O endereço precisa ter pelo menos 3 caracteres.'
 
-      // 1) nome e endereço do negócio
-      const sal = await neon.from('salons').update({ name, slug: site.slug }).eq('id', salonId).select('id')
+      // 1) endereço da página (o nome, o WhatsApp, o Instagram e o endereço do salão são de Meu negócio: publicar aqui nunca os sobrescreve)
+      const sal = await neon.from('salons').update({ slug: site.slug }).eq('id', salonId).select('id')
       if (sal.error) return friendlyPublishError(sal.error)
       if (!sal.data?.length) return 'Só quem é dona ou gerente pode publicar o site.'
 
@@ -606,8 +626,6 @@ export function useStudio() {
           salon_id: salonId,
           tagline: site.tagline,
           about: site.about,
-          whatsapp: site.whatsapp,
-          instagram: site.instagram,
           hours: site.hours,
           palette: site.palette,
           accent_color: null,
@@ -615,7 +633,6 @@ export function useStudio() {
           cover_style: site.coverStyle,
           logo: logoId,
           cover: coverId,
-          address: site.address.trim(),
           show_prices: site.showPrices,
           show_team: site.showTeam,
           deposit_percent: site.depositPercent,
@@ -694,9 +711,9 @@ export function useStudio() {
   // Se o site não carregou (erro de rede), o editor está em branco: guardar esse rascunho em branco apagaria, na volta, o que já estava publicado.
   useEffect(() => {
     if (loading || error) return
-    if (dirty) writeDraft(salonId, draft)
+    if (dirty) writeDraft(salonId, draft, published)
     else clearDraft(salonId)
-  }, [draft, dirty, loading, error, salonId])
+  }, [draft, dirty, loading, error, salonId, published])
 
   // avisa antes de sair com alterações não publicadas
   useEffect(() => {

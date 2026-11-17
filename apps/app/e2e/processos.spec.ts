@@ -138,7 +138,7 @@ test.describe('Meu negócio', () => {
     const days = dialog.getByRole('switch')
     await expect(days.first()).toBeVisible()
     const closed = dialog.locator('.hours__row:not(.is-open)').first()
-    if (await closed.count()) await closed.getByRole('switch').check({ force: true })
+    if (await closed.count()) await closed.locator('label.switch').click() // toque na chave, como a usuária
     const save = dialog.getByRole('button', { name: 'Salvar horários' })
     await expect(save).toBeEnabled()
     await save.click()

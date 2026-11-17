@@ -50,17 +50,22 @@ function Ideas({ ideas, current, onPick }: { ideas: string[]; current: string; o
   )
 }
 
-/** nome, frase de destaque e texto "sobre" */
+/** linha somente de leitura de um dado que se edita em Meu negócio (um lugar só para mudar) */
+function FromBusiness({ label, value, empty }: { label: string; value: string; empty: string }) {
+  return (
+    <SettingRow label={label} hint={value || empty}>
+      <Link className="textlink" to={dash('/negocio')}>
+        Mudar em Meu negócio
+      </Link>
+    </SettingRow>
+  )
+}
+
+/** nome (vem de Meu negócio), frase de destaque e texto "sobre" */
 export function TextFields({ site, setSite, categories = [] }: { site: SiteConfig; setSite: SetSite; categories?: string[] }) {
   return (
     <Group title="Textos da página">
-      <Field label="Nome do salão">
-        {(id) => (
-          <span className="input">
-            <input id={id} value={site.salonName} maxLength={40} onChange={(e) => setSite('salonName', e.target.value)} />
-          </span>
-        )}
-      </Field>
+      <FromBusiness label="Nome do salão" value={site.salonName} empty="Ainda sem nome" />
       <Field label="Frase de destaque" hint="A última palavra vira o destaque em itálico.">
         {(id) => (
           <span className="input">
@@ -85,7 +90,7 @@ export function TextFields({ site, setSite, categories = [] }: { site: SiteConfi
 export function ContactFields({ site, setSite, slugReserved }: { site: SiteConfig; setSite: SetSite; slugReserved: boolean }) {
   return (
     <>
-      <Group title="Endereço da página">
+      <Group title="Link do site">
         <Field
           label="Endereço da página"
           hint={slugReserved ? 'Esse endereço é reservado. Escolha outro.' : 'É o link que você coloca no Instagram e no WhatsApp.'}
@@ -99,29 +104,9 @@ export function ContactFields({ site, setSite, slugReserved }: { site: SiteConfi
         </Field>
       </Group>
       <Group title="Contato e atendimento">
-        <div className="form__pair">
-          <Field label="WhatsApp">
-            {(id) => (
-              <span className="input">
-                <input id={id} inputMode="tel" value={site.whatsapp} onChange={(e) => setSite('whatsapp', e.target.value)} />
-              </span>
-            )}
-          </Field>
-          <Field label="Instagram">
-            {(id) => (
-              <span className="input">
-                <input id={id} value={site.instagram} onChange={(e) => setSite('instagram', e.target.value)} />
-              </span>
-            )}
-          </Field>
-        </div>
-        <Field label="Endereço do salão" hint="Aparece na página com link para o mapa. Deixe vazio se atende em domicílio.">
-          {(id) => (
-            <span className="input">
-              <input id={id} value={site.address} maxLength={120} autoComplete="street-address" onChange={(e) => setSite('address', e.target.value)} />
-            </span>
-          )}
-        </Field>
+        <FromBusiness label="WhatsApp" value={site.whatsapp} empty="Ainda não preenchido" />
+        <FromBusiness label="Instagram" value={site.instagram} empty="Ainda não preenchido" />
+        <FromBusiness label="Endereço do salão" value={site.address} empty="Ainda não preenchido (deixe vazio se atende em domicílio)" />
         <SettingRow label="Horário de atendimento" hint={site.hours || 'Ainda sem horário definido'}>
           <Link className="textlink" to={dash('/negocio#horario')}>
             Mudar na agenda
