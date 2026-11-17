@@ -316,28 +316,38 @@ export function useStudio() {
     if (!live || !neon || !salonId) return
     let cancelled = false
     void (async () => {
-      const [settings, svcs, prods, salonRow, shop, plans] = await Promise.all([
-        neon.from('site_settings').select('*').eq('salon_id', salonId).maybeSingle(),
-        neon
-          .from('services')
-          .select('id, name, category, price, duration, monthly_volume, product_id, visible, photo_id')
-          .eq('salon_id', salonId)
-          .order('created_at'),
-        neon.from('products').select('id, name, monthly_spend').eq('salon_id', salonId).order('created_at'),
-        neon.from('salons').select('name, slug').eq('id', salonId).maybeSingle(),
-        neon
-          .from('showcase_items')
-          .select('id, name, description, price, photo_id, visible')
-          .eq('salon_id', salonId)
-          .order('position')
-          .order('created_at'),
-        neon
-          .from('client_plans')
-          .select('id, name, description, price, includes, is_new, visible')
-          .eq('salon_id', salonId)
-          .order('position')
-          .order('created_at'),
-      ])
+      const db = neon
+      const fetchAll = () =>
+        Promise.all([
+          db.from('site_settings').select('*').eq('salon_id', salonId).maybeSingle(),
+          db
+            .from('services')
+            .select('id, name, category, price, duration, monthly_volume, product_id, visible, photo_id')
+            .eq('salon_id', salonId)
+            .order('created_at'),
+          db.from('products').select('id, name, monthly_spend').eq('salon_id', salonId).order('created_at'),
+          db.from('salons').select('name, slug').eq('id', salonId).maybeSingle(),
+          db
+            .from('showcase_items')
+            .select('id, name, description, price, photo_id, visible')
+            .eq('salon_id', salonId)
+            .order('position')
+            .order('created_at'),
+          db
+            .from('client_plans')
+            .select('id, name, description, price, includes, is_new, visible')
+            .eq('salon_id', salonId)
+            .order('position')
+            .order('created_at'),
+        ])
+      const failed = (r: Awaited<ReturnType<typeof fetchAll>>) => Boolean(r[0].error || r[1].error || r[2].error || r[3].error || !r[3].data)
+      let result = await fetchAll()
+      // logo depois de abrir a página a sessão pode ainda estar sendo renovada: uma segunda tentativa evita mostrar erro à toa
+      if (!cancelled && failed(result)) {
+        await new Promise((resolve) => setTimeout(resolve, 900))
+        if (!cancelled) result = await fetchAll()
+      }
+      const [settings, svcs, prods, salonRow, shop, plans] = result
       if (cancelled) return
       // a vitrine pode não existir ainda neste ambiente (migration pendente): o resto do editor continua funcionando
       if (settings.error || svcs.error || prods.error || salonRow.error || !salonRow.data) {
