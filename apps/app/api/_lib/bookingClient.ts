@@ -13,7 +13,7 @@ body:has(dialog.sheet[open]){overflow:hidden}
 .sheet__x{display:grid;place-items:center;width:44px;height:44px;border:1px solid var(--line);border-radius:50%;background:var(--panel);font-size:22px;line-height:1;cursor:pointer;color:var(--text)}
 .sheet__body{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px 22px 18px}
 .sheet__foot{display:flex;gap:10px;padding:12px 22px calc(16px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
-.sheet__foot .btn{flex:1;min-height:54px;cursor:pointer;font:inherit;font-weight:500}
+.sheet__foot .btn{flex:1;min-height:54px;padding:0 16px;white-space:nowrap;cursor:pointer;font:inherit;font-weight:500}
 .sheet__foot .btn:disabled{opacity:.45;cursor:not-allowed}
 .sheet__foot .btn--light{background:var(--panel);color:var(--ink);border-color:var(--line);flex:0 0 auto;padding:0 22px}
 .bk-lead{margin:0 0 14px;color:var(--muted);font-size:15px}
@@ -24,6 +24,13 @@ body:has(dialog.sheet[open]){overflow:hidden}
 .bk-opt b{color:var(--accent);font-weight:600;white-space:nowrap}
 .bk-chosen{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;margin-bottom:14px;border-radius:18px;background:var(--soft)}
 .bk-chosen button{border:0;background:none;color:var(--accent);font:inherit;text-decoration:underline;cursor:pointer}
+.bk-chosen--list{display:block}
+.bk-chosen--list ul{list-style:none;margin:0;padding:0}
+.bk-chosen--list li{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:4px 0}
+.bk-chosen--list small{color:var(--muted)}
+.bk-total{margin:8px 0 0;padding-top:8px;border-top:1px solid var(--line);font-size:14px;font-weight:600}
+.bk-add{display:inline-flex;align-items:center;gap:6px;min-height:42px;padding:0 18px;margin:0 0 6px;border:0;border-radius:999px;background:var(--accent);color:var(--on);font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.bk-add:hover{filter:brightness(.92)}
 .bk-label{margin:14px 0 8px;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
 .bk-wk{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:14px 0 8px}
 .bk-wk span{font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
@@ -53,8 +60,10 @@ body:has(dialog.sheet[open]){overflow:hidden}
 .bk-hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
 .bk-err{margin:0 0 12px;padding:12px 14px;border-radius:14px;background:#fdeaea;color:#8a1c1c;font-size:14px}
 .bk-sum{margin:0 0 16px;padding:14px 16px;border-radius:18px;background:var(--soft);line-height:1.5}
-.bk-ok{display:grid;place-items:center;width:64px;height:64px;margin:6px auto 14px;border-radius:50%;background:#fbf0d9;color:#9a6200;font-size:30px}
-.bk-wait{margin:0 0 14px;padding:12px 14px;border-radius:14px;background:#fbf0d9;color:#6b4400;font-size:14px;line-height:1.5;text-align:left}
+.bk-ok{display:grid;place-items:center;width:60px;height:60px;margin:6px auto 14px;border-radius:50%;border:1px solid var(--line);background:var(--panel);color:var(--accent)}
+.bk-wait{margin:0 0 16px;color:var(--muted);font-size:15px;line-height:1.5}
+.bk-wait strong{color:inherit;font-weight:600}
+.bk-done .bk-sum{background:var(--panel);border:1px solid var(--line)}
 .bk-done{text-align:center}
 .bk-done h3{font-size:26px;margin-bottom:8px}
 .bk-ts{display:flex;justify-content:center}
@@ -68,7 +77,8 @@ export const BOOKING_SCRIPT = `
   var D=JSON.parse(document.getElementById('book-data').textContent);
   var body=document.getElementById('book-body'), foot=document.getElementById('book-foot');
   var TZ='America/Sao_Paulo';
-  var S={off:0,step:0,service:null,date:null,minute:null,pro:'',slots:null,error:'',name:'',phone:'',consent:false,done:null,busy:false,token:0,captcha:''};
+  var MAXS=4;
+  var S={off:0,step:0,list:[],adding:false,date:null,minute:null,pro:'',slots:null,error:'',name:'',phone:'',consent:false,done:null,busy:false,token:0,captcha:''};
   // Turnstile (só com a chave configurada na Vercel): carrega uma vez, fora do corpo que é redesenhado
   var TS=null,tsBox=null;
   function captchaStart(){
@@ -89,9 +99,15 @@ export const BOOKING_SCRIPT = `
   /* o profissional escolhido (ou qualquer um) atende nesse dia da semana? Sem a lista (página antiga), todo dia vale. */
   /* profissionais que fazem o serviço (sem a lista, todas fazem) */
   function prosOf(x){if(!x||!x.pros)return D.pros;return D.pros.filter(function(p){return x.pros.indexOf(p.id)>=0})}
+  /* serviços escolhidos, na ordem; e quem faz todos eles (mão + pé: a mesma profissional faz os dois, um depois do outro) */
+  function chosen(){return S.list.map(svc).filter(Boolean)}
+  function prosAll(){var ps=D.pros;chosen().forEach(function(x){var ok=prosOf(x);ps=ps.filter(function(p){return ok.indexOf(p)>=0})});return ps}
+  function total(k){var t=0,any=false;chosen().forEach(function(x){if(x[k]!=null){t+=x[k];any=true}});return any?t:null}
+  function names(){return chosen().map(function(x){return x.name}).join(' + ')}
+  function mins(n){var h=Math.floor(n/60),m=n%60;return h?h+'h'+(m?(m<10?'0':'')+m:''):m+' min'}
   /* trocou de serviço: a profissional escolhida antes pode não fazer este */
-  function fixPro(){if(S.pro&&!prosOf(svc(S.service)).some(function(p){return p.id===S.pro}))S.pro=''}
-  function openOn(d){if(!D.open)return true;var w=mk(d).getUTCDay(),ids=S.pro?[S.pro]:prosOf(svc(S.service)).map(function(p){return p.id});for(var i=0;i<ids.length;i++){var l=D.open[ids[i]]||[];if(l.indexOf(w)>=0)return true}return false}
+  function fixPro(){if(S.pro&&!prosAll().some(function(p){return p.id===S.pro}))S.pro=''}
+  function openOn(d){if(!D.open)return true;var w=mk(d).getUTCDay(),ids=S.pro?[S.pro]:prosAll().map(function(p){return p.id});for(var i=0;i<ids.length;i++){var l=D.open[ids[i]]||[];if(l.indexOf(w)>=0)return true}return false}
   function firstOpen(){var t=today();for(var n=0;n<D.windowDays;n++){if(openOn(addDays(t,n))){S.off=7*Math.floor(n/7);return addDays(t,n)}}return t}
   function wd(s){return mk(s).toLocaleDateString('pt-BR',{weekday:'short',timeZone:'UTC'}).replace('.','')}
   function full(s){return mk(s).toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',timeZone:'UTC'})}
@@ -99,14 +115,14 @@ export const BOOKING_SCRIPT = `
 
   function openSheet(id){
     /* fechou sem terminar e abriu de novo pelo botão geral: continua de onde parou (os horários são buscados de novo) */
-    if(!id&&S.service&&!S.done&&!S.busy){
+    if(!id&&S.list.length&&!S.done&&!S.busy){
       S.error='';render();
       if(!dlg.open)dlg.showModal();fit();
       captchaStart();
       if(S.date){if(S.step>1)S.step=1;pickDay(S.date)}
       return;
     }
-    S.service=id||null;fixPro();S.step=id?1:0;S.off=0;S.date=null;S.minute=null;S.slots=null;S.error='';S.done=null;S.busy=false;
+    S.list=id?[id]:[];S.adding=false;fixPro();S.step=id?1:0;S.off=0;S.date=null;S.minute=null;S.slots=null;S.error='';S.done=null;S.busy=false;
     render();
     if(!dlg.open)dlg.showModal();fit();
     captchaStart();
@@ -120,7 +136,7 @@ export const BOOKING_SCRIPT = `
   function pickDay(date){
     S.date=date;S.minute=null;S.slots=null;S.error='';
     var t=++S.token;render();
-    var q='/api/booking?slug='+encodeURIComponent(D.slug)+'&service='+encodeURIComponent(S.service)+'&date='+date+(S.pro?'&professional='+encodeURIComponent(S.pro):'');
+    var q='/api/booking?slug='+encodeURIComponent(D.slug)+'&service='+encodeURIComponent(S.list.join(','))+'&date='+date+(S.pro?'&professional='+encodeURIComponent(S.pro):'');
     fetch(q).then(function(r){return r.json()}).then(function(j){
       if(t!==S.token)return;
       S.slots=j.slots||[];if(j.message&&!j.slots)S.error=j.message;render();
@@ -137,20 +153,30 @@ export const BOOKING_SCRIPT = `
   }
 
   function view(){
-    var s=svc(S.service),h='';
+    var h='',list=chosen();
     if(S.step===0){
-      h+='<p class="bk-lead">Escolha o serviço que você quer agendar.</p>';
+      h+=S.adding?'<p class="bk-lead">Escolha mais um serviço para fazer no mesmo horário, logo em seguida.</p>':'<p class="bk-lead">Escolha o serviço que você quer agendar.</p>';
       var cats={},order=[];
       D.services.forEach(function(x){if(!cats[x.category]){cats[x.category]=[];order.push(x.category)}cats[x.category].push(x)});
       order.forEach(function(c){
         h+='<p class="bk-cat">'+e(c)+'</p>';
         cats[c].forEach(function(x){
+          if(S.adding&&S.list.indexOf(x.id)>=0)return;
           h+='<button type="button" class="bk-opt" data-act="svc" data-id="'+e(x.id)+'"><span>'+e(x.name)+'<small>'+e(x.duration)+' min</small></span>'+(D.showPrices&&x.price!=null?'<b>'+e(money(x.price))+'</b>':'')+'</button>';
         });
       });
     }else if(S.step===1){
-      h+='<div class="bk-chosen"><span><strong>'+e(s.name)+'</strong><br><small>'+e(s.duration)+' min'+(D.showPrices&&s.price!=null?' · '+e(money(s.price)):'')+'</small></span><button type="button" data-act="change">Trocar</button></div>';
-      var ps=prosOf(s);
+      if(list.length===1){
+        var s=list[0];
+        h+='<div class="bk-chosen"><span><strong>'+e(s.name)+'</strong><br><small>'+e(s.duration)+' min'+(D.showPrices&&s.price!=null?' · '+e(money(s.price)):'')+'</small></span><button type="button" data-act="change">Trocar</button></div>';
+      }else{
+        h+='<div class="bk-chosen bk-chosen--list"><ul>';
+        list.forEach(function(x){h+='<li><span><strong>'+e(x.name)+'</strong> <small>'+e(x.duration)+' min</small></span><button type="button" data-act="drop" data-id="'+e(x.id)+'" aria-label="Tirar '+e(x.name)+'">Tirar</button></li>'});
+        var tp=total('price');
+        h+='</ul><p class="bk-total">Total: '+e(mins(total('duration')))+(D.showPrices&&tp!=null?' · '+e(money(tp)):'')+'</p></div>';
+      }
+      if(S.list.length<MAXS&&D.services.length>S.list.length)h+='<button type="button" class="bk-add" data-act="add"><span aria-hidden="true">+</span> Outro serviço no mesmo horário</button>';
+      var ps=prosAll();
       if(ps.length>1){
         h+='<p class="bk-label">Com quem</p><div class="bk-pros"><button type="button" class="bk-pro" data-act="pro" data-id="" aria-pressed="'+(S.pro===''?'true':'false')+'">Qualquer uma</button>';
         ps.forEach(function(p){h+='<button type="button" class="bk-pro" data-act="pro" data-id="'+e(p.id)+'" aria-pressed="'+(S.pro===p.id?'true':'false')+'">'+e(p.name)+'</button>'});
@@ -173,7 +199,7 @@ export const BOOKING_SCRIPT = `
         else if(minutes().length){h+='<div class="bk-times">';minutes().forEach(function(m){h+='<button type="button" class="bk-time" data-act="time" data-id="'+m+'" aria-pressed="'+(S.minute===m?'true':'false')+'">'+hm(m)+'</button>'});h+='</div>'}
       }
     }else if(S.step===2){
-      h+='<div class="bk-sum"><strong>'+e(s.name)+'</strong><br>'+e(full(S.date))+' às '+hm(S.minute)+'</div>';
+      h+='<div class="bk-sum"><strong>'+e(names())+'</strong><br>'+e(full(S.date))+' às '+hm(S.minute)+(list.length>1?' · '+e(mins(total('duration'))):'')+'</div>';
       if(S.error)h+='<p class="bk-err" role="alert">'+e(S.error)+'</p>';
       h+='<label class="bk-field"><span>Seu nome</span><input id="bk-name" name="name" autocomplete="name" maxlength="80" value="'+e(S.name)+'"></label>';
       h+='<label class="bk-field"><span>Seu WhatsApp (com DDD)</span><input id="bk-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" value="'+e(S.phone)+'"></label>';
@@ -182,7 +208,7 @@ export const BOOKING_SCRIPT = `
       h+='<p class="bk-note">Este é um pedido: o horário só fica confirmado quando o salão responder você pelo WhatsApp.</p>';
     }else{
       var b=S.done;
-      h+='<div class="bk-done"><div class="bk-ok" aria-hidden="true">⏳</div><h3>Pedido enviado</h3>';
+      h+='<div class="bk-done"><div class="bk-ok" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/></svg></div><h3>Pedido enviado</h3>';
       h+='<p class="bk-wait" role="status"><strong>Ainda não está confirmado.</strong> O salão vai conferir e responder você pelo WhatsApp. Só considere o horário marcado depois dessa confirmação.</p>';
       h+='<div class="bk-sum"><strong>'+e(b.service)+'</strong><br>'+e(full(S.date))+' às '+hm(S.minute)+(b.professional?'<br>Com '+e(b.professional):'')+'</div></div>';
     }
@@ -190,7 +216,7 @@ export const BOOKING_SCRIPT = `
   }
 
   function footer(){
-    if(S.step===0)return '';
+    if(S.step===0)return S.adding?'<button type="button" class="btn btn--light" data-act="stay">Voltar</button>':'';
     if(S.step===1)return '<button type="button" class="btn" data-act="next" '+(S.minute==null?'disabled':'')+'>Continuar</button>';
     if(S.step===2)return '<button type="button" class="btn btn--light" data-act="back">Voltar</button><button type="button" class="btn" data-act="send" '+(S.busy?'disabled':'')+'>'+(S.busy?'Enviando…':'Pedir horário')+'</button>';
     var f='';
@@ -216,7 +242,7 @@ export const BOOKING_SCRIPT = `
     if(D.ts&&!S.captcha){S.error='Aguarde a verificação de segurança terminar e tente de novo.';render();return}
     S.busy=true;S.error='';render();
     var co=document.getElementById('bk-company');
-    fetch('/api/booking',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({slug:D.slug,service:S.service,professional:S.pro||null,date:S.date,minute:S.minute,name:name,phone:digits,consent:S.consent,company:co?co.value:'',captcha:S.captcha})})
+    fetch('/api/booking',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({slug:D.slug,services:S.list,professional:S.pro||null,date:S.date,minute:S.minute,name:name,phone:digits,consent:S.consent,company:co?co.value:'',captcha:S.captcha})})
       .then(function(r){return r.json().then(function(j){return {ok:r.ok,status:r.status,j:j}})})
       .then(function(res){
         S.busy=false;captchaReset();
@@ -232,8 +258,11 @@ export const BOOKING_SCRIPT = `
     var el=ev.target.closest('[data-act]');if(!el)return;
     var act=el.getAttribute('data-act'),id=el.getAttribute('data-id');
     if(act==='close')closeSheet();
-    else if(act==='svc'){S.service=id;fixPro();S.step=1;S.date=null;S.minute=null;S.slots=null;S.off=0;pickDay(firstOpen())}
-    else if(act==='change'){S.step=0;render()}
+    else if(act==='svc'){var more=S.adding;if(more){if(S.list.indexOf(id)<0)S.list.push(id)}else S.list=[id];S.adding=false;fixPro();S.step=1;S.minute=null;S.slots=null;if(more&&S.date&&openOn(S.date))pickDay(S.date);else{S.date=null;S.off=0;pickDay(firstOpen())}}
+    else if(act==='add'){S.adding=true;S.step=0;render()}
+    else if(act==='drop'){S.list=S.list.filter(function(x){return x!==id});fixPro();S.minute=null;if(S.date&&openOn(S.date))pickDay(S.date);else pickDay(firstOpen())}
+    else if(act==='stay'){S.adding=false;S.step=1;render()}
+    else if(act==='change'){S.adding=false;S.step=0;render()}
     else if(act==='pro'){S.pro=id||'';if(S.date)pickDay(openOn(S.date)?S.date:firstOpen());else render()}
     else if(act==='wk'){S.off=Math.max(0,S.off+7*(+id));render()}
     else if(act==='day')pickDay(id);

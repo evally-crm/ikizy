@@ -111,7 +111,7 @@ describe('chamar hoje', () => {
     assert.equal(countToCall(list, TODAY), 2)
     assert.deepEqual(
       [{ kind: 'aniversario' } as const, { kind: 'sumida', days: 60 } as const, { kind: 'manutencao', days: 1 } as const].map(callReasonLabel),
-      ['Faz aniversário hoje 🎂', 'Sem vir há 60 dias', 'Retorno atrasado 1 dia'],
+      ['Faz aniversário hoje', 'Sem vir há 60 dias', 'Retorno atrasado 1 dia'],
     )
   })
 })

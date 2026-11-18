@@ -9,6 +9,8 @@ export interface Slot {
 
 export interface BookingResult {
   id: string
+  /** um atendimento por serviço do pedido */
+  ids?: string[]
   starts_at: string
   service: string
   professional: string
@@ -23,9 +25,13 @@ export interface BookingDb {
   limited(bucket: string, max: number, windowSeconds: number): Promise<boolean>
 }
 
+/** até quantos serviços cabem num pedido (ex.: mão + pé) */
+export const MAX_SERVICES = 4
+
 export interface SlotsQuery {
   slug: string
-  service: string
+  /** serviços na ordem em que serão feitos (um ou mais) */
+  services: string[]
   date: string
   professional: string | null
 }
@@ -47,14 +53,24 @@ function isRealDate(value: string): boolean {
   return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === value
 }
 
+/** um serviço (texto), vários separados por vírgula, ou uma lista */
+function parseServices(value: unknown): string[] {
+  const list = Array.isArray(value) ? value : typeof value === 'string' ? value.split(',') : []
+  const ids = list.map((x) => (typeof x === 'string' ? x.trim().toLowerCase() : ''))
+  if (ids.length < 1 || ids.some((x) => !UUID.test(x))) throw bad('Escolha um serviço.')
+  if (ids.length > MAX_SERVICES) throw bad(`Escolha até ${MAX_SERVICES} serviços por pedido.`)
+  if (new Set(ids).size !== ids.length) throw bad('O mesmo serviço foi escolhido duas vezes.')
+  return ids
+}
+
 function parseCommon(slug: unknown, service: unknown, date: unknown, professional: unknown): SlotsQuery {
   const s = typeof slug === 'string' ? slug.toLowerCase() : ''
   if (!SLUG.test(s) || s.length < 3 || s.length > 40) throw bad('Endereço do salão inválido.')
-  if (typeof service !== 'string' || !UUID.test(service)) throw bad('Escolha um serviço.')
+  const services = parseServices(service)
   if (typeof date !== 'string' || !isRealDate(date)) throw bad('Escolha um dia válido.')
   const pro = professional == null || professional === '' ? null : professional
   if (pro !== null && (typeof pro !== 'string' || !UUID.test(pro))) throw bad('Profissional inválida.')
-  return { slug: s, service, date, professional: pro as string | null }
+  return { slug: s, services, date, professional: pro as string | null }
 }
 
 export function parseSlotsQuery(url: URL): SlotsQuery {
@@ -66,7 +82,7 @@ export function parseSlotsQuery(url: URL): SlotsQuery {
 export function parseBookingInput(body: unknown): BookingInput & { honeypot: boolean; captcha: string } {
   if (!body || typeof body !== 'object') throw bad('Pedido inválido.')
   const b = body as Record<string, unknown>
-  const common = parseCommon(b.slug, b.service, b.date, b.professional)
+  const common = parseCommon(b.slug, b.services ?? b.service, b.date, b.professional)
   const minute = typeof b.minute === 'number' && Number.isInteger(b.minute) ? b.minute : NaN
   if (!(minute >= 0 && minute <= 1439)) throw bad('Escolha um horário.')
   const name = typeof b.name === 'string' ? b.name.trim().replace(/\s+/g, ' ') : ''

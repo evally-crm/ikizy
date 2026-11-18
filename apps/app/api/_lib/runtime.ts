@@ -206,12 +206,12 @@ export function createBookingDb(): BookingDb {
   return {
     async slots(q) {
       const rows = (await sql`
-        select public.get_available_slots(${q.slug}, ${q.service}::uuid, ${q.date}::date, ${q.professional}::uuid) as s`) as { s: Slot[] }[]
+        select public.get_booking_slots(${q.slug}, ${q.services}::uuid[], ${q.date}::date, ${q.professional}::uuid) as s`) as { s: Slot[] }[]
       return rows[0]?.s ?? []
     },
     async book(i) {
       const rows = (await sql`
-        select public.book_appointment(${i.slug}, ${i.service}::uuid, ${i.professional}::uuid, ${i.date}::date, ${i.minute}, ${i.name}, ${i.phone}) as r`) as {
+        select public.book_services(${i.slug}, ${i.services}::uuid[], ${i.professional}::uuid, ${i.date}::date, ${i.minute}, ${i.name}, ${i.phone}) as r`) as {
         r: BookingResult
       }[]
       return rows[0].r

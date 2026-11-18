@@ -29,7 +29,7 @@ export function callReason(c: CallableClient, today: Date): CallReason | null {
 
 /** a frase curta da lista: "Aniversário hoje", "Sem vir há 60 dias", "Retorno atrasado 5 dias" */
 export function callReasonLabel(r: CallReason): string {
-  if (r.kind === 'aniversario') return 'Faz aniversário hoje 🎂'
+  if (r.kind === 'aniversario') return 'Faz aniversário hoje'
   if (r.kind === 'sumida') return `Sem vir há ${r.days} dias`
   return r.days === 1 ? 'Retorno atrasado 1 dia' : `Retorno atrasado ${r.days} dias`
 }
