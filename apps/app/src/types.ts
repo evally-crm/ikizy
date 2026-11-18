@@ -35,4 +35,6 @@ export interface Appointment {
   status: AppointmentStatus
   /** como a cliente pagou (informado ao concluir) */
   paymentMethod?: PaymentMethod | null
+  /** link secreto do pedido: a página da cliente (status e avaliação) */
+  publicToken?: string
 }

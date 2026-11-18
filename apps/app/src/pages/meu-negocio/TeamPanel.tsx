@@ -59,6 +59,7 @@ export function TeamPanel({
   const staff = membersWithoutAgenda(members, professionals).filter((m) => m.role !== 'owner')
   const staffInvites = invites.filter((i) => !i.professionalId)
   const canInviteStaff = invitable.some((r) => r !== 'professional')
+  const full = usage.professionals.full || usage.access.full
 
   if (plan === 'solo') {
     return (
@@ -80,37 +81,32 @@ export function TeamPanel({
 
   return (
     <div className="team">
-      <div className="team__usage">
-        <div className="team__meter">
-          <span className="team__kicker">Profissionais</span>
-          <strong>{usageLabel(usage.professionals)}</strong>
-          <small>ativas na agenda</small>
-        </div>
-        <div className="team__meter">
-          <span className="team__kicker">Acessos</span>
-          <strong>{usageLabel(usage.access)}</strong>
-          <small>com login, contando você e convites</small>
-        </div>
-        <div className="team__meter team__meter--plan">
-          <span className="team__label">Plano {PLANS[plan].name}</span>
-          <small>{usage.professionals.full || usage.access.full ? limitMessage(plan, usage.professionals.full ? 'professionals' : 'access') : 'Ainda cabe mais gente na equipe.'}</small>
-          {isOwner && (usage.professionals.full || usage.access.full) && plan !== 'salao' && (
-            <Link to={dash('/assinatura')} className="team__link">
-              Ver planos
-            </Link>
-          )}
-        </div>
-      </div>
-
       <Panel
-        title="Quem atende"
-        eyebrow="Aparecem na agenda e no site. A comissão entra no Financeiro."
+        title={
+          <>
+            Quem atende<span className="panel__count">{active.length}</span>
+          </>
+        }
         action={
           <Button size="sm" onClick={onNewProfessional} disabled={usage.professionals.full}>
             <Plus size={16} aria-hidden="true" /> Nova profissional
           </Button>
         }
       >
+        <p className="panel__note">
+          {usageLabel(usage.professionals)} {usage.professionals.max === null && usage.professionals.used === 1 ? 'profissional' : 'profissionais'} ·{' '}
+          {usageLabel(usage.access)} {usage.access.max === null && usage.access.used === 1 ? 'acesso' : 'acessos'} com login · Plano {PLANS[plan].name}
+        </p>
+        {full && (
+          <p className="alert alert--warn">
+            {limitMessage(plan, usage.professionals.full ? 'professionals' : 'access')}{' '}
+            {isOwner && plan !== 'salao' && (
+              <Link to={dash('/assinatura')} className="textlink">
+                Ver planos
+              </Link>
+            )}
+          </p>
+        )}
         <ul className="team__list">
           {active.map((p) => {
             const access = professionalAccess(p, members, invites)

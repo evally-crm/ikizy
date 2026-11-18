@@ -5,18 +5,6 @@
   gap: 16px;
 }
 
-/* faixa de números */
-.biztiles {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-}
-@media (min-width: 1024px) {
-  .biztiles {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-}
-
 /* dados: formulário e prévia lado a lado */
 .bizdetails {
   display: grid;
@@ -32,32 +20,89 @@
 .bizdetails__form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-}
-.form.bizdetails__fields {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 14px;
-}
-@media (min-width: 640px) {
-  .form.bizdetails__fields {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-.bizdetails__actions {
-  display: flex;
+  gap: 12px;
 }
 
-/* serviços: busca e filtro */
-.bizfilters {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 10px;
+/* lista agrupada (como os Ajustes do iPhone): um fio entre as linhas, nenhum campo pintado de cinza */
+.bizrows {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  overflow: hidden;
 }
-@media (min-width: 640px) {
-  .bizfilters {
-    grid-template-columns: minmax(0, 1fr) 240px;
-    align-items: end;
+.bizrow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 52px;
+  padding: 0 16px;
+  cursor: text;
+  transition: background-color 0.15s;
+}
+.bizrow + .bizrow {
+  border-top: 1px solid var(--line);
+}
+.bizrow:focus-within {
+  background: var(--page-bg);
+}
+.bizrow > span {
+  flex: none;
+  width: 92px;
+  font-size: 14px;
+  color: var(--ink-500);
+}
+.bizrow input {
+  flex: 1;
+  min-width: 0;
+  height: 52px;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--ink-900);
+  font: inherit;
+  font-size: 15px;
+  text-align: right;
+}
+.bizrow input::placeholder {
+  color: var(--ink-400);
+}
+.bizrow input:disabled {
+  color: var(--ink-700);
+  -webkit-text-fill-color: var(--ink-700);
+}
+
+/* salvar: pílula escura em toda a largura, só quando algo mudou */
+.bizdetails__save {
+  min-height: 50px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--solid);
+  color: var(--on-solid);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  animation: bizsave-in 0.32s var(--ease-fluid, cubic-bezier(0.32, 0.72, 0, 1));
+  transition: transform 100ms ease-out;
+}
+.bizdetails__save:active:not(:disabled) {
+  transform: scale(0.98);
+}
+.bizdetails__save:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+@keyframes bizsave-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bizdetails__save {
+    animation: none;
   }
 }
 

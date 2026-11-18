@@ -232,6 +232,11 @@
 .badge--dark {
   --badge: var(--ink-900);
 }
+/* selo preenchido de leve, sem contorno (listas em cartão) */
+.badge--soft {
+  box-shadow: none;
+  background: color-mix(in srgb, var(--badge) 13%, transparent);
+}
 
 /* ---------- avatar ---------- */
 .avatar {

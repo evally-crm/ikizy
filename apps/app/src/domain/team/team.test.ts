@@ -6,7 +6,7 @@ import { expiresLabel, inviteMessage, inviteStateText, isInviteToken } from './i
 import { limitMessage, planForTeam, teamUsage, usageLabel } from './limits'
 import { assignableRoles, canManageMember, invitableRoles, roleAccess } from './roles'
 import { membersWithoutAgenda, professionalAccess } from './status'
-import { initialSelection, prosForService, professionalsToSave } from './services'
+import { bookableServices, initialSelection, prosForService, professionalsToSave } from './services'
 
 describe('perfis', () => {
   it('a profissional vê só a agenda dela e os ganhos, sem financeiro, site, negócio, equipe ou assinatura', () => {
@@ -14,6 +14,7 @@ describe('perfis', () => {
     assert.equal(a.agendaAll, false)
     assert.equal(a.finance, 'none')
     assert.equal(a.earnings, true)
+    assert.equal(a.ownSchedule, true)
     assert.deepEqual([a.site, a.business, a.team, a.billing, a.clientValues], [false, false, false, false, false])
   })
   it('a recepção vê a agenda de todas e só o caixa de hoje', () => {
@@ -181,6 +182,22 @@ describe('quem faz cada serviço', () => {
     assert.deepEqual(prosForService(pros, undefined), pros)
     assert.deepEqual(prosForService(pros, ['b']), [{ id: 'b' }])
     assert.deepEqual(prosForService(pros, ['x']), pros)
+  })
+  it('quem só enxerga a si mesma: serviço de outra não volta para ela', () => {
+    const me = [{ id: 'a' }]
+    assert.deepEqual(prosForService(me, ['b'], false), [])
+    assert.deepEqual(prosForService(me, ['a', 'b'], false), me)
+    assert.deepEqual(prosForService(me, [], false), me)
+    const svcs = [
+      { id: 's1', professionalIds: [] },
+      { id: 's2', professionalIds: ['b'] },
+      { id: 's3', professionalIds: ['a'] },
+    ]
+    assert.deepEqual(
+      bookableServices(svcs, me, false).map((s) => s.id),
+      ['s1', 's3'],
+    )
+    assert.deepEqual(bookableServices(svcs, me, true), svcs)
   })
   it('escolher todas as ativas grava lista vazia', () => {
     assert.deepEqual(professionalsToSave(['a', 'b', 'c'], ['a', 'b', 'c']), [])

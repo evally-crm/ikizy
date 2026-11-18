@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { filterServices, summarizeBusiness, usageByProduct, type CatalogProduct, type CatalogService } from './catalog'
+import { filterServices, serviceNeeds, summarizeBusiness, usageByProduct, type CatalogProduct, type CatalogService } from './catalog'
 import { hoursSpan, openStatus, placeBlock, summarizeHours, weekDays } from './hours'
 import { serviceMargin } from './margin'
 
@@ -40,6 +40,19 @@ describe('resumo do negócio', () => {
     assert.equal(s.unpriced, 1)
     assert.equal(s.averageMarginPct, 85)
     assert.equal(s.materialSpend, 300)
+  })
+
+  it('conta os serviços com preço que ainda não têm material (os sem preço já têm o próprio aviso)', () => {
+    const a = svc({ id: 'a', price: 200, productId: 'gel' })
+    const b = svc({ id: 'b', price: 0 })
+    const c = svc({ id: 'c', price: 80 })
+    assert.equal(summarizeBusiness([a, b, c], [gel]).withoutMaterial, 1)
+  })
+
+  it('o que falta em cada serviço: sem preço vem antes de sem material', () => {
+    assert.deepEqual(serviceNeeds(svc({ id: 'a', price: 0 })), ['sem-preco'])
+    assert.deepEqual(serviceNeeds(svc({ id: 'b', price: 80 })), ['sem-material'])
+    assert.deepEqual(serviceNeeds(svc({ id: 'c', price: 80, productId: 'gel' })), [])
   })
 
   it('sem serviço com material, a sobra média fica indefinida', () => {

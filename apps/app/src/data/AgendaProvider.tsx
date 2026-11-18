@@ -97,6 +97,7 @@ interface Row {
   price: number | string
   status: AppointmentStatus
   payment_method: PaymentMethod | null
+  public_token?: string
   clients: { name: string; phone: string } | null
 }
 
@@ -104,7 +105,7 @@ interface Row {
 const PENDING_POLL_MS = 60_000
 
 const SELECT =
-  'id, client_id, professional_id, service_id, service_name, starts_at, duration, price, status, payment_method, clients ( name, phone )'
+  'id, client_id, professional_id, service_id, service_name, starts_at, duration, price, status, payment_method, public_token, clients ( name, phone )'
 
 function fromRow(r: Row): Appointment {
   const at = new Date(r.starts_at)
@@ -122,6 +123,7 @@ function fromRow(r: Row): Appointment {
     price: Number(r.price),
     status: r.status,
     paymentMethod: r.payment_method,
+    publicToken: r.public_token,
   }
 }
 

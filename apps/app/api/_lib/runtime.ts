@@ -1,3 +1,4 @@
+import type { BookingStatus } from './clientPage.js'
 import { neon } from '@neondatabase/serverless'
 import { del, get, list, put } from '@vercel/blob'
 import { createRemoteJWKSet, jwtVerify } from 'jose'
@@ -183,7 +184,25 @@ export async function fetchPublicSite(slug: string): Promise<PublicSite | null> 
       where s.slug = ${slug} group by ps.service_id`.catch(() => [])) as { id: string; pros: string[] }[]
     if (links.length) site.serviceProfessionals = Object.fromEntries(links.map((l) => [l.id, l.pros]))
   }
+  if (site) {
+    // avaliações das clientes (sem a migration, o site segue sem a seção)
+    const r = (await sql`select public.get_public_reviews(${slug}) as r`.catch(() => [])) as { r: PublicSite['reviews'] | null }[]
+    if (r[0]?.r?.count) site.reviews = { ...r[0].r, average: Number(r[0].r.average) }
+  }
   return site
+}
+
+/** página da cliente: status do pedido pelo link secreto; null se o link não existe */
+export async function fetchBookingStatus(token: string): Promise<BookingStatus | null> {
+  const sql = neon(env('DATABASE_URL'))
+  const rows = (await sql`select public.get_booking_status(${token}) as b`) as { b: BookingStatus | null }[]
+  return rows[0]?.b ?? null
+}
+
+/** grava a avaliação do pedido (a função do banco confere se foi concluído e se já não avaliou) */
+export async function saveReview(token: string, rating: number, comment: string): Promise<void> {
+  const sql = neon(env('DATABASE_URL'))
+  await sql`select public.submit_review(${token}, ${rating}::int, ${comment})`
 }
 
 /** nome de um negócio publicado cujo site saiu do ar (acesso vencido há mais de 7 dias); null nos outros casos */
@@ -617,6 +636,7 @@ const EXPORT_TABLES = [
   'month_closings',
   'working_hours',
   'professional_services',
+  'reviews',
   'client_plans',
   'showcase_items',
   'site_settings',

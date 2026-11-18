@@ -1,4 +1,5 @@
-import { hoursSpan, summarizeHours, weekDays } from '../../domain/business'
+import { hoursSpan, summarizeHours, weekDays, type OpenStatus } from '../../domain/business'
+import { formatTime } from '../../lib/format'
 import type { HourInterval } from '../../lib/agendaTime'
 import { WeekGrid } from '../../components/business/WeekGrid'
 import { Button, Panel } from '../../components/ui'
@@ -7,11 +8,14 @@ import { Button, Panel } from '../../components/ui'
 export function HoursPanel({
   professionals,
   workingHours,
+  status,
   canManage,
   onEdit,
 }: {
   professionals: { id: string; name: string }[]
   workingHours: Record<string, HourInterval[]>
+  /** aberto ou fechado agora; null quando ninguém tem horário */
+  status: OpenStatus | null
   canManage: boolean
   onEdit: () => void
 }) {
@@ -24,17 +28,28 @@ export function HoursPanel({
   }))
   return (
     <Panel
-      title="Horário de atendimento"
-      eyebrow="O site só oferece horários dentro dele; a agenda mostra o resto hachurado"
+      title="Horário"
       action={
         canManage && professionals.length > 0 ? (
           <Button size="sm" onClick={onEdit}>
-            Editar horário
+            Editar
           </Button>
         ) : null
       }
     >
+      {status && (
+        <p className="panel__note">
+          <span className={`badge badge--soft ${status.open ? 'badge--success' : 'badge--neutral'}`}>
+            {status.open
+              ? `Aberto agora · fecha às ${formatTime(status.until)}`
+              : status.opensAt !== null
+                ? `Fechado agora · abre às ${formatTime(status.opensAt)}`
+                : 'Fechado agora'}
+          </span>
+        </p>
+      )}
       {professionals.length === 0 ? <p className="panel__empty">Cadastre quem atende na agenda para definir o horário.</p> : <WeekGrid rows={rows} span={span} />}
+      <p className="panel__note">O site só oferece horários dentro destes. Na agenda, o resto aparece hachurado.</p>
     </Panel>
   )
 }

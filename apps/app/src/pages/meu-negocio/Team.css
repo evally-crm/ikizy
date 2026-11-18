@@ -1,62 +1,8 @@
-/* Equipe (Meu negócio): números no estilo do Início, listas de quem atende e de quem tem login */
+/* Equipe (Meu negócio): listas de quem atende e de quem tem login */
 .team {
   display: flex;
   flex-direction: column;
   gap: 16px;
-}
-
-.team__usage {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
-}
-
-.team__meter {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-  padding: 20px 22px;
-  border-radius: var(--radius-lg);
-  background: var(--white);
-  box-shadow: var(--shadow-sm);
-}
-.team__meter strong {
-  margin-top: 6px;
-  font-size: 40px;
-  font-weight: 300;
-  line-height: 1;
-  letter-spacing: -0.03em;
-  color: var(--ink-900);
-}
-.team__meter small {
-  font-size: 12px;
-  color: var(--ink-500);
-}
-
-/* o bloco do plano em vermelho, como o "Próximo" do Início */
-.team__meter--plan {
-  background: var(--brand-500);
-  color: var(--on-brand);
-}
-.team__meter--plan small {
-  color: var(--on-brand);
-  opacity: 0.85;
-}
-.team__label {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  opacity: 0.85;
-}
-.team__link {
-  margin-top: auto;
-  padding-top: 8px;
-  color: var(--on-brand);
-  font-size: 13px;
-  font-weight: 600;
-  text-decoration: underline;
 }
 
 /* selo preto em maiúsculas ("HOJE" do Início) */
@@ -75,6 +21,7 @@
 .team__list {
   display: flex;
   flex-direction: column;
+  gap: 8px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -88,11 +35,10 @@
   grid-template-columns: auto minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 12px;
-  padding: 12px 0;
-  border-top: 1px solid var(--line);
-}
-.team__row:first-child {
-  border-top: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--white);
 }
 
 .team__who {
@@ -232,12 +178,6 @@ button.team__who:hover strong {
 }
 
 @media (max-width: 767px) {
-  .team__usage {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .team__meter--plan {
-    grid-column: 1 / -1;
-  }
   .team__row {
     grid-template-columns: auto minmax(0, 1fr);
   }

@@ -1,8 +1,8 @@
 import { HttpError } from './_lib/billing.js'
-import { checkBookingLimits, createBooking, listSlots, parseBookingInput, parseSlotsQuery, tooManyFromIp, verifyCaptcha } from './_lib/booking.js'
+import { checkBookingLimits, createBooking, isReviewRequest, listSlots, parseBookingInput, parseReviewInput, parseSlotsQuery, tooManyFromIp, translateDbError, verifyCaptcha } from './_lib/booking.js'
 import { notifyNewRequest } from './_lib/notify.js'
 import { pushNewRequest } from './_lib/push.js'
-import { appUrl, createBookingDb, createNotifyDb, createPushDb, createPushSender, fail, json, sendEmail } from './_lib/runtime.js'
+import { appUrl, createBookingDb, createNotifyDb, createPushDb, createPushSender, fail, json, saveReview, sendEmail } from './_lib/runtime.js'
 
 /** GET /api/booking?slug=&service=<id>[,<id>...]&date=YYYY-MM-DD[&professional=] -> { slots: [{ professional_id, professional, minute }] } */
 export async function GET(request: Request) {
@@ -20,7 +20,16 @@ export async function POST(request: Request) {
   try {
     const ip = (request.headers.get('x-forwarded-for') ?? 'desconhecido').split(',')[0].trim()
     if (tooManyFromIp(ip)) throw new HttpError(429, 'too_many', 'Muitas tentativas. Aguarde alguns minutos.')
-    const { honeypot, captcha, ...input } = parseBookingInput(await request.json().catch(() => null))
+    const body = await request.json().catch(() => null)
+    // avaliação da cliente, pela página do pedido (o link secreto é a prova de que foi ela)
+    if (isReviewRequest(body)) {
+      const review = parseReviewInput(body)
+      await saveReview(review.token, review.rating, review.comment).catch((error) => {
+        throw translateDbError(error)
+      })
+      return json({ review: { rating: review.rating, comment: review.comment } }, 201)
+    }
+    const { honeypot, captcha, ...input } = parseBookingInput(body)
     // robô: responde como se tivesse dado certo, sem gravar nada
     if (honeypot) return json({ booking: { id: 'ok', starts_at: new Date().toISOString(), service: '', professional: '', price: 0, duration: 0 } })
     await verifyCaptcha(captcha, ip, process.env.TURNSTILE_SECRET_KEY)

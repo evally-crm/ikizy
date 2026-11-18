@@ -1,7 +1,8 @@
 import { reportError } from './_lib/monitoring.js'
 import { isReservedSlug } from '../src/lib/slug.js'
 import { renderNotFound, renderSiteOffline, renderSitePage } from './_lib/siteHtml.js'
-import { appUrl, fetchOfflineSiteName, fetchPublicSite } from './_lib/runtime.js'
+import { appUrl, fetchBookingStatus, fetchOfflineSiteName, fetchPublicSite } from './_lib/runtime.js'
+import { TOKEN, renderBookingStatus } from './_lib/clientPage.js'
 
 const html = (body: string, status: number, cache: string) =>
   new Response(body, { status, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': cache } })
@@ -11,6 +12,22 @@ export async function GET(request: Request) {
   const slug = (new URL(request.url).searchParams.get('slug') ?? '').toLowerCase()
   const valid = /^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug) && slug.length >= 3 && slug.length <= 40 && !isReservedSlug(slug)
   if (!valid) return html(renderNotFound(), 404, 'public, s-maxage=60')
+
+  // página da cliente: /pedido/<token> no domínio do salão (nunca guardada em cache: o status muda)
+  const token = (new URL(request.url).searchParams.get('pedido') ?? '').toLowerCase()
+  if (token) {
+    if (!TOKEN.test(token)) return html(renderNotFound(), 404, 'no-store')
+    try {
+      const status = await fetchBookingStatus(token)
+      // o link só vale no site do salão dono do pedido
+      if (!status || status.salon.slug !== slug) return html(renderNotFound(), 404, 'no-store')
+      const site = await fetchPublicSite(slug).catch(() => null)
+      return html(renderBookingStatus(status, site, token), 200, 'private, no-store')
+    } catch (error) {
+      reportError(error, `pedido ${slug}`)
+      return html(renderNotFound(), 500, 'no-store')
+    }
+  }
 
   try {
     const site = await fetchPublicSite(slug)

@@ -11,6 +11,8 @@ export interface BookingResult {
   id: string
   /** um atendimento por serviço do pedido */
   ids?: string[]
+  /** link secreto do pedido (página da cliente) */
+  token?: string
   starts_at: string
   service: string
   professional: string
@@ -129,6 +131,9 @@ export function translateDbError(error: unknown): HttpError {
   if (text.includes('booking_disabled')) return new HttpError(403, 'booking_disabled', 'Este salão ainda não aceita agendamentos online.')
   if (text.includes('too_many')) return new HttpError(429, 'too_many', 'Você já tem pedidos em aberto. Aguarde a confirmação do salão.')
   if (text.includes('invalid_input')) return bad('Confira os dados e tente de novo.')
+  if (text.includes('already_reviewed')) return new HttpError(409, 'already_reviewed', 'Este atendimento já foi avaliado.')
+  if (text.includes('not_done')) return new HttpError(409, 'not_done', 'Você poderá avaliar depois que o atendimento for concluído.')
+  if (text.includes('not_found')) return new HttpError(404, 'not_found', 'Pedido não encontrado.')
   throw error
 }
 
@@ -147,6 +152,21 @@ export async function createBooking(db: BookingDb, input: BookingInput): Promise
     throw translateDbError(error)
   }
 }
+
+/** corpo do POST de avaliação: { action: 'review', token, rating (1 a 5), comment? } */
+export function parseReviewInput(body: unknown): { token: string; rating: number; comment: string } {
+  const b = (body && typeof body === 'object' ? body : {}) as Record<string, unknown>
+  const token = typeof b.token === 'string' ? b.token.toLowerCase() : ''
+  if (!/^[a-f0-9]{64}$/.test(token)) throw new HttpError(404, 'not_found', 'Pedido não encontrado.')
+  const rating = typeof b.rating === 'number' && Number.isInteger(b.rating) ? b.rating : NaN
+  if (!(rating >= 1 && rating <= 5)) throw bad('Escolha uma nota de 1 a 5.')
+  const comment = typeof b.comment === 'string' ? b.comment.replace(/\s+/g, ' ').trim() : ''
+  if (comment.length > 500) throw bad('O texto pode ter até 500 letras.')
+  return { token, rating, comment }
+}
+
+/** é um pedido de avaliação (e não de horário)? */
+export const isReviewRequest = (body: unknown) => Boolean(body && typeof body === 'object' && (body as Record<string, unknown>).action === 'review')
 
 /** limite simples por IP (por instância do servidor): 12 pedidos em 10 minutos */
 const hits = new Map<string, number[]>()

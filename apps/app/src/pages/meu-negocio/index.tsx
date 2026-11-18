@@ -9,8 +9,7 @@ import type { Product, Service } from '../../data/catalog'
 import { openStatus, summarizeBusiness, summarizeHours } from '../../domain/business'
 import { ConfirmDialog } from '../../components/Modal'
 import { WorkingHoursDialog } from '../../components/WorkingHoursDialog'
-import { Em, PageHeader, StatTile, Tabs } from '../../components/ui'
-import { formatBRL } from '../../lib/format'
+import { Em, PageHeader, Tabs } from '../../components/ui'
 import { DetailsPanel } from './DetailsPanel'
 import { HoursPanel } from './HoursPanel'
 import { MaterialsPanel } from './MaterialsPanel'
@@ -154,27 +153,25 @@ export default function MeuNegocio() {
         <PageLoader label="Carregando os dados do negócio…" />
       ) : (
         <>
-          <div className="biztiles">
-            <StatTile
-              label="Serviços"
-              value={summary.serviceCount}
-              hint={summary.unpriced > 0 ? `${summary.unpriced} ${summary.unpriced === 1 ? 'sem preço' : 'sem preço'}` : 'Todos com preço'}
-            />
-            <StatTile
-              label="Sobra média"
-              value={summary.averageMarginPct === null ? '–' : `${summary.averageMarginPct}%`}
-              hint={summary.averageMarginPct === null ? 'Ligue um material a um serviço' : 'dos serviços com material'}
-            />
-            <StatTile label="Material por mês" value={formatBRL(summary.materialSpend).replace(',00', '')} hint={`${biz.products.length} materiais`} />
-            <StatTile label="Equipe" value={professionals.length} hint={status.open ? 'Aberto agora' : 'Fechado agora'} />
-          </div>
-
           {tab === 'dados' && <DetailsPanel details={biz.details} canManage={canManage} status={status} onSave={biz.saveDetails} />}
           {tab === 'horario' && (
-            <HoursPanel professionals={professionals} workingHours={workingHours} canManage={canManage} onEdit={() => setEditingHours(true)} />
+            <HoursPanel
+              professionals={professionals}
+              workingHours={workingHours}
+              status={allHours.length ? status : null}
+              canManage={canManage}
+              onEdit={() => setEditingHours(true)}
+            />
           )}
           {tab === 'servicos' && (
-            <ServicesPanel services={biz.services} products={biz.products} canManage={canManage} onNew={() => setService('new')} onOpen={setService} />
+            <ServicesPanel
+              services={biz.services}
+              products={biz.products}
+              summary={summary}
+              canManage={canManage}
+              onNew={() => setService('new')}
+              onOpen={setService}
+            />
           )}
           {tab === 'equipe' &&
             (team.loading ? (

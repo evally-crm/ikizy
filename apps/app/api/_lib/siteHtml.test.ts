@@ -450,3 +450,20 @@ describe('logo e capa na loja de fotos', () => {
     assert.ok(!bad.includes('class="hero hero--cover'))
   })
 })
+
+describe('avaliações no site', () => {
+  it('mostra média com vírgula, bolinhas, total e as mais recentes; sem avaliações, nada', async () => {
+    const { renderSitePage } = await import('./siteHtml.js')
+    const site = {
+      name: 'Studio', slug: 'studio-x', settings: {}, services: [], plans: [], team: [],
+      reviews: { count: 3, average: 4.7, latest: [{ name: 'Ana', service: 'Manicure', rating: 5, comment: '<b>ótimo</b>', created_at: '' }] },
+    }
+    const html = renderSitePage(site as never, { canonical: 'https://x' })
+    assert.match(html, /id="avaliacoes"/)
+    assert.match(html, /<strong>4,7<\/strong>/)
+    assert.match(html, /3 avaliações/)
+    assert.match(html, /Ana · Manicure/)
+    assert.match(html, /&lt;b&gt;ótimo/)
+    assert.doesNotMatch(renderSitePage({ ...site, reviews: undefined } as never, { canonical: 'https://x' }), /id="avaliacoes"/)
+  })
+})

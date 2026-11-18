@@ -391,6 +391,11 @@
   background: var(--success-soft);
   color: var(--success);
 }
+/* algo para resolver, sem ser erro (serviço sem material, equipe no limite) */
+.alert--warn {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
 
 /* tela de carregamento enquanto a sessão é verificada */
 .splash {
