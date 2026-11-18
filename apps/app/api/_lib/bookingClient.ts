@@ -78,7 +78,7 @@ export const BOOKING_SCRIPT = `
   var body=document.getElementById('book-body'), foot=document.getElementById('book-foot');
   var TZ='America/Sao_Paulo';
   var MAXS=4;
-  var S={off:0,step:0,list:[],adding:false,date:null,minute:null,pro:'',slots:null,error:'',name:'',phone:'',consent:false,done:null,busy:false,token:0,captcha:''};
+  var S={off:0,step:0,list:[],adding:false,date:null,minute:null,pro:'',slots:null,error:'',name:'',phone:'',consent:false,done:null,busy:false,token:0,captcha:'',cache:{},finding:false,none:false};
   // Turnstile (só com a chave configurada na Vercel): carrega uma vez, fora do corpo que é redesenhado
   var TS=null,tsBox=null;
   function captchaStart(){
@@ -108,7 +108,6 @@ export const BOOKING_SCRIPT = `
   /* trocou de serviço: a profissional escolhida antes pode não fazer este */
   function fixPro(){if(S.pro&&!prosAll().some(function(p){return p.id===S.pro}))S.pro=''}
   function openOn(d){if(!D.open)return true;var w=mk(d).getUTCDay(),ids=S.pro?[S.pro]:prosAll().map(function(p){return p.id});for(var i=0;i<ids.length;i++){var l=D.open[ids[i]]||[];if(l.indexOf(w)>=0)return true}return false}
-  function firstOpen(){var t=today();for(var n=0;n<D.windowDays;n++){if(openOn(addDays(t,n))){S.off=7*Math.floor(n/7);return addDays(t,n)}}return t}
   function wd(s){return mk(s).toLocaleDateString('pt-BR',{weekday:'short',timeZone:'UTC'}).replace('.','')}
   function full(s){return mk(s).toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',timeZone:'UTC'})}
   function svc(id){for(var i=0;i<D.services.length;i++){if(D.services[i].id===id)return D.services[i]}return null}
@@ -119,25 +118,60 @@ export const BOOKING_SCRIPT = `
       S.error='';render();
       if(!dlg.open)dlg.showModal();fit();
       captchaStart();
+      S.cache={};
       if(S.date){if(S.step>1)S.step=1;pickDay(S.date)}
       return;
     }
-    S.list=id?[id]:[];S.adding=false;fixPro();S.step=id?1:0;S.off=0;S.date=null;S.minute=null;S.slots=null;S.error='';S.done=null;S.busy=false;
+    S.list=id?[id]:[];S.adding=false;fixPro();S.step=id?1:0;S.off=0;S.date=null;S.minute=null;S.slots=null;S.error='';S.done=null;S.busy=false;S.cache={};S.finding=false;S.none=false;
     render();
     if(!dlg.open)dlg.showModal();fit();
     captchaStart();
-    if(id)pickDay(firstOpen());
+    if(id)goFirst();
   }
   /* centralizada e com altura de até 72% da área visível: navegadores dentro de apps (Google, Instagram) e o Safari do iPhone põem barras por cima da tela e escondiam o fim da janela */
   function fit(){var v=window.visualViewport;if(!v){dlg.style.removeProperty('--sheet-h');return}dlg.style.setProperty('--sheet-h',Math.floor(v.height*.72)+'px')}
   if(window.visualViewport){window.visualViewport.addEventListener('resize',function(){if(dlg.open)fit()})}
   function closeSheet(){if(dlg.open)dlg.close()}
 
+  /* horários livres de um dia (guardados por serviço + profissional + dia, para não buscar de novo) */
+  function ck(d){return S.list.join(',')+'|'+S.pro+'|'+d}
+  function fetchDay(d){
+    var k=ck(d);
+    var q='/api/booking?slug='+encodeURIComponent(D.slug)+'&service='+encodeURIComponent(S.list.join(','))+'&date='+d+(S.pro?'&professional='+encodeURIComponent(S.pro):'');
+    return fetch(q).then(function(r){return r.json()}).then(function(j){if(j.slots)S.cache[k]=j.slots;return j});
+  }
+  /* busca em segundo plano os outros dias da semana mostrada, para apagar os que já estão lotados */
+  function loadWeek(){
+    var t0=today(),calls=[];
+    for(var i=0;i<7;i++){
+      var n=S.off+i,d=addDays(t0,n);
+      if(n<=D.windowDays&&openOn(d)&&d!==S.date&&!S.cache[ck(d)])calls.push(fetchDay(d).catch(function(){}));
+    }
+    if(calls.length)Promise.all(calls).then(function(){render()});
+  }
+  /* abre já no primeiro dia que tem horário livre, procurando semana a semana */
+  function goFirst(){
+    var t=++S.token,t0=today();
+    S.date=null;S.minute=null;S.slots=null;S.off=0;S.error='';S.finding=true;S.none=false;render();
+    function week(w){
+      if(7*w>D.windowDays){S.finding=false;S.none=true;S.off=0;render();return}
+      var days=[];
+      for(var i=0;i<7;i++){var n=7*w+i,d=addDays(t0,n);if(n<=D.windowDays&&openOn(d))days.push(d)}
+      Promise.all(days.map(function(d){return fetchDay(d).then(function(j){return {d:d,s:j.slots||[]}}).catch(function(){return {d:d,s:null}})})).then(function(rs){
+        if(t!==S.token)return;
+        var hit=rs.filter(function(r){return r.s&&r.s.length})[0];
+        if(hit){S.off=7*w;pickDay(hit.d);return}
+        if(rs.some(function(r){return r.s===null})){S.finding=false;S.error='Não foi possível carregar os horários. Tente de novo.';render();return}
+        week(w+1);
+      });
+    }
+    week(0);
+  }
   function pickDay(date){
-    S.date=date;S.minute=null;S.slots=null;S.error='';
-    var t=++S.token;render();
-    var q='/api/booking?slug='+encodeURIComponent(D.slug)+'&service='+encodeURIComponent(S.list.join(','))+'&date='+date+(S.pro?'&professional='+encodeURIComponent(S.pro):'');
-    fetch(q).then(function(r){return r.json()}).then(function(j){
+    S.date=date;S.minute=null;S.error='';S.finding=false;S.none=false;
+    var t=++S.token,hit=S.cache[ck(date)];S.slots=hit||null;render();loadWeek();
+    if(hit)return;
+    fetchDay(date).then(function(j){
       if(t!==S.token)return;
       S.slots=j.slots||[];if(j.message&&!j.slots)S.error=j.message;render();
     }).catch(function(){
@@ -187,10 +221,13 @@ export const BOOKING_SCRIPT = `
         +'<button type="button" class="bk-arrow" data-act="wk" data-id="-1" aria-label="Semana anterior" '+(S.off<=0?'disabled':'')+'>&lsaquo;</button>'
         +'<button type="button" class="bk-arrow" data-act="wk" data-id="1" aria-label="Próxima semana" '+(S.off+7>last?'disabled':'')+'>&rsaquo;</button></div></div><div class="bk-days">';
       for(var i=0;i<7;i++){
-        var n=S.off+i,d=addDays(t0,n);
-        h+='<button type="button" class="bk-day" data-act="day" data-id="'+d+'" aria-pressed="'+(S.date===d?'true':'false')+'" '+(n>last||!openOn(d)?'disabled':'')+'><small>'+e(wd(d))+'</small><strong>'+d.slice(8)+'</strong></button>';
+        var n=S.off+i,d=addDays(t0,n),cd=S.cache[ck(d)];
+        h+='<button type="button" class="bk-day" data-act="day" data-id="'+d+'" aria-pressed="'+(S.date===d?'true':'false')+'" '+(n>last||!openOn(d)||(cd&&!cd.length)?'disabled':'')+'><small>'+e(wd(d))+'</small><strong>'+d.slice(8)+'</strong></button>';
       }
       h+='</div>';
+      if(S.finding)h+='<p class="bk-note">Buscando o primeiro dia livre…</p>';
+      else if(S.none)h+='<p class="bk-note">Sem horários livres nos próximos dias. Fale com o salão para combinar outro horário.</p>';
+      if(S.error&&!S.date)h+='<p class="bk-err" role="alert">'+e(S.error)+'</p>';
       if(S.date){
         h+='<p class="bk-label">Horários · '+e(full(S.date))+'</p>';
         if(S.error)h+='<p class="bk-err" role="alert">'+e(S.error)+'</p>';
@@ -252,7 +289,7 @@ export const BOOKING_SCRIPT = `
         S.busy=false;captchaReset();
         if(res.ok){S.done=res.j.booking;S.step=3;render();return}
         S.error=res.j.message||'Não foi possível agendar agora. Tente de novo.';
-        if(res.status===409){S.step=1;S.minute=null;pickDay(S.date);return}
+        if(res.status===409){S.step=1;S.minute=null;S.cache={};pickDay(S.date);return}
         render();
       }).catch(function(){S.busy=false;captchaReset();S.error='Sem conexão. Tente de novo.';render()});
   }
@@ -262,13 +299,13 @@ export const BOOKING_SCRIPT = `
     var el=ev.target.closest('[data-act]');if(!el)return;
     var act=el.getAttribute('data-act'),id=el.getAttribute('data-id');
     if(act==='close')closeSheet();
-    else if(act==='svc'){var more=S.adding;if(more){if(S.list.indexOf(id)<0)S.list.push(id)}else S.list=[id];S.adding=false;fixPro();S.step=1;S.minute=null;S.slots=null;if(more&&S.date&&openOn(S.date))pickDay(S.date);else{S.date=null;S.off=0;pickDay(firstOpen())}}
+    else if(act==='svc'){var more=S.adding;if(more){if(S.list.indexOf(id)<0)S.list.push(id)}else S.list=[id];S.adding=false;fixPro();S.step=1;S.minute=null;S.slots=null;if(more&&S.date&&openOn(S.date))pickDay(S.date);else goFirst()}
     else if(act==='add'){S.adding=true;S.step=0;render()}
-    else if(act==='drop'){S.list=S.list.filter(function(x){return x!==id});fixPro();S.minute=null;if(S.date&&openOn(S.date))pickDay(S.date);else pickDay(firstOpen())}
+    else if(act==='drop'){S.list=S.list.filter(function(x){return x!==id});fixPro();S.minute=null;if(S.date&&openOn(S.date))pickDay(S.date);else goFirst()}
     else if(act==='stay'){S.adding=false;S.step=1;render()}
     else if(act==='change'){S.adding=false;S.step=0;render()}
-    else if(act==='pro'){S.pro=id||'';if(S.date)pickDay(openOn(S.date)?S.date:firstOpen());else render()}
-    else if(act==='wk'){S.off=Math.max(0,S.off+7*(+id));render()}
+    else if(act==='pro'){S.pro=id||'';if(S.date&&openOn(S.date))pickDay(S.date);else goFirst()}
+    else if(act==='wk'){S.off=Math.max(0,S.off+7*(+id));render();loadWeek()}
     else if(act==='day')pickDay(id);
     else if(act==='time'){S.minute=+id;render()}
     else if(act==='next'){S.step=2;S.error='';render()}
