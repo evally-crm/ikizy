@@ -185,6 +185,18 @@ describe('renderSitePage', () => {
     assert.equal(data.services.length, 1)
   })
 
+  it('serviço com quem faz definido leva só essas profissionais (e só as que estão no site)', () => {
+    const PRO2 = '33333333-3333-4333-8333-333333333333'
+    const OFF = '44444444-4444-4444-8444-444444444444'
+    const site = online()
+    site.professionals = [{ id: PRO, name: 'Ana' }, { id: PRO2, name: 'Bia' }]
+    site.serviceProfessionals = { [SVC]: [PRO2, OFF] }
+    const data = JSON.parse(page(site).match(/<script type="application\/json" id="book-data">([\s\S]*?)<\/script>/)?.[1] ?? 'null')
+    assert.deepEqual(data.services[0].pros, [PRO2])
+    const all = JSON.parse(page(online()).match(/<script type="application\/json" id="book-data">([\s\S]*?)<\/script>/)?.[1] ?? 'null')
+    assert.equal(all.services[0].pros, undefined)
+  })
+
   it('agendamento online desligado, ou sem profissionais: nada da janela aparece', () => {
     assert.doesNotMatch(page(base()), /<dialog|id="book-data"|data-book/)
     assert.doesNotMatch(page(online({ online_booking: false })), /<dialog|data-book/)

@@ -87,7 +87,11 @@ export const BOOKING_SCRIPT = `
   function mk(s,n){var p=s.split('-');return new Date(Date.UTC(+p[0],+p[1]-1,+p[2]+(n||0),12))}
   function addDays(s,n){return mk(s,n).toISOString().slice(0,10)}
   /* o profissional escolhido (ou qualquer um) atende nesse dia da semana? Sem a lista (página antiga), todo dia vale. */
-  function openOn(d){if(!D.open)return true;var w=mk(d).getUTCDay(),ids=S.pro?[S.pro]:Object.keys(D.open);for(var i=0;i<ids.length;i++){var l=D.open[ids[i]]||[];if(l.indexOf(w)>=0)return true}return false}
+  /* profissionais que fazem o serviço (sem a lista, todas fazem) */
+  function prosOf(x){if(!x||!x.pros)return D.pros;return D.pros.filter(function(p){return x.pros.indexOf(p.id)>=0})}
+  /* trocou de serviço: a profissional escolhida antes pode não fazer este */
+  function fixPro(){if(S.pro&&!prosOf(svc(S.service)).some(function(p){return p.id===S.pro}))S.pro=''}
+  function openOn(d){if(!D.open)return true;var w=mk(d).getUTCDay(),ids=S.pro?[S.pro]:prosOf(svc(S.service)).map(function(p){return p.id});for(var i=0;i<ids.length;i++){var l=D.open[ids[i]]||[];if(l.indexOf(w)>=0)return true}return false}
   function firstOpen(){var t=today();for(var n=0;n<D.windowDays;n++){if(openOn(addDays(t,n))){S.off=7*Math.floor(n/7);return addDays(t,n)}}return t}
   function wd(s){return mk(s).toLocaleDateString('pt-BR',{weekday:'short',timeZone:'UTC'}).replace('.','')}
   function full(s){return mk(s).toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',timeZone:'UTC'})}
@@ -102,7 +106,7 @@ export const BOOKING_SCRIPT = `
       if(S.date){if(S.step>1)S.step=1;pickDay(S.date)}
       return;
     }
-    S.service=id||null;S.step=id?1:0;S.off=0;S.date=null;S.minute=null;S.slots=null;S.error='';S.done=null;S.busy=false;
+    S.service=id||null;fixPro();S.step=id?1:0;S.off=0;S.date=null;S.minute=null;S.slots=null;S.error='';S.done=null;S.busy=false;
     render();
     if(!dlg.open)dlg.showModal();fit();
     captchaStart();
@@ -146,9 +150,10 @@ export const BOOKING_SCRIPT = `
       });
     }else if(S.step===1){
       h+='<div class="bk-chosen"><span><strong>'+e(s.name)+'</strong><br><small>'+e(s.duration)+' min'+(D.showPrices&&s.price!=null?' · '+e(money(s.price)):'')+'</small></span><button type="button" data-act="change">Trocar</button></div>';
-      if(D.pros.length>1){
+      var ps=prosOf(s);
+      if(ps.length>1){
         h+='<p class="bk-label">Com quem</p><div class="bk-pros"><button type="button" class="bk-pro" data-act="pro" data-id="" aria-pressed="'+(S.pro===''?'true':'false')+'">Qualquer uma</button>';
-        D.pros.forEach(function(p){h+='<button type="button" class="bk-pro" data-act="pro" data-id="'+e(p.id)+'" aria-pressed="'+(S.pro===p.id?'true':'false')+'">'+e(p.name)+'</button>'});
+        ps.forEach(function(p){h+='<button type="button" class="bk-pro" data-act="pro" data-id="'+e(p.id)+'" aria-pressed="'+(S.pro===p.id?'true':'false')+'">'+e(p.name)+'</button>'});
         h+='</div>';
       }
       var t0=today(),last=D.windowDays,first=addDays(t0,S.off);
@@ -227,7 +232,7 @@ export const BOOKING_SCRIPT = `
     var el=ev.target.closest('[data-act]');if(!el)return;
     var act=el.getAttribute('data-act'),id=el.getAttribute('data-id');
     if(act==='close')closeSheet();
-    else if(act==='svc'){S.service=id;S.step=1;S.date=null;S.minute=null;S.slots=null;S.off=0;pickDay(firstOpen())}
+    else if(act==='svc'){S.service=id;fixPro();S.step=1;S.date=null;S.minute=null;S.slots=null;S.off=0;pickDay(firstOpen())}
     else if(act==='change'){S.step=0;render()}
     else if(act==='pro'){S.pro=id||'';if(S.date)pickDay(openOn(S.date)?S.date:firstOpen());else render()}
     else if(act==='wk'){S.off=Math.max(0,S.off+7*(+id));render()}

@@ -6,6 +6,7 @@ import { expiresLabel, inviteMessage, inviteStateText, isInviteToken } from './i
 import { limitMessage, planForTeam, teamUsage, usageLabel } from './limits'
 import { assignableRoles, canManageMember, invitableRoles, roleAccess } from './roles'
 import { membersWithoutAgenda, professionalAccess } from './status'
+import { initialSelection, prosForService, professionalsToSave } from './services'
 
 describe('perfis', () => {
   it('a profissional vê só a agenda dela e os ganhos, sem financeiro, site, negócio, equipe ou assinatura', () => {
@@ -170,5 +171,24 @@ describe('trocar o perfil de um acesso', () => {
   })
   it('gerente não promove a gerente', () => {
     assert.deepEqual(assignableRoles('manager', 'salao', true), ['professional', 'reception'])
+  })
+})
+
+describe('quem faz cada serviço', () => {
+  const pros = [{ id: 'a' }, { id: 'b' }, { id: 'c' }]
+  it('sem lista, todas fazem; com lista, só as dela; lista sem ninguém ativo volta para todas', () => {
+    assert.deepEqual(prosForService(pros, []), pros)
+    assert.deepEqual(prosForService(pros, undefined), pros)
+    assert.deepEqual(prosForService(pros, ['b']), [{ id: 'b' }])
+    assert.deepEqual(prosForService(pros, ['x']), pros)
+  })
+  it('escolher todas as ativas grava lista vazia', () => {
+    assert.deepEqual(professionalsToSave(['a', 'b', 'c'], ['a', 'b', 'c']), [])
+    assert.deepEqual(professionalsToSave(['c', 'a', 'x'], ['a', 'b', 'c']), ['a', 'c'])
+  })
+  it('escolha inicial: as da lista que seguem ativas, ou todas', () => {
+    assert.deepEqual(initialSelection([], ['a', 'b']), ['a', 'b'])
+    assert.deepEqual(initialSelection(['b', 'x'], ['a', 'b']), ['b'])
+    assert.deepEqual(initialSelection(['x'], ['a', 'b']), ['a', 'b'])
   })
 })

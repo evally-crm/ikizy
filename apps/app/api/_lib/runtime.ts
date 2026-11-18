@@ -176,6 +176,12 @@ export async function fetchPublicSite(slug: string): Promise<PublicSite | null> 
       from public.working_hours wh join public.salons s on s.id = wh.salon_id
       where s.slug = ${slug} group by wh.professional_id`) as { id: string; days: number[] }[]
     site.openDays = Object.fromEntries(days.map((d) => [d.id, d.days.map(Number)]))
+    // quem faz cada serviço: o agendamento só mostra essas profissionais (serviço fora da lista = todas fazem)
+    const links = (await sql`
+      select ps.service_id as id, array_agg(ps.professional_id) as pros
+      from public.professional_services ps join public.salons s on s.id = ps.salon_id
+      where s.slug = ${slug} group by ps.service_id`.catch(() => [])) as { id: string; pros: string[] }[]
+    if (links.length) site.serviceProfessionals = Object.fromEntries(links.map((l) => [l.id, l.pros]))
   }
   return site
 }
@@ -610,6 +616,7 @@ const EXPORT_TABLES = [
   'expenses',
   'month_closings',
   'working_hours',
+  'professional_services',
   'client_plans',
   'showcase_items',
   'site_settings',

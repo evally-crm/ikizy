@@ -34,7 +34,7 @@ type TabId = (typeof TABS)[number]['id']
 /** /dashboard/negocio: tudo que é do negócio (dados, horário, serviços, materiais), uma seção por vez em abas */
 export default function MeuNegocio() {
   const { salon } = useAuth()
-  const { professionals, workingHours, reload: reloadAgenda } = useAgenda()
+  const { professionals, services: agendaServices, workingHours, reload: reloadAgenda } = useAgenda()
   const biz = useBusiness()
   const team = useTeam()
   const { hash, state } = useLocation()
@@ -223,10 +223,18 @@ export default function MeuNegocio() {
         <ServiceDialog
           service={service === 'new' ? null : service}
           products={biz.products}
+          professionals={professionals}
+          professionalIds={service === 'new' ? [] : (agendaServices.find((x) => x.id === service.id)?.professionalIds ?? [])}
           onClose={() => setService(null)}
-          onSave={async (input) =>
-            afterServices(await biz.saveService(input, service === 'new' ? undefined : service.id), service === 'new' ? 'Serviço criado' : 'Serviço salvo')
-          }
+          onSave={async (input, who) => {
+            const r = await biz.storeService(input, service === 'new' ? undefined : service.id)
+            if (r.error !== null) return r.error
+            const whoError = await biz.saveServiceProfessionals(r.saved.id, who)
+            // o serviço já foi salvo: fecha a janela (salvar de novo criaria outro) e avisa que "quem faz" ficou como estava
+            afterServices(null, service === 'new' ? 'Serviço criado' : 'Serviço salvo')
+            if (whoError) setToast(`Serviço salvo, mas "Quem faz" não: ${whoError}`)
+            return null
+          }}
           onRemove={service === 'new' ? undefined : () => setRemoving({ kind: 'service', id: service.id, name: service.name })}
         />
       )}

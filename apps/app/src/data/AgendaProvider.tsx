@@ -21,6 +21,8 @@ export interface ServiceOption {
   name: string
   price: number
   duration: number
+  /** profissionais que fazem o serviço; vazio = todas fazem */
+  professionalIds: string[]
 }
 
 export interface NewAppointment {
@@ -156,7 +158,7 @@ function demoData() {
   }))
   const seen = new Map<string, ServiceOption>()
   for (const a of mockAppointments) {
-    if (!seen.has(a.service)) seen.set(a.service, { id: a.service, name: a.service, price: a.price, duration: a.duration })
+    if (!seen.has(a.service)) seen.set(a.service, { id: a.service, name: a.service, price: a.price, duration: a.duration, professionalIds: [] })
   }
   return { clients, appts, services: [...seen.values()] }
 }
@@ -208,11 +210,12 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
     if (!live || !neon || !salonId) return
     let cancelled = false
     void (async () => {
-      const [pros, cls, svcs, hrs] = await Promise.all([
+      const [pros, cls, svcs, hrs, links] = await Promise.all([
         neon.from('professionals').select('id, name, title').eq('salon_id', salonId).eq('active', true).order('name'),
         neon.from('clients').select('id, name, phone').eq('salon_id', salonId).order('name'),
         neon.from('services').select('id, name, price, duration').eq('salon_id', salonId).order('name'),
         neon.from('working_hours').select('professional_id, weekday, start_minute, end_minute').eq('salon_id', salonId),
+        neon.from('professional_services').select('service_id, professional_id').eq('salon_id', salonId),
       ])
       if (cancelled) return
       if (pros.error || cls.error || svcs.error) {
@@ -237,7 +240,10 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
       const own = (pros.data ?? []).filter((p) => !onlyMine || p.id === myProfessional)
       setProfessionals(own.map((p) => ({ id: p.id, name: p.name, role: p.title })))
       setClients((cls.data ?? []).filter((c) => !isForgotten(c.name)).map((c) => ({ id: c.id, name: c.name, phone: c.phone })))
-      setServices((svcs.data ?? []).map((s) => ({ id: s.id, name: s.name, price: Number(s.price), duration: s.duration })))
+      // quem faz cada serviço (sem a tabela, migration pendente, todas fazem tudo)
+      const bySvc: Record<string, string[]> = {}
+      if (!links.error) for (const l of links.data ?? []) (bySvc[l.service_id as string] ??= []).push(l.professional_id as string)
+      setServices((svcs.data ?? []).map((s) => ({ id: s.id, name: s.name, price: Number(s.price), duration: s.duration, professionalIds: bySvc[s.id] ?? [] })))
       setRegistryFor(salonId)
     })()
     return () => {
