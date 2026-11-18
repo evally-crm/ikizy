@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
-import { CircleUserRound, ExternalLink, Eye, LayoutList, MapPin, Maximize2, PackagePlus, PanelRightClose, PanelRightOpen, Palette, Undo2, X } from 'lucide-react'
+import { CircleUserRound, ExternalLink, Eye, LayoutList, MapPin, MessageSquareText, Maximize2, PackagePlus, PanelRightClose, PanelRightOpen, Palette, Undo2, X } from 'lucide-react'
 import { newId, useStudio, type ClientPlan, type Service, type ShowcaseItem, type SiteConfig } from '../../data/catalog'
 import { useAgenda } from '../../data/AgendaProvider'
 import { useBusiness, type ServiceInput } from '../../data/business'
@@ -15,6 +15,7 @@ import SiteFrame, { DeviceToggle, type Device } from '../../components/SiteFrame
 import { Button, Card, Em, PageHeader, Tag } from '../../components/ui'
 import { AppearanceFields } from './AppearanceFields'
 import { ExtrasEditor } from './ExtrasEditor'
+import { ReviewsEditor } from './ReviewsEditor'
 import { CoverFields, IdentityFields } from './IdentityFields'
 import { PreviewSheet } from './PreviewSheet'
 import { PublishButton } from './PublishButton'
@@ -24,7 +25,7 @@ import { ServicesEditor, type SaveServiceResult } from './ServicesEditor'
 import { BookingFields, ContactFields, TextFields } from './SiteFields'
 import './MeuSite.css'
 
-type Part = 'perfil' | 'visual' | 'servicos' | 'extras' | 'contato'
+type Part = 'perfil' | 'visual' | 'servicos' | 'extras' | 'avaliacoes' | 'contato'
 
 /** um menu só: cada parte é um assunto, aberta uma por vez */
 const PARTS: { id: Part; label: string; icon: ReactNode }[] = [
@@ -32,6 +33,7 @@ const PARTS: { id: Part; label: string; icon: ReactNode }[] = [
   { id: 'visual', label: 'Visual', icon: <Palette size={20} aria-hidden="true" /> },
   { id: 'servicos', label: 'Serviços', icon: <LayoutList size={20} aria-hidden="true" /> },
   { id: 'extras', label: 'Extras', icon: <PackagePlus size={20} aria-hidden="true" /> },
+  { id: 'avaliacoes', label: 'Avaliações', icon: <MessageSquareText size={20} aria-hidden="true" /> },
   { id: 'contato', label: 'Contato', icon: <MapPin size={20} aria-hidden="true" /> },
 ]
 
@@ -346,6 +348,7 @@ export default function MeuSite() {
                     onRemoveShowcase={removeShowcase}
                   />
                 )}
+                {part === 'avaliacoes' && <ReviewsEditor />}
                 {part === 'contato' && <ContactFields site={site} setSite={setSite} slugReserved={slugReserved} />}
               </div>
             </section>
