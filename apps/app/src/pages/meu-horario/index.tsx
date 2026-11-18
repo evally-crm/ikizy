@@ -1,7 +1,7 @@
 import { useAuth } from '../../auth/AuthProvider'
 import { useAgenda } from '../../data/AgendaProvider'
 import { hoursSpan, summarizeHours, weekDays } from '../../domain/business'
-import { servicesOf } from '../../domain/team'
+import { bookableServices } from '../../domain/team'
 import { WeekGrid } from '../../components/business/WeekGrid'
 import { DataTable, Em, PageHeader, Panel, type Column } from '../../components/ui'
 import { PageLoader } from '../../components/PageLoader'
@@ -21,7 +21,7 @@ export default function MeuHorario() {
   const proId = salon?.professionalId ?? null
   const me = professionals.find((p) => p.id === proId)
   const hours = proId ? workingHours[proId] : undefined
-  const mine = proId ? servicesOf(proId, services) : []
+  const mine = proId ? bookableServices(services, [{ id: proId }], false) : []
   const summary = summarizeHours(hours)
 
   const columns: Column<Svc>[] = [

@@ -6,7 +6,7 @@ import { expiresLabel, inviteMessage, inviteStateText, isInviteToken } from './i
 import { limitMessage, planForTeam, teamUsage, usageLabel } from './limits'
 import { assignableRoles, canManageMember, invitableRoles, roleAccess } from './roles'
 import { membersWithoutAgenda, professionalAccess } from './status'
-import { initialSelection, prosForService, professionalsToSave, servicesOf } from './services'
+import { bookableServices, initialSelection, prosForService, professionalsToSave } from './services'
 
 describe('perfis', () => {
   it('a profissional vê só a agenda dela e os ganhos, sem financeiro, site, negócio, equipe ou assinatura', () => {
@@ -183,6 +183,22 @@ describe('quem faz cada serviço', () => {
     assert.deepEqual(prosForService(pros, ['b']), [{ id: 'b' }])
     assert.deepEqual(prosForService(pros, ['x']), pros)
   })
+  it('quem só enxerga a si mesma: serviço de outra não volta para ela', () => {
+    const me = [{ id: 'a' }]
+    assert.deepEqual(prosForService(me, ['b'], false), [])
+    assert.deepEqual(prosForService(me, ['a', 'b'], false), me)
+    assert.deepEqual(prosForService(me, [], false), me)
+    const svcs = [
+      { id: 's1', professionalIds: [] },
+      { id: 's2', professionalIds: ['b'] },
+      { id: 's3', professionalIds: ['a'] },
+    ]
+    assert.deepEqual(
+      bookableServices(svcs, me, false).map((s) => s.id),
+      ['s1', 's3'],
+    )
+    assert.deepEqual(bookableServices(svcs, me, true), svcs)
+  })
   it('escolher todas as ativas grava lista vazia', () => {
     assert.deepEqual(professionalsToSave(['a', 'b', 'c'], ['a', 'b', 'c']), [])
     assert.deepEqual(professionalsToSave(['c', 'a', 'x'], ['a', 'b', 'c']), ['a', 'c'])
@@ -191,20 +207,5 @@ describe('quem faz cada serviço', () => {
     assert.deepEqual(initialSelection([], ['a', 'b']), ['a', 'b'])
     assert.deepEqual(initialSelection(['b', 'x'], ['a', 'b']), ['b'])
     assert.deepEqual(initialSelection(['x'], ['a', 'b']), ['a', 'b'])
-  })
-  it('serviços de uma profissional: os sem lista e os em que ela está (lista de outra não vira dela)', () => {
-    const svcs = [
-      { id: 's1', professionalIds: [] },
-      { id: 's2', professionalIds: ['a'] },
-      { id: 's3', professionalIds: ['b', 'c'] },
-    ]
-    assert.deepEqual(
-      servicesOf('a', svcs).map((s) => s.id),
-      ['s1', 's2'],
-    )
-    assert.deepEqual(
-      servicesOf('b', svcs).map((s) => s.id),
-      ['s1', 's3'],
-    )
   })
 })

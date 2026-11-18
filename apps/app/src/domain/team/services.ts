@@ -3,19 +3,19 @@
  * entra na equipe depois). Com lista, só as profissionais dela.
  */
 
-/** profissionais que podem atender o serviço; se a lista não bate com ninguém (todas saíram), volta para todas */
-export function prosForService<P extends { id: string }>(pros: P[], professionalIds: readonly string[] | undefined): P[] {
+/**
+ * profissionais que podem atender o serviço; se a lista não bate com ninguém (todas saíram), volta para todas.
+ * `seesAll` falso (a profissional, que só enxerga a si mesma): sem essa volta, senão o serviço de outra pessoa viraria dela.
+ */
+export function prosForService<P extends { id: string }>(pros: P[], professionalIds: readonly string[] | undefined, seesAll = true): P[] {
   if (!professionalIds?.length) return pros
   const only = pros.filter((p) => professionalIds.includes(p.id))
-  return only.length ? only : pros
+  return only.length || !seesAll ? only : pros
 }
 
-/**
- * serviços que esta profissional faz: os sem lista (todas fazem) e os em que ela está na lista.
- * Não usa prosForService: a profissional só enxerga a si mesma, e lá a lista de outra pessoa "voltaria para todas".
- */
-export function servicesOf<S extends { professionalIds: readonly string[] }>(professionalId: string, services: S[]): S[] {
-  return services.filter((s) => s.professionalIds.length === 0 || s.professionalIds.includes(professionalId))
+/** serviços que dá para agendar com as profissionais que a pessoa enxerga (para a dona, todos) */
+export function bookableServices<S extends { professionalIds: readonly string[] }>(services: S[], pros: { id: string }[], seesAll: boolean): S[] {
+  return services.filter((s) => prosForService(pros, s.professionalIds, seesAll).length > 0)
 }
 
 /** o que gravar: escolher todas as ativas = sem lista (quem entrar depois também faz) */

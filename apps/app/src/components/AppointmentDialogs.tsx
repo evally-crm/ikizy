@@ -5,7 +5,8 @@ import { Pencil, X } from 'lucide-react'
 import { WhatsAppIcon } from './BrandIcons'
 import { useAgenda, type NewAppointment } from '../data/AgendaProvider'
 import { findConflict } from '../domain/agenda'
-import { prosForService } from '../domain/team'
+import { useAuth } from '../auth/AuthProvider'
+import { bookableServices, prosForService, roleAccess } from '../domain/team'
 import { formatDuration } from '../lib/agendaTime'
 import { formatBRL, formatTime } from '../lib/format'
 import { Button, Em, StatusBadge } from './ui'
@@ -30,6 +31,12 @@ export function whatsappLink(a: Appointment) {
   return `https://wa.me/${number}?text=${encodeURIComponent(text)}`
 }
 
+/** quem enxerga a agenda de todas (a profissional só vê a dela; modo demonstração: como a dona) */
+function useSeesAll() {
+  const { salon } = useAuth()
+  return !salon || roleAccess(salon.role).agendaAll
+}
+
 function ProfessionalChips({
   value,
   onChange,
@@ -41,9 +48,10 @@ function ProfessionalChips({
   only?: readonly string[]
 }) {
   const { professionals } = useAgenda()
+  const seesAll = useSeesAll()
   return (
     <div className="chips chips--tight" role="group" aria-label="Profissional">
-      {prosForService(professionals, only).map((p) => (
+      {prosForService(professionals, only, seesAll).map((p) => (
         <button key={p.id} type="button" className="chip" aria-pressed={value === p.id} onClick={() => onChange(p.id)}>
           {p.name}
         </button>
@@ -78,7 +86,10 @@ export function NewAppointmentDialog({
   onClose: () => void
   notify: (message: string) => void
 }) {
-  const { professionals, clients, services, appointments, workingHours, create } = useAgenda()
+  const { professionals, clients, services: allServices, appointments, workingHours, create } = useAgenda()
+  const seesAll = useSeesAll()
+  // a profissional só agenda o que ela faz; a dona vê todos
+  const services = bookableServices(allServices, professionals, seesAll)
   // profissional, serviço, duração e valor guardam só o que a pessoa escolheu; o resto vem da lista, que pode chegar
   // depois de a janela abrir (por exemplo ao recarregar a página), e por isso é lido a cada desenho
   const [clientName, setClientName] = useState(initial.clientName ?? '')
@@ -87,7 +98,7 @@ export function NewAppointmentDialog({
   const serviceId = pickedService === 'outro' ? 'outro' : (services.find((s) => s.id === pickedService)?.id ?? services[0]?.id ?? 'outro')
   const first = services.find((s) => s.id === serviceId)
   // só quem faz o serviço; se a escolhida não faz o serviço novo, passa para a primeira que faz
-  const allowed = prosForService(professionals, first?.professionalIds)
+  const allowed = prosForService(professionals, first?.professionalIds, seesAll)
   const [pickedPro, setProfessionalId] = useState<string | null>(initial.professionalId ?? null)
   const professionalId = pickedPro && allowed.some((p) => p.id === pickedPro) ? pickedPro : (allowed[0]?.id ?? '')
   const [customService, setCustomService] = useState('')
