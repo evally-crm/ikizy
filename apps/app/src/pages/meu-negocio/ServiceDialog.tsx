@@ -3,8 +3,7 @@ import { Trash2, X } from 'lucide-react'
 import { CATEGORIES, type Category, type Product, type Service } from '../../data/catalog'
 import type { ServiceInput } from '../../data/business'
 import { formatDuration } from '../../lib/agendaTime'
-import { toMoneyInput } from '../../lib/format'
-import { MoneyField, Select, Stepper, parseMoney } from '../../components/controls'
+import { PriceField, Select, Stepper } from '../../components/controls'
 import { Modal } from '../../components/Modal'
 import { Button, Em } from '../../components/ui'
 import { initialSelection, professionalsToSave } from '../../domain/team'
@@ -33,7 +32,7 @@ export function ServiceDialog({
 }) {
   const [name, setName] = useState(service?.name ?? '')
   const [category, setCategory] = useState<Category>(service?.category ?? 'Unhas')
-  const [price, setPrice] = useState(toMoneyInput(service?.price ?? 0))
+  const [price, setPrice] = useState(service?.price ?? 0)
   const [duration, setDuration] = useState(service?.duration ?? 60)
   const [productId, setProductId] = useState(service?.productId ?? '')
   const [volume, setVolume] = useState(String(service?.monthlyVolume ?? 0))
@@ -50,7 +49,7 @@ export function ServiceDialog({
     const message = await onSave({
       name,
       category,
-      price: parseMoney(price),
+      price,
       duration,
       productId: productId || null,
       monthlyVolume: Number(volume) || 0,
@@ -79,10 +78,8 @@ export function ServiceDialog({
             </span>
           </label>
           <Select label="Categoria" value={category} options={CATEGORIES.map((c) => ({ value: c, label: c }))} onChange={(v) => setCategory(v as Category)} />
-          <div className="form__pair">
-            <MoneyField label="Preço" value={price} onChange={setPrice} />
-            <Stepper label="Duração" value={duration} onChange={setDuration} format={formatDuration} min={5} max={600} step={15} />
-          </div>
+          <PriceField label="Preço" value={price} onChange={setPrice} />
+          <Stepper label="Duração" value={duration} onChange={setDuration} format={formatDuration} min={5} max={600} step={15} />
           {professionals.length > 1 && (
             <div className="field">
               <span className="field__label">Quem faz</span>

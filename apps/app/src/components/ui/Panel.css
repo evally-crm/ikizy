@@ -23,6 +23,20 @@
   font-weight: 500;
   letter-spacing: -0.01em;
 }
+/* quantos itens, ao lado do título */
+.panel__count {
+  margin-left: 6px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--ink-500);
+}
+/* filtro e botão de adicionar, lado a lado à direita do título */
+.panel__tools {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+}
 .panel__empty,
 .panel__aside,
 .panel__note {

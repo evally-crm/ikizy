@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type KeyboardEvent, type RefObject } from 'react'
+import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent as ReactPointerEvent, type RefObject } from 'react'
 import { Check, ChevronDown, Minus, Plus } from 'lucide-react'
 import { formatPhone } from '../lib/format'
 
@@ -25,6 +25,7 @@ export function Select({
   options,
   onChange,
   hideLabel,
+  pill,
 }: {
   label: string
   value: string
@@ -32,6 +33,8 @@ export function Select({
   onChange: (value: string) => void
   /** o rótulo continua para leitores de tela, mas não aparece */
   hideLabel?: boolean
+  /** filtro compacto em pílula, ao lado de um título (o menu abre a partir dele, alinhado à direita) */
+  pill?: boolean
 }) {
   const [open, setOpen] = useState(false)
   const [hi, setHi] = useState(0)
@@ -79,12 +82,12 @@ export function Select({
   }
 
   return (
-    <div className="field" ref={ref}>
-      <span className={`field__label ${hideLabel ? 'sr-only' : ''}`}>{label}</span>
+    <div className={pill ? 'pick--pill' : 'field'} ref={ref}>
+      <span className={`field__label ${hideLabel || pill ? 'sr-only' : ''}`}>{label}</span>
       <div className="pick">
         <button
           type="button"
-          className="input pick__btn"
+          className={pill ? 'pick__btn pick__btn--pill' : 'input pick__btn'}
           aria-haspopup="listbox"
           aria-expanded={open}
           onClick={() => {
@@ -246,6 +249,125 @@ export function Stepper({
           <Plus size={16} aria-hidden="true" />
         </button>
       </div>
+    </div>
+  )
+}
+
+/** o teto do trilho de preço: pelo menos R$ 300 e sempre com folga acima do valor (arredondado a 100) */
+const priceCeiling = (v: number) => Math.max(300, Math.ceil((v * 1.5) / 100) * 100)
+
+/**
+ * preço com − / + e um trilho que se arrasta: o bloco branco segue o dedo 1:1 a partir de onde foi pego
+ * (sem pular para o ponto tocado), e − / + andam de 5 em 5. Teclado: setas (5), Page Up/Down (50).
+ * "Digitar valor" troca para o campo de texto, para centavos ou valores fora do trilho.
+ */
+export function PriceField({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
+  const [typing, setTyping] = useState(false)
+  const [text, setText] = useState('')
+  const [dragging, setDragging] = useState(false)
+  // o teto fica fixo (senão o trilho mudaria de escala debaixo do dedo)
+  const [ceiling, setCeiling] = useState(() => priceCeiling(value))
+  const drag = useRef<{ x: number; start: number; width: number } | null>(null)
+  const step = 5
+  const set = (v: number) => onChange(Math.max(0, Math.round(v * 100) / 100))
+  const snap = (v: number) => Math.min(Math.max(Math.round(v / step) * step, 0), ceiling)
+
+  const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if ((e.target as HTMLElement).closest('button')) return
+    e.currentTarget.setPointerCapture(e.pointerId)
+    drag.current = { x: e.clientX, start: value, width: e.currentTarget.getBoundingClientRect().width }
+    setDragging(true)
+  }
+  const onPointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const d = drag.current
+    if (!d) return
+    set(snap(d.start + ((e.clientX - d.x) / d.width) * ceiling))
+  }
+  // o teto não muda ao soltar (o bloco daria um salto); só cresce quando o valor passa dele
+  const onPointerUp = () => {
+    drag.current = null
+    setDragging(false)
+  }
+  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    const by = e.key === 'ArrowRight' || e.key === 'ArrowUp' ? step : e.key === 'ArrowLeft' || e.key === 'ArrowDown' ? -step : e.key === 'PageUp' ? 50 : e.key === 'PageDown' ? -50 : 0
+    if (!by) return
+    e.preventDefault()
+    const next = Math.max(0, value + by)
+    set(next)
+    if (next > ceiling) setCeiling(priceCeiling(next))
+  }
+  const bump = (by: number) => {
+    const next = Math.max(0, snap(value) === value ? value + by : by > 0 ? Math.ceil(value / step) * step : Math.floor(value / step) * step)
+    set(next)
+    if (next > ceiling) setCeiling(priceCeiling(next))
+  }
+
+  if (typing) {
+    return (
+      <div className="field price">
+        <MoneyField label={label} value={text} onChange={setText} />
+        <button
+          type="button"
+          className="price__type"
+          onClick={() => {
+            const v = parseMoney(text)
+            set(v)
+            if (v > ceiling) setCeiling(priceCeiling(v))
+            setTyping(false)
+          }}
+        >
+          Usar o trilho
+        </button>
+      </div>
+    )
+  }
+
+  const shown = Number.isInteger(value) ? String(value) : value.toFixed(2).replace('.', ',')
+  return (
+    <div className="field price">
+      <span className="field__label">{label}</span>
+      <div
+        className={`price__track ${dragging ? 'is-dragging' : ''}`}
+        role="slider"
+        tabIndex={0}
+        aria-label={label}
+        aria-valuemin={0}
+        aria-valuemax={ceiling}
+        aria-valuenow={value}
+        aria-valuetext={`R$ ${shown}`}
+        style={{ '--pct': Math.min(value / ceiling, 1) } as CSSProperties}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+        onKeyDown={onKeyDown}
+      >
+        <span className="price__fill" aria-hidden="true" />
+        <button type="button" className="price__btn" tabIndex={-1} aria-label="Diminuir 5 reais" disabled={value <= 0} onClick={() => bump(-step)}>
+          <Minus size={20} aria-hidden="true" />
+        </button>
+        <output className="price__value">
+          <small>R$</small>
+          {shown}
+        </output>
+        <button type="button" className="price__btn" tabIndex={-1} aria-label="Aumentar 5 reais" onClick={() => bump(step)}>
+          <Plus size={20} aria-hidden="true" />
+        </button>
+      </div>
+      <div className="price__scale" aria-hidden="true">
+        <span>R$ 0</span>
+        <span>R$ {ceiling}</span>
+      </div>
+      <button
+        type="button"
+        className="price__type"
+        onClick={() => {
+          setText(value ? String(value).replace('.', ',') : '')
+          setTyping(true)
+        }}
+      >
+        Digitar valor
+      </button>
     </div>
   )
 }

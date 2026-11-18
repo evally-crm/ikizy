@@ -109,6 +109,157 @@
   background: var(--page-bg);
 }
 
+/* filtro em pílula ("Todas ⌄") ao lado do título: o menu sai dele, alinhado à direita, e nasce do botão */
+.pick__btn--pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  max-width: 180px;
+  padding: 0 12px 0 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  background: var(--white);
+  font-size: 13px;
+  font-weight: 500;
+  transition: transform 100ms ease-out;
+}
+.pick__btn--pill:active {
+  transform: scale(0.96);
+}
+.pick__btn--pill svg {
+  flex: none;
+  color: var(--ink-500);
+  transition: transform 0.3s var(--ease-fluid, cubic-bezier(0.32, 0.72, 0, 1));
+}
+.pick__btn--pill[aria-expanded='true'] {
+  border-color: var(--ink-400);
+}
+.pick__btn--pill[aria-expanded='true'] svg {
+  transform: rotate(180deg);
+}
+.pick--pill .pick__list {
+  left: auto;
+  min-width: 200px;
+  transform-origin: top right;
+  animation: pick-in 0.22s var(--ease-fluid, cubic-bezier(0.32, 0.72, 0, 1));
+}
+@keyframes pick-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pick--pill .pick__list {
+    animation: none;
+  }
+}
+
+/* preço: − e + nas pontas, o valor no meio e um bloco branco que cresce até o valor (dá para arrastar) */
+.price {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.price__track {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 64px;
+  border-radius: 20px;
+  background: var(--bg);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: ew-resize;
+}
+.price__track:focus-visible {
+  outline: 2px solid var(--brand-500);
+  outline-offset: 2px;
+}
+.price__fill {
+  position: absolute;
+  inset: 4px auto 4px 4px;
+  width: calc((100% - 8px) * var(--pct, 0));
+  min-width: 52px;
+  border-radius: 16px;
+  background: var(--white);
+  box-shadow:
+    0 1px 3px color-mix(in srgb, var(--black) 10%, transparent),
+    0 6px 16px -10px color-mix(in srgb, var(--black) 30%, transparent);
+  transition: width 0.4s var(--ease-fluid, cubic-bezier(0.32, 0.72, 0, 1));
+}
+/* arrastando: o bloco segue o dedo 1:1, sem animação no meio */
+.price__track.is-dragging .price__fill {
+  transition: none;
+}
+.price__value {
+  position: relative;
+  flex: 1;
+  font-size: 26px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+.price__value small {
+  margin-right: 4px;
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--ink-500);
+}
+.price__btn {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 52px;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--ink-500);
+  cursor: pointer;
+  transition:
+    transform 100ms ease-out,
+    color 0.15s;
+}
+.price__btn:hover:not(:disabled) {
+  color: var(--ink-900);
+}
+.price__btn:active:not(:disabled) {
+  transform: scale(0.85);
+}
+.price__btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.price__scale {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 4px;
+  font-size: 12px;
+  color: var(--ink-400);
+}
+.price__type {
+  align-self: center;
+  padding: 4px 8px;
+  border: 0;
+  background: transparent;
+  color: var(--ink-500);
+  font: inherit;
+  font-size: 12px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+@media (prefers-reduced-motion: reduce) {
+  .price__fill,
+  .price__btn {
+    transition: none;
+  }
+}
+
 /* quantidade em passos */
 .stepper {
   display: flex;
