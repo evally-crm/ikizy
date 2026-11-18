@@ -34,18 +34,20 @@ export interface RoleAccess {
   billing: boolean
   /** "Meus ganhos": comissão do mês, só dela */
   earnings: boolean
+  /** "Meu horário": os dias, horas e serviços dela, só para ler (quem tem Meu negócio vê e edita lá) */
+  ownSchedule: boolean
 }
 
 export function roleAccess(role: Role): RoleAccess {
   switch (role) {
     case 'owner':
-      return { agendaAll: true, finance: 'full', clientValues: true, site: true, business: true, team: true, billing: true, earnings: false }
+      return { agendaAll: true, finance: 'full', clientValues: true, site: true, business: true, team: true, billing: true, earnings: false, ownSchedule: false }
     case 'manager':
-      return { agendaAll: true, finance: 'full', clientValues: true, site: true, business: true, team: true, billing: false, earnings: false }
+      return { agendaAll: true, finance: 'full', clientValues: true, site: true, business: true, team: true, billing: false, earnings: false, ownSchedule: false }
     case 'reception':
-      return { agendaAll: true, finance: 'today', clientValues: false, site: false, business: false, team: false, billing: false, earnings: false }
+      return { agendaAll: true, finance: 'today', clientValues: false, site: false, business: false, team: false, billing: false, earnings: false, ownSchedule: false }
     case 'professional':
-      return { agendaAll: false, finance: 'none', clientValues: false, site: false, business: false, team: false, billing: false, earnings: true }
+      return { agendaAll: false, finance: 'none', clientValues: false, site: false, business: false, team: false, billing: false, earnings: true, ownSchedule: true }
   }
 }
 

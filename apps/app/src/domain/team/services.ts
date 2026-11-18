@@ -10,6 +10,14 @@ export function prosForService<P extends { id: string }>(pros: P[], professional
   return only.length ? only : pros
 }
 
+/**
+ * serviços que esta profissional faz: os sem lista (todas fazem) e os em que ela está na lista.
+ * Não usa prosForService: a profissional só enxerga a si mesma, e lá a lista de outra pessoa "voltaria para todas".
+ */
+export function servicesOf<S extends { professionalIds: readonly string[] }>(professionalId: string, services: S[]): S[] {
+  return services.filter((s) => s.professionalIds.length === 0 || s.professionalIds.includes(professionalId))
+}
+
 /** o que gravar: escolher todas as ativas = sem lista (quem entrar depois também faz) */
 export function professionalsToSave(selected: readonly string[], activeIds: readonly string[]): string[] {
   const picked = activeIds.filter((id) => selected.includes(id))

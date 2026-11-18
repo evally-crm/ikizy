@@ -1,4 +1,4 @@
-import { CalendarDays, CreditCard, Globe, HandCoins, House, Store, Users, Wallet, type LucideIcon } from 'lucide-react'
+import { CalendarDays, Clock, CreditCard, Globe, HandCoins, House, Store, Users, Wallet, type LucideIcon } from 'lucide-react'
 import type { RoleAccess } from '../../domain/team'
 import { dash, ROUTES } from '../../lib/routes'
 
@@ -27,7 +27,10 @@ export const navItems: NavItem[] = [
 ]
 
 /** o que fica nas Configurações (celular) e no menu do avatar (computador), além do que já está no topo */
-export const moreItems: NavItem[] = [{ to: dash('/assinatura'), label: 'Assinatura', icon: CreditCard, show: (a) => a.billing }]
+export const moreItems: NavItem[] = [
+  { to: dash('/meu-horario'), label: 'Meu horário', icon: Clock, show: (a) => a.ownSchedule },
+  { to: dash('/assinatura'), label: 'Assinatura', icon: CreditCard, show: (a) => a.billing },
+]
 
 /** itens que o perfil vê */
 export const visibleFor = <T extends NavItem>(items: T[], access: RoleAccess) => items.filter((i) => !i.show || i.show(access))

@@ -22,6 +22,7 @@ import Convite from './pages/convite'
 import Financeiro from './pages/financeiro'
 import Ganhos from './pages/ganhos'
 import Inicio from './pages/inicio'
+import MeuHorario from './pages/meu-horario'
 import MeuNegocio from './pages/meu-negocio'
 import MeuSite from './pages/meu-site'
 
@@ -58,6 +59,9 @@ export default function App() {
             </Route>
             <Route element={<RequireRole allow={(a) => a.earnings} />}>
               <Route path="ganhos" element={<Ganhos />} />
+            </Route>
+            <Route element={<RequireRole allow={(a) => a.ownSchedule} />}>
+              <Route path="meu-horario" element={<MeuHorario />} />
             </Route>
             <Route element={<RequireRole allow={(a) => a.site} />}>
               <Route path="site" element={<MeuSite />} />
