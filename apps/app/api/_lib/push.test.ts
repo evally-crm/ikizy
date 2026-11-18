@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import { HttpError } from './billing.js'
-import { newRequestPayload, parseSubscription, pushNewRequest, subscribe, unsubscribe, type PushDb, type PushSender, type StoredSubscription } from './push.js'
+import { changedRequestPayload, newRequestPayload, parseSubscription, pushNewRequest, subscribe, unsubscribe, type PushDb, type PushSender, type StoredSubscription } from './push.js'
 
 // chaves no formato de verdade: P-256 público (65 bytes = 87 letras) e segredo de autenticação (16 bytes = 22 letras)
 const P256DH = 'B'.repeat(87)
@@ -177,5 +177,19 @@ describe('aviso de pedido novo', () => {
       throw new Error('banco fora do ar')
     }
     assert.deepEqual(await pushNewRequest({ db: broken, send }, 'studio', request), { sent: 0, dropped: 0 })
+  })
+})
+
+describe('aviso de remarcação e cancelamento', () => {
+  const base = { startsAt: '2026-11-20T17:00:00.000Z', service: 'Esmaltação em gel', clientName: 'Ana' }
+  it('remarcado diz o novo horário e cancelado diz o que foi cancelado', () => {
+    const a = changedRequestPayload({ ...base, kind: 'remarcado' })
+    assert.equal(a.title, 'Pedido remarcado')
+    assert.match(a.body, /^Ana remarcou Esmaltação em gel para /)
+    const b = changedRequestPayload({ ...base, kind: 'cancelado' })
+    assert.equal(b.title, 'Pedido cancelado')
+    assert.match(b.body, /^Ana cancelou Esmaltação em gel · /)
+    assert.notEqual(a.tag, b.tag)
+    assert.equal(a.url, '/dashboard/agenda')
   })
 })

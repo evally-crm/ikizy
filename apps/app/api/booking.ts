@@ -1,8 +1,8 @@
 import { HttpError } from './_lib/billing.js'
 import { checkBookingLimits, createBooking, isChangeRequest, isReviewRequest, listSlots, parseBookingInput, parseChangeInput, parseRescheduleQuery, parseReviewInput, parseSlotsQuery, tooManyFromIp, translateDbError, verifyCaptcha } from './_lib/booking.js'
 import { notifyNewRequest } from './_lib/notify.js'
-import { pushNewRequest } from './_lib/push.js'
-import { appUrl, cancelBooking, createBookingDb, createNotifyDb, createPushDb, createPushSender, fetchRescheduleSlots, fail, json, rescheduleBooking, saveReview, sendEmail } from './_lib/runtime.js'
+import { changedRequestPayload, pushNewRequest, pushToSalon } from './_lib/push.js'
+import { appUrl, cancelBooking, createBookingDb, createNotifyDb, createPushDb, createPushSender, fetchBookingStatus, fetchRescheduleSlots, fail, json, rescheduleBooking, saveReview, sendEmail } from './_lib/runtime.js'
 
 /**
  * GET /api/booking?slug=&service=<id>[,<id>...]&date=YYYY-MM-DD[&professional=] -> { slots: [{ professional_id, professional, minute }] }
@@ -46,6 +46,17 @@ export async function POST(request: Request) {
       await (change.action === 'cancel' ? cancelBooking(change.token) : rescheduleBooking(change.token, change.date, change.minute)).catch((error) => {
         throw translateDbError(error)
       })
+      // avisa a dona no aparelho (se os avisos estiverem configurados); nunca atrapalha a resposta da cliente
+      const sender = createPushSender()
+      if (sender) {
+        const st = await fetchBookingStatus(change.token).catch(() => null)
+        const first = st?.items[0]
+        if (st && first) {
+          const service = st.items.map((i) => i.service).join(' + ')
+          const kind = change.action === 'cancel' ? 'cancelado' : 'remarcado'
+          await pushToSalon({ db: createPushDb(), send: sender }, st.salon.slug, changedRequestPayload({ kind, startsAt: first.starts_at, service, clientName: st.client ?? 'A cliente' }))
+        }
+      }
       return json({ ok: true, status: change.action === 'cancel' ? 'cancelado' : 'pendente' })
     }
     const { honeypot, captcha, ...input } = parseBookingInput(body)
