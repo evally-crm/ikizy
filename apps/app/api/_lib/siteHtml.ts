@@ -39,6 +39,8 @@ export interface PublicSite {
   professionals?: { id: string; name: string }[]
   /** dias da semana (0 = domingo) em que cada profissional atende; os outros dias aparecem desligados no agendamento */
   openDays?: Record<string, number[]>
+  /** avaliações das clientes: média, total e as mais recentes com texto (só vem quando há alguma) */
+  reviews?: { count: number; average: number; latest: { name: string; service: string; rating: number; comment: string; created_at: string }[] }
   /** quem faz cada serviço (id do serviço -> ids das profissionais); serviço fora da lista = todas fazem */
   serviceProfessionals?: Record<string, string[]>
 }
@@ -86,6 +88,16 @@ export function safeLogo(raw: string | null | undefined): string | null {
 }
 
 const CSS = `
+.rv-sum{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 16px}
+.rv-sum strong{font-family:var(--display);font-weight:var(--dw);font-size:40px;line-height:1;color:var(--ink)}
+.rv-sum span:last-child{color:var(--muted);font-size:15px}
+.dots{display:inline-flex;gap:4px}
+.dots i{width:10px;height:10px;border-radius:50%;border:1.5px solid var(--accent)}
+.dots i.on{background:var(--accent)}
+.rv-list{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.rv-list li{padding:16px;border:1px solid var(--line);border-radius:18px}
+.rv-list p{margin:8px 0 6px;color:var(--text)}
+.rv-list small{color:var(--muted)}
 *{box-sizing:border-box}html{scroll-behavior:smooth}
 body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased;padding-bottom:84px}
 a{color:inherit}
@@ -329,6 +341,26 @@ export function renderSitePage(site: PublicSite, opts: { canonical: string; capt
     })
     .join('')
 
+  // avaliações das clientes: média em número e bolinhas (sem estrelas), e as mais recentes com texto
+  const rv = site.reviews
+  const dots = (n: number) =>
+    `<span class="dots" role="img" aria-label="Nota ${esc(n)} de 5">${[1, 2, 3, 4, 5].map((i) => `<i${i <= Math.round(n) ? ' class="on"' : ''}></i>`).join('')}</span>`
+  const reviewsHtml =
+    rv && rv.count > 0
+      ? `<section id="avaliacoes" class="panel"><h2>O que dizem <em>as clientes</em></h2><p class="rv-sum"><strong>${esc(
+          rv.average.toFixed(1).replace('.', ','),
+        )}</strong>${dots(rv.average)}<span>${esc(rv.count)} ${rv.count === 1 ? 'avaliação' : 'avaliações'}</span></p>${
+          rv.latest.length
+            ? `<ul class="rv-list">${rv.latest
+                .map(
+                  (r) =>
+                    `<li>${dots(r.rating)}<p>${esc(r.comment)}</p><small>${r.name ? `${esc(r.name)} · ` : ''}${esc(r.service)}</small></li>`,
+                )
+                .join('')}</ul>`
+            : ''
+        }</section>`
+      : ''
+
   const showcase = (site.showcase ?? []).filter((x) => x.name?.trim())
   const showcaseHtml = showcase
     .map((x) => {
@@ -460,7 +492,7 @@ export function renderSitePage(site: PublicSite, opts: { canonical: string; capt
     plans.length ? `<section id="planos" class="panel"><h2>Planos por <em>assinatura</em></h2><div class="plans">${plansHtml}</div></section>` : ''
   }${
     team.length ? `<section id="equipe" class="panel"><h2>Quem cuida de você</h2><ul class="team">${teamHtml}</ul></section>` : ''
-  }${
+  }${reviewsHtml}${
     contactCards || bookLink || online
       ? `<section id="contato" class="panel contact"><h2>Vamos <em>agendar?</em></h2><div class="contact__grid">${contactCards}</div>${
           online || bookLink

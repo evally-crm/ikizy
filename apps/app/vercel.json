@@ -24,6 +24,20 @@
       "dest": "/api/site?slug=$slug"
     },
     {
+      "src": "/pedido/([a-f0-9]{64})",
+      "has": [
+        {
+          "type": "host",
+          "value": "(?!app\\.|www\\.)(?<slug>[a-z0-9-]+)\\.ikizy\\.com"
+        }
+      ],
+      "dest": "/api/site?slug=$slug&pedido=$1"
+    },
+    {
+      "src": "/s/([a-z0-9-]+)/pedido/([a-f0-9]{64})",
+      "dest": "/api/site?slug=$1&pedido=$2"
+    },
+    {
       "src": "/s/([a-z0-9-]+)",
       "dest": "/api/site?slug=$1"
     },

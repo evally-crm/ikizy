@@ -209,7 +209,7 @@ export const BOOKING_SCRIPT = `
     }else{
       var b=S.done;
       h+='<div class="bk-done"><div class="bk-ok" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/></svg></div><h3>Pedido enviado</h3>';
-      h+='<p class="bk-wait" role="status"><strong>Ainda não está confirmado.</strong> O salão vai conferir e responder você pelo WhatsApp. Só considere o horário marcado depois dessa confirmação.</p>';
+      h+='<p class="bk-wait" role="status"><strong>Ainda não está confirmado.</strong> O salão vai conferir e responder você pelo WhatsApp. Só considere o horário marcado depois dessa confirmação.'+(b.token?' Guarde o link de acompanhamento para ver quando for confirmado.':'')+'</p>';
       h+='<div class="bk-sum"><strong>'+e(b.service)+'</strong><br>'+e(full(S.date))+' às '+hm(S.minute)+(b.professional?'<br>Com '+e(b.professional):'')+'</div></div>';
     }
     return h;
@@ -220,7 +220,11 @@ export const BOOKING_SCRIPT = `
     if(S.step===1)return '<button type="button" class="btn" data-act="next" '+(S.minute==null?'disabled':'')+'>Continuar</button>';
     if(S.step===2)return '<button type="button" class="btn btn--light" data-act="back">Voltar</button><button type="button" class="btn" data-act="send" '+(S.busy?'disabled':'')+'>'+(S.busy?'Enviando…':'Pedir horário')+'</button>';
     var f='';
-    if(D.wa){
+    if(S.done&&S.done.token){
+      var tk=S.done.token,host=location.hostname,path=host.indexOf(D.slug+'.')===0?'/pedido/'+tk:'/s/'+D.slug+'/pedido/'+tk;
+      f+='<a class="btn" href="'+e(path)+'">Acompanhar meu pedido</a>';
+    }
+    if(D.wa&&!(S.done&&S.done.token)){
       var b=S.done,msg='Olá! Acabei de pedir um horário pelo site: '+b.service+', '+full(S.date)+' às '+hm(S.minute)+'. Meu nome é '+S.name+'.';
       f+='<a class="btn" href="https://wa.me/'+D.wa+'?text='+encodeURIComponent(msg)+'" rel="noopener">Avisar no WhatsApp</a>';
     }

@@ -124,7 +124,7 @@ export function MessageDialog({
 
 /** mensagem sobre um horário da agenda, já com a sugestão certa para o momento */
 export function AppointmentMessageDialog({ appointment, onClose }: { appointment: Appointment; onClose: () => void }) {
-  const { salonName, siteUrl, address } = useSalonInfo()
+  const { salonName, siteUrl, address, bookingLink } = useSalonInfo()
   const { professionals } = useAgenda()
   const professional = professionals.find((p) => p.id === appointment.professionalId)?.name
   const now = new Date()
@@ -144,6 +144,7 @@ export function AppointmentMessageDialog({ appointment, onClose }: { appointment
         professional,
         date: appointment.date,
         start: appointment.start,
+        bookingUrl: bookingLink(appointment.publicToken),
       }}
       onSent={(kind) => markSent(sentKey(kind, appointment.id, today))}
       onClose={onClose}

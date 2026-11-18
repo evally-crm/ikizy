@@ -31,5 +31,7 @@ export function useSalonInfo() {
     salonName: salon?.name ?? 'Studio Maria Beauty',
     siteUrl: published && salon?.slug ? `https://${salon.slug}.ikizy.com` : undefined,
     address: address || undefined,
+    /** página da cliente de um horário (status e avaliação), no domínio do salão */
+    bookingLink: (token?: string) => (token && salon?.slug ? `https://${salon.slug}.ikizy.com/pedido/${token}` : undefined),
   }
 }

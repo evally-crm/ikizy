@@ -224,6 +224,7 @@ const SHEETS: { table: string; file: string; about: string }[] = [
   { table: 'month_closings', file: 'fechamentos-do-mes.csv', about: 'meses fechados, com o resumo guardado' },
   { table: 'working_hours', file: 'horarios.csv', about: 'horário de atendimento de cada profissional' },
   { table: 'professional_services', file: 'quem-faz-cada-servico.csv', about: 'quais profissionais fazem cada serviço (serviço fora da lista: todas fazem)' },
+  { table: 'reviews', file: 'avaliacoes.csv', about: 'avaliações deixadas pelas clientes depois do atendimento' },
   { table: 'client_plans', file: 'planos-do-site.csv', about: 'planos e pacotes mostrados no site' },
   { table: 'showcase_items', file: 'vitrine-do-site.csv', about: 'itens da vitrine do site' },
   { table: 'site_settings', file: 'site.csv', about: 'textos e configurações do seu site' },

@@ -49,6 +49,8 @@ export interface MessageContext {
   date?: string
   /** minutos desde 00:00 */
   start?: number
+  /** página da cliente para este horário (status e, depois de concluído, a avaliação) */
+  bookingUrl?: string
 }
 
 const firstName = (name: string) => name.trim().split(/\s+/)[0] ?? ''
@@ -87,12 +89,13 @@ export function renderMessage(kind: MessageKind, ctx: MessageContext): string {
   const horario = details(servico, quando, ctx.professional)
   const agendar = ctx.siteUrl ? `\n\nSe preferir, agende pelo link: ${ctx.siteUrl}` : ''
   const local = location(ctx.salonName, ctx.address)
+  const acompanhar = ctx.bookingUrl ? `\n\nAcompanhe seu horário pelo link: ${ctx.bookingUrl}` : ''
   // o nome do negócio vai como assinatura: "no Studio" / "na Clínica" não tem como acertar sozinho
   const assinatura = ctx.salonName.trim() ? `\n\n${ctx.salonName.trim()}` : ''
 
   switch (kind) {
     case 'confirmacao':
-      return `Olá, ${nome}! Tudo bem?\n\nSeu horário está reservado:\n\n${horario}\n\nPor favor, responda SIM para confirmar. Se precisar remarcar, é só avisar por aqui.${local}${assinatura}`
+      return `Olá, ${nome}! Tudo bem?\n\nSeu horário está reservado:\n\n${horario}\n\nPor favor, responda SIM para confirmar. Se precisar remarcar, é só avisar por aqui.${acompanhar}${local}${assinatura}`
     case 'recusa':
       return `Olá, ${nome}! Tudo bem?\n\nRecebemos seu pedido de ${servico} para ${quando}, mas infelizmente esse horário não está disponível.\n\nResponda com os dias e períodos que ficam melhores para você, e encontramos outra opção.${agendar}${assinatura}`
     case 'lembrete':
@@ -100,7 +103,9 @@ export function renderMessage(kind: MessageKind, ctx: MessageContext): string {
     case 'hoje':
       return `Olá, ${nome}! Seu horário é hoje, às ${hora}. Estamos à sua espera!\n\nSe surgir algum imprevisto, avise por aqui.${local}${assinatura}`
     case 'pos':
-      return `Olá, ${nome}! Agradecemos pela visita hoje.\n\nEsperamos que tenha gostado do resultado. Se tiver qualquer dúvida sobre os cuidados em casa, é só chamar por aqui.\n\nSua opinião é muito importante: pode contar como foi a sua experiência?${assinatura}`
+      return `Olá, ${nome}! Agradecemos pela visita hoje.\n\nEsperamos que tenha gostado do resultado. Se tiver qualquer dúvida sobre os cuidados em casa, é só chamar por aqui.\n\nSua opinião é muito importante: ${
+        ctx.bookingUrl ? `conte como foi pelo link, leva menos de um minuto:\n${ctx.bookingUrl}` : 'pode contar como foi a sua experiência?'
+      }${assinatura}`
     case 'falta':
       return `Olá, ${nome}! Tudo bem?\n\nNotamos que você não conseguiu vir ao horário de hoje, às ${hora}. Se quiser, podemos reagendar: é só responder com o melhor dia para você.${agendar}${assinatura}`
     case 'manutencao':
