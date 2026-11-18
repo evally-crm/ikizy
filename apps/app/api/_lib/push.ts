@@ -116,15 +116,37 @@ export function newRequestPayload(r: NewRequestInfo): PushPayload {
 /** teto de tempo para o aviso não segurar a resposta da cliente que acabou de pedir o horário */
 const TIMEOUT_MS = 4000
 
+export interface ChangedRequestInfo {
+  kind: 'remarcado' | 'cancelado'
+  startsAt: string
+  service: string
+  clientName: string
+}
+
+/** o texto do aviso quando a cliente remarca ou cancela pelo link do pedido */
+export function changedRequestPayload(r: ChangedRequestInfo): PushPayload {
+  const remarcou = r.kind === 'remarcado'
+  return {
+    title: remarcou ? 'Pedido remarcado' : 'Pedido cancelado',
+    body: remarcou ? `${r.clientName} remarcou ${r.service} para ${whenBR(r.startsAt)}` : `${r.clientName} cancelou ${r.service} · ${whenBR(r.startsAt)}`,
+    url: '/dashboard/agenda',
+    tag: `change:${r.kind}:${r.startsAt}`,
+  }
+}
+
+/** avisa os aparelhos de quem trata pedidos de um pedido novo */
+export function pushNewRequest(deps: { db: PushDb; send: PushSender }, slug: string, r: NewRequestInfo): Promise<{ sent: number; dropped: number }> {
+  return pushToSalon(deps, slug, newRequestPayload(r))
+}
+
 /** avisa os aparelhos de quem trata pedidos; apaga os que o serviço de push diz que saíram; nunca lança erro */
-export async function pushNewRequest(deps: { db: PushDb; send: PushSender }, slug: string, r: NewRequestInfo): Promise<{ sent: number; dropped: number }> {
+export async function pushToSalon(deps: { db: PushDb; send: PushSender }, slug: string, payload: PushPayload): Promise<{ sent: number; dropped: number }> {
   const out = { sent: 0, dropped: 0 }
   try {
     const salonId = await deps.db.salonIdBySlug(slug)
     if (!salonId) return out
     const subs = await deps.db.listForSalon(salonId)
     if (!subs.length) return out
-    const payload = newRequestPayload(r)
     const pending = await deps.db.pendingCount?.(salonId).catch(() => undefined)
     if (typeof pending === 'number' && pending > 0) payload.badge = pending
     await Promise.race([
