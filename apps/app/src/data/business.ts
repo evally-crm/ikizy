@@ -174,6 +174,16 @@ export function useBusiness() {
   /** cria (sem `id`) ou altera um serviço; devolve a mensagem de erro, ou null quando salvou */
   const saveService = useCallback(async (input: ServiceInput, id?: string) => (await storeService(input, id)).error, [storeService])
 
+  /** quem faz o serviço; lista vazia = todas fazem. No modo demonstração não guarda (a agenda de exemplo não usa) */
+  const saveServiceProfessionals = useCallback(
+    async (serviceId: string, professionalIds: string[]): Promise<string | null> => {
+      if (!live || !neon || !salonId) return null
+      const r = await neon.rpc('set_service_professionals', { p_service: serviceId, p_professionals: professionalIds })
+      return r.error ? friendly(r.error) : null
+    },
+    [live, salonId],
+  )
+
   /** atendimentos já feitos guardam o nome do serviço: apagar não muda o histórico */
   const removeService = useCallback(
     async (id: string): Promise<string | null> => {
@@ -239,5 +249,5 @@ export function useBusiness() {
     [live, salonId],
   )
 
-  return { details, services, products, loading, error, reload, saveDetails, storeService, saveService, removeService, saveProduct, removeProduct }
+  return { details, services, products, loading, error, reload, saveDetails, storeService, saveService, saveServiceProfessionals, removeService, saveProduct, removeProduct }
 }

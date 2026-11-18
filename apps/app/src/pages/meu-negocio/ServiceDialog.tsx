@@ -7,19 +7,27 @@ import { toMoneyInput } from '../../lib/format'
 import { MoneyField, Select, Stepper, parseMoney } from '../../components/controls'
 import { Modal } from '../../components/Modal'
 import { Button, Em } from '../../components/ui'
+import { initialSelection, professionalsToSave } from '../../domain/team'
 import './MeuNegocio.css'
 
 /** cria ou edita um serviço (o que aparece no site fica no Meu site) */
 export function ServiceDialog({
   service,
   products,
+  professionals = [],
+  professionalIds = [],
   onSave,
   onRemove,
   onClose,
 }: {
   service: Service | null
   products: Product[]
-  onSave: (input: ServiceInput) => Promise<string | null>
+  /** profissionais ativas do negócio (sem a lista, a escolha de quem faz não aparece) */
+  professionals?: { id: string; name: string }[]
+  /** quem faz este serviço hoje (vazio = todas) */
+  professionalIds?: string[]
+  /** `who` vazio = todas fazem */
+  onSave: (input: ServiceInput, who: string[]) => Promise<string | null>
   onRemove?: () => void
   onClose: () => void
 }) {
@@ -29,6 +37,10 @@ export function ServiceDialog({
   const [duration, setDuration] = useState(service?.duration ?? 60)
   const [productId, setProductId] = useState(service?.productId ?? '')
   const [volume, setVolume] = useState(String(service?.monthlyVolume ?? 0))
+  const activeIds = professionals.map((p) => p.id)
+  const [who, setWho] = useState(() => initialSelection(professionalIds, activeIds))
+  // sempre fica pelo menos uma: tocar na única escolhida não faz nada
+  const toggle = (id: string) => setWho((list) => (list.includes(id) ? (list.length > 1 ? list.filter((x) => x !== id) : list) : [...list, id]))
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -42,7 +54,7 @@ export function ServiceDialog({
       duration,
       productId: productId || null,
       monthlyVolume: Number(volume) || 0,
-    })
+    }, professionalsToSave(who, activeIds))
     setBusy(false)
     if (message) setError(message)
     else onClose()
@@ -71,6 +83,23 @@ export function ServiceDialog({
             <MoneyField label="Preço" value={price} onChange={setPrice} />
             <Stepper label="Duração" value={duration} onChange={setDuration} format={formatDuration} min={5} max={600} step={15} />
           </div>
+          {professionals.length > 1 && (
+            <div className="field">
+              <span className="field__label">Quem faz</span>
+              <div className="chips chips--tight" role="group" aria-label="Quem faz este serviço">
+                {professionals.map((p) => (
+                  <button key={p.id} type="button" className="chip" aria-pressed={who.includes(p.id)} onClick={() => toggle(p.id)}>
+                    {p.name}
+                  </button>
+                ))}
+              </div>
+              <p className="field__hint">
+                {who.length === professionals.length
+                  ? 'Todas fazem. Desmarque quem não faz: ela deixa de aparecer para este serviço na agenda e no site.'
+                  : 'Só as marcadas aparecem para este serviço na agenda e no agendamento pelo site.'}
+              </p>
+            </div>
+          )}
           <details className="bizdialog__more" open={Boolean(service?.productId)}>
             <summary>Custo de material (opcional)</summary>
             <p className="field__hint">Para calcular quanto sobra de cada atendimento. Cadastre os materiais na aba Materiais.</p>

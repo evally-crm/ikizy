@@ -5,6 +5,7 @@ import { Pencil, X } from 'lucide-react'
 import { WhatsAppIcon } from './BrandIcons'
 import { useAgenda, type NewAppointment } from '../data/AgendaProvider'
 import { findConflict } from '../domain/agenda'
+import { prosForService } from '../domain/team'
 import { formatDuration } from '../lib/agendaTime'
 import { formatBRL, formatTime } from '../lib/format'
 import { Button, Em, StatusBadge } from './ui'
@@ -32,14 +33,17 @@ export function whatsappLink(a: Appointment) {
 function ProfessionalChips({
   value,
   onChange,
+  only,
 }: {
   value: string
   onChange: (id: string) => void
+  /** só estas (as que fazem o serviço); sem a lista, todas */
+  only?: readonly string[]
 }) {
   const { professionals } = useAgenda()
   return (
     <div className="chips chips--tight" role="group" aria-label="Profissional">
-      {professionals.map((p) => (
+      {prosForService(professionals, only).map((p) => (
         <button key={p.id} type="button" className="chip" aria-pressed={value === p.id} onClick={() => onChange(p.id)}>
           {p.name}
         </button>
@@ -79,11 +83,13 @@ export function NewAppointmentDialog({
   // depois de a janela abrir (por exemplo ao recarregar a página), e por isso é lido a cada desenho
   const [clientName, setClientName] = useState(initial.clientName ?? '')
   const [phone, setPhone] = useState('')
-  const [pickedPro, setProfessionalId] = useState<string | null>(initial.professionalId ?? null)
-  const professionalId = pickedPro && professionals.some((p) => p.id === pickedPro) ? pickedPro : (professionals[0]?.id ?? '')
   const [pickedService, setServiceId] = useState<string | null>(initial.serviceId ?? null)
   const serviceId = pickedService === 'outro' ? 'outro' : (services.find((s) => s.id === pickedService)?.id ?? services[0]?.id ?? 'outro')
   const first = services.find((s) => s.id === serviceId)
+  // só quem faz o serviço; se a escolhida não faz o serviço novo, passa para a primeira que faz
+  const allowed = prosForService(professionals, first?.professionalIds)
+  const [pickedPro, setProfessionalId] = useState<string | null>(initial.professionalId ?? null)
+  const professionalId = pickedPro && allowed.some((p) => p.id === pickedPro) ? pickedPro : (allowed[0]?.id ?? '')
   const [customService, setCustomService] = useState('')
   const [date, setDate] = useState(initial.date)
   const [start, setStart] = useState<number | null>(initial.start)
@@ -197,7 +203,7 @@ export function NewAppointmentDialog({
           </div>
 
           <Section title="Profissional">
-            <ProfessionalChips value={professionalId} onChange={setProfessionalId} />
+            <ProfessionalChips value={professionalId} onChange={setProfessionalId} only={first?.professionalIds} />
           </Section>
 
           <Section title="Dia">

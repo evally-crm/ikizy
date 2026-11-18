@@ -336,7 +336,7 @@ Hoje: a cliente escolhe serviço, profissional, dia e horário livre, informa no
 | P1 | **Link da cliente para ver, remarcar ou cancelar** | Após o pedido, um link único (token) com o status; cancelar libera a vaga; remarcar reaproveita a escolha de horário. Regra de antecedência para cancelar. |
 | P2 | **Sinal por Pix** | O campo "% de sinal" já existe no site. Gerar cobrança Pix (Stripe ou PSP brasileiro) no pedido; a vaga fica reservada por X minutos até o pagamento. Reduz faltas. |
 | P2 | **Lembrete antes do horário** | Mensagem de lembrete (24 h e 2 h antes) com botão de confirmar presença. Via WhatsApp Business API, ou pelo menos e-mail/SMS. Cron na Vercel. |
-| P2 | **Serviço × profissional** | Hoje toda profissional faz todos os serviços. Marcar quem faz o quê; o site só oferece a profissional certa. |
+| ~~P2~~ | **Serviço × profissional** (feito e publicado, 18/11/2026) | Migration `20261118000000_professional_services` (aplicada na dev e na produção; tabela entra na exportação de dados). Tabela `professional_services`: serviço sem linhas = todas fazem. "Quem faz" na janela do serviço em Meu negócio (só com 2+ profissionais ativas); `get_available_slots()` filtra, então o site e o `book_appointment()` respeitam; a janela do site e o novo agendamento da agenda só mostram quem faz. Regras em `domain/team/services.ts`. |
 | P2 | **Intervalo entre atendimentos e bloqueios** | Tempo de limpeza após cada serviço; bloquear horários (almoço extra, folga, férias) sem precisar mudar o expediente. |
 | P2 | **Mais de um serviço no mesmo pedido** | Ex.: mão + pé: soma as durações e procura um horário contínuo. |
 | P3 | **Lista de espera** | Dia cheio: a cliente entra na fila e é avisada se abrir vaga. |
