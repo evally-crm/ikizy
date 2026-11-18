@@ -29,7 +29,7 @@ const status = (fn: () => unknown) => {
 describe('parseSlotsQuery', () => {
   it('aceita consulta válida e normaliza o slug', () => {
     const q = parseSlotsQuery(new URL(`https://x.test/api/booking?slug=Studio-Maria&service=${SVC}&date=2026-10-19`))
-    assert.deepEqual(q, { slug: 'studio-maria', service: SVC, date: '2026-10-19', professional: null })
+    assert.deepEqual(q, { slug: 'studio-maria', services: [SVC], date: '2026-10-19', professional: null })
   })
 
   it('recusa slug, serviço, data e profissional inválidos', () => {
@@ -39,6 +39,15 @@ describe('parseSlotsQuery', () => {
     assert.equal(status(() => parseSlotsQuery(url(`slug=studio&service=${SVC}&date=2026-02-31`))), 400)
     assert.equal(status(() => parseSlotsQuery(url(`slug=studio&service=${SVC}&date=19/10/2026`))), 400)
     assert.equal(status(() => parseSlotsQuery(url(`slug=studio&service=${SVC}&date=2026-10-19&professional=x`))), 400)
+  })
+
+  it('aceita vários serviços separados por vírgula, na ordem; recusa repetido e mais de 4', () => {
+    const SVC2 = '33333333-3333-4333-8333-333333333333'
+    const q = parseSlotsQuery(new URL(`https://x.test/?slug=studio&service=${SVC2},${SVC}&date=2026-10-19`))
+    assert.deepEqual(q.services, [SVC2, SVC])
+    assert.equal(status(() => parseSlotsQuery(new URL(`https://x.test/?slug=studio&service=${SVC},${SVC}&date=2026-10-19`))), 400)
+    const five = Array.from({ length: 5 }, (_, i) => `${i}1111111-1111-4111-8111-111111111111`).join(',')
+    assert.equal(status(() => parseSlotsQuery(new URL(`https://x.test/?slug=studio&service=${five}&date=2026-10-19`))), 400)
   })
 
   it('aceita profissional escolhida', () => {
@@ -56,7 +65,14 @@ describe('parseBookingInput', () => {
     assert.equal(r.honeypot, false)
   })
 
-  it('recusa corpo vazio, horário fora do dia, nome curto e telefone curto', () => {
+  it('pedido com lista de serviços (e o formato antigo, com um só)', () => {
+    const SVC2 = '33333333-3333-4333-8333-333333333333'
+    assert.deepEqual(parseBookingInput(body({ service: undefined, services: [SVC, SVC2] })).services, [SVC, SVC2])
+    assert.deepEqual(parseBookingInput(body()).services, [SVC])
+    assert.equal(status(() => parseBookingInput(body({ service: undefined, services: [] }))), 400)
+  })
+
+    it('recusa corpo vazio, horário fora do dia, nome curto e telefone curto', () => {
     assert.equal(status(() => parseBookingInput(null)), 400)
     assert.equal(status(() => parseBookingInput(body({ minute: 1440 }))), 400)
     assert.equal(status(() => parseBookingInput(body({ minute: 10.5 }))), 400)

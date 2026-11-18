@@ -4,7 +4,7 @@ import { notifyNewRequest } from './_lib/notify.js'
 import { pushNewRequest } from './_lib/push.js'
 import { appUrl, createBookingDb, createNotifyDb, createPushDb, createPushSender, fail, json, sendEmail } from './_lib/runtime.js'
 
-/** GET /api/booking?slug=&service=&date=YYYY-MM-DD[&professional=] -> { slots: [{ professional_id, professional, minute }] } */
+/** GET /api/booking?slug=&service=<id>[,<id>...]&date=YYYY-MM-DD[&professional=] -> { slots: [{ professional_id, professional, minute }] } */
 export async function GET(request: Request) {
   try {
     const query = parseSlotsQuery(new URL(request.url))
@@ -15,7 +15,7 @@ export async function GET(request: Request) {
   }
 }
 
-/** POST { slug, service, professional?, date, minute, name, phone, consent: true } -> { booking } (pedido fica "pendente" até o salão confirmar) */
+/** POST { slug, services: [ids] (ou service: id), professional?, date, minute, name, phone, consent: true } -> { booking } (pedido fica "pendente" até o salão confirmar) */
 export async function POST(request: Request) {
   try {
     const ip = (request.headers.get('x-forwarded-for') ?? 'desconhecido').split(',')[0].trim()

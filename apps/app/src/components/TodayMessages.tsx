@@ -71,7 +71,7 @@ export function TodayMessages({ clientsOnly = false }: { clientsOnly?: boolean }
     let missing = 0
     for (const c of clients) {
       const base = { kinds: CLIENT_KINDS, name: c.name, phone: c.phone, context: { clientName: c.name } }
-      if (c.birthday === md) push('aniversario', c.id, { ...base, detail: 'Faz aniversário hoje 🎂' })
+      if (c.birthday === md) push('aniversario', c.id, { ...base, detail: 'Faz aniversário hoje' })
       else if (c.visits > 0 && daysSince(c.lastVisit, now) > MISSING_AFTER && missing < 5) {
         missing++
         push('sumida', c.id, { ...base, detail: `Sem vir há ${daysSince(c.lastVisit, now)} dias` })
@@ -89,7 +89,7 @@ export function TodayMessages({ clientsOnly = false }: { clientsOnly?: boolean }
         <div>
           <h2 className="card__title">{clientsOnly ? 'Chamar hoje' : 'Mensagens de hoje'}</h2>
           <p className="card__sub">
-            {items.length === 0 ? 'Nada pendente por enquanto.' : pending === 0 ? 'Tudo enviado. 💕' : `${pending} para enviar pelo seu WhatsApp`}
+            {items.length === 0 ? 'Nada pendente por enquanto.' : pending === 0 ? 'Tudo enviado.' : `${pending} para enviar pelo seu WhatsApp`}
           </p>
         </div>
         <Link to={dash('/clientes')} className="textlink">

@@ -101,7 +101,7 @@ export function Receipt({ model }: { model: ReceiptModel }) {
         <footer className="receipt__foot">
           <p>{model.footer}</p>
           {model.note && <p>{model.note}</p>}
-          <p>Obrigada por cuidar de quem cuida ♥</p>
+          <p>Obrigada por cuidar de quem cuida.</p>
           <div className="receipt__barcode" aria-hidden="true" />
         </footer>
       </div>

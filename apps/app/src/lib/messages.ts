@@ -59,7 +59,7 @@ const day = (iso: string) => format(parseISO(iso), "EEEE, d 'de' MMMM", { locale
 function details(service: string, when: string, professional?: string) {
   const lines = [`Serviço: ${service}`]
   if (professional?.trim()) lines.push(`Profissional: ${professional.trim()}`)
-  if (when) lines.push(`📅 ${when}`)
+  if (when) lines.push(`Quando: ${when}`)
   return lines.join('\n')
 }
 
@@ -71,7 +71,7 @@ export function mapsUrl(salonName: string, address: string) {
 /** endereço com link do mapa, no fim das mensagens de horário marcado; vazio sem endereço */
 function location(salonName: string, address?: string) {
   const clean = address?.trim()
-  return clean ? `\n\n📍 Endereço: ${clean}\n${mapsUrl(salonName, clean)}` : ''
+  return clean ? `\n\nEndereço: ${clean}\n${mapsUrl(salonName, clean)}` : ''
 }
 
 /**
@@ -108,7 +108,7 @@ export function renderMessage(kind: MessageKind, ctx: MessageContext): string {
     case 'sumida':
       return `Olá, ${nome}! Tudo bem?\n\nFaz um tempo desde a sua última visita. Quando quiser voltar, será um prazer atender você. É só responder por aqui para reservar um horário.${agendar}${assinatura}`
     case 'aniversario':
-      return `Feliz aniversário, ${nome}! 🎉\n\nDesejamos a você um novo ano cheio de saúde, alegria e momentos especiais.${assinatura}`
+      return `Feliz aniversário, ${nome}!\n\nDesejamos a você um novo ano cheio de saúde, alegria e momentos especiais.${assinatura}`
     case 'livre':
       return `Olá, ${nome}! `
   }
