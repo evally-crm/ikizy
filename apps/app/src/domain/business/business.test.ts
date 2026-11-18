@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import { filterServices, serviceNeeds, summarizeBusiness, usageByProduct, type CatalogProduct, type CatalogService } from './catalog'
-import { hoursSpan, openStatus, placeBlock, summarizeHours, weekDays } from './hours'
+import { hoursSpan, openStatus, placeBlock, salonHours, summarizeHours, weekDays } from './hours'
 import { serviceMargin } from './margin'
 
 const svc = (over: Partial<CatalogService> & { id: string }): CatalogService => ({
@@ -82,6 +82,20 @@ describe('horários', () => {
   it('junta dias seguidos com o mesmo horário', () => {
     assert.deepEqual(summarizeHours([...week, { weekday: 6, start: 9 * 60, end: 13 * 60 }]), ['Seg a Sex · 09:00–18:00', 'Sáb · 09:00–13:00'])
     assert.deepEqual(summarizeHours(undefined), [])
+  })
+
+  it('o horário do salão junta o de quem atende, sem repetir nem sobrepor', () => {
+    const tarde = [1, 2].map((weekday) => ({ weekday, start: 13 * 60, end: 20 * 60 }))
+    const out = salonHours([week, tarde, undefined])
+    assert.deepEqual(out.filter((i) => i.weekday === 1), [{ weekday: 1, start: 9 * 60, end: 20 * 60 }])
+    assert.deepEqual(out.filter((i) => i.weekday === 3), [{ weekday: 3, start: 9 * 60, end: 18 * 60 }])
+    // a mesma lista duas vezes não duplica
+    assert.equal(salonHours([week, week]).length, 5)
+    // intervalos que não se tocam continuam separados
+    const manha = { weekday: 1, start: 8 * 60, end: 11 * 60 }
+    const noite = { weekday: 1, start: 14 * 60, end: 18 * 60 }
+    assert.equal(salonHours([[manha], [noite]]).length, 2)
+    assert.deepEqual(salonHours([undefined]), [])
   })
 
   it('monta a semana de segunda a domingo', () => {

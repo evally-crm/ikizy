@@ -55,7 +55,27 @@ export function hoursSpan(lists: (HourInterval[] | undefined)[]): { from: number
   }
 }
 
-export type OpenStatus = { open: true; until: number } | { open: false; opensAt: number | null }
+/**
+ * o horário do salão: quando há alguém atendendo, juntando os intervalos que se tocam.
+ * É o ponto de partida de quem entra na equipe, que depois ajusta os dias e as horas dela.
+ */
+export function salonHours(lists: (HourInterval[] | undefined)[]): HourInterval[] {
+  const out: HourInterval[] = []
+  for (const d of WEEKDAYS) {
+    const day = lists
+      .flatMap((l) => l ?? [])
+      .filter((i) => i.weekday === d.id)
+      .sort((a, b) => a.start - b.start)
+    let current: HourInterval | null = null
+    for (const i of day) {
+      if (current && i.start <= current.end) current.end = Math.max(current.end, i.end)
+      else out.push((current = { weekday: i.weekday, start: i.start, end: i.end }))
+    }
+  }
+  return out
+}
+
+export type OpenStatus ={ open: true; until: number } | { open: false; opensAt: number | null }
 
 /** se o negócio está aberto agora e até que horas (ou a que horas abre de novo hoje) */
 export function openStatus(list: HourInterval[] | undefined, now: Date): OpenStatus {
