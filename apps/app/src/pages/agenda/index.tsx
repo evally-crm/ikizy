@@ -23,7 +23,7 @@ import type { Appointment } from '../../types'
 import { CalendarCard, type CalendarView } from './CalendarCard'
 import { DayList } from './DayList'
 import { DaySummary } from './DaySummary'
-import { FirstProfessional, NoAgenda, SoloProfessional } from './ProfessionalSetup'
+import { FirstProfessional, NoAgenda, OwnerAttends, SoloProfessional } from './ProfessionalSetup'
 import { useAuth } from '../../auth/AuthProvider'
 import { roleAccess } from '../../domain/team'
 import { TimeGrid } from './TimeGrid'
@@ -62,6 +62,7 @@ export default function Agenda() {
   const { salon } = useAuth()
   // só quem cuida do negócio cadastra quem atende; a recepção e a profissional só esperam
   const canSetUp = roleAccess(salon?.role ?? 'owner').business
+  const isOwner = (salon?.role ?? 'owner') === 'owner'
   const [editingHours, setEditingHours] = useState(false)
   const [date, setDate] = useState(() => new Date())
   const [proFilter, setProFilter] = useState<string>('all')
@@ -266,7 +267,8 @@ export default function Agenda() {
         )}
 
         {!loading && professionals.length === 0 && !error ? (
-          subLoading ? null : !canSetUp ? <NoAgenda /> : sub && sub.plan !== 'solo' ? <FirstProfessional /> : <SoloProfessional />
+          // Solo: a dona já é quem atende. Equipe: a dona diz se atende; a gerente cadastra a primeira à mão
+          subLoading ? null : !canSetUp ? <NoAgenda /> : !sub || sub.plan === 'solo' ? <SoloProfessional /> : isOwner ? <OwnerAttends /> : <FirstProfessional />
         ) : (
           <>
             {isDesktop && !loading && <DaySummary summary={summary} isToday={isToday} professionalName={professionalName} />}

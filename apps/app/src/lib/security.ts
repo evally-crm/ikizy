@@ -47,7 +47,10 @@ export async function listDevices(): Promise<Device[] | null> {
   const a = auth()
   if (!a) return null
   const [list, now] = await Promise.all([run<RawSession[]>(() => a.listSessions()), run<{ session?: { id?: string } }>(() => a.getSession())])
-  if (list.error || !Array.isArray(list.data)) return null
+  if (list.error || !Array.isArray(list.data)) {
+    console.warn('aparelhos: não foi possível listar as sessões', list.error ?? list.data)
+    return null
+  }
   return toDevices(list.data, now.data?.session?.id ?? null)
 }
 

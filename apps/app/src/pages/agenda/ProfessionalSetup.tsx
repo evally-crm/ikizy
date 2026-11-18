@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthProvider'
 import { useAgenda } from '../../data/AgendaProvider'
 import { neon } from '../../lib/neon'
 import { Button, Card } from '../../components/ui'
 
-/** no Solo quem atende é a própria dona: a agenda já nasce com ela, sem perguntar nada */
+/** a dona é a primeira a atender (no Solo e nos planos de equipe): a agenda já nasce com ela, sem perguntar nada; as outras entram em Equipe */
 export function SoloProfessional() {
   const { addProfessional, reload } = useAgenda()
   const { displayName, session, salon } = useAuth()
@@ -50,7 +51,28 @@ export function SoloProfessional() {
   )
 }
 
-/** planos com equipe: a agenda é organizada por profissional, então a primeira é cadastrada aqui */
+/** plano de equipe, dona: ela diz se também atende; se sim entra como profissional, se não vai cadastrar quem atende em Equipe */
+export function OwnerAttends() {
+  const [attends, setAttends] = useState(false)
+  const navigate = useNavigate()
+  if (attends) return <SoloProfessional />
+  return (
+    <Card className="agenda__empty">
+      <h2 className="card__title">Você também atende?</h2>
+      <p className="card__sub">
+        Se sim, a agenda já abre com você como profissional. Se você só cuida do negócio, cadastre quem atende em Equipe.
+      </p>
+      <div className="form">
+        <Button onClick={() => setAttends(true)}>Sim, eu atendo</Button>
+        <Button variant="light" onClick={() => navigate('/negocio#equipe')}>
+          Não, cadastrar quem atende
+        </Button>
+      </div>
+    </Card>
+  )
+}
+
+/** planos de equipe, para quem gerencia mas não é a dona: a primeira profissional é cadastrada aqui */
 export function FirstProfessional() {
   const { addProfessional } = useAgenda()
   const [name, setName] = useState('')
