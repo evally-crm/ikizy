@@ -1740,3 +1740,62 @@ button.sitelink {
     order: 0;
   }
 }
+
+/* avaliações das clientes */
+.reviews__sum {
+  margin: 0;
+  color: var(--ink-500);
+  font-size: 14px;
+}
+
+.reviews__sum strong {
+  color: var(--ink-900);
+  font-size: 22px;
+  font-weight: 300;
+  letter-spacing: -0.03em;
+}
+
+.reviews__who {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  font-weight: 600;
+}
+
+.reviews__who small {
+  overflow: hidden;
+  color: var(--ink-500);
+  font-size: 12px;
+  font-weight: 400;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reviews__text {
+  margin: 0;
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+
+.reviews__text--none {
+  color: var(--ink-500);
+  font-size: 13px;
+}
+
+.row .dots {
+  display: inline-flex;
+  flex: none;
+  gap: 4px;
+}
+
+.row .dots i {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--line);
+}
+
+.row .dots i.on {
+  background: var(--ink-900);
+}
