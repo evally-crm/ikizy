@@ -28,6 +28,21 @@ export interface BookingStatus {
 
 export const TOKEN = /^[a-f0-9]{64}$/
 
+/** resumo do que muda na página (status, horários e situação de cada item): se mudar, a página da cliente se atualiza sozinha */
+export const statusKey = (b: BookingStatus) => [b.status, ...b.items.map((i) => `${i.starts_at}/${i.status}`)].join('|')
+
+/** enquanto o pedido está aberto, pergunta ao servidor a cada 8 s (só com a aba à vista) e recarrega quando algo mudou */
+const scriptLive = (key: string) => `(function(){
+var k=${JSON.stringify(key)},busy=false;
+function check(){
+if(busy||document.hidden||document.querySelector('dialog[open]'))return;
+busy=true;
+fetch(location.pathname,{headers:{'x-poll':'1'},cache:'no-store'}).then(function(r){return r.ok?r.json():null}).then(function(j){busy=false;if(j&&j.key&&j.key!==k)location.reload()}).catch(function(){busy=false});
+}
+setInterval(check,8000);
+document.addEventListener('visibilitychange',function(){if(!document.hidden)check()});
+})();`
+
 /** endereço da página da cliente (o mesmo domínio do site do salão) */
 export const bookingLink = (slug: string, token: string) => `https://${slug}.ikizy.com/pedido/${token}`
 
@@ -337,7 +352,7 @@ ${review}
 ${actions}
 </div>
 </main>
-${b.status === 'concluido' && !b.review ? `<script>${SCRIPT}</script>` : ''}${open && b.can_change ? `<script>${SCRIPT_CHANGE}</script>` : ''}
+${b.status === 'concluido' && !b.review ? `<script>${SCRIPT}</script>` : ''}${open && b.can_change ? `<script>${SCRIPT_CHANGE}</script>` : ''}${open ? `<script>${scriptLive(statusKey(b))}</script>` : ''}
 </body>
 </html>`
 }

@@ -2,7 +2,7 @@ import { reportError } from './_lib/monitoring.js'
 import { isReservedSlug } from '../src/lib/slug.js'
 import { renderNotFound, renderSiteOffline, renderSitePage } from './_lib/siteHtml.js'
 import { appUrl, fetchBookingStatus, fetchOfflineSiteName, fetchPublicSite } from './_lib/runtime.js'
-import { TOKEN, renderBookingStatus } from './_lib/clientPage.js'
+import { TOKEN, renderBookingStatus, statusKey } from './_lib/clientPage.js'
 
 const html = (body: string, status: number, cache: string) =>
   new Response(body, { status, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': cache } })
@@ -21,6 +21,10 @@ export async function GET(request: Request) {
       const status = await fetchBookingStatus(token)
       // o link só vale no site do salão dono do pedido
       if (!status || status.salon.slug !== slug) return html(renderNotFound(), 404, 'no-store')
+      // consulta leve da página aberta: só diz se algo mudou, para ela se atualizar sozinha
+      if (request.headers.get('x-poll')) {
+        return new Response(JSON.stringify({ key: statusKey(status) }), { headers: { 'content-type': 'application/json', 'cache-control': 'private, no-store' } })
+      }
       const site = await fetchPublicSite(slug).catch(() => null)
       return html(renderBookingStatus(status, site, token), 200, 'private, no-store')
     } catch (error) {
