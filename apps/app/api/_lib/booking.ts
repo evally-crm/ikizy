@@ -133,6 +133,7 @@ export function translateDbError(error: unknown): HttpError {
   if (text.includes('invalid_input')) return bad('Confira os dados e tente de novo.')
   if (text.includes('already_reviewed')) return new HttpError(409, 'already_reviewed', 'Este atendimento já foi avaliado.')
   if (text.includes('not_done')) return new HttpError(409, 'not_done', 'Você poderá avaliar depois que o atendimento for concluído.')
+  if (text.includes('not_allowed')) return new HttpError(409, 'not_allowed', 'Faltam menos de 2 horas para o horário (ou o pedido já não está em aberto). Fale com o salão pelo WhatsApp.')
   if (text.includes('not_found')) return new HttpError(404, 'not_found', 'Pedido não encontrado.')
   throw error
 }
@@ -167,6 +168,45 @@ export function parseReviewInput(body: unknown): { token: string; rating: number
 
 /** é um pedido de avaliação (e não de horário)? */
 export const isReviewRequest = (body: unknown) => Boolean(body && typeof body === 'object' && (body as Record<string, unknown>).action === 'review')
+
+/** até quantas horas antes a cliente ainda cancela ou remarca pelo link (o banco usa o mesmo número) */
+export const CHANGE_NOTICE_HOURS = 2
+
+const TOKEN_RE = /^[a-f0-9]{64}$/
+
+function parseToken(value: unknown): string {
+  const token = typeof value === 'string' ? value.toLowerCase() : ''
+  if (!TOKEN_RE.test(token)) throw new HttpError(404, 'not_found', 'Pedido não encontrado.')
+  return token
+}
+
+/** GET /api/booking?pedido=<token>&date=YYYY-MM-DD: horários livres para remarcar */
+export function parseRescheduleQuery(url: URL): { token: string; date: string } {
+  const token = parseToken(url.searchParams.get('pedido'))
+  const date = url.searchParams.get('date') ?? ''
+  if (!isRealDate(date)) throw bad('Escolha um dia válido.')
+  return { token, date }
+}
+
+export type ChangeInput = { action: 'cancel'; token: string } | { action: 'reschedule'; token: string; date: string; minute: number }
+
+/** corpo do POST de mudança: { action: 'cancel', token } ou { action: 'reschedule', token, date, minute } */
+export function parseChangeInput(body: unknown): ChangeInput {
+  const b = (body && typeof body === 'object' ? body : {}) as Record<string, unknown>
+  const token = parseToken(b.token)
+  if (b.action === 'cancel') return { action: 'cancel', token }
+  const date = typeof b.date === 'string' ? b.date : ''
+  if (!isRealDate(date)) throw bad('Escolha um dia válido.')
+  const minute = typeof b.minute === 'number' && Number.isInteger(b.minute) ? b.minute : NaN
+  if (!(minute >= 0 && minute <= 1439)) throw bad('Escolha um horário.')
+  return { action: 'reschedule', token, date, minute }
+}
+
+/** é um pedido de cancelar ou remarcar? */
+export const isChangeRequest = (body: unknown) => {
+  const action = body && typeof body === 'object' ? (body as Record<string, unknown>).action : undefined
+  return action === 'cancel' || action === 'reschedule'
+}
 
 /** limite simples por IP (por instância do servidor): 12 pedidos em 10 minutos */
 const hits = new Map<string, number[]>()

@@ -89,7 +89,7 @@ export function renderMessage(kind: MessageKind, ctx: MessageContext): string {
   const horario = details(servico, quando, ctx.professional)
   const agendar = ctx.siteUrl ? `\n\nSe preferir, agende pelo link: ${ctx.siteUrl}` : ''
   const local = location(ctx.salonName, ctx.address)
-  const acompanhar = ctx.bookingUrl ? `\n\nAcompanhe seu horário pelo link: ${ctx.bookingUrl}` : ''
+  const acompanhar = ctx.bookingUrl ? `\n\nAcompanhe, remarque ou cancele pelo link: ${ctx.bookingUrl}` : ''
   // o nome do negócio vai como assinatura: "no Studio" / "na Clínica" não tem como acertar sozinho
   const assinatura = ctx.salonName.trim() ? `\n\n${ctx.salonName.trim()}` : ''
 

@@ -7,6 +7,7 @@ import type { Appointment, AppointmentStatus, PaymentMethod, Professional } from
 import { appointments as mockAppointments, professionals as mockProfessionals } from './mock'
 import { isForgotten } from '../domain/clients'
 import { getClients } from './clients'
+import { salonHours } from '../domain/business'
 import { roleAccess } from '../domain/team'
 import type { HourInterval } from '../lib/agendaTime'
 
@@ -57,6 +58,8 @@ interface AgendaState {
    * null até a primeira busca. Atualiza a cada minuto e ao voltar para a aba.
    */
   pending: Appointment[] | null
+  /** pedidos que a própria cliente cancelou pelo link nos últimos 3 dias e ainda não passaram (do mais novo ao mais antigo) */
+  clientCancelled: Appointment[]
   /** horário de atendimento por profissional; sem entrada = ainda não configurado */
   workingHours: Record<string, HourInterval[]>
   /** false quando o banco ainda não tem a tabela de horários (migration pendente) */
@@ -98,6 +101,8 @@ interface Row {
   status: AppointmentStatus
   payment_method: PaymentMethod | null
   public_token?: string
+  client_change?: 'remarcado' | 'cancelado' | null
+  client_change_at?: string | null
   clients: { name: string; phone: string } | null
 }
 
@@ -105,7 +110,7 @@ interface Row {
 const PENDING_POLL_MS = 60_000
 
 const SELECT =
-  'id, client_id, professional_id, service_id, service_name, starts_at, duration, price, status, payment_method, public_token, clients ( name, phone )'
+  'id, client_id, professional_id, service_id, service_name, starts_at, duration, price, status, payment_method, public_token, client_change, client_change_at, clients ( name, phone )'
 
 function fromRow(r: Row): Appointment {
   const at = new Date(r.starts_at)
@@ -124,6 +129,8 @@ function fromRow(r: Row): Appointment {
     status: r.status,
     paymentMethod: r.payment_method,
     publicToken: r.public_token,
+    clientChange: r.client_change ?? null,
+    clientChangeAt: r.client_change_at ?? null,
   }
 }
 
@@ -184,6 +191,7 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null)
   const [tick, setTick] = useState(0)
   const [livePending, setLivePending] = useState<Appointment[] | null>(null)
+  const [liveCancelled, setLiveCancelled] = useState<Appointment[]>([])
   const pendingIds = useRef<Set<string> | null>(null)
   const [win, setWin] = useState(() => ({
     from: startOfMonth(addMonths(new Date(), -1)),
@@ -300,6 +308,19 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
       if (known && list.some((a) => !known.has(a.id))) setTick((t) => t + 1)
       pendingIds.current = new Set(list.map((a) => a.id))
       setLivePending(list)
+      // cancelados pela cliente (pelo link do pedido) nos últimos 3 dias: o sininho avisa
+      const since = new Date(Date.now() - 3 * 86_400_000).toISOString()
+      const cut = await neon!
+        .from('appointments')
+        .select(SELECT)
+        .eq('salon_id', salonId)
+        .eq('status', 'cancelado')
+        .eq('client_change', 'cancelado')
+        .gte('client_change_at', since)
+        .gte('starts_at', new Date().toISOString())
+        .order('client_change_at', { ascending: false })
+        .limit(20)
+      if (!cancelled && !cut.error) setLiveCancelled((cut.data as unknown as Row[]).map(fromRow))
     }
     void load()
     const timer = window.setInterval(() => void load(), PENDING_POLL_MS)
@@ -451,13 +472,20 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
           .select('id, name, title')
           .single()
         if (err || !data) return friendly(err ?? { message: '' })
-        setProfessionals((p) => [...p, { id: data.id as string, name: data.name as string, role: data.title as string }])
+        const id = data.id as string
+        setProfessionals((p) => [...p, { id, name: data.name as string, role: data.title as string }])
+        // quem entra já atende no horário do salão; depois ela ajusta os dias e as horas dela
+        const start = salonHours(Object.values(workingHours))
+        if (start.length) await saveHours(id, start)
         return null
       }
-      setProfessionals((p) => [...p, { id: `p-${Date.now()}`, name: clean, role: title.trim() }])
+      const id = `p-${Date.now()}`
+      setProfessionals((p) => [...p, { id, name: clean, role: title.trim() }])
+      const start = salonHours(Object.values(workingHours))
+      if (start.length) await saveHours(id, start)
       return null
     },
-    [live, salonId],
+    [live, salonId, workingHours, saveHours],
   )
 
   const registryLoading = live && registryFor !== salonId
@@ -471,6 +499,7 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
       services,
       appointments,
       pending,
+      clientCancelled: live ? liveCancelled : [],
       workingHours,
       hoursAvailable,
       saveHours,
@@ -480,7 +509,7 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
       update,
       addProfessional,
     }),
-    [loading, registryLoading, error, professionals, clients, services, appointments, pending, workingHours, hoursAvailable, saveHours, focus, reload, create, update, addProfessional],
+    [loading, registryLoading, error, professionals, clients, services, appointments, pending, live, liveCancelled, workingHours, hoursAvailable, saveHours, focus, reload, create, update, addProfessional],
   )
 
   return <AgendaContext.Provider value={value}>{children}</AgendaContext.Provider>

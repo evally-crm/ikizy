@@ -1,12 +1,23 @@
 import { HttpError } from './_lib/billing.js'
-import { checkBookingLimits, createBooking, isReviewRequest, listSlots, parseBookingInput, parseReviewInput, parseSlotsQuery, tooManyFromIp, translateDbError, verifyCaptcha } from './_lib/booking.js'
+import { checkBookingLimits, createBooking, isChangeRequest, isReviewRequest, listSlots, parseBookingInput, parseChangeInput, parseRescheduleQuery, parseReviewInput, parseSlotsQuery, tooManyFromIp, translateDbError, verifyCaptcha } from './_lib/booking.js'
 import { notifyNewRequest } from './_lib/notify.js'
 import { pushNewRequest } from './_lib/push.js'
-import { appUrl, createBookingDb, createNotifyDb, createPushDb, createPushSender, fail, json, saveReview, sendEmail } from './_lib/runtime.js'
+import { appUrl, cancelBooking, createBookingDb, createNotifyDb, createPushDb, createPushSender, fetchRescheduleSlots, fail, json, rescheduleBooking, saveReview, sendEmail } from './_lib/runtime.js'
 
-/** GET /api/booking?slug=&service=<id>[,<id>...]&date=YYYY-MM-DD[&professional=] -> { slots: [{ professional_id, professional, minute }] } */
+/**
+ * GET /api/booking?slug=&service=<id>[,<id>...]&date=YYYY-MM-DD[&professional=] -> { slots: [{ professional_id, professional, minute }] }
+ * GET /api/booking?pedido=<token>&date=YYYY-MM-DD -> { slots } livres para remarcar aquele pedido
+ */
 export async function GET(request: Request) {
   try {
+    const url = new URL(request.url)
+    if (url.searchParams.has('pedido')) {
+      const q = parseRescheduleQuery(url)
+      const slots = await fetchRescheduleSlots(q.token, q.date).catch((error) => {
+        throw translateDbError(error)
+      })
+      return json({ slots })
+    }
     const query = parseSlotsQuery(new URL(request.url))
     const slots = await listSlots(createBookingDb(), query)
     return json({ slots })
@@ -28,6 +39,14 @@ export async function POST(request: Request) {
         throw translateDbError(error)
       })
       return json({ review: { rating: review.rating, comment: review.comment } }, 201)
+    }
+    // cancelar ou remarcar pela página do pedido
+    if (isChangeRequest(body)) {
+      const change = parseChangeInput(body)
+      await (change.action === 'cancel' ? cancelBooking(change.token) : rescheduleBooking(change.token, change.date, change.minute)).catch((error) => {
+        throw translateDbError(error)
+      })
+      return json({ ok: true, status: change.action === 'cancel' ? 'cancelado' : 'pendente' })
     }
     const { honeypot, captcha, ...input } = parseBookingInput(body)
     // robô: responde como se tivesse dado certo, sem gravar nada
