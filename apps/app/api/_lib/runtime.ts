@@ -205,6 +205,25 @@ export async function saveReview(token: string, rating: number, comment: string)
   await sql`select public.submit_review(${token}, ${rating}::int, ${comment})`
 }
 
+/** horários livres para a cliente remarcar o pedido (mesma profissional, os atendimentos do próprio pedido não contam) */
+export async function fetchRescheduleSlots(token: string, date: string): Promise<Slot[]> {
+  const sql = neon(env('DATABASE_URL'))
+  const rows = (await sql`select public.get_reschedule_slots(${token}, ${date}::date) as s`) as { s: Slot[] }[]
+  return rows[0]?.s ?? []
+}
+
+/** a cliente cancela o pedido pelo link (a função do banco confere o prazo de 2 horas) */
+export async function cancelBooking(token: string): Promise<void> {
+  const sql = neon(env('DATABASE_URL'))
+  await sql`select public.cancel_booking(${token})`
+}
+
+/** a cliente remarca o pedido pelo link; o pedido volta a "pendente" para o salão confirmar */
+export async function rescheduleBooking(token: string, date: string, minute: number): Promise<void> {
+  const sql = neon(env('DATABASE_URL'))
+  await sql`select public.reschedule_booking(${token}, ${date}::date, ${minute}::int)`
+}
+
 /** nome de um negócio publicado cujo site saiu do ar (acesso vencido há mais de 7 dias); null nos outros casos */
 export async function fetchOfflineSiteName(slug: string): Promise<string | null> {
   const sql = neon(env('DATABASE_URL'))

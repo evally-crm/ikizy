@@ -37,4 +37,8 @@ export interface Appointment {
   paymentMethod?: PaymentMethod | null
   /** link secreto do pedido: a página da cliente (status e avaliação) */
   publicToken?: string
+  /** a última mudança veio da própria cliente, pelo link do pedido (remarcou ou cancelou) */
+  clientChange?: 'remarcado' | 'cancelado' | null
+  /** quando a cliente mudou o pedido (ISO) */
+  clientChangeAt?: string | null
 }

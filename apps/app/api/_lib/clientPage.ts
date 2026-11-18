@@ -1,5 +1,6 @@
 import { paletteFor } from '../../src/lib/siteTheme.js'
 import { WHATSAPP_PATH } from '../../src/lib/social.js'
+import { CHANGE_NOTICE_HOURS } from './booking.js'
 import { esc, whatsappLink, type PublicSite } from './siteHtml.js'
 
 /**
@@ -19,6 +20,10 @@ export interface BookingStatus {
   status: BookingState
   items: { service: string; starts_at: string; duration: number; professional: string | null; status: string }[]
   review: { rating: number; comment: string; created_at: string } | null
+  /** ainda dá para remarcar ou cancelar (mais de 2 horas até o primeiro horário) */
+  can_change?: boolean
+  /** até quantos dias à frente o salão aceita agendar */
+  window_days?: number
 }
 
 export const TOKEN = /^[a-f0-9]{64}$/
@@ -135,6 +140,21 @@ textarea:focus,.rate button:focus-visible,.btn:focus-visible,.back:focus-visible
 .dots{display:inline-flex;gap:5px;vertical-align:middle}
 .dots i{width:10px;height:10px;border-radius:50%;background:#e1e1e4}
 .dots i.on{background:#111}
+.chg{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
+.chg>*{min-width:0}
+.chg__panel{margin-top:14px}
+.chg__panel[hidden]{display:none}
+.days{display:flex;gap:8px;margin:0 -20px;padding:2px 20px 10px;overflow-x:auto;scrollbar-width:none}
+.days::-webkit-scrollbar{display:none}
+.dchip{display:flex;flex:none;flex-direction:column;align-items:center;gap:2px;min-width:58px;padding:10px 8px;border:2px solid #ededf0;border-radius:18px;background:#fff;color:#111;font:inherit;cursor:pointer}
+.dchip small{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#7a7a7f}
+.dchip b{font-size:20px;font-weight:700;line-height:1}
+.dchip[aria-pressed=true]{border:3px solid #111;padding:9px 7px}
+.times{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:6px 0 14px}
+.times button{min-height:48px;border:2px solid #ededf0;border-radius:14px;background:#fff;color:#111;font:inherit;font-size:15px;font-weight:700;cursor:pointer}
+.times button[aria-pressed=true]{border:3px solid #111}
+.chg__hint{margin:8px 0 0;font-size:14px;color:#7a7a7f}
+.chg__pair{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .mine{display:flex;align-items:center;gap:10px;font-weight:700}
 .mine+p{margin:10px 0 0}
 `
@@ -158,6 +178,55 @@ const SCRIPT = `
       .then(function(res){if(res.ok){location.reload();return}busy=false;send.disabled=false;send.textContent='Enviar avaliação';err.textContent=res.j.message||'Não foi possível enviar agora. Tente de novo.';err.hidden=false})
       .catch(function(){busy=false;send.disabled=false;send.textContent='Enviar avaliação';err.textContent='Sem conexão. Tente de novo.';err.hidden=false});
   });
+})();
+`
+
+const SCRIPT_CHANGE = `
+(function(){
+  var root=document.getElementById('chg');if(!root)return;
+  var token=root.getAttribute('data-token'),today=root.getAttribute('data-today'),span=+root.getAttribute('data-span')||14;
+  var pRe=document.getElementById('chg-re'),pCa=document.getElementById('chg-ca');
+  var bRe=document.getElementById('chg-open-re'),bCa=document.getElementById('chg-open-ca');
+  var days=document.getElementById('chg-days'),times=document.getElementById('chg-times'),hint=document.getElementById('chg-hint');
+  var go=document.getElementById('chg-go'),err=document.getElementById('chg-err'),yes=document.getElementById('chg-yes'),errC=document.getElementById('chg-err-ca');
+  var day=null,minute=null,busy=false,WD=['dom','seg','ter','qua','qui','sex','sáb'];
+  function two(n){return (n<10?'0':'')+n}
+  function hhmm(m){return two(Math.floor(m/60))+':'+two(m%60)}
+  function show(which){pRe.hidden=which!=='re';pCa.hidden=which!=='ca';bRe.setAttribute('aria-expanded',which==='re');bCa.setAttribute('aria-expanded',which==='ca')}
+  bRe.addEventListener('click',function(){show(pRe.hidden?'re':'')});
+  bCa.addEventListener('click',function(){show(pCa.hidden?'ca':'')});
+  document.getElementById('chg-back').addEventListener('click',function(){show('')});
+  var base=new Date(today+'T12:00:00Z');
+  for(var i=0;i<span;i++){(function(i){
+    var d=new Date(base.getTime()+i*86400000),iso=d.toISOString().slice(0,10);
+    var b=document.createElement('button');b.type='button';b.className='dchip';b.setAttribute('aria-pressed','false');
+    b.innerHTML='<small>'+WD[d.getUTCDay()]+'</small><b>'+d.getUTCDate()+'</b>';
+    b.addEventListener('click',function(){
+      day=iso;minute=null;go.disabled=true;err.hidden=true;
+      [].forEach.call(days.children,function(x){x.setAttribute('aria-pressed',x===b?'true':'false')});
+      times.innerHTML='';hint.textContent='Procurando horários…';
+      fetch('/api/booking?pedido='+token+'&date='+iso).then(function(r){return r.json()}).then(function(j){
+        if(day!==iso)return;
+        var seen={},list=((j&&j.slots)||[]).filter(function(s){if(seen[s.minute])return false;seen[s.minute]=1;return true});
+        hint.textContent=list.length?'':'Sem horários livres neste dia. Escolha outro.';
+        list.forEach(function(s){
+          var t=document.createElement('button');t.type='button';t.textContent=hhmm(s.minute);t.setAttribute('aria-pressed','false');
+          t.addEventListener('click',function(){minute=s.minute;go.disabled=false;err.hidden=true;[].forEach.call(times.children,function(x){x.setAttribute('aria-pressed',x===t?'true':'false')})});
+          times.appendChild(t);
+        });
+      }).catch(function(){hint.textContent='Sem conexão. Tente de novo.'});
+    });
+    days.appendChild(b);
+  })(i)}
+  function post(body,btn,label,e){
+    if(busy)return;busy=true;btn.disabled=true;btn.textContent='Enviando…';
+    fetch('/api/booking',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)})
+      .then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j}})})
+      .then(function(res){if(res.ok){location.reload();return}busy=false;btn.disabled=false;btn.textContent=label;e.textContent=res.j.message||'Não foi possível agora. Tente de novo.';e.hidden=false})
+      .catch(function(){busy=false;btn.disabled=false;btn.textContent=label;e.textContent='Sem conexão. Tente de novo.';e.hidden=false});
+  }
+  go.addEventListener('click',function(){if(day&&minute!==null)post({action:'reschedule',token:token,date:day,minute:minute},go,'Confirmar novo horário',err)});
+  yes.addEventListener('click',function(){post({action:'cancel',token:token},yes,'Cancelar pedido',errC)});
 })();
 `
 
@@ -216,6 +285,18 @@ export function renderBookingStatus(b: BookingStatus, site: PublicSite | null, t
     )} com o seu primeiro nome${first ? ` (${esc(first)})` : ''}.</p><p class="err" id="rv-err" role="alert" hidden></p><button type="submit" class="btn" id="rv-send" disabled>Enviar avaliação</button></form></section>`
   }
 
+  // mudar o pedido: só enquanto está em aberto; até 2 horas antes dá para remarcar ou cancelar sozinha
+  const open = b.status === 'pendente' || b.status === 'confirmado'
+  const todayIso = new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date())
+  const span = Math.max(1, Math.min(b.window_days ?? 14, 14))
+  const change = !open
+    ? ''
+    : b.can_change
+      ? `<section class="sec chg" id="chg" data-token="${esc(token)}" data-today="${todayIso}" data-span="${span}"><h2>Precisa mudar?</h2><div class="chg__pair"><button type="button" class="btn btn--light" id="chg-open-re" aria-expanded="false">Remarcar</button><button type="button" class="btn btn--light" id="chg-open-ca" aria-expanded="false">Cancelar</button></div>` +
+        `<div class="chg__panel" id="chg-re" hidden><h2>Novo horário</h2><span class="lead">Escolha o dia e o horário. O salão confirma de novo.</span><div class="days" id="chg-days"></div><p class="chg__hint" id="chg-hint">Escolha um dia.</p><div class="times" id="chg-times"></div><p class="err" id="chg-err" role="alert" hidden></p><button type="button" class="btn" id="chg-go" disabled>Confirmar novo horário</button></div>` +
+        `<div class="chg__panel" id="chg-ca" hidden><h2>Cancelar o pedido?</h2><span class="lead">O horário volta a ficar livre. Se mudar de ideia, é só fazer um novo pedido no site.</span><p class="err" id="chg-err-ca" role="alert" hidden></p><div class="chg__pair"><button type="button" class="btn btn--light" id="chg-back">Voltar</button><button type="button" class="btn" id="chg-yes">Cancelar pedido</button></div></div></section>`
+      : `<section class="sec"><h2>Precisa mudar?</h2><p class="text">Faltam menos de ${CHANGE_NOTICE_HOURS} horas para o horário. Para remarcar ou cancelar, fale com o salão pelo WhatsApp.</p></section>`
+
   const waText = firstItem ? `Olá! Sobre o meu horário de ${services}, ${when(firstItem.starts_at)}.` : 'Olá!'
   const wa = whatsappLink(b.salon.whatsapp, waText)
   const site_ = `https://${b.salon.slug}.ikizy.com`
@@ -251,11 +332,12 @@ ${day}
 ${seg}
 <section class="sec">${first ? `<h2>Olá, ${esc(first)}</h2>` : ''}<p class="status">${esc(state.title)}</p><p class="text">${esc(state.text)}</p></section>
 <section class="sec"><h2>${items.length > 1 ? `Serviços · ${esc(mins(total))}` : 'Serviço'}</h2><ul class="rows">${rows}</ul></section>
+${change}
 ${review}
 ${actions}
 </div>
 </main>
-${b.status === 'concluido' && !b.review ? `<script>${SCRIPT}</script>` : ''}
+${b.status === 'concluido' && !b.review ? `<script>${SCRIPT}</script>` : ''}${open && b.can_change ? `<script>${SCRIPT_CHANGE}</script>` : ''}
 </body>
 </html>`
 }

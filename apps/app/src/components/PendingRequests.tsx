@@ -14,6 +14,23 @@ import { usePresence } from '../hooks/usePresence'
 
 const plural = (n: number) => (n === 1 ? '1 pedido' : `${n} pedidos`)
 
+/** quando a dona abriu o sininho pela última vez: cancelamentos da cliente depois disso contam como novos (só neste aparelho) */
+const SEEN_KEY = 'ikizy:cancelados-vistos'
+const readSeen = () => {
+  try {
+    return localStorage.getItem(SEEN_KEY) ?? ''
+  } catch {
+    return ''
+  }
+}
+const writeSeen = (iso: string) => {
+  try {
+    localStorage.setItem(SEEN_KEY, iso)
+  } catch {
+    /* sem storage: o aviso só não some sozinho */
+  }
+}
+
 /** "Hoje, 14:00", "Amanhã, 09:30" ou "Sex, 17 out, 10:00" */
 function when(a: Appointment) {
   const day = parseISO(a.date)
@@ -41,6 +58,7 @@ function RequestRow({
       <span className="pendrow__text">
         <span className="pendrow__name">{a.client}</span>
         <span className="pendrow__meta">
+          {a.clientChange === 'remarcado' ? 'Remarcou · ' : ''}
           {a.service} · {when(a)}
           {pro && professionals.length > 1 ? ` · ${pro}` : ''}
         </span>
@@ -104,12 +122,16 @@ function useRespond(notify?: (message: string) => void) {
 
 /** sininho do topo: contagem de pedidos do site e a lista ao clicar; também põe a contagem no título da aba */
 export function PendingBell() {
-  const { pending } = useAgenda()
+  const { pending, clientCancelled } = useAgenda()
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
+  const [seenAt, setSeenAt] = useState(readSeen)
   const pop = usePresence(open)
   const ref = useRef<HTMLDivElement>(null)
-  const count = pending?.length ?? 0
+  // a cliente cancelou pelo link: conta no sininho até a dona abrir a lista
+  const freshCancelled = clientCancelled.filter((a) => (a.clientChangeAt ?? '') > seenAt).length
+  const waiting = pending?.length ?? 0
+  const count = waiting + freshCancelled
 
   useEffect(() => {
     const base = document.title.replace(/^\(\d+\) /, '')
@@ -142,9 +164,16 @@ export function PendingBell() {
         variant="soft"
         icon
         className="notif"
-        aria-label={count ? `Pedidos do site: ${plural(count)} para confirmar` : 'Pedidos do site'}
+        aria-label={count ? `Pedidos do site: ${count} ${count === 1 ? 'aviso' : 'avisos'}` : 'Pedidos do site'}
         aria-expanded={open}
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => {
+          if (!open && clientCancelled.length) {
+            const now = new Date().toISOString()
+            setSeenAt(now)
+            writeSeen(now)
+          }
+          setOpen((o) => !o)
+        }}
       >
         <Bell size={18} />
         {count > 0 && (
@@ -157,16 +186,27 @@ export function PendingBell() {
         <div className={`pendpop ${pop.closing ? 'is-closing' : ''}`.trim()} role="dialog" aria-label="Pedidos do site">
           <div className="pendpop__head">
             <p className="pendpop__title">Pedidos do site</p>
-            <p className="pendpop__sub">{count ? `${plural(count)} para confirmar` : 'Nada esperando confirmação'}</p>
+            <p className="pendpop__sub">{waiting ? `${plural(waiting)} para confirmar` : 'Nada esperando confirmação'}</p>
           </div>
-          {count ? (
+          {waiting > 0 && (
             <div className="pendpop__list">
               {pending!.map((a) => (
                 <RequestRow key={a.id} a={a} onOpen={go} />
               ))}
             </div>
-          ) : (
-            <p className="pendpop__empty">Quando uma cliente agendar pelo seu site, o pedido aparece aqui para você confirmar.</p>
+          )}
+          {clientCancelled.length > 0 && (
+            <>
+              <p className="pendpop__sub pendpop__sub--section">Canceladas pela cliente</p>
+              <div className="pendpop__list">
+                {clientCancelled.map((a) => (
+                  <RequestRow key={a.id} a={a} onOpen={go} />
+                ))}
+              </div>
+            </>
+          )}
+          {!waiting && !clientCancelled.length && (
+            <p className="pendpop__empty">Quando uma cliente agendar pelo seu site, o pedido aparece aqui para você confirmar. Se ela remarcar ou cancelar pelo link, também.</p>
           )}
         </div>
       )}
