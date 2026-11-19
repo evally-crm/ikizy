@@ -77,7 +77,18 @@ describe('listas do site', () => {
   })
 
   it('plano e produto novos nascem vazios e visíveis', () => {
-    assert.deepEqual(blankPlan('p1'), { id: 'p1', name: '', description: '', price: 0, includes: [], isNew: true, visible: true })
+    assert.deepEqual(blankPlan('p1'), {
+      id: 'p1',
+      name: '',
+      description: '',
+      kind: 'assinatura',
+      price: 0,
+      oldPrice: null,
+      validUntil: null,
+      includes: [],
+      isNew: true,
+      visible: true,
+    })
     assert.equal(blankShowcaseItem('v1').visible, true)
     assert.equal(blankShowcaseItem('v1').photoId, null)
   })

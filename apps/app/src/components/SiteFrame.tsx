@@ -46,7 +46,10 @@ function toPublicSite(studio: Studio, team: { name: string; role: string }[]): P
         description: x.description,
         includes: x.includes.map((i) => i.trim()).filter(Boolean),
         is_new: x.isNew,
+        kind: x.kind,
+        valid_until: x.validUntil,
         price: site.showPrices ? x.price : null,
+        old_price: site.showPrices ? x.oldPrice : null,
       })),
     team: site.showTeam ? team.map((p) => ({ name: p.name, title: p.role })) : [],
   }

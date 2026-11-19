@@ -8,9 +8,9 @@ export function removeById<T extends { id: string }>(list: T[], id: string): T[]
   return list.filter((item) => item.id !== id)
 }
 
-/** plano de assinatura novo, vazio e visível, com a etiqueta "Novidade" */
+/** plano, pacote ou promoção novo, vazio e visível, com a etiqueta "Novidade" */
 export function blankPlan(id: string) {
-  return { id, name: '', description: '', price: 0, includes: [] as string[], isNew: true, visible: true }
+  return { id, name: '', description: '', kind: 'assinatura' as const, price: 0, oldPrice: null as number | null, validUntil: null as string | null, includes: [] as string[], isNew: true, visible: true }
 }
 
 /** produto à venda novo, vazio e visível */
