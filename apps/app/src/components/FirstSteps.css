@@ -154,7 +154,17 @@
   color: var(--ink-500);
 }
 
-a.setup__item:hover {
+button.setup__item {
+  width: 100%;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+a.setup__item:hover,
+button.setup__item:hover {
   background: var(--page-bg);
 }
 
