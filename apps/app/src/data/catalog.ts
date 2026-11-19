@@ -41,13 +41,21 @@ export interface ShowcaseItem {
   photoId: string | null
 }
 
-/** plano por assinatura que o negócio vende (ex.: "Unhas o mês todo"); a cobrança é combinada pelo WhatsApp */
+/** assinatura = preço por mês; pacote e promoção = preço único, com preço "de" e validade opcionais */
+export type PlanKind = 'assinatura' | 'pacote' | 'promocao'
+
+/** plano, pacote ou promoção que o negócio vende (ex.: "Unhas o mês todo"); a cobrança é combinada pelo WhatsApp */
 export interface ClientPlan {
   id: string
   name: string
   description: string
-  /** preço por mês */
+  kind: PlanKind
+  /** assinatura: preço por mês; pacote e promoção: preço único */
   price: number
+  /** preço "de" (riscado), só em pacote e promoção */
+  oldPrice: number | null
+  /** último dia da oferta (AAAA-MM-DD); depois dele o item sai do site sozinho */
+  validUntil: string | null
   /** o que está incluso, um item por linha (até 8) */
   includes: string[]
   /** mostra a etiqueta "Novidade" na página */
@@ -108,7 +116,7 @@ export interface Studio {
 type StudioInput = Pick<Studio, 'site' | 'products'> & {
   services: (Omit<Service, 'photo' | 'photoId'> & Partial<Pick<Service, 'photo' | 'photoId'>>)[]
   showcase?: ShowcaseItem[]
-  plans?: ClientPlan[]
+  plans?: (Omit<ClientPlan, 'kind' | 'oldPrice' | 'validUntil'> & Partial<Pick<ClientPlan, 'kind' | 'oldPrice' | 'validUntil'>>)[]
 }
 
 const DEMO_STUDIO: StudioInput = {
@@ -159,7 +167,8 @@ const normalize = (studio: StudioInput): Studio => ({
   site: { ...studio.site, coverStyle: isCoverStyleId(studio.site.coverStyle) ? studio.site.coverStyle : 'sobrio' },
   services: studio.services.map((sv) => ({ ...sv, photo: sv.photo ?? '', photoId: sv.photoId ?? null })),
   showcase: studio.showcase ?? [],
-  plans: studio.plans ?? [],
+  // rascunhos antigos só tinham planos por assinatura
+  plans: (studio.plans ?? []).map((p) => ({ ...p, kind: p.kind ?? 'assinatura', oldPrice: p.oldPrice ?? null, validUntil: p.validUntil ?? null })),
 })
 
 export const DEFAULT_STUDIO: Studio = normalize(DEMO_STUDIO)
@@ -355,7 +364,7 @@ export function useStudio() {
             .order('created_at'),
           db
             .from('client_plans')
-            .select('id, name, description, price, includes, is_new, visible')
+            .select('id, name, description, price, includes, is_new, visible, kind, old_price, valid_until')
             .eq('salon_id', salonId)
             .order('position')
             .order('created_at'),
@@ -430,7 +439,10 @@ export function useStudio() {
               id: x.id as string,
               name: x.name as string,
               description: (x.description as string) ?? '',
+              kind: (['pacote', 'promocao'].includes(x.kind as string) ? x.kind : 'assinatura') as PlanKind,
               price: Number(x.price),
+              oldPrice: x.old_price == null ? null : Number(x.old_price),
+              validUntil: (x.valid_until as string | null) ?? null,
               includes: (x.includes as string[] | null) ?? [],
               isNew: Boolean(x.is_new),
               visible: x.visible as boolean,
@@ -597,6 +609,9 @@ export function useStudio() {
           name: pl.name.trim() || 'Plano',
           description: pl.description.trim().slice(0, 200),
           price: pl.price,
+          kind: pl.kind,
+          old_price: pl.kind === 'assinatura' ? null : pl.oldPrice,
+          valid_until: pl.kind === 'assinatura' ? null : pl.validUntil || null,
           includes: pl.includes.map((i) => i.trim()).filter(Boolean).slice(0, 8),
           is_new: pl.isNew,
           visible: pl.visible,

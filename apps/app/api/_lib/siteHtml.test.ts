@@ -94,6 +94,28 @@ describe('renderSitePage', () => {
     assert.match(html, /Quero este plano/)
   })
 
+  it('pacote e promoção: preço único, "de" riscado, validade e botão próprio; a vencida some', () => {
+    const site = base()
+    site.plans = [
+      { name: 'Pacote 4 esmaltações', description: '', includes: [], is_new: false, price: 300, kind: 'pacote', old_price: 360, valid_until: '2999-12-31' },
+      { name: 'Promoção velha', description: '', includes: [], is_new: false, price: 50, kind: 'promocao', old_price: 80, valid_until: '2000-01-01' },
+    ]
+    const html = page(site)
+    assert.match(html, /Pacote 4 esmaltações/)
+    assert.match(html, /<s class="was">R\$\s?360<\/s>/)
+    assert.match(html, /Válido até 31\/12/)
+    assert.match(html, /Quero este pacote/)
+    assert.match(html, /Nossos <em>pacotes<\/em>/)
+    assert.doesNotMatch(html, /\/mês/)
+    assert.doesNotMatch(html, /Promoção velha/)
+  })
+
+  it('preço "de" que não é maior que o preço atual não aparece riscado', () => {
+    const site = base()
+    site.plans = [{ name: 'Oferta', description: '', includes: [], is_new: false, price: 100, kind: 'promocao', old_price: 100, valid_until: null }]
+    assert.doesNotMatch(page(site), /class="was"/)
+  })
+
   it('sem mostrar preços, nenhum valor aparece (serviços e planos)', () => {
     const site = base({}, { show_prices: false })
     site.services = site.services.map((s) => ({ ...s, price: null }))

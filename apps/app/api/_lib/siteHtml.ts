@@ -33,7 +33,7 @@ export interface PublicSite {
   services: { id?: string; name: string; category: string; duration: number; price: number | null; photo?: string | null }[]
   /** produtos à venda; photo = id da foto (página pública) ou um endereço já pronto (prévia no app) */
   showcase?: { id?: string; name: string; description: string; price: number | null; photo?: string | null }[]
-  plans: { name: string; description: string; includes: string[]; is_new: boolean; price: number | null }[]
+  plans: { name: string; description: string; includes: string[]; is_new: boolean; price: number | null; kind?: 'assinatura' | 'pacote' | 'promocao'; old_price?: number | null; valid_until?: string | null }[]
   team: { name: string; title: string }[]
   /** só vem preenchido com o agendamento online ligado */
   professionals?: { id: string; name: string }[]
@@ -62,6 +62,13 @@ export function photoSrc(value: string | null | undefined): string | null {
 const ESCAPES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }
 /** tudo que o negócio digita passa por aqui antes de entrar no HTML */
 export const esc = (value: unknown) => String(value ?? '').replace(/[&<>"']/g, (c) => ESCAPES[c])
+
+/** palavras de cada tipo de oferta: "no plano", "no pacote"... e o texto do botão */
+const PLAN_WORDS = {
+  assinatura: { of: 'no plano', cta: 'Quero este plano' },
+  pacote: { of: 'no pacote', cta: 'Quero este pacote' },
+  promocao: { of: 'na promoção', cta: 'Quero esta promoção' },
+} as const
 
 export function formatPrice(n: number): string {
   return new Intl.NumberFormat('pt-BR', {
@@ -194,7 +201,7 @@ em{font-family:inherit;font-style:normal;color:var(--accent-ink)}
 .plan{position:relative;display:flex;flex-direction:column;gap:10px;padding:24px;border-radius:24px;background:var(--soft)}
 .plan h3{font-size:26px}
 .plan .desc{margin:0;color:var(--muted);font-size:15px}
-.plan .pp{font-size:36px;letter-spacing:-.04em;color:var(--ink)}.plan .pp small{font-size:14px;color:var(--muted);letter-spacing:0}
+.plan .pp{font-size:36px;letter-spacing:-.04em;color:var(--ink)}.plan .pp small{font-size:14px;color:var(--muted);letter-spacing:0}.plan .was{font-size:18px;letter-spacing:0;color:var(--muted);text-decoration:line-through;font-weight:400}.plan .until{margin:-4px 0 10px;font-size:13px;color:var(--muted)}
 .plan ul{list-style:none;margin:4px 0 8px;padding:0;display:grid;gap:6px;font-size:15px}
 .plan li:before{content:"";display:inline-block;width:8px;height:8px;margin-right:10px;border-radius:50%;background:var(--accent)}
 .plan .btn{margin-top:auto}
@@ -288,7 +295,9 @@ export function renderSitePage(site: PublicSite, opts: { canonical: string; capt
   const name = site.name
   const showPrices = s.show_prices !== false
   const services = (site.services ?? []).filter((x) => x.name?.trim())
-  const plans = (site.plans ?? []).filter((x) => x.name?.trim())
+  // a oferta vencida sai do site (o banco já filtra; isto cobre a prévia do editor)
+  const todayBR = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date())
+  const plans = (site.plans ?? []).filter((x) => x.name?.trim() && (!x.valid_until || x.valid_until >= todayBR))
   const team = site.team ?? []
 
   const ownTagline = (s.tagline ?? '').trim()
@@ -328,16 +337,30 @@ export function renderSitePage(site: PublicSite, opts: { canonical: string; capt
     })
     .join('')
 
+  const kinds = new Set(plans.map((x) => x.kind ?? 'assinatura'))
+  const planTitle =
+    kinds.size === 1 && kinds.has('assinatura')
+      ? 'Planos por <em>assinatura</em>'
+      : kinds.size === 1 && kinds.has('pacote')
+        ? 'Nossos <em>pacotes</em>'
+        : kinds.size === 1 && kinds.has('promocao')
+          ? 'Promoções'
+          : 'Planos, pacotes e <em>promoções</em>'
   const plansHtml = plans
     .map((p) => {
-      const link = whatsappLink(s.whatsapp, `Olá! Tenho interesse no plano "${p.name}" do ${name}.`)
-      return `<article class="plan">${p.is_new ? '<span class="tag">Novidade</span>' : ''}<h3>${esc(p.name)}</h3>${
+      const kind = p.kind ?? 'assinatura'
+      const what = PLAN_WORDS[kind]
+      const link = whatsappLink(s.whatsapp, `Olá! Tenho interesse ${what.of} "${p.name}" do ${name}.`)
+      const until = kind !== 'assinatura' && p.valid_until ? `<p class="until">Válido até ${esc(p.valid_until.slice(8, 10))}/${esc(p.valid_until.slice(5, 7))}</p>` : ''
+      const was = kind !== 'assinatura' && showPrices && p.old_price != null && p.price != null && p.old_price > p.price ? `<s class="was">${esc(formatPrice(p.old_price))}</s> ` : ''
+      const tag = p.is_new ? '<span class="tag">Novidade</span>' : kind === 'pacote' ? '<span class="tag">Pacote</span>' : kind === 'promocao' ? '<span class="tag">Promoção</span>' : ''
+      return `<article class="plan">${tag}<h3>${esc(p.name)}</h3>${
         p.description ? `<p class="desc">${esc(p.description)}</p>` : ''
       }${
-        showPrices && p.price != null ? `<p class="pp">${esc(formatPrice(p.price))}<small> /mês</small></p>` : ''
-      }${
+        showPrices && p.price != null ? `<p class="pp">${was}${esc(formatPrice(p.price))}${kind === 'assinatura' ? '<small> /mês</small>' : ''}</p>` : ''
+      }${until}${
         p.includes?.length ? `<ul>${p.includes.map((i) => `<li>${esc(i)}</li>`).join('')}</ul>` : ''
-      }${link ? `<a class="btn" href="${esc(link)}" rel="noopener">Quero este plano</a>` : ''}</article>`
+      }${link ? `<a class="btn" href="${esc(link)}" rel="noopener">${what.cta}</a>` : ''}</article>`
     })
     .join('')
 
@@ -489,7 +512,7 @@ export function renderSitePage(site: PublicSite, opts: { canonical: string; capt
   }${
     showcase.length ? `<section id="produtos" class="panel"><h2>Para levar <em>para casa</em></h2><div class="shop">${showcaseHtml}</div></section>` : ''
   }${
-    plans.length ? `<section id="planos" class="panel"><h2>Planos por <em>assinatura</em></h2><div class="plans">${plansHtml}</div></section>` : ''
+    plans.length ? `<section id="planos" class="panel"><h2>${planTitle}</h2><div class="plans">${plansHtml}</div></section>` : ''
   }${
     team.length ? `<section id="equipe" class="panel"><h2>Quem cuida de você</h2><ul class="team">${teamHtml}</ul></section>` : ''
   }${reviewsHtml}${

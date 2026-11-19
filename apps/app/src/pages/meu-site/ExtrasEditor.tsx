@@ -1,13 +1,19 @@
 import { useState } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
-import type { ClientPlan, ShowcaseItem } from '../../data/catalog'
+import type { ClientPlan, PlanKind, ShowcaseItem } from '../../data/catalog'
 import { SITE_LIMITS, splitIncludes } from '../../domain/site'
-import { Switch } from '../../components/controls'
+import { Select, Switch } from '../../components/controls'
 import { Button, Collapse, MoneyInput } from '../../components/ui'
 import { ShowcaseEditor } from './ShowcaseEditor'
 import './MeuSite.css'
 
-/** uma linha de plano por assinatura, editável */
+const KINDS = [
+  { value: 'assinatura', label: 'Plano por assinatura' },
+  { value: 'pacote', label: 'Pacote' },
+  { value: 'promocao', label: 'Promoção' },
+]
+
+/** uma linha de plano, pacote ou promoção, editável */
 function PlanRow({ plan, onPatch, onRemove }: { plan: ClientPlan; onPatch: (patch: Partial<ClientPlan>) => void; onRemove: () => void }) {
   return (
     <li className={`row ${plan.visible ? '' : 'is-hidden'}`.trim()}>
@@ -16,15 +22,32 @@ function PlanRow({ plan, onPatch, onRemove }: { plan: ClientPlan; onPatch: (patc
           <input aria-label="Nome do plano" placeholder="Nome do plano" value={plan.name} maxLength={60} onChange={(e) => onPatch({ name: e.target.value })} />
         </span>
         <Switch checked={plan.visible} onChange={(v) => onPatch({ visible: v })} label="No site" />
-        <button type="button" className="chevbtn" aria-label={`Remover ${plan.name || 'plano'}`} onClick={onRemove}>
+        <button type="button" className="chevbtn" aria-label={`Remover ${plan.name || 'item'}`} onClick={onRemove}>
           <Trash2 size={15} />
         </button>
       </div>
       <div className="row__grid">
+        <div className="mini-field mini-field--wide">
+          <Select label="Tipo" value={plan.kind} options={KINDS} onChange={(v) => onPatch({ kind: v as PlanKind })} />
+        </div>
         <label className="mini-field">
-          <span>Preço por mês</span>
-          <MoneyInput label="Preço por mês" value={plan.price} onChange={(v) => onPatch({ price: v })} />
+          <span>{plan.kind === 'assinatura' ? 'Preço por mês' : plan.kind === 'pacote' ? 'Preço do pacote' : 'Preço da promoção'}</span>
+          <MoneyInput label="Preço" value={plan.price} onChange={(v) => onPatch({ price: v })} />
         </label>
+        {plan.kind !== 'assinatura' && (
+          <>
+            <label className="mini-field">
+              <span>De (preço riscado, opcional)</span>
+              <MoneyInput label="Preço de" value={plan.oldPrice ?? 0} onChange={(v) => onPatch({ oldPrice: v > 0 ? v : null })} />
+            </label>
+            <label className="mini-field mini-field--wide">
+              <span>Vale até (opcional, depois dessa data sai do site)</span>
+              <span className="input">
+                <input type="date" value={plan.validUntil ?? ''} onChange={(e) => onPatch({ validUntil: e.target.value || null })} />
+              </span>
+            </label>
+          </>
+        )}
         <label className="mini-field mini-field--wide">
           <span>Descrição curta</span>
           <span className="input">
@@ -73,13 +96,13 @@ export function ExtrasEditor({
     <div className="catalog">
       <p className="catalog__intro">Opcional. Só aparece no site o que você ligar aqui.</p>
       <Collapse
-        title="Planos por assinatura"
-        meta={plans.length ? `${plans.length} ${plans.length === 1 ? 'plano' : 'planos'}` : 'Pacotes que a cliente paga por mês'}
+        title="Planos, pacotes e promoções"
+        meta={plans.length ? `${plans.length} ${plans.length === 1 ? 'item' : 'itens'}` : 'Assinatura mensal, pacote ou oferta por tempo limitado'}
         open={open.plans}
         onToggle={() => setOpen((o) => ({ ...o, plans: !o.plans }))}
       >
         <p className="catalog__intro">
-          Ex.: “Unhas o mês todo”. Aparece com o botão “Quero este plano”, que abre o WhatsApp. A cobrança você combina com a cliente.
+          Ex.: “Unhas o mês todo” (assinatura), “4 esmaltações” (pacote) ou “Dia das Mães” (promoção, com preço de e validade). Cada um aparece com um botão que abre o WhatsApp. A cobrança você combina com a cliente.
         </p>
         <ul className="rows">
           {plans.map((pl) => (
@@ -87,7 +110,7 @@ export function ExtrasEditor({
           ))}
         </ul>
         <Button variant="ghost" onClick={onAddPlan} disabled={plans.length >= SITE_LIMITS.plans} className="catalog__add">
-          <Plus size={16} aria-hidden="true" /> Novo plano
+          <Plus size={16} aria-hidden="true" /> Novo item
         </Button>
       </Collapse>
       <Collapse
