@@ -105,3 +105,38 @@
       gap: 12px;
     }
 }
+
+
+/* folgas, férias e bloqueios do dia */
+.blocks {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.blocks__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 16px;
+  background: var(--bg);
+  font-size: 14px;
+}
+
+.blocks__item svg {
+  flex: none;
+  margin-top: 2px;
+}
+
+.blocks__item small {
+  color: var(--ink-500);
+  font-size: 13px;
+}
+
+.blocks__more {
+  padding: 0 4px;
+  font-size: 13px;
+}

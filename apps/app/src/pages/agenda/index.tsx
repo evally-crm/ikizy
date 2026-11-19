@@ -26,6 +26,9 @@ import { DaySummary } from './DaySummary'
 import { FirstProfessional, NoAgenda, OwnerAttends, SoloProfessional } from './ProfessionalSetup'
 import { useAuth } from '../../auth/AuthProvider'
 import { roleAccess } from '../../domain/team'
+import { blocksOfDay } from '../../domain/schedule'
+import { useScheduling } from '../../data/useScheduling'
+import { BlocksNotice } from './BlocksNotice'
 import { TimeGrid } from './TimeGrid'
 import './Agenda.css'
 
@@ -60,6 +63,7 @@ export default function Agenda() {
   const [params, setParams] = useSearchParams()
   const { sub, loading: subLoading } = useSubscription()
   const { salon } = useAuth()
+  const sched = useScheduling()
   // só quem cuida do negócio cadastra quem atende; a recepção e a profissional só esperam
   const canSetUp = roleAccess(salon?.role ?? 'owner').business
   const isOwner = (salon?.role ?? 'owner') === 'owner'
@@ -100,6 +104,8 @@ export default function Agenda() {
     [dayAppointments, activePro],
   )
   const countsByDay = useMemo(() => countByDay(appointments), [appointments])
+  // folgas, férias e bloqueios do dia, da profissional escolhida (ou de quem aparece)
+  const dayBlocks = useMemo(() => blocksOfDay(sched.blocks, today, activePro === 'all' ? undefined : activePro), [sched.blocks, today, activePro])
   const summary = useMemo(() => summarizeDay(appointments, today, isToday ? nowMinutes : null), [appointments, today, isToday, nowMinutes])
   const professionalName = (id: string) => professionals.find((p) => p.id === id)?.name ?? ''
 
@@ -311,6 +317,8 @@ export default function Agenda() {
                 </button>
               )}
             </div>
+
+            <BlocksNotice blocks={dayBlocks} date={today} professionals={professionals} />
 
             {listMode ? (
               <>

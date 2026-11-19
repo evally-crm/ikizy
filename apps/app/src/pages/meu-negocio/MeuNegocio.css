@@ -124,3 +124,39 @@
 .bizdialog__more .form__pair {
   margin-top: 10px;
 }
+
+
+/* folgas, férias e intervalo entre atendimentos (aba Horário) */
+.sched__list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sched__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: var(--page-bg);
+}
+
+.sched__row span {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.sched__row small {
+  color: var(--ink-500);
+  font-size: 13px;
+}
+
+.sched__buffer {
+  max-width: 260px;
+  margin: 4px 0 10px;
+}
