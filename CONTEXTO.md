@@ -1,7 +1,7 @@
 # IKIZY: contexto completo do projeto
 
 Documento de passagem: o que é o projeto, como está montado, o que já foi feito, como trabalhar nele e o que falta.
-Atualizado em 09/10/2026. Complementa o [README](README.md), que explica como rodar e configurar Neon e Stripe.
+Atualizado em 19/11/2026. Complementa o [README](README.md), que explica como rodar e configurar Neon e Stripe.
 **Antes de mexer em telas, leia o [plano de experiência](docs/PLANO-DE-EXPERIENCIA.md)** (10/10/2026): diagnóstico, nova organização, perfis e fluxos.
 **Para ir ao ar, siga a [especificação de produção](docs/ESPECIFICACAO-PRODUCAO.md)** (11/10/2026): regras de negócio, telas finais, schema final e serviços externos.
 
@@ -22,8 +22,11 @@ Módulos do sistema (`app.ikizy.com/dashboard`):
 | Agenda | calendário semana/mês, grade por profissional, horário de atendimento, criar/remarcar/confirmar/concluir |
 | Clientes | carteira, VIP, novas, sumidas, histórico |
 | Financeiro | fechamento mensal (recibo), saídas, comissões, formas de pagamento |
-| Meu site | editor do site público do negócio (detalhado na seção 5) |
+| Meu site | editor do site público do negócio, em 5 partes: Perfil, Visual, Serviços, Extras e Agendar (detalhado na seção 5) |
+| Meu negócio | dados, horário, **folgas e bloqueios**, **intervalo entre atendimentos**, serviços, materiais e equipe |
 | Assinatura | plano do IKIZY (Stripe: cartão e Pix) |
+
+Fora do dashboard, a **página da cliente** (`slug.ikizy.com/pedido/<link secreto>`): status do pedido ao vivo, remarcar, cancelar e avaliar (seção 5).
 
 Planos do IKIZY: Solo R$ 19,90, Studio R$ 49,90, Salão R$ 99,90 (fonte única: `apps/app/src/lib/plans.ts`). Todo salão novo ganha 30 dias de teste em qualquer plano; no cadastro a dona escolhe o plano e se paga no cartão (débito automático no fim do teste) ou por Pix.
 
@@ -105,7 +108,7 @@ Toda migration termina com `notify pgrst, 'reload schema';` para a Data API enxe
 ### Banco de desenvolvimento (branch `dev` do Neon)
 
 Criada em 16/11/2026 (`br-lucky-star-b68ny7u5`, endpoint `ep-old-dream-b6e5t7dn`, mesmo projeto `lingering-base-71670281`). Tem o schema
-da produção (30 migrations) e **nenhum dado real**: o projeto tem a role legada `anonymous`, que não permite branch só com a estrutura, então
+da produção (hoje as 40 migrations) e **nenhum dado real**: o projeto tem a role legada `anonymous`, que não permite branch só com a estrutura, então
 foi criada como cópia e os dados pessoais (logins, negócios, clientes, atendimentos) foram apagados na hora, com trava de endereço. Tem Neon Auth
 e Data API próprios, com endereços diferentes dos da produção.
 
@@ -124,11 +127,16 @@ e Data API próprios, com endereços diferentes dos da produção.
 ```bash
 cd apps/app
 npx tsc -b              # checagem de tipos REAL do app (o "tsc -p ." não checa nada: a raiz só referencia outros configs)
-npm run test:api        # testes das funções do servidor (node:test via tsx), hoje 143 testes
+npm run test:api        # testes das funções do servidor (node:test via tsx), hoje 269 testes
+npm run test:domain     # regras puras de src/domain e src/lib, hoje 198 testes
+npm run check:conventions  # regras da casa (hoje reclama de um style inline antigo em meu-site/IdentityFields.tsx)
 npm run typecheck:api   # tipos das funções da Vercel
 npm run build
 npm run test:e2e        # ponta a ponta (Playwright), celular e computador, no modo demonstração: sem banco, nada é gravado
 ```
+
+**Não confie em `tsc -p .` nem em `tsc --noEmit -p .`:** eles não checam o app (ver Pegadinhas). Em 19/11/2026 um import
+faltando (`siteHost`) foi para a produção porque a checagem foi feita assim; o `npx tsc -b` o pegou. Rode sempre `npx tsc -b` e `npm run typecheck:api`.
 
 Ponta a ponta (`apps/app/e2e/`): telas principais sem erro e sem rolagem lateral, agendar, confirmar pedido do site,
 cadastrar cliente, prévia do editor do site e o agendamento da página pública (com a caixa de autorização; a API é simulada).
@@ -160,13 +168,30 @@ Monitoramento de erros (Sentry): o código está pronto e só liga com `SENTRY_D
 | `20261019000000_palette_dark` | paleta escura `preto-branco` aceita no banco |
 | `20261020000000_client_file` | ficha completa da cliente (e-mail, Instagram, endereço, profissão, como conheceu, anamnese em jsonb, assinatura do termo), `loyalty_settings`, `loyalty_entries` (selos extras e resgates) e `client_notes` |
 | `20261021000000_client_photos` | fotos de antes e depois na ficha (`client_photos`: miniatura + foto, só membros do salão leem; não passam pela página pública) |
+| `20261022000000_category_outros` | categoria de serviço "Outros" (áreas fora da lista, digitadas no cadastro) |
 | `20261023000000_plan_choice` | passo de plano no cadastro: `subscriptions.plan_chosen_at` e `choose_trial_plan()` (teste sem cartão, paga por Pix) |
 | `20261024000000_fase1` | aplicada em 11/10/2026 (testada antes numa branch). No projeto novo `ikizy` todas foram aplicadas do zero; `create_salon(text,text,text)`, que existia só no banco antigo (sem migration), não foi recriada. `schema_migrations`; apaga as campanhas de WhatsApp órfãs e a fidelidade; `appointments.origin` (sistema/site); trava contra dois atendimentos da mesma profissional no mesmo horário (`appointments_no_overlap`); `slug_available()` |
+| `20261025000000_hardening` | mês fechado no fuso de Brasília, `close_month` confere os números, concluir exige forma de pagamento, atendimento só aponta para dados do próprio negócio, `hit_rate_limit`, WhatsApp único por negócio |
+| `20261026000000_lgpd_requests` | `forget_client()` (apagar dados de uma cliente) e `expire_stale_requests()` (pedido do site sem resposta vira cancelado) |
+| `20261027000000_email_reminders` | `subscriptions.notify_email` e `email_log` (avisos de fim de teste e de acesso, sem repetir) |
+| `20261028000000_cover_style` | `site_settings.cover_style` (o que fica atrás do título sem foto) |
 | `20261029000000_create_salon_setup` | `create_salon_setup()`: cadastro do negócio inteiro numa transação (R-11). Aplicada em 16/10/2026 |
 | `20261030000000_palette_colors` | paletas nas oito cores novas (vermelho, rosa bebê, verde musgo...), aceitando os nomes antigos. Aplicada em 16/10/2026 |
 | `20261031000000_team` | aplicada em 16/10/2026 (testada antes na branch `teste-equipe`, 52 verificações de perfil e limite). Fase 2: `invites` + `create_invite`/`revoke_invite`/`get_invite`/`accept_invite`, `remove_member`, `set_member_role`, `get_team`, `get_commissions`; regras por perfil (profissional só vê os atendimentos e as clientes dela; recepção e profissional não leem saídas, custos, fechamentos nem comissão das outras; `members` só pelas funções); limites por plano (`plan_limits`, travas em `professionals` e `members`, `choose_trial_plan` exige caber); `clients.created_by` |
 | `20261101000000_photo_storage` | aplicada em 20/10/2026 (testada antes numa branch). Fotos fora do banco: `site_photos.blob_path`, `client_photos.blob_path`/`thumb_path` (caminho na loja privada `ikizy-fotos` do Vercel Blob, região gru1, ligada ao `ikizy-app`); o caminho tem de começar por `salons/<id do negócio>/site/` ou `/client/`; logo e capa aceitam o id de uma foto; `get_public_photo()` devolve `blob:<caminho>` para fotos na loja. As linhas antigas em data URL continuam valendo. Rotas: `/api/photos/upload`, `/api/photos/file` (só a equipe do negócio), cron diário `/api/cron/cleanup-photos` |
-| `20261116000000_account_lifecycle` | **aplicada só na branch `dev` (16/11/2026); a produção ainda não.** Ciclo de vida da conta: `salons.deletion_requested_at` / `deletion_scheduled_at` / `deletion_resume_billing` (exclusão com 7 dias de espera, só o servidor mexe: o `authenticated` passou a poder atualizar apenas `name` e `slug` em `salons`) e `audit_log` (quem apagou ou pediu para apagar o quê; não aponta para `salons`, sobrevive ao negócio; sem acesso para `anonymous`/`authenticated`). Testada com `npm run test:dev-db` (Postgres de verdade na dev). Aplicar na produção **antes** do deploy do código que a usa |
+| `20261102000000_leads` | `leads`: e-mails deixados na landing, gravados só pelo servidor |
+| `20261103000000_leads_unsubscribe` | `leads.unsubscribed_at` (quem saiu da lista) |
+| `20261110000000_cover_textures` | capas com textura (poá, onça, zebra, xadrez, listras) nas cores da paleta |
+| `20261116000000_account_lifecycle` | aplicada na dev em 16/11/2026 e já na produção. Ciclo de vida da conta: `salons.deletion_requested_at` / `deletion_scheduled_at` / `deletion_resume_billing` (exclusão com 7 dias de espera, só o servidor mexe: o `authenticated` passou a poder atualizar apenas `name` e `slug` em `salons`) e `audit_log` (quem apagou ou pediu para apagar o quê; não aponta para `salons`, sobrevive ao negócio; sem acesso para `anonymous`/`authenticated`). Testada com `npm run test:dev-db` (Postgres de verdade na dev). Regra que vale para toda migration que o código novo lê: aplicar na produção **antes** do deploy do código que a usa |
+| `20261117000000_push_subscriptions` | `push_subscriptions`: um registro por aparelho que autorizou aviso (só o servidor lê) |
+| `20261117120000_site_offline` | `site_online()`: o site sai do ar 7 dias depois que o acesso vence; `get_public_site` e `get_public_photo` passam a exigir isso |
+| `20261117130000_complimentary` | `subscriptions.complimentary`: conta de cortesia, sem vencimento e sem cobrança (marcada pelo script `npm run db:cortesia`, nunca pelo navegador) |
+| `20261118000000_professional_services` | `professional_services` e `set_service_professionals()`: quem faz cada serviço (sem linhas = todas fazem) |
+| `20261118100000_multi_service_booking` | `get_booking_slots()` e `book_services()`: até 4 serviços no mesmo pedido, em sequência, com a mesma profissional |
+| `20261119000000_client_link_reviews` | `appointments.public_token` (link secreto do pedido), `get_booking_status()`, avaliações (`reviews`, `submit_review()`, `get_public_reviews()`) |
+| `20261120000000_client_change_booking` | a cliente remarca ou cancela pelo link: `get_reschedule_slots()`, `reschedule_booking()`, `cancel_booking()`; `appointments.client_change` |
+| `20261121000000_plan_kind` | `client_plans.kind` (assinatura, pacote ou promoção), `old_price` (preço "de") e `valid_until` (a oferta vencida sai do site sozinha); `get_public_site` devolve os três. Aplicada na produção em 19/11/2026 |
+| `20261122000000_time_blocks` | `time_blocks` (folgas, férias e bloqueios, da profissional ou de todas), `salons.buffer_minutes` (intervalo entre atendimentos, 0 a 120 min) e reescrita de `get_booking_slots` e `get_reschedule_slots` para respeitá-los. Testada na dev e aplicada na produção em 19/11/2026 |
 
 Regras importantes:
 - Toda tabela tem `salon_id` + RLS. Escrita de catálogo/site só `owner`/`manager`; sem assinatura ativa, escrita bloqueada (políticas restritivas).
@@ -182,9 +207,11 @@ Regras importantes:
 
 - Gerada no servidor: `apps/app/api/site.ts` + `api/_lib/siteHtml.ts` (HTML + CSS inline, sem framework, rápida, com SEO e JSON-LD).
 - Roteamento em `apps/app/vercel.json` com `routes` (precisam vir antes do sistema de arquivos para o subdomínio funcionar).
-- Seções: topo com logo, capa (foto ou fundo marcante na cor da paleta, com o nome do salão), "Agendar é simples" (3 passos),
-  Sobre, Serviços (por categoria, com foto opcional e botão de agendar), Produtos à venda (vitrine), Planos por assinatura,
-  Equipe, Contato (WhatsApp, Instagram, horário, endereço com mapa) e botão flutuante de agendar no celular.
+- Seções: topo com logo, capa (foto, textura ou fundo na cor da paleta, com o nome do salão), "Agendar é simples" (3 passos),
+  Sobre, Serviços (por categoria, com foto opcional e botão de agendar), Produtos à venda (vitrine), **Planos, pacotes e promoções**
+  (o título muda conforme o que existe; assinatura mostra "/mês"; pacote e promoção mostram preço único, o preço "de" riscado e
+  "Válido até dd/mm"; vencido some), **O que dizem as clientes** (avaliações), Equipe, Contato (WhatsApp, Instagram, horário,
+  endereço com mapa) e botão flutuante de agendar no celular. Cada oferta tem um botão que abre o WhatsApp com a mensagem pronta.
 - Cache de 60 s na Vercel, sem `stale-while-revalidate` (uma publicação aparece em no máximo 1 minuto; com ele, a versão antiga ainda era entregue depois disso).
 - Tudo que o negócio digita passa por `esc()`; fotos só entram por `photoSrc()` (id, `/api/photo` ou data URL de imagem).
 
@@ -197,24 +224,29 @@ Regras importantes:
   **Não** há cor livre: a usuária pediu explicitamente para tirar.
 - **Fontes dos títulos:** Manrope, Forum e Raleway (ids no banco: `moderna`, `elegante`, `forte`), do Google Fonts; a página carrega só a escolhida.
 
-### Editor (`apps/app/src/pages/MeuSite.tsx`)
+### Editor (`apps/app/src/pages/meu-site/index.tsx`)
 
-- Abre **sempre em tela cheia** em telas largas (sem o menu do app); o X minimiza só naquela visita.
-- **Sem guia:** o guia de 2 passos foi removido; só existe o editor completo, com a **prévia fiel** ao lado (mesmo gerador da página real, num iframe dentro de uma moldura de navegador; Computador/Celular). O primeiro "Publicar" usa a barra de publicar, com o endereço em "Contato e endereço".
-- **Etapas do editor** (tracinhos no topo com setas ← → e "2 de 4"; botões "Próximo: ..." no fim de cada etapa):
-  1. **Página:** Aparência (paleta e fonte), Identidade (logo e capa), Textos, Contato e endereço, O que mostrar (preços, equipe, sinal, agendamento online). Seções começam fechadas.
-  2. **Serviços e planos:** serviços agrupados por categoria (abre/fecha), com foto opcional; grupo **Planos por assinatura** com selo "Novidade" (nome, preço/mês, descrição, o que inclui, etiqueta Novidade no site). A cobrança dos planos é combinada por WhatsApp.
-  3. **Produtos à venda:** vitrine com foto, preço e descrição (botão "Quero este" abre o WhatsApp).
-  4. **Produtos e custos:** gastos internos com material, só para calcular margem (não aparece no site).
-- Rascunho no navegador; "Publicar alterações" grava tudo de uma vez (`useStudio` em `data/catalog.ts`).
-- Fotos: reduzidas no navegador (`lib/imageResize.ts`), gravadas em `site_photos` só ao publicar, servidas por `/api/photo?id=` com cache eterno; fotos trocadas/removidas são apagadas.
+- Abre **sempre em tela cheia** no celular (sem o menu do app); em telas largas abre normal e o botão "Tela cheia" expande. Rascunho no navegador; "Publicar" grava tudo de uma vez (`useStudio` em `data/catalog.ts`). Prévia fiel (mesmo gerador da página real; Computador/Celular).
+- **Endereço do site no topo** (`SiteLinkButton.tsx`, celular e computador): tocar abre uma folha com o campo do endereço, **Copiar link** e **Abrir**. Trocar o endereço de um site publicado vale só no próximo Publicar e avisa que o link antigo deixa de funcionar.
+- **5 partes**, um menu só (a escolha fica na aba do navegador; a bolinha marca o que falta):
+  1. **Perfil:** tipo de perfil, foto, textos (frase de destaque e "sobre", com ideias prontas). O nome, WhatsApp, Instagram e endereço **não** se editam aqui: são de Meu negócio (um lugar só).
+  2. **Visual:** capa (lisa, poá, onça...), paleta de cores e fonte dos títulos.
+  3. **Serviços:** serviços do negócio com foto opcional e "No site".
+  4. **Extras:** **Planos, pacotes e promoções** (tipo, preço, "de", validade, o que inclui, etiqueta Novidade), **Produtos à venda** e **Avaliações** (esconder uma avaliação vale na hora, sem Publicar).
+  5. **Agendar:** agendamento online (ligar, antecedência mínima, "Agendar até"), checklist "Antes de abrir a agenda", mostrar preços e equipe.
+- A aba **Contato** e o bloco de contatos foram removidos (19/11/2026) por pedido da usuária: o celular estava apertado e com passos demais. O assistente da primeira vez, no passo "Horário e WhatsApp", leva para Meu negócio.
+- Fotos: reduzidas no navegador (`lib/imageResize.ts`), gravadas em `site_photos` só ao publicar, servidas por `/api/photo?id=`.
 
 ### Agendamento online
 
-- Ligado em Meu site → O que mostrar → "Aceitar agendamentos online" (desligado por padrão), com antecedência mínima e prazo.
-- A cliente escolhe serviço, profissional (ou qualquer uma), dia (semana de 7 dias com setas) e horário livre; informa nome e WhatsApp.
+- Ligado em Meu site → Agendar → "Aceitar agendamentos pelo site" (desligado por padrão), com antecedência mínima e "Agendar até" (dias à frente).
+- A cliente escolhe serviço (até 4 no mesmo horário), profissional (ou qualquer uma que faça todos), dia e horário livre; informa nome e WhatsApp. Ao abrir a janela, ela **já mostra o primeiro dia com vaga** e apaga os dias lotados (a janela busca os horários da semana em segundo plano, `api/_lib/bookingClient.ts`).
 - `api/booking.ts` (GET horários, POST reserva) + funções do banco com trava contra duas reservas na mesma vaga; cliente reaproveitada pelo telefone; até 3 pedidos em aberto por cliente; limite por IP; campo-isca contra robôs.
+- **Vagas respeitam:** expediente da profissional, quem faz o serviço, antecedência mínima, janela de dias, atendimentos já marcados, **bloqueios** (`time_blocks`) e o **intervalo entre atendimentos** (`salons.buffer_minutes`). Quem marca pela agenda do sistema ainda pode marcar dentro de um bloqueio ou do intervalo (a dona manda; o aviso do dia mostra o bloqueio).
 - O pedido entra na agenda como **pendente** para o salão confirmar. Fuso fixo: America/Sao_Paulo.
+- **Página do pedido (da cliente):** status, **remarcar** e **cancelar** até 2 horas antes, e avaliação depois de concluído. Enquanto o pedido está aberto, a página pergunta ao servidor a cada 8 s (cabeçalho `x-poll`, mesma rota `/api/site`, sem função nova) e **se recarrega sozinha** quando a dona confirma, cancela ou conclui.
+- **Avisos à dona:** pedido novo (e-mail e aviso no celular); **remarcação e cancelamento** pela cliente também mandam aviso no celular (`pushToSalon` em `push.ts`). Ainda não mandam e-mail.
+- **Folgas, férias e intervalo** (Meu negócio → Horário): `BlocksPanel` e `BufferPanel` em `pages/meu-negocio/SchedulingPanels.tsx`, dados em `data/useScheduling.ts`, regras puras em `domain/schedule/blocks.ts` (fuso fixo -03:00). Só dona e gerente alteram; todos os membros leem. A agenda mostra um aviso "Bloqueado · 10h às 12h" no dia (`pages/agenda/BlocksNotice.tsx`).
 
 ---
 
@@ -261,7 +293,10 @@ Pontos de atenção:
 - Reaproveitar o UX da **criação de conta** (tracinhos, pílulas, disco preto) em novos fluxos.
 - Nada de rolagem lateral; nada de telas que "estouram"; campos não podem ter a mesma cor do fundo.
 - Cores sempre de paletas fixas, combinando com o sistema (bordô/vinho do IKIZY).
-- Comunicação em português, direta. Publicar só quando ela pedir.
+- Comunicação em português, direta. Publicar só quando ela pedir; migration na produção só com o OK dela na hora (ela já aprovou caso a caso).
+- **Nada de emojis** (app, site, mensagens): só ícones do lucide. **Nada de estrelas ou brilhos** (sparkles) em ícone nenhum.
+- Botão de adicionar = pílula escura com "+", sem vermelho claro; cartões no estilo do Início.
+- No celular ela cobra **menos passos e menos aperto**: foi por isso que Contato saiu do Meu site e o endereço foi para o topo.
 
 ---
 
@@ -269,16 +304,27 @@ Pontos de atenção:
 
 - **`desktop.ini` dentro de `.git/refs`:** a pasta é sincronizada pelo Windows e recria esse arquivo; o `git fetch` falha com
   `bad object refs/desktop.ini`. Solução: `find .git -path '*refs*' -name desktop.ini -delete` antes de fetch/merge.
-- **`tsc -p .` não verifica o app** (a config raiz só referencia outras). Use `npx tsc -b` (é o que o build usa).
+- **`tsc -p .` e `tsc --noEmit -p .` não verificam o app** (a config raiz só referencia outras). Use `npx tsc -b` (é o que o build usa).
 - **Data API não vê coluna nova:** rodar `notify pgrst, 'reload schema';` no banco.
 - **Preview da `dev` na Vercel** pede login; para testar a página pública localmente, gerar o HTML com `renderSitePage` via `tsx` e servir com um servidor simples.
 - **Navegador embutido de testes:** às vezes a sessão do Neon Auth fica presa em "Carregando…" (a busca é cancelada quando a aba perde foco); recarregar resolve.
+- **Shell de teste:** `heredoc` com aspas simples dentro de comandos grandes quebrou várias vezes no terminal desta máquina; para arquivos e scripts longos, grave o arquivo com a ferramenta de escrita e rode depois.
 - **Modais e telas cheias** precisam ser renderizados no `body` (`createPortal`): dentro do conteúdo, a barra de navegação de baixo fica por cima.
 
 ---
 
 ## 8. Estado atual
 
+- **18 e 19/11/2026 (tudo na `main`, no ar, com migrations aplicadas na produção):**
+  - **Página do pedido** da cliente (status ao vivo, remarcar, cancelar, avaliar) e avisos no celular de pedido novo, remarcação e cancelamento.
+  - **Janela de agendar** só com dias que têm vaga (abre no primeiro dia livre, respeitando antecedência e "Agendar até").
+  - **Meu site enxuto:** 5 partes (Perfil, Visual, Serviços, Extras, Agendar), endereço do site no topo com folha de ações, Contato removido e Avaliações dentro de Extras.
+  - **Planos, pacotes e promoções** com tipo, preço "de" e validade (migration `plan_kind`).
+  - **Folgas, férias, bloqueios e intervalo entre atendimentos** (migration `time_blocks`).
+  - **Agenda:** quem entra num plano de equipe vê "Você também atende?" (sim = entra como profissional; não = vai para Equipe); Solo continua automático.
+  - **Erro achado em 19/11/2026 (corrigido no código, vai no próximo deploy):** o Meu site publicado em 19/11 não importava `siteHost`; quebrava ao publicar e ao abrir a prévia no celular. O atalho "Ligar agendamento" do resumo também apontava para a parte Perfil em vez de Agendar. Foi achado só com `npx tsc -b`.
+  - Números do banco de produção em 19/11/2026: **4 contas** (uma de uso real, uma de fora que entrou uma vez), 3 negócios, 3 assinaturas (2 Solo em teste e 1 Salão de cortesia). O produto ainda não foi validado com salões de verdade.
+  - **Decisão:** o sinal por Pix **não** será integrado agora; só quando houver salões usando (ver 9.6).
 - 15/10/2026 (Fase 2, equipe; código na `dev`, ainda não publicado; migration `20261031000000_team` aplicada em produção em 16/10/2026. **Publicar a `dev` logo**: a `main` ainda lê `professionals.commission_pct` direto, que agora é bloqueado, então o Financeiro no ar falha até o deploy): aba **Equipe** em Meu negócio (profissionais com comissão, ativar/desativar, "Dar acesso" gera link de convite de 7 dias para o WhatsApp, trocar perfil e remover acesso), tela `/convite/<token>` (cria a conta ou entra; o token fica no aparelho até a pessoa ter conta, `lib/pendingInvite.ts`), menu e rotas por perfil (`domain/team/roles.ts`, `auth/RequireRole.tsx`), **Meus ganhos** (`/dashboard/ganhos`) para a profissional, recepção só com o caixa de hoje, valores gastos das clientes escondidos para recepção e profissional. Limites (R-26): Solo 1 profissional e sem convites; Studio até 3 profissionais e 3 logins, só perfil profissional; Salão sem limite, com gerente e recepção (`PLAN_LIMITS` em `lib/plans.ts` = `plan_limits()` no banco). Trocar para plano menor exige caber (tela de Assinatura e `createCheckout`); trocar pelo portal do Stripe ainda não é barrado.
 - 15/10/2026 (Clientes, item 5.3 do plano de experiência): filtro **"Chamar hoje (N)"** na lista (aniversário hoje, sumida há mais de 45 dias ou retorno atrasado pelo intervalo dela; quem já tem horário marcado só entra pelo aniversário), regra em `domain/clients/call.ts`. Nesse filtro a linha diz o motivo e tem o botão de mensagem pronta no tipo certo; o "já enviei" é o mesmo do "Chamar hoje" da Agenda. A bolinha de seleção só aparece depois de tocar em "Selecionar várias", e os 4 números do topo ficam só na tela larga. Confirmar/Recusar direto na faixa de pedidos já existia (`PendingBanner`).
 - 15/10/2026 (cadastro novo, estilo Peec AI, migration `20261029000000_create_salon_setup`, que só entrou no banco de produção em 16/10/2026 (em 15/10 tinha ido para o banco antigo, ver seção 2)): `/cadastro/salao` virou uma pergunta por tela (seu nome se faltar, nome do negócio + link, áreas, Só eu / Eu e equipe, horário, revisão dos serviços) com a prévia do sistema se montando ao fundo; depois "Montando…", "Sua agenda está pronta" e `/cadastro/plano` com os 3 planos (30 dias grátis sem cartão via `choose_trial_plan`, ou cartão no Stripe com `from=onboarding`). Código em `pages/cadastro/`, regras em `domain/onboarding/`, rascunho em `data/onboarding.ts`. `create_salon_setup()` cria tudo numa transação (R-11); sem a migration o app usa o caminho antigo em partes. No modo demonstração (`npm run dev -- --mode demo` com `.env.demo.local` vazio) o cadastro roda de ensaio, sem gravar.
@@ -333,11 +379,11 @@ Hoje: a cliente escolhe serviço, profissional, dia e horário livre, informa no
 | ~~P1~~ | **Aviso de novo pedido para o salão** (feito) | `components/PendingRequests.tsx`: sininho do topo com contagem e lista, faixa "N pedidos do site para confirmar" no Início e na Agenda, contagem no título da aba e aviso rápido (toast) quando chega pedido com o sistema aberto. Pedido = atendimento `pendente` daqui para a frente (os criados no sistema já entram `confirmado`); busca a cada 60 s e ao voltar para a aba (`pending` no `AgendaProvider`). Clicar abre `/dashboard/agenda?pedido=id`, que vai ao dia e abre o atendimento (Confirmar já existe lá). Falta: e-mail/push com o sistema fechado (depende do PWA). |
 | P1 | **Confirmar/recusar em um toque** | Lista "Pedidos online" com botões Confirmar e Recusar; ao confirmar, abrir o WhatsApp da cliente com mensagem pronta ("Seu horário de X, dia Y às Z, está confirmado"). |
 | P1 | **Confirmação automática (opcional)** | Chave "confirmar sozinho" por salão: pedidos dentro do expediente já entram como confirmados. |
-| ~~P1~~ | **Link da cliente e avaliações** (feito e publicado, 18/11/2026) | Migration `20261119000000_client_link_reviews` (aplicada na dev e na produção; o `AgendaProvider` lê `public_token`). Visual da página: folha branca no estilo iOS (alça, voltar redondo, etapas numa pílula, notas em blocos com borda preta e check), só uma linha discreta com a data no alto. `appointments.public_token` (64 hex; os serviços de um pedido do site dividem o mesmo). Página `/pedido/<token>` no subdomínio (ou `/s/<slug>/pedido/<token>`), servida por `api/site.ts` com `clientPage.ts`: status (pendente, confirmado, concluído, cancelado, faltou), sem conta e sem pedir contato de novo. Depois de **concluído**: nota 1 a 5 (botões numerados, sem estrelas) e texto opcional; uma avaliação por pedido, enviada por `POST /api/booking {action:'review'}` (`submit_review()`), publicada na hora na seção "O que dizem as clientes" do site (`get_public_reviews()`, primeiro nome tirado da ficha, some com a LGPD). O link vai na tela final do pedido do site e nas mensagens de confirmação e pós-atendimento. Tela da dona: Meu site, parte "Avaliações" (`pages/meu-site/ReviewsEditor.tsx`, dados em `data/useReviews.ts`): lista com nota, texto e chave "No site"; esconder vale na hora, sem Publicar (só dona e gerente, pela política do banco). Remarcar e cancelar pela página: migration `20261120000000_client_change_booking` (até 2 horas antes; remarcar mantém a mesma profissional, os serviços seguem em sequência e o pedido volta a pendente; cancelar libera a vaga). `GET /api/booking?pedido=<token>&date=` lista os horários livres e `POST` com `action: cancel|reschedule` muda; o sininho mostra "Remarcou" nos pedidos e uma seção "Canceladas pela cliente" (últimos 3 dias, conta no número até a dona abrir). Sem e-mail ou push para essas mudanças. |
-| P2 | **Sinal por Pix** | O campo "% de sinal" já existe no site. Gerar cobrança Pix (Stripe ou PSP brasileiro) no pedido; a vaga fica reservada por X minutos até o pagamento. Reduz faltas. |
+| ~~P1~~ | **Link da cliente e avaliações** (feito e publicado, 18/11/2026) | Migration `20261119000000_client_link_reviews` (aplicada na dev e na produção; o `AgendaProvider` lê `public_token`). Visual da página: folha branca no estilo iOS (alça, voltar redondo, etapas numa pílula, notas em blocos com borda preta e check), só uma linha discreta com a data no alto. `appointments.public_token` (64 hex; os serviços de um pedido do site dividem o mesmo). Página `/pedido/<token>` no subdomínio (ou `/s/<slug>/pedido/<token>`), servida por `api/site.ts` com `clientPage.ts`: status (pendente, confirmado, concluído, cancelado, faltou), sem conta e sem pedir contato de novo. Depois de **concluído**: nota 1 a 5 (botões numerados, sem estrelas) e texto opcional; uma avaliação por pedido, enviada por `POST /api/booking {action:'review'}` (`submit_review()`), publicada na hora na seção "O que dizem as clientes" do site (`get_public_reviews()`, primeiro nome tirado da ficha, some com a LGPD). O link vai na tela final do pedido do site e nas mensagens de confirmação e pós-atendimento. Tela da dona: Meu site, parte "Avaliações" (`pages/meu-site/ReviewsEditor.tsx`, dados em `data/useReviews.ts`): lista com nota, texto e chave "No site"; esconder vale na hora, sem Publicar (só dona e gerente, pela política do banco). Remarcar e cancelar pela página: migration `20261120000000_client_change_booking` (até 2 horas antes; remarcar mantém a mesma profissional, os serviços seguem em sequência e o pedido volta a pendente; cancelar libera a vaga). `GET /api/booking?pedido=<token>&date=` lista os horários livres e `POST` com `action: cancel|reschedule` muda; o sininho mostra "Remarcou" nos pedidos e uma seção "Canceladas pela cliente" (últimos 3 dias, conta no número até a dona abrir). Aviso no celular da dona para remarcar e cancelar (19/11/2026); e-mail ainda não. A página da cliente se atualiza sozinha enquanto o pedido está aberto. |
+| P2 (adiado) | **Sinal por Pix** | O campo "% de sinal" já existe no site e não cobra nada. **Adiado por decisão (19/11/2026) até haver salões usando.** Quando vier: começar pelo **Pix da própria dona com confirmação manual** (chave Pix em Meu negócio; o IKIZY gera o código copia e cola e o QR com o valor; a dona marca "sinal recebido" na agenda; o dinheiro nunca passa pelo IKIZY), tudo configurável (liga/desliga, % ou valor fixo, por serviço, tempo para guardar a vaga, texto livre de devolução e falta). Cobrança automática com divisão por salão só depois (conta de pagamento por salão, taxa, CNPJ e Stripe em produção ainda pendentes). |
 | P2 | **Lembrete antes do horário** | Mensagem de lembrete (24 h e 2 h antes) com botão de confirmar presença. Via WhatsApp Business API, ou pelo menos e-mail/SMS. Cron na Vercel. |
 | ~~P2~~ | **Serviço × profissional** (feito e publicado, 18/11/2026) | Migration `20261118000000_professional_services` (aplicada na dev e na produção; tabela entra na exportação de dados). Tabela `professional_services`: serviço sem linhas = todas fazem. "Quem faz" na janela do serviço em Meu negócio (só com 2+ profissionais ativas); `get_available_slots()` filtra, então o site e o `book_appointment()` respeitam; a janela do site e o novo agendamento da agenda só mostram quem faz. Regras em `domain/team/services.ts`. |
-| P2 | **Intervalo entre atendimentos e bloqueios** | Tempo de limpeza após cada serviço; bloquear horários (almoço extra, folga, férias) sem precisar mudar o expediente. |
+| ~~P2~~ | **Intervalo entre atendimentos e bloqueios** (feito e publicado, 19/11/2026) | Migration `20261122000000_time_blocks`. Intervalo único por negócio (0 a 60 min nas opções), bloqueios por profissional ou para todas, dia inteiro, vários dias ou por horas. Afeta as vagas do site e da remarcação pelo link; a agenda do sistema ainda deixa marcar (a dona manda). Falta: intervalo por serviço, bloqueio recorrente ("todo almoço"), aviso ao tentar marcar dentro de um bloqueio e arrastar bloqueio na grade. |
 | ~~P2~~ | **Mais de um serviço no mesmo pedido** (feito e publicado, 18/11/2026) | Migration `20261118100000_multi_service_booking` (aplicada na dev e na produção). Na janela do site, "+ Outro serviço no mesmo horário" (até 4). `get_booking_slots()` soma as durações e só oferece quem faz todos; `book_services()` grava um atendimento por serviço, em sequência, com a mesma profissional (mesmo `created_at`; o limite de 3 pedidos por cliente conta pedidos). `/api/booking` aceita `service=id1,id2` no GET e `services: []` no POST (o `service` antigo continua valendo). As funções de um serviço ficaram no banco, sem uso. Falta: na agenda, cada serviço do pedido aparece e é confirmado separado. |
 | P3 | **Lista de espera** | Dia cheio: a cliente entra na fila e é avisada se abrir vaga. |
 | P3 | **Fuso horário por salão** | Hoje fixo em America/Sao_Paulo (problema para Acre, Amazonas e Fernando de Noronha). |
@@ -349,7 +395,7 @@ Hoje: a cliente escolhe serviço, profissional, dia e horário livre, informa no
 |---|---|---|
 | P1 | **Fundos prontos para a capa** | Hoje, sem foto, a capa é um degradê na cor da paleta. Oferecer 6 a 10 fotos/texturas de banco livre por segmento (unhas, cílios, cabelo...) no guia. É o que faz o site nascer bonito, como na GlossGenius. |
 | P1 | **Galeria / portfólio** | Fotos dos trabalhos (antes e depois), em grade. Salões vendem pelo visual. Reaproveita `site_photos`. |
-| P2 | **Depoimentos** | Avaliações das clientes (o salão escolhe quais mostrar). Depois: pedir avaliação automaticamente após o atendimento concluído. |
+| ~~P2~~ | **Depoimentos** (feito, 18/11/2026) | Avaliações pela página do pedido, seção "O que dizem as clientes" no site e esconder em Meu site → Extras → Avaliações. Falta pedir a avaliação automaticamente depois do atendimento concluído (depende de lembrete automático). |
 | P2 | **SEO local e compartilhamento** | Imagem de compartilhamento (og:image) gerada com a capa e o nome; dados de horário e endereço no JSON-LD; sitemap dos sites publicados. |
 | P2 | **Domínio próprio** | `www.studiomaria.com.br` apontando para o site (Vercel Domains API). Recurso para os planos Studio/Salão. |
 | P3 | **Instagram no site** | Últimas fotos do Instagram ou link em destaque. |
@@ -360,6 +406,7 @@ Hoje: a cliente escolhe serviço, profissional, dia e horário livre, informa no
 
 | Prioridade | Melhoria | Por quê / como |
 |---|---|---|
+| ~~P1~~ | **Pacotes e promoções no site** (etapa 1 feita, 19/11/2026) | Tipo (assinatura, pacote, promoção), preço "de" e validade nos planos do site (migration `plan_kind`). **Etapa 2:** pedido de interesse dentro do app (nome e WhatsApp da cliente, aviso no celular da dona) em vez de só abrir o WhatsApp. **Etapa 3:** serviços complementares sugeridos ao agendar ("quer adicionar...?"). Pacote com **saldo de sessões** (controla quantas restam) ficou de fora por ora. |
 | P1 | **Planos por assinatura com cobrança de verdade** | Hoje os planos aparecem no site e a cobrança é por WhatsApp. Próximo passo: assinatura da cliente (cartão recorrente ou Pix mensal), controle de uso ("2 de 2 manutenções no mês") e aviso de vencimento. |
 | ~~P2~~ | **Mensagens prontas no WhatsApp** (feito) | Sem disparo automático, por decisão da usuária: o texto abre no WhatsApp da própria pessoa (wa.me). Tipos em `lib/messages.ts`; card "Mensagens de hoje" no Início (lembretes, pós, faltas, aniversário, prêmio, sumidas), botão Mensagem na agenda e na ficha. O "já enviei" fica só no navegador. Disparo automático (Meta oficial, Z-API ou Evolution) ficou para depois. |
 | P3 | **Envio automático no WhatsApp (Evolution API)** | Adiado até a receita pagar a hospedagem (VPS de ~R$ 20/mês; a Oracle Always Free serve para testar). Cada salão conecta a própria instância por QR code em Configurações; lembrete, pós-atendimento, aniversário e falta saem sozinhos, com `wa.me` como alternativa se a instância cair. Só mensagens transacionais para clientes (a Evolution não é oficial: há risco de bloqueio do número), com limite diário e intervalo entre envios. Recurso opcional, talvez só nos planos Studio e Salão. Alternativa oficial: API da Meta (paga por conversa). |
@@ -374,7 +421,7 @@ Hoje: a cliente escolhe serviço, profissional, dia e horário livre, informa no
 |---|---|---|
 | P2 | **Arrastar para remarcar** na grade da agenda | Mais rápido que abrir o menu. |
 | P2 | **Atendimentos recorrentes** | "Toda quinzena às 10h" (manutenção de unha/cílios). |
-| P2 | **Acesso da profissional** | Cada profissional vê a própria agenda e comissões no celular (papel `professional` já existe no banco). |
+| P1 | **Acesso da profissional** | Cada profissional vê a própria agenda e comissões no celular. O papel `professional`, o convite por link e **Meus ganhos** (`/dashboard/ganhos`) já existem (Fase 2); falta fechar a experiência da agenda dela no celular e testar com uma profissional de verdade. Sem isso o plano de equipe fica pela metade. |
 | P2 | **Pagamento na hora (Pix/cartão)** | Registrar e, depois, cobrar pelo app; alimenta o financeiro sem digitar. |
 | P3 | **Relatórios** | Serviços mais vendidos, ticket médio por profissional, horários ociosos, taxa de faltas. |
 | P3 | **Várias unidades** | Plano Salão com mais de um endereço. |
@@ -385,10 +432,29 @@ Hoje: a cliente escolhe serviço, profissional, dia e horário livre, informa no
 |---|---|---|
 | ~~P1~~ | **Ligar a confirmação de e-mail** (feito) | Ligada em 11/10/2026: código por e-mail (Resend, webhook `send.otp`). Passo a passo e cuidados na seção 5b. |
 | ~~P1~~ | **Checklist de primeiros passos** (feito) | Painel flutuante no canto (`components/FirstSteps.tsx`), em todas as telas do dashboard: horário, preços, site e agendamento online. Recolhe num botão com anel de progresso, lembra a escolha por negócio e some sozinho ao concluir (mostra "Tudo pronto!" por uns 4 s). Só dona e gerente; some dentro do editor do site. |
-| P1 | **App instalável (PWA) + notificações push** | Base para avisar novos pedidos e lembretes. |
+| ~~P1~~ | **App instalável (PWA) + notificações push** (feito, 17/11/2026) | Ver "App instalável e aviso de pedido novo" na seção 3. Falta: app nas lojas (App Store e Google Play), que hoje só o PWA cobre. |
 | P2 | **Indique e ganhe** | Como o "Give $30, get $30" da GlossGenius: link de indicação, crédito na assinatura das duas. Crescimento barato. |
-| P2 | **Testes de ponta a ponta** | Playwright para o fluxo cadastro → site → agendamento; hoje há só testes das funções do servidor (81). |
-| P2 | **Monitoramento de erros** | Sentry (ou similar) no app e nas funções da Vercel. |
+| P2 | **Testes de ponta a ponta** | Playwright já cobre as telas principais, agendar, confirmar pedido, cliente, prévia do site e a página pública (no modo demonstração, sem banco). Falta cobrir o que mudou em 18 e 19/11: bloqueios, janela de agendar com dias lotados, remarcar e cancelar pelo link. Hoje há 269 testes do servidor e 198 do domínio. |
+| P2 | **Monitoramento de erros** | Código pronto; só liga com `SENTRY_DSN` e `VITE_SENTRY_DSN` na Vercel (não confirmado se estão configurados). Já valeria ligar: o erro de `siteHost` de 19/11 só foi achado por conferência manual. |
 | ~~P3~~ | **Branch de banco para desenvolvimento** (feito) | Feita em 16/11/2026: o `npm run dev` usa a branch `dev` do Neon, sem dados reais. Falta conferir para onde o preview da Vercel aponta (as variáveis de Preview não foram revisadas). Ver "Banco de desenvolvimento" na seção 3. |
 | P3 | **LGPD** | Termo de consentimento no agendamento, exportar/apagar dados da cliente. |
 | P3 | **Ferramenta de migrations** | Registrar quais já foram aplicadas (tabela de controle) em vez de aplicar à mão. |
+
+### 9.6 Roteiro das próximas versões (19/11/2026)
+
+**Antes de tudo: validar com salões de verdade.** Hoje são 4 contas e uma só de uso real. Cada funcionalidade nova vale menos do que 5 a 10 donas de salão usando o que já existe e dizendo o que atrapalha. As respostas delas decidem a ordem abaixo (principalmente o sinal por Pix e o envio automático de mensagens).
+
+**Versão atual (no ar):** agenda por profissional, clientes e ficha, financeiro e comissões, site público com agendamento online (vários serviços, bloqueios e intervalo), página do pedido ao vivo (remarcar, cancelar, avaliar), planos, pacotes e promoções, equipe com convites, aviso no celular, app instalável, exportar e apagar dados.
+
+| Versão | O que entra | Por quê |
+|---|---|---|
+| **v1.1 (próxima)** | **Acesso da profissional** pelo celular; **lembrete automático** ao cliente (e-mail; WhatsApp só quando a receita pagar a hospedagem); **pedido de interesse dentro do app** (pacotes etapa 2); **serviços complementares** ao agendar (etapa 3); Sentry ligado; testes ponta a ponta dos fluxos novos | Fecha o plano de equipe, reduz faltas sem depender de WhatsApp pago e dá à dona a venda extra |
+| **v1.2** | **Sinal por Pix** (manual e configurável, quando houver uso); aniversariantes; atendimentos recorrentes; arrastar para remarcar; aviso ao marcar dentro de um bloqueio; bloqueio recorrente e intervalo por serviço | Reduz faltas e tira trabalho manual da agenda |
+| **v2** | **Assinatura da cliente com cobrança** e controle de uso; **pacote com saldo de sessões**; cobrança automática do sinal (conta por salão); relatórios; pagamento na hora; envio automático no WhatsApp; domínio próprio; indique e ganhe; app nas lojas; várias unidades | Aumenta a receita por salão e o motivo de continuar pagando |
+
+**Pendências técnicas e de negócio que não são funcionalidade**
+- CNPJ, conta PJ e Stripe em produção (a lista de lançamento da [especificação](docs/ESPECIFICACAO-PRODUCAO.md) ainda tem esses itens abertos).
+- Trocar o e-mail da conta: desligado no servidor de login do Neon; decisão pendente (seção 3).
+- Conferir para onde o preview da Vercel aponta (variáveis de Preview não revisadas).
+- Ferramenta de migrations: já há `schema_migrations` e o script `db:migrate`; falta só automatizar a aplicação junto com o deploy.
+- Fuso horário por salão (hoje fixo em Brasília; os bloqueios também usam -03:00).

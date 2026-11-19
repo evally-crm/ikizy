@@ -6,7 +6,7 @@ import { newId, useStudio, type ClientPlan, type Service, type ShowcaseItem, typ
 import { useAgenda } from '../../data/AgendaProvider'
 import { useBusiness, type ServiceInput } from '../../data/business'
 import { blankPlan, blankShowcaseItem, firstOpenGuideStep, guideSteps, hoursSummary, patchById, quickSteps, removeById, type GuideStepId, type PublishState } from '../../domain/site'
-import { isReservedSlug } from '../../lib/slug'
+import { isReservedSlug, siteHost } from '../../lib/slug'
 import { dash } from '../../lib/routes'
 import { accessState, isSiteOffline } from '../../lib/plans'
 import { useSubscription } from '../../billing/SubscriptionProvider'
@@ -405,7 +405,7 @@ export default function MeuSite() {
           onClose={() => setSummary(null)}
           onFixBooking={() => {
             setSummary(null)
-            goPart('perfil')
+            goPart('agendamento')
           }}
         />
       )}
