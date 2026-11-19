@@ -7,6 +7,7 @@ import { useAgenda } from '../data/AgendaProvider'
 import { useMediaQuery } from '../hooks/useMediaQuery'
 import { neon } from '../lib/neon'
 import { dash } from '../lib/routes'
+import { useInstallAction } from './useInstallAction'
 
 /** painel aberto ou recolhido, guardado neste aparelho, por negócio */
 const minKey = (salonId: string) => `ikizy:primeiros-passos-min:${salonId}`
@@ -98,8 +99,10 @@ export function FirstSteps() {
   // só comemora se o painel chegou a mostrar etapas pendentes nesta visita
   const sawPending = useRef(false)
 
+  const { info: install, available: canInstall, run: runInstall, dialog: installDialog } = useInstallAction()
   const unpriced = services.filter((s) => s.price <= 0).length
-  const steps = [
+  type Step = { id: string; done: boolean; title: string; detail: string; to?: string; onClick?: () => void }
+  const steps: Step[] = [
     {
       id: 'horario',
       done: professionals.some((p) => (workingHours[p.id]?.length ?? 0) > 0),
@@ -116,6 +119,10 @@ export function FirstSteps() {
     },
     { id: 'site', done: Boolean(site?.published), title: 'Publique seu site', detail: 'Visual, textos e endereço da sua página.', to: dash('/site') },
     { id: 'online', done: Boolean(site?.online), title: 'Receba agendamentos pelo site', detail: 'As clientes marcam sozinhas.', to: dash('/site') },
+    // aparece sempre que o app ainda não está instalado neste aparelho
+    ...(canInstall || install.installed
+      ? [{ id: 'app', done: install.installed, title: 'Instale o app no celular', detail: install.canPrompt ? 'Abre em tela cheia e avisa dos pedidos.' : 'Veja como instalar neste aparelho.', onClick: () => void runInstall() }]
+      : []),
   ]
   const doneCount = steps.filter((s) => s.done).length
   const ready = !loading && Boolean(site) && canManage
@@ -181,7 +188,7 @@ export function FirstSteps() {
       </div>
       {celebrate ? (
         <p className="setup__party">
-          <CircleCheck size={18} aria-hidden="true" /> Os 4 passos estão feitos.
+          <CircleCheck size={18} aria-hidden="true" /> Os {steps.length} passos estão feitos.
         </p>
       ) : (
         <ol className="setup__list">
@@ -196,8 +203,17 @@ export function FirstSteps() {
                     <strong>{s.title}</strong>
                   </span>
                 </div>
+              ) : s.onClick ? (
+                <button type="button" className="setup__item setup__item--button" onClick={s.onClick}>
+                  <span className="setup__check" />
+                  <span className="setup__text">
+                    <strong>{s.title}</strong>
+                    <small>{s.detail}</small>
+                  </span>
+                  <ChevronRight size={16} aria-hidden="true" />
+                </button>
               ) : (
-                <Link to={s.to} className="setup__item">
+                <Link to={s.to ?? dash('/')} className="setup__item">
                   <span className="setup__check" />
                   <span className="setup__text">
                     <strong>{s.title}</strong>
@@ -215,6 +231,7 @@ export function FirstSteps() {
           <X size={16} aria-hidden="true" /> Fechar
         </button>
       )}
+      {installDialog}
     </section>
   )
 }

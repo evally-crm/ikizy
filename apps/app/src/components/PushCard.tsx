@@ -1,43 +1,25 @@
 import { useEffect, useState } from 'react'
 import { Bell, Download, Smartphone } from 'lucide-react'
-import { disablePush, enablePush, isInstalled, pushState, type PushState } from '../lib/push'
-
-/** o evento que o navegador entrega quando o app pode ser instalado (Chrome, Edge e outros; o Safari instala pelo menu Compartilhar) */
-interface InstallEvent extends Event {
-  prompt: () => Promise<void>
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
-}
+import { disablePush, enablePush, pushState, type PushState } from '../lib/push'
+import { useInstallAction } from './useInstallAction'
 
 /** Minha conta > "Neste aparelho": instalar o app e ligar o aviso de pedido novo (só quem trata pedidos) */
 export function PushCard() {
   const [state, setState] = useState<PushState | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [installEvent, setInstallEvent] = useState<InstallEvent | null>(null)
-  const [installed, setInstalled] = useState(() => isInstalled())
+  const { info, available: canInstall, run: install, dialog: stepsDialog } = useInstallAction(() => void pushState().then(setState))
+  const installed = info.installed
 
   useEffect(() => {
     let alive = true
     void pushState().then((s) => alive && setState(s))
-    const onPrompt = (e: Event) => {
-      e.preventDefault()
-      setInstallEvent(e as InstallEvent)
-    }
-    const onInstalled = () => {
-      setInstalled(true)
-      setInstallEvent(null)
-    }
-    window.addEventListener('beforeinstallprompt', onPrompt)
-    window.addEventListener('appinstalled', onInstalled)
     return () => {
       alive = false
-      window.removeEventListener('beforeinstallprompt', onPrompt)
-      window.removeEventListener('appinstalled', onInstalled)
     }
   }, [])
 
   // nada a oferecer (sem suporte, sem chaves no servidor, sem como instalar e ainda não instalado): o cartão nem aparece
-  const canInstall = Boolean(installEvent) && !installed
   const hasPushRow = state === 'on' || state === 'off' || state === 'denied' || state === 'needs-install'
   if (state === null || (!hasPushRow && !canInstall && !installed)) return null
 
@@ -48,13 +30,6 @@ export function PushCard() {
     if (message) setError(message)
     setState(await pushState())
     setBusy(false)
-  }
-
-  const install = async () => {
-    if (!installEvent) return
-    await installEvent.prompt()
-    await installEvent.userChoice
-    setInstallEvent(null)
   }
 
   return (
@@ -84,21 +59,13 @@ export function PushCard() {
             </p>
           </li>
         )}
-        {state === 'needs-install' && (
-          <li>
-            <p className="settings__row conta__note">
-              <Smartphone size={19} aria-hidden="true" />
-              <span>No iPhone, instale o app para receber avisos: toque em Compartilhar e depois em Adicionar à Tela de Início. Depois abra por lá.</span>
-            </p>
-          </li>
-        )}
-        {canInstall && (
+        {canInstall && !installed && (
           <li>
             <button type="button" className="settings__row" onClick={() => void install()}>
               <Download size={19} aria-hidden="true" />
               <span>
                 Instalar o app
-                <small className="conta__sub">Abre em tela cheia, como um aplicativo</small>
+                <small className="conta__sub">{info.needsSteps ? 'Veja o passo a passo para o iPhone' : 'Abre em tela cheia, como um aplicativo'}</small>
               </span>
             </button>
           </li>
@@ -118,6 +85,7 @@ export function PushCard() {
           {error}
         </p>
       )}
+      {stepsDialog}
     </section>
   )
 }

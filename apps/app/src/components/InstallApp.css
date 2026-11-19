@@ -1,0 +1,32 @@
+/* passo a passo do iPhone */
+.install-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.install-steps li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 15px;
+  line-height: 1.4;
+}
+.install-steps__n {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-pill);
+  background: var(--ink-900);
+  color: var(--white);
+  font-size: 13px;
+  font-weight: 600;
+}
+.install-steps__icon {
+  display: inline-block;
+  margin-bottom: -3px;
+}

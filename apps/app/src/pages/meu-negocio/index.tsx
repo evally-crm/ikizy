@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthProvider'
 import { useAgenda } from '../../data/AgendaProvider'
 import { useBusiness } from '../../data/business'
+import { useScheduling } from '../../data/useScheduling'
 import { useTeam, type TeamInvite, type TeamMember, type TeamProfessional } from '../../data/team'
 import { assignableRoles, invitableRoles, teamUsage, type Role } from '../../domain/team'
 import type { Product, Service } from '../../data/catalog'
@@ -12,6 +13,7 @@ import { WorkingHoursDialog } from '../../components/WorkingHoursDialog'
 import { Em, PageHeader, Tabs } from '../../components/ui'
 import { DetailsPanel } from './DetailsPanel'
 import { HoursPanel } from './HoursPanel'
+import { BlocksPanel, BufferPanel } from './SchedulingPanels'
 import { MaterialsPanel } from './MaterialsPanel'
 import { ProductDialog } from './ProductDialog'
 import { ServiceDialog } from './ServiceDialog'
@@ -35,6 +37,7 @@ export default function MeuNegocio() {
   const { salon } = useAuth()
   const { professionals, services: agendaServices, workingHours, reload: reloadAgenda } = useAgenda()
   const biz = useBusiness()
+  const sched = useScheduling()
   const team = useTeam()
   const { hash, state } = useLocation()
   const navigate = useNavigate()
@@ -155,13 +158,18 @@ export default function MeuNegocio() {
         <>
           {tab === 'dados' && <DetailsPanel details={biz.details} canManage={canManage} status={status} onSave={biz.saveDetails} />}
           {tab === 'horario' && (
-            <HoursPanel
-              professionals={professionals}
-              workingHours={workingHours}
-              status={allHours.length ? status : null}
-              canManage={canManage}
-              onEdit={() => setEditingHours(true)}
-            />
+            <>
+              <HoursPanel
+                professionals={professionals}
+                workingHours={workingHours}
+                status={allHours.length ? status : null}
+                canManage={canManage}
+                onEdit={() => setEditingHours(true)}
+              />
+              {sched.error && <p className="alert">{sched.error}</p>}
+              <BlocksPanel blocks={sched.blocks} professionals={professionals} canManage={canManage} onAdd={sched.addBlock} onRemove={sched.removeBlock} />
+              <BufferPanel buffer={sched.buffer} canManage={canManage} onChange={sched.setBuffer} />
+            </>
           )}
           {tab === 'servicos' && (
             <ServicesPanel

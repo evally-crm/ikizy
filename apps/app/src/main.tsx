@@ -4,9 +4,11 @@ import { BrowserRouter } from 'react-router-dom'
 import './styles/index.css'
 import App from './App.tsx'
 import { startAnalytics } from './lib/analytics'
+import { startInstallWatch } from './lib/install'
 import { startMonitoring } from './lib/monitoring'
 import { trackVisualViewport } from './lib/viewport'
 
+startInstallWatch()
 startMonitoring()
 startAnalytics()
 trackVisualViewport()
