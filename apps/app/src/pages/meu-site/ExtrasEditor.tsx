@@ -4,6 +4,7 @@ import type { ClientPlan, PlanKind, ShowcaseItem } from '../../data/catalog'
 import { SITE_LIMITS, splitIncludes } from '../../domain/site'
 import { Select, Switch } from '../../components/controls'
 import { Button, Collapse, MoneyInput } from '../../components/ui'
+import { ReviewsEditor } from './ReviewsEditor'
 import { ShowcaseEditor } from './ShowcaseEditor'
 import './MeuSite.css'
 
@@ -91,7 +92,7 @@ export function ExtrasEditor({
   onAddShowcase: () => void
   onRemoveShowcase: (id: string) => void
 }) {
-  const [open, setOpen] = useState(() => ({ plans: plans.length > 0, showcase: showcase.length > 0 }))
+  const [open, setOpen] = useState(() => ({ plans: plans.length > 0, showcase: showcase.length > 0, reviews: false }))
   return (
     <div className="catalog">
       <p className="catalog__intro">Opcional. Só aparece no site o que você ligar aqui.</p>
@@ -120,6 +121,14 @@ export function ExtrasEditor({
         onToggle={() => setOpen((o) => ({ ...o, showcase: !o.showcase }))}
       >
         <ShowcaseEditor items={showcase} onPatch={onPatchShowcase} onAdd={onAddShowcase} onRemove={onRemoveShowcase} />
+      </Collapse>
+      <Collapse
+        title="Avaliações"
+        meta="O que as clientes escreveram"
+        open={open.reviews}
+        onToggle={() => setOpen((o) => ({ ...o, reviews: !o.reviews }))}
+      >
+        <ReviewsEditor />
       </Collapse>
     </div>
   )

@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
-import { CircleUserRound, ExternalLink, Eye, LayoutList, MapPin, MessageSquareText, Maximize2, PackagePlus, PanelRightClose, PanelRightOpen, Palette, Undo2, X } from 'lucide-react'
+import { CalendarCheck, CircleUserRound, Eye, LayoutList, Maximize2, PackagePlus, PanelRightClose, PanelRightOpen, Palette, Undo2, X } from 'lucide-react'
 import { newId, useStudio, type ClientPlan, type Service, type ShowcaseItem, type SiteConfig } from '../../data/catalog'
 import { useAgenda } from '../../data/AgendaProvider'
 import { useBusiness, type ServiceInput } from '../../data/business'
 import { blankPlan, blankShowcaseItem, firstOpenGuideStep, guideSteps, hoursSummary, patchById, quickSteps, removeById, type GuideStepId, type PublishState } from '../../domain/site'
-import { isReservedSlug, siteHost } from '../../lib/slug'
+import { isReservedSlug } from '../../lib/slug'
+import { dash } from '../../lib/routes'
 import { accessState, isSiteOffline } from '../../lib/plans'
 import { useSubscription } from '../../billing/SubscriptionProvider'
 import { useMediaQuery } from '../../hooks/useMediaQuery'
@@ -15,17 +16,17 @@ import SiteFrame, { DeviceToggle, type Device } from '../../components/SiteFrame
 import { Button, Card, Em, PageHeader, Tag } from '../../components/ui'
 import { AppearanceFields } from './AppearanceFields'
 import { ExtrasEditor } from './ExtrasEditor'
-import { ReviewsEditor } from './ReviewsEditor'
 import { CoverFields, IdentityFields } from './IdentityFields'
 import { PreviewSheet } from './PreviewSheet'
 import { PublishButton } from './PublishButton'
 import { PublishedSummary } from './PublishedSummary'
 import { SetupGuide } from './SetupGuide'
 import { ServicesEditor, type SaveServiceResult } from './ServicesEditor'
-import { BookingFields, ContactFields, TextFields } from './SiteFields'
+import { BookingFields, TextFields } from './SiteFields'
+import { SiteLinkButton } from './SiteLinkButton'
 import './MeuSite.css'
 
-type Part = 'perfil' | 'visual' | 'servicos' | 'extras' | 'avaliacoes' | 'contato'
+type Part = 'perfil' | 'visual' | 'servicos' | 'extras' | 'agendamento'
 
 /** um menu só: cada parte é um assunto, aberta uma por vez */
 const PARTS: { id: Part; label: string; icon: ReactNode }[] = [
@@ -33,8 +34,7 @@ const PARTS: { id: Part; label: string; icon: ReactNode }[] = [
   { id: 'visual', label: 'Visual', icon: <Palette size={20} aria-hidden="true" /> },
   { id: 'servicos', label: 'Serviços', icon: <LayoutList size={20} aria-hidden="true" /> },
   { id: 'extras', label: 'Extras', icon: <PackagePlus size={20} aria-hidden="true" /> },
-  { id: 'avaliacoes', label: 'Avaliações', icon: <MessageSquareText size={20} aria-hidden="true" /> },
-  { id: 'contato', label: 'Contato', icon: <MapPin size={20} aria-hidden="true" /> },
+  { id: 'agendamento', label: 'Agendar', icon: <CalendarCheck size={20} aria-hidden="true" /> },
 ]
 
 const PART_KEY = 'ikizy:site:part'
@@ -49,7 +49,7 @@ const savedPart = (): Part => {
 }
 
 /** cada passo do assistente abre a parte do editor onde ele se resolve */
-const GUIDE_PART: Partial<Record<GuideStepId, Part>> = { perfil: 'perfil', servicos: 'servicos', contato: 'contato' }
+const GUIDE_PART: Partial<Record<GuideStepId, Part>> = { perfil: 'perfil', servicos: 'servicos' }
 const GUIDE_KEY = 'ikizy:site:guide-off'
 const readGuideOff = () => {
   try {
@@ -173,7 +173,7 @@ export default function MeuSite() {
   const mark: Partial<Record<Part, boolean>> = {
     perfil: isDone('foto', 'textos'),
     servicos: isDone('precos'),
-    contato: isDone('contato'),
+    agendamento: isDone('contato'),
   }
   const ready = steps.filter((x) => x.done).length
 
@@ -183,6 +183,11 @@ export default function MeuSite() {
   const showGuide = !loading && !loadError && !isLive &&!guideOff
   const goGuide = (i: number) => {
     setGuideIdx(i)
+    // WhatsApp e horário são editados em Meu negócio e na agenda: o passo leva para lá
+    if (gsteps[i].id === 'contato') {
+      navigate(dash('/negocio'))
+      return
+    }
     const target = GUIDE_PART[gsteps[i].id]
     if (target) goPart(target)
   }
@@ -196,11 +201,22 @@ export default function MeuSite() {
   }
 
   const publishState: PublishState = { isLive, dirty, justPublished, publishing, loading, reserved: slugReserved }
-  const liveUrl = `https://${siteHost(publishedSlug)}`
   // acesso vencido há mais de 7 dias: o endereço mostra "temporariamente fora do ar" até a dona voltar a pagar
   // (só quando o acesso está vencido: a cortesia nunca vence, mesmo com access_until no passado)
   const siteOffline = !!sub && accessState(sub) === 'expired' && isSiteOffline(sub)
   const closePreview = () => setPreviewOpen(false)
+  // endereço do site no topo (celular e computador): tocar abre copiar, abrir e mudar
+  const siteLink = (className: string) => (
+    <SiteLinkButton
+      className={className}
+      slug={site.slug}
+      publishedSlug={publishedSlug}
+      isLive={isLive}
+      offline={siteOffline}
+      reserved={slugReserved}
+      onSlug={(v) => setSite('slug', v)}
+    />
+  )
 
   // celular: uma barra só no topo (fechar, nome e endereço, prévia e publicar)
   const mobileBar = (
@@ -212,15 +228,7 @@ export default function MeuSite() {
         <h1>
           Meu <Em>site</Em>
         </h1>
-        {isLive ? (
-          <a href={liveUrl} target="_blank" rel="noreferrer">
-            {siteHost(publishedSlug)}
-            {siteOffline && ' · fora do ar'}
-            <ExternalLink size={11} aria-hidden="true" />
-          </a>
-        ) : (
-          <span>{siteHost(site.slug)}</span>
-        )}
+        {siteLink('sbar__link')}
       </div>
       <button type="button" className="sbar__icon sbar__icon--soft sbar__icon--label" title="Ver a prévia" onClick={() => setPreviewOpen(true)}>
         <Eye size={18} aria-hidden="true" /> Prévia
@@ -256,19 +264,7 @@ export default function MeuSite() {
           }
           actions={
             <>
-              {isLive ? (
-                <a className="sitelink" href={liveUrl} target="_blank" rel="noreferrer">
-                  <span>
-                    {siteHost(publishedSlug)}
-                    {siteOffline && ' · fora do ar'}
-                  </span>
-                  <ExternalLink size={13} aria-hidden="true" />
-                </a>
-              ) : (
-                <span className="sitelink">
-                  <span>{siteHost(site.slug)} · ainda não publicado</span>
-                </span>
-              )}
+              {siteLink('sitelink')}
               <div className="bar__publish">
                 {!loading && ready < steps.length && (
                   <span className="readiness" title={steps.filter((x) => !x.done).map((x) => x.label).join(' · ')}>
@@ -318,7 +314,6 @@ export default function MeuSite() {
                   <>
                     <IdentityFields site={site} setSite={setSite} />
                     <TextFields site={site} setSite={setSite} categories={[...new Set(services.map((x) => x.category))]} />
-                    <BookingFields site={site} setSite={setSite} />
                   </>
                 )}
                 {part === 'visual' && (
@@ -348,8 +343,7 @@ export default function MeuSite() {
                     onRemoveShowcase={removeShowcase}
                   />
                 )}
-                {part === 'avaliacoes' && <ReviewsEditor />}
-                {part === 'contato' && <ContactFields site={site} setSite={setSite} slugReserved={slugReserved} />}
+                {part === 'agendamento' && <BookingFields site={site} setSite={setSite} />}
               </div>
             </section>
 

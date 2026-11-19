@@ -1034,6 +1034,28 @@ button.sitelink {
   min-width: 0;
 }
 
+.sbar__link {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.sbar__link > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sheet__title {
+  margin: 0 0 16px;
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+}
+
 .sbar__title h1 {
   margin: 0;
   font-size: 20px;
@@ -1043,7 +1065,8 @@ button.sitelink {
 }
 
 .sbar__title > a,
-.sbar__title > span {
+.sbar__title > span,
+.sbar__link {
   display: flex;
   align-items: center;
   gap: 4px;

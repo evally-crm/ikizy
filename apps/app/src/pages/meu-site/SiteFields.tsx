@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { SiteConfig } from '../../data/catalog'
-import { aboutIdeas, cleanSlug, noticeHours, taglineIdeas, windowDays } from '../../domain/site'
-import { SITE_DOMAIN } from '../../lib/slug'
+import { aboutIdeas, noticeHours, taglineIdeas, windowDays } from '../../domain/site'
 import { dash } from '../../lib/routes'
 import OnlineBookingChecklist from '../../components/OnlineBookingChecklist'
 import { Field } from '../../components/ui'
@@ -83,37 +82,6 @@ export function TextFields({ site, setSite, categories = [] }: { site: SiteConfi
       </Field>
       <Ideas ideas={aboutIdeas(site.salonName, categories)} current={site.about} onPick={(t) => setSite('about', t)} />
     </Group>
-  )
-}
-
-/** endereço da página, WhatsApp, Instagram e endereço do salão; o horário vem da agenda (um lugar só para mudar) */
-export function ContactFields({ site, setSite, slugReserved }: { site: SiteConfig; setSite: SetSite; slugReserved: boolean }) {
-  return (
-    <>
-      <Group title="Link do site">
-        <Field
-          label="Endereço da página"
-          hint={slugReserved ? 'Esse endereço é reservado. Escolha outro.' : 'É o link que você coloca no Instagram e no WhatsApp.'}
-        >
-          {(id) => (
-            <span className="input input--suffix">
-              <input id={id} value={site.slug} maxLength={40} aria-invalid={slugReserved} onChange={(e) => setSite('slug', cleanSlug(e.target.value))} />
-              <span aria-hidden="true">.{SITE_DOMAIN}</span>
-            </span>
-          )}
-        </Field>
-      </Group>
-      <Group title="Contato e atendimento">
-        <FromBusiness label="WhatsApp" value={site.whatsapp} empty="Ainda não preenchido" />
-        <FromBusiness label="Instagram" value={site.instagram} empty="Ainda não preenchido" />
-        <FromBusiness label="Endereço do salão" value={site.address} empty="Ainda não preenchido (deixe vazio se atende em domicílio)" />
-        <SettingRow label="Horário de atendimento" hint={site.hours || 'Ainda sem horário definido'}>
-          <Link className="textlink" to={dash('/negocio#horario')}>
-            Mudar na agenda
-          </Link>
-        </SettingRow>
-      </Group>
-    </>
   )
 }
 
